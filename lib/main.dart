@@ -77,12 +77,26 @@ Future<void> main() async {
     debugPrint('Stack trace: ${details.stack}');
   };
   
-  // Run the application wrapped in ProviderScope
-  runApp(
-    ProviderScope(
-      child: VesparaApp(supabaseReady: supabaseInitialized),
-    ),
-  );
+  // Run the application - NO ProviderScope to isolate the issue
+  runApp(const MinimalApp());
+}
+
+/// Ultra minimal app - no providers, no themes, just basic Flutter
+class MinimalApp extends StatelessWidget {
+  const MinimalApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('MinimalApp.build');
+    return MaterialApp(
+      title: 'Vespara',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF1A1523),
+      ),
+      home: const _MinimalLoginScreen(),
+    );
+  }
 }
 
 /// The root Vespara application widget
