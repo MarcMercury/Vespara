@@ -47,7 +47,7 @@ Future<void> main() async {
     }
   }
   
-  // Allow Google Fonts to use HTTP on web (handles CORS gracefully)
+  // Configure Google Fonts for web - use system fonts as fallback
   GoogleFonts.config.allowRuntimeFetching = true;
   
   debugPrint('Vespara: Supabase URL = ${Env.supabaseUrl}');
@@ -99,33 +99,8 @@ class VesparaApp extends ConsumerWidget {
     if (!supabaseReady) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: VesparaColors.background,
-        ),
-        home: const Scaffold(
-          backgroundColor: VesparaColors.background,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'VESPARA',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w500,
-                    color: VesparaColors.primary,
-                    letterSpacing: 12,
-                  ),
-                ),
-                SizedBox(height: 24),
-                Text(
-                  'Unable to connect to server',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-        ),
+        theme: _buildSimpleTheme(),
+        home: const _ErrorScreen(message: 'Unable to connect to server'),
       );
     }
     
@@ -139,53 +114,14 @@ class VesparaApp extends ConsumerWidget {
       debugPrint('Stack: $stack');
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: VesparaColors.background,
-        ),
-        home: Scaffold(
-          backgroundColor: VesparaColors.background,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'VESPARA',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w500,
-                    color: VesparaColors.primary,
-                    letterSpacing: 12,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Router Error: $e',
-                  style: const TextStyle(color: Colors.redAccent),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
+        theme: _buildSimpleTheme(),
+        home: _ErrorScreen(message: 'Router Error: $e'),
       );
     }
     
-    // Get theme with fallback
-    ThemeData theme;
-    try {
-      theme = VesparaTheme.dark;
-      debugPrint('Theme created successfully');
-    } catch (e, stack) {
-      debugPrint('Theme error: $e');
-      debugPrint('Stack: $stack');
-      theme = ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: VesparaColors.background,
-        colorScheme: const ColorScheme.dark(
-          primary: VesparaColors.primary,
-          surface: VesparaColors.surface,
-        ),
-      );
-    }
+    // Use simple theme to avoid Google Fonts issues on web
+    final theme = _buildSimpleTheme();
+    debugPrint('Theme created successfully');
     
     debugPrint('Returning MaterialApp.router');
     
@@ -196,6 +132,101 @@ class VesparaApp extends ConsumerWidget {
       darkTheme: theme,
       themeMode: ThemeMode.dark,
       routerConfig: router,
+    );
+  }
+  
+  /// Build a simple theme without Google Fonts to avoid web loading issues
+  static ThemeData _buildSimpleTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: VesparaColors.primary,
+        onPrimary: VesparaColors.background,
+        secondary: VesparaColors.secondary,
+        onSecondary: VesparaColors.background,
+        surface: VesparaColors.surface,
+        onSurface: VesparaColors.primary,
+        error: VesparaColors.error,
+        onError: VesparaColors.background,
+      ),
+      scaffoldBackgroundColor: VesparaColors.background,
+      canvasColor: VesparaColors.background,
+      // Use default fonts instead of Google Fonts
+      fontFamily: 'sans-serif',
+      appBarTheme: const AppBarTheme(
+        backgroundColor: VesparaColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: VesparaColors.primary,
+          letterSpacing: 2,
+        ),
+        iconTheme: IconThemeData(
+          color: VesparaColors.primary,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: VesparaColors.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(
+            color: VesparaColors.border,
+            width: 1,
+          ),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: VesparaColors.primary,
+          foregroundColor: VesparaColors.background,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Simple error screen widget
+class _ErrorScreen extends StatelessWidget {
+  final String message;
+  
+  const _ErrorScreen({required this.message});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: VesparaColors.background,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'VESPARA',
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.primary,
+                letterSpacing: 12,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              message,
+              style: const TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -157,7 +157,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const Text(
                 'VESPARA',
                 style: TextStyle(
-                  fontFamily: 'Cinzel',
                   fontSize: 36,
                   fontWeight: FontWeight.w500,
                   color: _primary,
@@ -170,7 +169,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const Text(
                 'Social Operating System',
                 style: TextStyle(
-                  fontFamily: 'Inter',
                   fontSize: 14,
                   color: _muted,
                   letterSpacing: 2,
@@ -236,7 +234,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Text(
                   'By continuing, you agree to our Terms of Service\nand Privacy Policy',
                   style: TextStyle(
-                    fontFamily: 'Inter',
                     fontSize: 12,
                     color: _muted.withOpacity(0.7),
                     height: 1.5,
@@ -293,7 +290,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     label,
                     style: const TextStyle(
-                      fontFamily: 'Inter',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -318,7 +314,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
             style: const TextStyle(
-              fontFamily: 'Inter',
               fontSize: 16,
               color: _primary,
             ),
@@ -354,7 +349,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Text(
             'Back to options',
             style: TextStyle(
-              fontFamily: 'Inter',
               color: _muted,
               fontSize: 14,
             ),
