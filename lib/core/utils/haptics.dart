@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 /// Vespara Haptic Feedback Service
 /// Provides tactile feedback for all interactions (luxury feel)
+/// Note: Uses HapticFeedback from Flutter which is web-safe (no-op on web)
 class VesparaHaptics {
   VesparaHaptics._();
   
@@ -17,8 +18,13 @@ class VesparaHaptics {
   
   /// Light Impact - Standard button taps, menu selections
   /// Usage: InkWell taps, navigation buttons
-  static Future<void> lightTap() async {
+  static Future<void> light() async {
     await HapticFeedback.lightImpact();
+  }
+  
+  /// Alias for light()
+  static Future<void> lightTap() async {
+    await light();
   }
   
   /// Medium Impact - Snapping cards, confirming selections

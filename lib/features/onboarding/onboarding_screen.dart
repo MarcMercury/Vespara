@@ -7,8 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:vibration/vibration.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../core/utils/haptics.dart';
 
 /// OnboardingScreen: "The Interview" - 4-Card Progressive Disclosure
 /// 
@@ -282,9 +283,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }).eq('id', userId);
       
       // Haptic celebration
-      if (await Vibration.hasVibrator() ?? false) {
-        Vibration.vibrate(pattern: [0, 50, 100, 50, 100, 100]);
-      }
+      VesparaHaptics.success();
       
       if (mounted) {
         // Navigate to home with warp animation

@@ -1,12 +1,13 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:vibration/vibration.dart';
 
 import '../../core/services/auth_service.dart';
+import '../../core/utils/haptics.dart';
 
 /// LoginScreen: "The Gate" - First impression of Vespara
 /// 
@@ -97,10 +98,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       _errorMessage = null;
     });
 
-    // Haptic feedback
-    if (await Vibration.hasVibrator() ?? false) {
-      Vibration.vibrate(duration: 50);
-    }
+    // Haptic feedback (skip on web)
+    await VesparaHaptics.light();
 
     try {
       await authAction();
