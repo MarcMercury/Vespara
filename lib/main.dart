@@ -95,134 +95,58 @@ class VesparaApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     debugPrint('VesparaApp.build called, supabaseReady: $supabaseReady');
     
-    // If Supabase didn't initialize, show error
-    if (!supabaseReady) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: _buildSimpleTheme(),
-        home: const _ErrorScreen(message: 'Unable to connect to server'),
-      );
-    }
-    
-    // Get router
-    GoRouter router;
-    try {
-      router = ref.watch(routerProvider);
-      debugPrint('Router created successfully');
-    } catch (e, stack) {
-      debugPrint('Router error: $e');
-      debugPrint('Stack: $stack');
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: _buildSimpleTheme(),
-        home: _ErrorScreen(message: 'Router Error: $e'),
-      );
-    }
-    
-    // Use simple theme to avoid Google Fonts issues on web
-    final theme = _buildSimpleTheme();
-    debugPrint('Theme created successfully');
-    
-    debugPrint('Returning MaterialApp.router');
-    
-    return MaterialApp.router(
-      title: Env.appName,
+    // MINIMAL TEST: Skip everything and just show basic UI
+    return MaterialApp(
+      title: 'Vespara',
       debugShowCheckedModeBanner: false,
-      theme: theme,
-      darkTheme: theme,
-      themeMode: ThemeMode.dark,
-      routerConfig: router,
-    );
-  }
-  
-  /// Build a simple theme without Google Fonts to avoid web loading issues
-  static ThemeData _buildSimpleTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: VesparaColors.primary,
-        onPrimary: VesparaColors.background,
-        secondary: VesparaColors.secondary,
-        onSecondary: VesparaColors.background,
-        surface: VesparaColors.surface,
-        onSurface: VesparaColors.primary,
-        error: VesparaColors.error,
-        onError: VesparaColors.background,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF1A1523),
       ),
-      scaffoldBackgroundColor: VesparaColors.background,
-      canvasColor: VesparaColors.background,
-      // Use default fonts instead of Google Fonts
-      fontFamily: 'sans-serif',
-      appBarTheme: const AppBarTheme(
-        backgroundColor: VesparaColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: VesparaColors.primary,
-          letterSpacing: 2,
-        ),
-        iconTheme: IconThemeData(
-          color: VesparaColors.primary,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: VesparaColors.surface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(
-            color: VesparaColors.border,
-            width: 1,
-          ),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: VesparaColors.primary,
-          foregroundColor: VesparaColors.background,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
+      home: const _MinimalLoginScreen(),
     );
   }
 }
 
-/// Simple error screen widget
-class _ErrorScreen extends StatelessWidget {
-  final String message;
-  
-  const _ErrorScreen({required this.message});
+/// Super minimal login screen to test basic rendering
+class _MinimalLoginScreen extends StatelessWidget {
+  const _MinimalLoginScreen();
   
   @override
   Widget build(BuildContext context) {
+    debugPrint('MinimalLoginScreen.build');
     return Scaffold(
-      backgroundColor: VesparaColors.background,
+      backgroundColor: const Color(0xFF1A1523),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Simple moon
+            Container(
+              width: 100,
+              height: 100,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFE0D8EA),
+              ),
+            ),
+            const SizedBox(height: 40),
+            // Text
             const Text(
               'VESPARA',
               style: TextStyle(
-                fontSize: 36,
+                fontSize: 32,
                 fontWeight: FontWeight.w500,
-                color: VesparaColors.primary,
-                letterSpacing: 12,
+                color: Color(0xFFE0D8EA),
+                letterSpacing: 10,
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              message,
-              style: const TextStyle(color: Colors.white70),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 16),
+            const Text(
+              'Loading...',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF9A8EB5),
+              ),
             ),
           ],
         ),
