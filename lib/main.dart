@@ -47,22 +47,54 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  static const _background = Color(0xFF1A1523);
+  bool _isLoading = true;
+  Session? _session;
   
   @override
   void initState() {
     super.initState();
+    _initAuth();
+  }
+  
+  Future<void> _initAuth() async {
+    // Get initial session
+    _session = Supabase.instance.client.auth.currentSession;
+    
     // Listen for auth changes
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (mounted) setState(() {});
+      debugPrint('Auth state changed: ${data.event}');
+      if (mounted) {
+        setState(() {
+          _session = data.session;
+        });
+      }
     });
+    
+    // Small delay to allow session recovery from URL
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    if (mounted) {
+      setState(() {
+        _session = Supabase.instance.client.auth.currentSession;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final session = Supabase.instance.client.auth.currentSession;
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF1A1523),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFE0D8EA),
+          ),
+        ),
+      );
+    }
     
-    if (session != null) {
+    if (_session != null) {
       return const HomeScreen();
     }
     return const LoginScreen();
