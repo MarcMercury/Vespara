@@ -1,117 +1,129 @@
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'core/config/env.dart';
-import 'core/theme/app_theme.dart';
-import 'core/router/app_router.dart';
-import 'features/auth/login_screen.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  debugPrint('Vespara: Starting app initialization...');
-  
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: VesparaColors.background,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
-  
-  if (!kIsWeb) {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    try {
-      await dotenv.load(fileName: '.env');
-    } catch (e) {
-      debugPrint('Warning: .env file not found');
-    }
-  }
-  
-  GoogleFonts.config.allowRuntimeFetching = true;
-  
-  debugPrint('Vespara: Supabase URL = ${Env.supabaseUrl}');
-  
-  // Try to initialize Supabase but don't block the app if it fails
-  try {
-    await Supabase.initialize(
-      url: Env.supabaseUrl,
-      anonKey: Env.supabaseAnonKey,
-      authOptions: const FlutterAuthClientOptions(
-        authFlowType: AuthFlowType.pkce,
-      ),
-    );
-    debugPrint('Vespara: Supabase initialized successfully');
-  } catch (e) {
-    debugPrint('Vespara: Supabase error: $e');
-  }
-  
-  FlutterError.onError = (details) {
-    debugPrint('Flutter error: ${details.exception}');
-  };
-  
-  runApp(const ProviderScope(child: VesparaApp()));
+void main() {
+  runApp(const VesparaApp());
 }
 
-class VesparaApp extends ConsumerWidget {
+class VesparaApp extends StatelessWidget {
   const VesparaApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    debugPrint('VesparaApp.build');
-    
-    // Always use the router - it will handle auth state
-    final router = ref.watch(routerProvider);
-    
-    return MaterialApp.router(
-      title: Env.appName,
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Vespara',
       debugShowCheckedModeBanner: false,
-      theme: _buildTheme(),
-      darkTheme: _buildTheme(),
-      themeMode: ThemeMode.dark,
-      routerConfig: router,
+      theme: ThemeData.dark(),
+      home: const LoginScreen(),
     );
   }
+}
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
   
-  static ThemeData _buildTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: VesparaColors.primary,
-        onPrimary: VesparaColors.background,
-        secondary: VesparaColors.secondary,
-        surface: VesparaColors.surface,
-        onSurface: VesparaColors.primary,
-        error: VesparaColors.error,
-      ),
-      scaffoldBackgroundColor: VesparaColors.background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: VesparaColors.background,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: VesparaColors.primary,
-          letterSpacing: 2,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: VesparaColors.primary,
-          foregroundColor: VesparaColors.background,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  static const _background = Color(0xFF1A1523);
+  static const _primary = Color(0xFFE0D8EA);
+  static const _muted = Color(0xFF9A8EB5);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 2),
+              
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _primary,
+                ),
+              ),
+              
+              const SizedBox(height: 48),
+              
+              const Text(
+                'VESPARA',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w500,
+                  color: _primary,
+                  letterSpacing: 12,
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+              
+              const Text(
+                'Social Operating System',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _muted,
+                  letterSpacing: 2,
+                ),
+              ),
+              
+              const Spacer(flex: 2),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: _background,
+                  ),
+                  child: const Text('Continue with Apple'),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _primary,
+                  ),
+                  child: const Text('Continue with Google'),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _primary,
+                  ),
+                  child: const Text('Continue with Email'),
+                ),
+              ),
+              
+              const Spacer(),
+              
+              const Padding(
+                padding: EdgeInsets.only(bottom: 24),
+                child: Text(
+                  'By continuing, you agree to our Terms',
+                  style: TextStyle(fontSize: 12, color: _muted),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
