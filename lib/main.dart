@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -49,6 +50,7 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   Session? _session;
+  String? _error;
   
   @override
   void initState() {
@@ -57,25 +59,42 @@ class _AuthGateState extends State<AuthGate> {
   }
   
   Future<void> _initAuth() async {
-    // Get initial session
-    _session = Supabase.instance.client.auth.currentSession;
-    
-    // Listen for auth changes
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      debugPrint('Auth state changed: ${data.event}');
-      if (mounted) {
-        setState(() {
-          _session = data.session;
-        });
+    try {
+      // Listen for auth changes FIRST
+      Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
+        if (mounted) {
+          setState(() {
+            _session = data.session;
+            _isLoading = false;
+          });
+        }
+      });
+      
+      // On web, check if we're returning from OAuth
+      if (kIsWeb) {
+        final uri = Uri.base;
+        debugPrint('Vespara: Current URL = $uri');
+        
+        // Check for OAuth callback parameters
+        if (uri.hasFragment || uri.queryParameters.containsKey('code')) {
+          debugPrint('Vespara: Detected OAuth callback, waiting for session...');
+          // Wait longer for PKCE code exchange
+          await Future.delayed(const Duration(seconds: 2));
+        }
       }
-    });
-    
-    // Small delay to allow session recovery from URL
-    await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Get current session
+      _session = Supabase.instance.client.auth.currentSession;
+      debugPrint('Vespara: Final session check = ${_session != null}');
+      
+    } catch (e) {
+      debugPrint('Vespara Auth Error: $e');
+      _error = e.toString();
+    }
     
     if (mounted) {
       setState(() {
-        _session = Supabase.instance.client.auth.currentSession;
         _isLoading = false;
       });
     }
@@ -87,9 +106,23 @@ class _AuthGateState extends State<AuthGate> {
       return const Scaffold(
         backgroundColor: Color(0xFF1A1523),
         body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFE0D8EA),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFFE0D8EA)),
+              SizedBox(height: 16),
+              Text('Signing in...', style: TextStyle(color: Color(0xFF9A8EB5))),
+            ],
           ),
+        ),
+      );
+    }
+    
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF1A1523),
+        body: Center(
+          child: Text('Error: $_error', style: const TextStyle(color: Colors.red)),
         ),
       );
     }
