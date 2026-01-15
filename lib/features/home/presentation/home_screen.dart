@@ -254,7 +254,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildExpandingTile({
     required int index,
     required Widget Function(BuildContext, VoidCallback) closedBuilder,
-    required Widget Function(BuildContext, VoidCallback Function({Object? returnValue})) openBuilder,
+    required Widget Function(BuildContext, VoidCallback) openBuilder,
   }) {
     // Staggered entrance animation using flutter_animate
     return OpenContainer(

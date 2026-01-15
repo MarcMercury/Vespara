@@ -63,8 +63,8 @@ dependencies:
   crypto: ^3.0.3
   
   # Image Handling
-  image_picker: ^1.0.7
-  image_cropper: ^5.0.1
+  image_picker: ^1.1.2
+  # image_cropper removed - compatibility issues with Flutter 3.24
   
   # Icons
   cupertino_icons: ^1.0.6
@@ -87,20 +87,8 @@ flutter:
     - assets/icons/
     - assets/animations/
   
-  fonts:
-    - family: Cinzel
-      fonts:
-        - asset: assets/fonts/Cinzel-Regular.ttf
-        - asset: assets/fonts/Cinzel-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Cinzel-Bold.ttf
-          weight: 700
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700
+  # Fonts will use Google Fonts package instead of local assets
+  # fonts:
+  #   - family: Cinzel
+  #     fonts:
+  #       - asset: assets/fonts/Cinzel-Regular.ttf

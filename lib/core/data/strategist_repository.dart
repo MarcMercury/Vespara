@@ -142,10 +142,7 @@ class StrategistRepository {
 
       // Get position
       return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 100,
-        ),
+        desiredAccuracy: LocationAccuracy.high,
       );
     } catch (e) {
       return null;
@@ -406,11 +403,6 @@ class TonightModeNotifier extends StateNotifier<bool> {
     if (success) state = false;
   }
 }
-
-/// Optimization score provider
-final optimizationScoreProvider = FutureProvider<double>((ref) async {
-  return ref.watch(strategistRepositoryProvider).getOptimizationScore();
-});
 
 /// Ghost rate provider
 final ghostRateProvider = FutureProvider<double>((ref) async {

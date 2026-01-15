@@ -45,13 +45,15 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
   @override
   Widget build(BuildContext context) {
-    final analytics = ref.watch(analyticsProvider);
+    final analytics = ref.watch(userAnalyticsProvider);
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
         child: analytics.when(
-          data: (data) => _buildContent(context, data),
+          data: (data) => data != null 
+            ? _buildContent(context, data)
+            : const Center(child: Text('No analytics data')),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
         ),

@@ -133,6 +133,19 @@ class RosterMatch extends Equatable {
     }
   }
   
+  // Computed getters for UI compatibility
+  String get displayName => nickname ?? name;
+  DateTime get lastInteractionAt => lastContactDate ?? updatedAt;
+  DateTime get matchedAt => createdAt;
+  String? get bio => notes;
+  List<String> get tags => interests;
+  
+  /// Match is stale if no interaction in 14+ days
+  bool get isStale {
+    final daysSinceInteraction = DateTime.now().difference(lastInteractionAt).inDays;
+    return daysSinceInteraction >= 14 && !isArchived;
+  }
+  
   Map<String, dynamic> toJson() {
     return {
       'id': id,

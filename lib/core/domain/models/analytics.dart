@@ -105,6 +105,9 @@ class UserAnalytics extends Equatable {
     return score.clamp(0.0, 100.0);
   }
   
+  /// Count of stale matches (calculated separately but stored for UI display)
+  int get staleMatches => 0; // This is calculated from roster, not stored
+  
   @override
   List<Object?> get props => [
     userId,

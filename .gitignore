@@ -1,3 +1,18 @@
+# Environment & Secrets
 .env
 CREDENTIALS.md
 supabase/.temp/
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub/
+build/
+*.iml
+.idea/
+.metadata
+pubspec.lock
+
+# Generated plugin registrations
+.flutter-plugins
+.flutter-plugins-dependencies

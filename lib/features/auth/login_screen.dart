@@ -206,7 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 // Google Sign In
                 _buildAuthButton(
                   onPressed: _signInWithGoogle,
-                  icon: Iconsax.google,
+                  icon: Icons.g_mobiledata_rounded,
                   label: 'Continue with Google',
                 ).animate().fadeIn(duration: 600.ms, delay: 900.ms)
                   .slideY(begin: 0.3, end: 0),

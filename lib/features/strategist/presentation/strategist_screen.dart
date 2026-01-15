@@ -266,7 +266,6 @@ class _StrategistScreenState extends ConsumerState<StrategistScreen> {
               ),
             ),
           ),
-          ),
           const SizedBox(width: VesparaSpacing.md),
           Expanded(
             child: Column(

@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/data/ludus_repository.dart';
 import '../../../core/domain/models/tags_game.dart';
+import '../../../core/providers/app_providers.dart';
 import '../widgets/consent_meter.dart';
 import '../widgets/game_card_widget.dart';
 
@@ -311,7 +312,8 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
         vertical: VesparaSpacing.md,
       ),
       onSwipe: (previousIndex, currentIndex, direction) {
-        // PHASE 5: Carousel snap haptic feedback
+        // PHASE 5: Carousel snap haptic feedback + swipe haptic
+        VesparaHaptics.swipeCard();
         VesparaHaptics.carouselSnap();
         if (currentIndex != null) {
           setState(() {
@@ -319,10 +321,6 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
           });
         }
         return true;
-      },
-      onSwipeStart: (previousIndex, currentIndex, direction) {
-        // PHASE 5: Swipe card haptic on start
-        VesparaHaptics.swipeCard();
       },
       cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
         return GameCardWidget(

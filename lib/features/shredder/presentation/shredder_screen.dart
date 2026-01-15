@@ -56,10 +56,10 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen>
             
             // Stale matches list
             Expanded(
-              child: staleMatches.when(
-                data: (matches) {
+              child: Builder(
+                builder: (context) {
                   // Filter out already shredded
-                  final remaining = matches
+                  final remaining = staleMatches
                       .where((m) => !_shreddedMatches.any((s) => s.id == m.id))
                       .toList();
                   
@@ -69,8 +69,6 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen>
                   
                   return _buildMatchesList(context, remaining);
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
               ),
             ),
             

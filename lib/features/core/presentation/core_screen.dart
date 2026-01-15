@@ -31,11 +31,9 @@ class _CoreScreenState extends ConsumerState<CoreScreen> {
             
             // Profile section
             SliverToBoxAdapter(
-              child: user.when(
-                data: (profile) => _buildProfileSection(context, profile),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
-              ),
+              child: user != null 
+                ? _buildProfileSection(context, user)
+                : const Center(child: CircularProgressIndicator()),
             ),
             
             // Vouch Chain section
