@@ -78,8 +78,6 @@
       to { transform: rotate(360deg); }
     }
   </style>
-
-  <script src="flutter.js" defer></script>
 </head>
 <body>
   <div id="loading" class="loading-container">
@@ -87,27 +85,6 @@
     <div class="loading-spinner"></div>
   </div>
   
-  <script>
-    window.addEventListener('load', function(ev) {
-      if (typeof _flutter === 'undefined') {
-        console.error('Vespara: Flutter loader not found');
-        document.getElementById('loading').innerHTML = '<div class="loading-logo">VESPARA</div><div style="color: #E0D8EA;">Loading failed. Please refresh.</div>';
-        return;
-      }
-      _flutter.loader.load({
-        onEntrypointLoaded: function(engineInitializer) {
-          console.log('Vespara: Initializing engine...');
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            console.log('Vespara: Running app...');
-            // Hide loading screen when app is ready
-            document.getElementById('loading').style.display = 'none';
-            appRunner.runApp();
-          }).catch(function(e) {
-            console.error('Vespara: Engine init failed', e);
-          });
-        }
-      });
-    });
-  </script>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
