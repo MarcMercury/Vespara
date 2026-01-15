@@ -44,79 +44,132 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       '🎭 Social Chameleon',
       '🐺 Lone Wolf',
     ],
-    '🧠 Mind': [
-      '📚 Intellectual',
-      '🎨 Creative Soul',
-      '💡 Endlessly Curious',
-      '🧩 Analytical',
-      '💭 Deep Thinker',
-      '🎯 Driven & Ambitious',
-    ],
     '💫 Spirit': [
       '😂 Witty & Sarcastic',
       '💝 Hopeless Romantic',
       '🔥 Passionate',
       '😌 Easy Going',
-      '🌟 Eternal Optimist',
       '🖤 Dark Humor',
+      '😈 Mischievous',
     ],
     
     // DESIRES & CONNECTION
     '💕 Looking For': [
       '💕 Something Real',
       '🌶️ Spicy Adventures',
-      '🤝 New Friends',
+      '🤝 New Connections',
       '💫 Go With the Flow',
-      '👀 Just Exploring',
-      '🔐 Discreet Fun',
+      '🔐 Discreet Encounters',
+      '👫 Third for Couples',
+      '💑 Couples Welcome',
+      '🔄 Open to Anything',
     ],
     '💬 Connection Style': [
       '💬 Deep Conversations',
-      '🎲 Spontaneous Fun',
-      '🌹 Old School Romance',
-      '🔗 No Strings Attached',
+      '🎲 Spontaneous',
+      '🔗 No Strings',
       '🎯 Direct & Honest',
       '🔥 Chemistry First',
-    ],
-    '⏱️ Pace': [
-      '🐢 Slow Burn',
-      '🚀 Fast & Intense',
-      '🌊 See Where It Goes',
-      '⏰ Here for a Good Time',
-      '💎 Worth the Wait',
+      '💋 Flirty',
+      '🌡️ Slow Tease',
     ],
     
-    // LIFESTYLE & INTERESTS
-    '🍷 Interests': [
-      '🍷 Wine Connoisseur',
-      '🏋️ Fitness Obsessed',
-      '✈️ Travel Addict',
-      '🎵 Music is Life',
-      '📺 Binge Watcher',
-      '🎮 Gamer',
-      '👨‍🍳 Foodie',
-      '📖 Bookworm',
-      '🎬 Film Buff',
-      '🎧 Podcast Junkie',
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INTIMATE PREFERENCES
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    '🔥 In The Bedroom': [
+      '👑 Dominant',
+      '🦋 Submissive',
+      '🔄 Switch',
+      '🎭 Roleplay',
+      '👀 Voyeur',
+      '🎪 Exhibitionist',
+      '💪 Rough',
+      '🌸 Gentle & Sensual',
+      '🎲 Spontaneous',
+      '📝 Planned & Intentional',
     ],
-    '🌃 Vibes': [
-      '🌃 City Nights',
-      '🏔️ Nature Escapes',
-      '🍸 Cocktail Hours',
-      '☕ Coffee Dates',
-      '🏠 Netflix & Chill',
-      '💃 Dance Floors',
-      '🎪 Festival Season',
-      '🕯️ Candlelit Dinners',
+    '🌶️ Turn Ons': [
+      '💋 Kissing',
+      '🗣️ Dirty Talk',
+      '📱 Sexting',
+      '📸 Pics & Vids',
+      '👙 Lingerie',
+      '🎭 Costumes',
+      '🕯️ Wax Play',
+      '❄️ Temperature Play',
+      '👁️ Eye Contact',
+      '🔊 Being Vocal',
+      '🤫 Being Quiet',
+      '💆 Massage',
     ],
-    '🔞 After Dark': [
-      '👀 Curious',
-      '🔥 Adventurous',
-      '💋 Sensual',
-      '🎭 Role Play',
-      '🌶️ Spicy',
-      '💫 Vanilla is Fine',
-      '🔐 Private',
+    '⛓️ Kinks & Fetishes': [
+      '⛓️ Bondage',
+      '👋 Spanking',
+      '🎀 BDSM Light',
+      '⛓️ BDSM Heavy',
+      '🦶 Feet',
+      '🧥 Leather',
+      '✨ Latex',
+      '🎭 Power Exchange',
+      '🚫 Denial & Edging',
+      '💦 Praise Kink',
+      '😈 Degradation',
+      '🐾 Pet Play',
+      '👔 Uniforms',
+      '🪢 Rope/Shibari',
+      '🍑 Anal',
+      '👥 Group Play',
+      '👀 Watching Others',
+      '🎪 Being Watched',
+    ],
+    '🛏️ Experience Level': [
+      '🌱 Curious Beginner',
+      '📚 Still Learning',
+      '✅ Experienced',
+      '🎓 Very Experienced',
+      '👨‍🏫 Happy to Teach',
+      '📖 Eager to Learn',
+    ],
+    '💫 Situationships': [
+      '🌙 One Night Stands',
+      '🔄 FWB',
+      '💕 Regular Thing',
+      '🏠 Hosting',
+      '🚗 Can Travel',
+      '🏨 Hotels',
+      '🌳 Outdoors',
+      '⚡ Quickies',
+      '🌅 All Night',
+      '☀️ Daytime Fun',
+    ],
+    '👥 Group Dynamics': [
+      '👤 1-on-1 Only',
+      '👥 Threesomes',
+      '👥 Moresomes',
+      '🎉 Party Vibes',
+      '👫 Couple Looking',
+      '🦄 Unicorn',
+      '🐂 Bull',
+      '👀 Cuckold/Cuckquean',
+      '💑 Hotwife/Stag',
+      '🔄 Full Swap',
+      '🙈 Soft Swap',
+      '👁️ Watch Only',
+    ],
+    '🚫 Boundaries': [
+      '📱 Verification Required',
+      '🗓️ Meet First',
+      '💬 Chat First',
+      '📸 No Face Pics',
+      '🔐 Very Discreet',
+      '💍 Partner Knows',
+      '🤫 Partner Doesn\'t Know',
+      '🚭 Sober Only',
+      '🥂 420 Friendly',
+      '✨ DDF Required',
+      '💊 On PrEP',
     ],
   };
   
@@ -180,7 +233,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     
     try {
       // Build a compelling bio locally based on traits
-      // (Edge function has JWT issues, so we do it client-side)
       final bio = _generateLocalBio();
       
       setState(() {
@@ -195,48 +247,71 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
   
-  /// Generate a charming, witty bio based on selected traits
+  /// Generate a seductive, confident bio based on selected traits
   String _generateLocalBio() {
     final name = _displayNameController.text.trim();
     final traits = _selectedTraits.toList();
     
     // Categorize selected traits
     final personality = <String>[];
-    final desires = <String>[];
-    final lifestyle = <String>[];
+    final kinks = <String>[];
+    final dynamics = <String>[];
     
     for (final trait in traits) {
-      final cleanTrait = trait.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
-      if (cleanTrait.contains('night owl') || cleanTrait.contains('early') || 
-          cleanTrait.contains('energy') || cleanTrait.contains('calm') ||
-          cleanTrait.contains('party') || cleanTrait.contains('homebody') ||
-          cleanTrait.contains('intellectual') || cleanTrait.contains('creative') ||
-          cleanTrait.contains('witty') || cleanTrait.contains('romantic') ||
-          cleanTrait.contains('passionate') || cleanTrait.contains('optimist')) {
+      final cleanTrait = trait.replaceAll(RegExp(r'[^\w\s/]'), '').trim().toLowerCase();
+      
+      // Kinks & bedroom stuff
+      if (cleanTrait.contains('dominant') || cleanTrait.contains('submissive') ||
+          cleanTrait.contains('switch') || cleanTrait.contains('bondage') ||
+          cleanTrait.contains('bdsm') || cleanTrait.contains('roleplay') ||
+          cleanTrait.contains('spanking') || cleanTrait.contains('rough') ||
+          cleanTrait.contains('kink') || cleanTrait.contains('fetish') ||
+          cleanTrait.contains('voyeur') || cleanTrait.contains('exhib') ||
+          cleanTrait.contains('dirty talk') || cleanTrait.contains('rope') ||
+          cleanTrait.contains('anal') || cleanTrait.contains('oral')) {
+        kinks.add(trait);
+      } 
+      // Group/relationship dynamics
+      else if (cleanTrait.contains('threesome') || cleanTrait.contains('group') ||
+               cleanTrait.contains('couple') || cleanTrait.contains('unicorn') ||
+               cleanTrait.contains('bull') || cleanTrait.contains('cuck') ||
+               cleanTrait.contains('swap') || cleanTrait.contains('hotwife') ||
+               cleanTrait.contains('fwb') || cleanTrait.contains('no strings') ||
+               cleanTrait.contains('discreet') || cleanTrait.contains('one night')) {
+        dynamics.add(trait);
+      }
+      // Personality
+      else {
         personality.add(trait);
-      } else if (cleanTrait.contains('looking') || cleanTrait.contains('connection') ||
-                 cleanTrait.contains('deep') || cleanTrait.contains('spontaneous') ||
-                 cleanTrait.contains('chemistry') || cleanTrait.contains('adventure') ||
-                 cleanTrait.contains('spicy') || cleanTrait.contains('discreet')) {
-        desires.add(trait);
-      } else {
-        lifestyle.add(trait);
       }
     }
     
-    // Build bio with personality
+    // Extract clean text for bio
+    String cleanTrait(String t) => t.replaceAll(RegExp(r'^[^\w]*'), '').trim();
+    String lowerClean(String t) => cleanTrait(t).toLowerCase();
+    
+    // Build seductive, confident bios
     final List<String> bioOptions = [
-      // Charming & mysterious
-      "Hey, I'm $name. Looking to meet interesting people and see what happens. I believe the best stories start with \"we probably shouldn't, but...\"\n\nI bring ${_getTraitPhrase(personality)} to the table, and I'm here for ${_getDesirePhrase(desires)}.\n\nIf you're into ${_getLifestylePhrase(lifestyle)}, we might just get along.",
+      // Confident & direct
+      "$name. I know what I want and I'm not shy about it.\n\n${kinks.isNotEmpty ? 'Into: ${kinks.take(3).map(lowerClean).join(', ')}.' : ''} ${dynamics.isNotEmpty ? 'Looking for ${dynamics.take(2).map(lowerClean).join(' or ')}.' : ''}\n\nIf you can handle ${personality.isNotEmpty ? lowerClean(personality.first) : 'intensity'}, we should talk.",
       
-      // Witty & direct  
-      "$name here. Part ${_getRandomTrait(personality)}, part ${_getRandomTrait(lifestyle)}, 100% not here to waste your time.\n\nLooking for: ${_getDesirePhrase(desires)}.\n\nSwipe right if you've got wit and aren't afraid to use it.",
+      // Playfully explicit
+      "They call me $name. ${personality.isNotEmpty ? cleanTrait(personality.first) : 'Curious'} with a wild side that comes out to play.\n\n${kinks.isNotEmpty ? 'I like my ${lowerClean(kinks.first)}${kinks.length > 1 ? ' with some ${lowerClean(kinks[1])}' : ''}.' : 'Open to exploring.'}\n\n${dynamics.isNotEmpty ? 'Currently seeking: ${dynamics.take(2).map(lowerClean).join(', ')}.' : 'Let\'s see where this goes.'}\n\nDon't be boring. 😈",
       
-      // Intriguing & playful
-      "I'm $name, and I'm probably more fun than your last few matches combined.\n\n${_getTraitPhrase(personality)} meets ${_getLifestylePhrase(lifestyle)}.\n\nHere for ${_getDesirePhrase(desires)}. Your move.",
+      // Mysterious & seductive
+      "I'm $name, and I have a feeling you're going to enjoy getting to know me.\n\n${personality.isNotEmpty ? cleanTrait(personality.first) : 'Intriguing'} on the surface. ${kinks.isNotEmpty ? cleanTrait(kinks.first) : 'Adventurous'} behind closed doors.\n\n${dynamics.isNotEmpty ? 'Here for ${dynamics.take(2).map(lowerClean).join(', ')}.' : 'Here to explore.'} No games—unless we\'re both playing. 🌙",
       
-      // Confident & enticing
-      "They call me $name. ${_getTraitPhrase(personality)} by day, ${_getLifestylePhrase(lifestyle)} enthusiast by night.\n\nI'm looking for ${_getDesirePhrase(desires)}. If you can keep up, let's make some memories worth deleting later.",
+      // Bold & unapologetic
+      "Let's skip the small talk. I'm $name.\n\n${kinks.isNotEmpty ? '✓ ${kinks.take(4).map(cleanTrait).join('\\n✓ ')}' : 'Open-minded and ready to explore.'}\n\n${dynamics.isNotEmpty ? 'Ideal situation: ${dynamics.take(2).map(lowerClean).join(' or ')}.' : ''} ${personality.isNotEmpty ? cleanTrait(personality.first) : 'Confident'} and ready when you are.",
+      
+      // Sultry & inviting  
+      "$name here. ${personality.isNotEmpty ? cleanTrait(personality.first) : 'Passionate'} soul with an appetite for ${kinks.isNotEmpty ? lowerClean(kinks.first) : 'adventure'}.\n\nI believe chemistry is everything. ${dynamics.isNotEmpty ? 'Open to ${dynamics.take(2).map(lowerClean).join(', ')}.' : 'Let\'s see if we have it.'}\n\nMessage me something that makes me smile. Or blush. Preferably both. 💋",
+      
+      // Dominant energy
+      "$name. ${kinks.any((k) => k.toLowerCase().contains('dominant')) ? 'I take control.' : 'I know what I like.'}\n\n${kinks.isNotEmpty ? 'If ${kinks.take(2).map(lowerClean).join(' and ')} sound like your kind of night, keep reading.' : 'Looking for someone who can keep up.'}\n\n${dynamics.isNotEmpty ? 'Seeking: ${dynamics.take(2).map(lowerClean).join(', ')}.' : ''} Come correct or don\'t come at all.",
+      
+      // Submissive energy
+      "$name. ${kinks.any((k) => k.toLowerCase().contains('submissive')) ? 'I follow the right lead.' : 'I appreciate someone who takes charge.'}\n\n${personality.isNotEmpty ? cleanTrait(personality.first) : 'Sweet'} until the bedroom door closes. Then? ${kinks.isNotEmpty ? cleanTrait(kinks.first) : 'Eager to please'}.\n\n${dynamics.isNotEmpty ? 'Looking for ${dynamics.take(2).map(lowerClean).join(' or ')}.' : 'Show me you\'re worth it.'} 🦋",
     ];
     
     // Pick a random bio style
