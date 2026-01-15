@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ import '../../features/onboarding/onboarding_screen.dart';
 class AuthNotifier extends ChangeNotifier {
   AuthNotifier() {
     Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+      debugPrint('Auth state changed: ${event.event}');
       notifyListeners();
     });
   }
@@ -29,50 +31,24 @@ final _authNotifier = AuthNotifier();
 /// Router provider for the entire application
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     debugLogDiagnostics: true,
     refreshListenable: _authNotifier,
-    redirect: (context, state) async {
+    redirect: (context, state) {
       final session = Supabase.instance.client.auth.currentSession;
       final isLoggedIn = session != null;
       final isLoggingIn = state.matchedLocation == '/login';
-      final isOnboarding = state.matchedLocation == '/onboarding';
+      
+      debugPrint('Router redirect: location=${state.matchedLocation}, loggedIn=$isLoggedIn');
       
       // Not logged in - redirect to login (except if already there)
       if (!isLoggedIn) {
         return isLoggingIn ? null : '/login';
       }
       
-      // Logged in but on login page - check onboarding status
+      // Logged in but on login page - go to home (onboarding check happens in HomeScreen)
       if (isLoggingIn) {
-        final profile = await Supabase.instance.client
-            .from('profiles')
-            .select('onboarding_complete')
-            .eq('id', session.user.id)
-            .maybeSingle();
-        
-        if (profile?['onboarding_complete'] != true) {
-          return '/onboarding';
-        }
         return '/home';
-      }
-      
-      // On onboarding page - let it through if logged in
-      if (isOnboarding) {
-        return null;
-      }
-      
-      // Check if onboarding is complete for other routes
-      if (state.matchedLocation != '/login' && state.matchedLocation != '/onboarding') {
-        final profile = await Supabase.instance.client
-            .from('profiles')
-            .select('onboarding_complete')
-            .eq('id', session.user.id)
-            .maybeSingle();
-        
-        if (profile?['onboarding_complete'] != true) {
-          return '/onboarding';
-        }
       }
       
       return null;
