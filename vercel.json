@@ -1,6 +1,10 @@
 {
-  "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons",
+  "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY --dart-define=GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY",
   "outputDirectory": "build/web",
   "installCommand": "git clone https://github.com/flutter/flutter.git -b stable --depth 1 && flutter/bin/flutter config --enable-web && flutter/bin/flutter pub get",
-  "framework": null
+  "framework": null,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }

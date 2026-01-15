@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,8 +31,14 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
   
-  // Load environment variables
-  await dotenv.load(fileName: '.env');
+  // Load environment variables (skip on web if using --dart-define)
+  if (!kIsWeb) {
+    try {
+      await dotenv.load(fileName: '.env');
+    } catch (e) {
+      debugPrint('Warning: .env file not found, using dart-define values');
+    }
+  }
   
   // Initialize Supabase with configuration
   await Supabase.initialize(

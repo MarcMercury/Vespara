@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -36,6 +36,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _lastNameController = TextEditingController();
   DateTime? _birthDate;
   final List<XFile> _photos = [];
+  final Map<String, Uint8List> _photoBytes = {}; // Cache for web compatibility
   final Set<String> _selectedTags = {};
   final _bioController = TextEditingController();
   bool _isGeneratingBio = false;
@@ -64,6 +65,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _lastNameController.dispose();
     _bioController.dispose();
     super.dispose();
+  }
+
+  /// Gets an ImageProvider for the photo at the given index
+  /// Uses cached bytes for web compatibility
+  ImageProvider? _getPhotoImage(int index) {
+    if (index >= _photos.length) return null;
+    final bytes = _photoBytes[_photos[index].path];
+    if (bytes != null) {
+      return MemoryImage(bytes);
+    }
+    return null;
   }
 
   Future<void> _loadVibeTags() async {
@@ -141,7 +153,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
     
     if (image != null) {
-      setState(() => _photos.add(image));
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _photos.add(image);
+        _photoBytes[image.path] = bytes;
+      });
       HapticFeedback.selectionClick();
     }
   }
@@ -159,13 +175,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
     
     if (image != null) {
-      setState(() => _photos.add(image));
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _photos.add(image);
+        _photoBytes[image.path] = bytes;
+      });
       HapticFeedback.selectionClick();
     }
   }
 
   void _removePhoto(int index) {
-    setState(() => _photos.removeAt(index));
+    final path = _photos[index].path;
+    setState(() {
+      _photos.removeAt(index);
+      _photoBytes.remove(path);
+    });
     HapticFeedback.lightImpact();
   }
 
@@ -804,9 +828,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         color: _background,
-                        image: _photos.isNotEmpty
+                        image: _photos.isNotEmpty && _getPhotoImage(0) != null
                             ? DecorationImage(
-                                image: FileImage(File(_photos.first.path)),
+                                image: _getPhotoImage(0)!,
                                 fit: BoxFit.cover,
                               )
                             : null,
@@ -991,15 +1015,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _buildPhotoTile(int index) {
+    final imageProvider = _getPhotoImage(index);
     return Stack(
       children: [
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: FileImage(File(_photos[index].path)),
-              fit: BoxFit.cover,
-            ),
+            image: imageProvider != null
+                ? DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
         ),
         if (index == 0)

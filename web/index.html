@@ -4,8 +4,20 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Vespara - The Social Operating System">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Vespara - The Social Operating System. A luxury relationship management platform.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.vespara.co/">
+  <meta property="og:title" content="Vespara">
+  <meta property="og:description" content="The Social Operating System - Luxury relationship management">
+  <meta property="og:image" content="https://www.vespara.co/icons/Icon-512.png">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Vespara">
+  <meta name="twitter:description" content="The Social Operating System">
   
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,12 +31,72 @@
   <title>Vespara</title>
   <link rel="manifest" href="manifest.json">
 
+  <style>
+    /* Vespara loading screen */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #1A1523;
+      overflow: hidden;
+    }
+    
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      background-color: #1A1523;
+    }
+    
+    .loading-logo {
+      font-family: 'Georgia', serif;
+      font-size: 48px;
+      font-weight: 400;
+      color: #E0D8EA;
+      letter-spacing: 8px;
+      margin-bottom: 40px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #2D2638;
+      border-top-color: #E0D8EA;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
   <script src="flutter.js" defer></script>
 </head>
 <body>
+  <div id="loading" class="loading-container">
+    <div class="loading-logo">VESPARA</div>
+    <div class="loading-spinner"></div>
+  </div>
+  
   <script>
     window.addEventListener('load', function(ev) {
       _flutter.loader.load({
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            // Hide loading screen when app is ready
+            document.getElementById('loading').style.display = 'none';
+            appRunner.runApp();
+          });
+        },
         serviceWorkerSettings: {
           serviceWorkerVersion: "{{flutter_service_worker_version}}"
         }

@@ -2,8 +2,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment configuration wrapper
 /// Provides type-safe access to all environment variables
+/// Uses --dart-define for web/production, .env for local development
 class Env {
   Env._();
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPILE-TIME CONSTANTS (from --dart-define)
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  static const String _supabaseUrlDef = String.fromEnvironment('SUPABASE_URL');
+  static const String _supabaseAnonKeyDef = String.fromEnvironment('SUPABASE_ANON_KEY');
+  static const String _openaiApiKeyDef = String.fromEnvironment('OPENAI_API_KEY');
+  static const String _googleMapsApiKeyDef = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
   
   // ═══════════════════════════════════════════════════════════════════════════
   // APP IDENTITY
@@ -18,10 +28,14 @@ class Env {
   // ═══════════════════════════════════════════════════════════════════════════
   
   static String get supabaseUrl => 
-    dotenv.env['SUPABASE_URL'] ?? 'https://nazcwlfirmbuxuzlzjtz.supabase.co';
+    _supabaseUrlDef.isNotEmpty 
+        ? _supabaseUrlDef 
+        : (dotenv.env['SUPABASE_URL'] ?? 'https://nazcwlfirmbuxuzlzjtz.supabase.co');
   
   static String get supabaseAnonKey => 
-    dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+    _supabaseAnonKeyDef.isNotEmpty 
+        ? _supabaseAnonKeyDef 
+        : (dotenv.env['SUPABASE_ANON_KEY'] ?? '');
   
   static String get supabaseServiceRole => 
     dotenv.env['SUPABASE_SERVICE_ROLE'] ?? '';
@@ -31,7 +45,9 @@ class Env {
   // ═══════════════════════════════════════════════════════════════════════════
   
   static String get openaiApiKey => 
-    dotenv.env['OPENAI_API_KEY'] ?? '';
+    _openaiApiKeyDef.isNotEmpty 
+        ? _openaiApiKeyDef 
+        : (dotenv.env['OPENAI_API_KEY'] ?? '');
   
   static String get openaiAdminKey => 
     dotenv.env['OPENAI_ADMIN_KEY'] ?? '';
@@ -47,5 +63,7 @@ class Env {
     dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
   
   static String get googleMapsApiKey => 
-    dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
+    _googleMapsApiKeyDef.isNotEmpty 
+        ? _googleMapsApiKeyDef 
+        : (dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '');
 }
