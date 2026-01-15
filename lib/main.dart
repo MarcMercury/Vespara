@@ -1,8 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
+import 'core/theme/app_theme.dart';
+import 'features/home/presentation/home_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,25 +19,18 @@ Future<void> main() async {
     ),
   );
   
-  runApp(const VesparaApp());
+  runApp(const ProviderScope(child: VesparaApp()));
 }
 
-class VesparaApp extends StatefulWidget {
+class VesparaApp extends StatelessWidget {
   const VesparaApp({super.key});
 
-  @override
-  State<VesparaApp> createState() => _VesparaAppState();
-}
-
-class _VesparaAppState extends State<VesparaApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Vespara',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF1A1523),
-      ),
+      theme: VesparaTheme.dark,
       home: const AuthGate(),
     );
   }
@@ -51,6 +48,7 @@ class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   Session? _session;
   String? _error;
+  bool? _hasCompletedOnboarding;
   
   @override
   void initState() {
@@ -68,6 +66,10 @@ class _AuthGateState extends State<AuthGate> {
             _session = data.session;
             _isLoading = false;
           });
+          // Check onboarding status when session changes
+          if (data.session != null) {
+            _checkOnboardingStatus(data.session!.user.id);
+          }
         }
       });
       
@@ -88,6 +90,11 @@ class _AuthGateState extends State<AuthGate> {
       _session = Supabase.instance.client.auth.currentSession;
       debugPrint('Vespara: Final session check = ${_session != null}');
       
+      // Check onboarding status if we have a session
+      if (_session != null) {
+        await _checkOnboardingStatus(_session!.user.id);
+      }
+      
     } catch (e) {
       debugPrint('Vespara Auth Error: $e');
       _error = e.toString();
@@ -99,19 +106,43 @@ class _AuthGateState extends State<AuthGate> {
       });
     }
   }
+  
+  Future<void> _checkOnboardingStatus(String userId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', userId)
+          .maybeSingle();
+      
+      if (mounted) {
+        setState(() {
+          _hasCompletedOnboarding = response?['onboarding_completed'] ?? false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Vespara: Error checking onboarding: $e');
+      // If profile doesn't exist, user hasn't completed onboarding
+      if (mounted) {
+        setState(() {
+          _hasCompletedOnboarding = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color(0xFF1A1523),
+        backgroundColor: VesparaColors.background,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: Color(0xFFE0D8EA)),
+              CircularProgressIndicator(color: VesparaColors.primary),
               SizedBox(height: 16),
-              Text('Signing in...', style: TextStyle(color: Color(0xFF9A8EB5))),
+              Text('Loading...', style: TextStyle(color: VesparaColors.secondary)),
             ],
           ),
         ),
@@ -120,128 +151,59 @@ class _AuthGateState extends State<AuthGate> {
     
     if (_error != null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF1A1523),
+        backgroundColor: VesparaColors.background,
         body: Center(
-          child: Text('Error: $_error', style: const TextStyle(color: Colors.red)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: VesparaColors.error, size: 48),
+              const SizedBox(height: 16),
+              Text('Error: $_error', style: const TextStyle(color: VesparaColors.error)),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _error = null;
+                    _isLoading = true;
+                  });
+                  _initAuth();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       );
     }
     
-    if (_session != null) {
-      return const HomeScreen();
+    // Not logged in - show login screen
+    if (_session == null) {
+      return const LoginScreen();
     }
-    return const LoginScreen();
-  }
-}
-
-/// Home screen shown after successful login
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  static const _background = Color(0xFF1A1523);
-  static const _primary = Color(0xFFE0D8EA);
-  static const _muted = Color(0xFF9A8EB5);
-
-  Future<void> _signOut(BuildContext context) async {
-    await Supabase.instance.client.auth.signOut();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
     
-    return Scaffold(
-      backgroundColor: _background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              
-              // Welcome header
-              Text(
-                'Welcome to Vespara',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w500,
-                  color: _primary,
-                ),
-              ),
-              
-              const SizedBox(height: 8),
-              
-              Text(
-                user?.email ?? 'Logged in',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: _muted,
-                ),
-              ),
-              
-              const SizedBox(height: 48),
-              
-              // Placeholder content
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [_primary, _primary.withOpacity(0.6)],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _primary.withOpacity(0.3),
-                              blurRadius: 40,
-                              spreadRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Your secrets are safe here',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontStyle: FontStyle.italic,
-                          color: _muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              // Sign out button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton(
-                  onPressed: () => _signOut(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primary,
-                    side: BorderSide(color: _primary.withOpacity(0.3)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: const Text('Sign Out', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-            ],
-          ),
+    // Logged in but loading onboarding status
+    if (_hasCompletedOnboarding == null) {
+      return const Scaffold(
+        backgroundColor: VesparaColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: VesparaColors.primary),
         ),
-      ),
-    );
+      );
+    }
+    
+    // Logged in but hasn't completed onboarding
+    if (_hasCompletedOnboarding == false) {
+      return const OnboardingScreen();
+    }
+    
+    // Logged in and onboarding complete - show the full app!
+    return const HomeScreen();
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOGIN SCREEN - Working OAuth implementation
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -251,10 +213,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
-  static const _background = Color(0xFF1A1523);
-  static const _primary = Color(0xFFE0D8EA);
-  static const _muted = Color(0xFF9A8EB5);
-  
   bool _isLoading = false;
   late AnimationController _animController;
   late Animation<double> _fadeIn;
@@ -315,29 +273,29 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2640),
-        title: const Text('Enter your email', style: TextStyle(color: _primary)),
+        backgroundColor: VesparaColors.surface,
+        title: const Text('Enter your email', style: TextStyle(color: VesparaColors.primary)),
         content: TextField(
           controller: emailController,
-          style: const TextStyle(color: _primary),
+          style: const TextStyle(color: VesparaColors.primary),
           decoration: InputDecoration(
             hintText: 'your@email.com',
-            hintStyle: TextStyle(color: _muted.withOpacity(0.5)),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: _muted)),
-            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: _primary)),
+            hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: VesparaColors.secondary)),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: VesparaColors.primary)),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: _muted)),
+            child: const Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
               await _signInWithEmail(emailController.text);
             },
-            child: const Text('Send Magic Link', style: TextStyle(color: _primary)),
+            child: const Text('Send Magic Link', style: TextStyle(color: VesparaColors.primary)),
           ),
         ],
       ),
@@ -367,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade800,
+        backgroundColor: VesparaColors.error,
       ),
     );
   }
@@ -375,8 +333,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: _background)),
-        backgroundColor: _primary,
+        content: Text(message, style: const TextStyle(color: VesparaColors.background)),
+        backgroundColor: VesparaColors.primary,
       ),
     );
   }
@@ -384,7 +342,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: VesparaColors.background,
       body: AnimatedBuilder(
         animation: _animController,
         builder: (context, child) => Opacity(
@@ -409,11 +367,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
-                      colors: [_primary, _primary.withOpacity(0.6)],
+                      colors: [VesparaColors.primary, VesparaColors.primary.withOpacity(0.6)],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _primary.withOpacity(0.4),
+                        color: VesparaColors.glow.withOpacity(0.4),
                         blurRadius: 60,
                         spreadRadius: 20,
                       ),
@@ -423,12 +381,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 
                 const SizedBox(height: 48),
                 
-                const Text(
+                Text(
                   'VESPARA',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w500,
-                    color: _primary,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     letterSpacing: 12,
                   ),
                 ),
@@ -440,7 +395,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   style: TextStyle(
                     fontSize: 15,
                     fontStyle: FontStyle.italic,
-                    color: _muted,
+                    color: VesparaColors.secondary,
                     letterSpacing: 1,
                   ),
                 ),
@@ -458,10 +413,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Text('Continue with Apple', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: _background,
-                      disabledBackgroundColor: _primary.withOpacity(0.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      backgroundColor: VesparaColors.primary,
+                      foregroundColor: VesparaColors.background,
+                      disabledBackgroundColor: VesparaColors.primary.withOpacity(0.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VesparaBorderRadius.button)),
                     ),
                   ),
                 ),
@@ -477,10 +432,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     icon: const Icon(Icons.g_mobiledata, size: 28),
                     label: const Text('Continue with Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _primary,
-                      disabledForegroundColor: _primary.withOpacity(0.5),
-                      side: BorderSide(color: _primary.withOpacity(0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      foregroundColor: VesparaColors.primary,
+                      disabledForegroundColor: VesparaColors.primary.withOpacity(0.5),
+                      side: BorderSide(color: VesparaColors.primary.withOpacity(0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VesparaBorderRadius.button)),
                     ),
                   ),
                 ),
@@ -496,10 +451,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     icon: const Icon(Icons.email_outlined, size: 24),
                     label: const Text('Continue with Email', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _primary,
-                      disabledForegroundColor: _primary.withOpacity(0.5),
-                      side: BorderSide(color: _primary.withOpacity(0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      foregroundColor: VesparaColors.primary,
+                      disabledForegroundColor: VesparaColors.primary.withOpacity(0.5),
+                      side: BorderSide(color: VesparaColors.primary.withOpacity(0.3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VesparaBorderRadius.button)),
                     ),
                   ),
                 ),
@@ -512,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     'What happens in Vespara, stays in Vespara',
                     style: TextStyle(
                       fontSize: 12,
-                      color: _muted.withOpacity(0.7),
+                      color: VesparaColors.secondary.withOpacity(0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),

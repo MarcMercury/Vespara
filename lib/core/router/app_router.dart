@@ -3,27 +3,192 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../features/auth/login_screen.dart';
+import '../../features/home/presentation/home_screen.dart';
+import '../../features/strategist/presentation/strategist_screen.dart';
+import '../../features/scope/presentation/scope_screen.dart';
+import '../../features/roster/presentation/roster_screen.dart';
+import '../../features/wire/presentation/wire_screen.dart';
+import '../../features/shredder/presentation/shredder_screen.dart';
+import '../../features/ludus/presentation/tags_screen.dart';
+import '../../features/core/presentation/core_screen.dart';
+import '../../features/mirror/presentation/mirror_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
 
-/// Router provider - simplified to just show login
+/// App Router Provider
+/// Uses GoRouter for declarative routing with auth redirects
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/home',
     debugLogDiagnostics: true,
+    
+    // Redirect logic based on auth state
+    redirect: (context, state) {
+      final session = Supabase.instance.client.auth.currentSession;
+      final isLoggedIn = session != null;
+      final isLoggingIn = state.matchedLocation == '/login';
+      final isOnboarding = state.matchedLocation == '/onboarding';
+      
+      // Not logged in - redirect to login
+      if (!isLoggedIn && !isLoggingIn) {
+        return '/login';
+      }
+      
+      // Logged in but on login page - redirect to home
+      if (isLoggedIn && isLoggingIn) {
+        return '/home';
+      }
+      
+      return null;
+    },
+    
     routes: [
+      // ═══════════════════════════════════════════════════════════════════════
+      // AUTH ROUTES
+      // ═══════════════════════════════════════════════════════════════════════
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SizedBox(), // Login is handled by AuthGate in main.dart
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
+      
       GoRoute(
-        path: '/',
-        redirect: (context, state) => '/login',
+        path: '/onboarding',
+        name: 'onboarding',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const OnboardingScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
+      
+      // ═══════════════════════════════════════════════════════════════════════
+      // MAIN APP ROUTES
+      // ═══════════════════════════════════════════════════════════════════════
       GoRoute(
         path: '/home',
-        redirect: (context, state) => '/login',
+        name: 'home',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+        routes: [
+          // ═════════════════════════════════════════════════════════════════════
+          // FEATURE ROUTES (nested under /home)
+          // ═════════════════════════════════════════════════════════════════════
+          
+          // Tile 1: The Strategist
+          GoRoute(
+            path: 'strategist',
+            name: 'strategist',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const StrategistScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 2: The Scope
+          GoRoute(
+            path: 'scope',
+            name: 'scope',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const ScopeScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 3: The Roster
+          GoRoute(
+            path: 'roster',
+            name: 'roster',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const RosterScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 4: The Wire
+          GoRoute(
+            path: 'wire',
+            name: 'wire',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const WireScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 5: The Shredder
+          GoRoute(
+            path: 'shredder',
+            name: 'shredder',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const ShredderScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 6: The Ludus (TAGS)
+          GoRoute(
+            path: 'ludus',
+            name: 'ludus',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const TagsScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 7: The Core
+          GoRoute(
+            path: 'core',
+            name: 'core',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const CoreScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+          
+          // Tile 8: The Mirror
+          GoRoute(
+            path: 'mirror',
+            name: 'mirror',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const MirrorScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+          ),
+        ],
       ),
     ],
   );
 });
+
+/// Fade transition for all routes
+Widget _fadeTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  return FadeTransition(
+    opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
+    child: child,
+  );
+}
