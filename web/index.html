@@ -27,6 +27,11 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
+  
+  <!-- Preload Google Fonts for better performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <title>Vespara</title>
   <link rel="manifest" href="manifest.json">
@@ -38,6 +43,13 @@
       padding: 0;
       background-color: #1A1523;
       overflow: hidden;
+    }
+    
+    /* Ensure Flutter canvas also has dark background */
+    flt-glass-pane,
+    flt-scene-host,
+    flutter-view {
+      background-color: #1A1523 !important;
     }
     
     .loading-container {
@@ -85,6 +97,19 @@
     <div class="loading-spinner"></div>
   </div>
   
+  <script>
+    // Hide loading screen when Flutter is ready
+    window.addEventListener('flutter-first-frame', function() {
+      var loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.transition = 'opacity 0.3s';
+        loading.style.opacity = '0';
+        setTimeout(function() {
+          loading.style.display = 'none';
+        }, 300);
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

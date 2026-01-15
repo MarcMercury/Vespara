@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -129,6 +129,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return _buildLoginScreen(context);
+    } catch (e, stack) {
+      debugPrint('LoginScreen build error: $e');
+      debugPrint('Stack: $stack');
+      // Return a simple fallback screen
+      return Scaffold(
+        backgroundColor: _background,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'VESPARA',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w500,
+                  color: _primary,
+                  letterSpacing: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading: $e',
+                style: const TextStyle(color: Colors.redAccent),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildLoginScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: _background,
       body: SafeArea(

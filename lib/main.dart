@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
@@ -45,6 +47,9 @@ Future<void> main() async {
     }
   }
   
+  // Allow Google Fonts to use HTTP on web (handles CORS gracefully)
+  GoogleFonts.config.allowRuntimeFetching = true;
+  
   debugPrint('Vespara: Supabase URL = ${Env.supabaseUrl}');
   debugPrint('Vespara: Initializing Supabase...');
   
@@ -65,6 +70,12 @@ Future<void> main() async {
   
   debugPrint('Vespara: Running app...');
   
+  // Set up error handling for Flutter errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('Flutter error: ${details.exception}');
+    debugPrint('Stack trace: ${details.stack}');
+  };
+  
   // Run the application wrapped in ProviderScope
   runApp(
     const ProviderScope(
@@ -79,7 +90,41 @@ class VesparaApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
+    // Get router with error handling
+    GoRouter router;
+    try {
+      router = ref.watch(routerProvider);
+    } catch (e) {
+      debugPrint('Router error: $e');
+      // Return a basic error screen if router fails
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: VesparaColors.background,
+        ),
+        home: Scaffold(
+          backgroundColor: VesparaColors.background,
+          body: Center(
+            child: Text('Error loading app: $e', style: const TextStyle(color: Colors.white)),
+          ),
+        ),
+      );
+    }
+    
+    // Get theme with fallback
+    ThemeData theme;
+    try {
+      theme = VesparaTheme.dark;
+    } catch (e) {
+      debugPrint('Theme error: $e');
+      theme = ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: VesparaColors.background,
+        colorScheme: const ColorScheme.dark(
+          primary: VesparaColors.primary,
+          surface: VesparaColors.surface,
+        ),
+      );
+    }
     
     return MaterialApp.router(
       // ═══════════════════════════════════════════════════════════════════════
@@ -91,8 +136,8 @@ class VesparaApp extends ConsumerWidget {
       // ═══════════════════════════════════════════════════════════════════════
       // THEME CONFIGURATION - THE VESPARA NIGHT
       // ═══════════════════════════════════════════════════════════════════════
-      theme: VesparaTheme.dark,
-      darkTheme: VesparaTheme.dark,
+      theme: theme,
+      darkTheme: theme,
       themeMode: ThemeMode.dark, // Always dark - Vespara is nocturnal
       
       // ═══════════════════════════════════════════════════════════════════════
