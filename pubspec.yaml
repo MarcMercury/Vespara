@@ -82,10 +82,8 @@ flutter:
   uses-material-design: true
   
   assets:
-    - .env
     - assets/images/
     - assets/icons/
-    - assets/animations/
   
   # Fonts will use Google Fonts package instead of local assets
   # fonts:
