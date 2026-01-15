@@ -18,11 +18,19 @@ import '../../features/onboarding/onboarding_screen.dart';
 
 /// Auth state notifier for router refresh
 class AuthNotifier extends ChangeNotifier {
-  AuthNotifier() {
-    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
-      debugPrint('Auth state changed: ${event.event}');
-      notifyListeners();
-    });
+  bool _initialized = false;
+  
+  void initialize() {
+    if (_initialized) return;
+    _initialized = true;
+    try {
+      Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+        debugPrint('Auth state changed: ${event.event}');
+        notifyListeners();
+      });
+    } catch (e) {
+      debugPrint('AuthNotifier: Could not listen to auth changes: $e');
+    }
   }
 }
 
@@ -30,28 +38,37 @@ final _authNotifier = AuthNotifier();
 
 /// Router provider for the entire application
 final routerProvider = Provider<GoRouter>((ref) {
+  // Initialize auth notifier lazily
+  _authNotifier.initialize();
+  
   return GoRouter(
     initialLocation: '/login',
     debugLogDiagnostics: true,
     refreshListenable: _authNotifier,
     redirect: (context, state) {
-      final session = Supabase.instance.client.auth.currentSession;
-      final isLoggedIn = session != null;
-      final isLoggingIn = state.matchedLocation == '/login';
-      
-      debugPrint('Router redirect: location=${state.matchedLocation}, loggedIn=$isLoggedIn');
-      
-      // Not logged in - redirect to login (except if already there)
-      if (!isLoggedIn) {
-        return isLoggingIn ? null : '/login';
+      try {
+        final session = Supabase.instance.client.auth.currentSession;
+        final isLoggedIn = session != null;
+        final isLoggingIn = state.matchedLocation == '/login';
+        
+        debugPrint('Router redirect: location=${state.matchedLocation}, loggedIn=$isLoggedIn');
+        
+        // Not logged in - redirect to login (except if already there)
+        if (!isLoggedIn) {
+          return isLoggingIn ? null : '/login';
+        }
+        
+        // Logged in but on login page - go to home
+        if (isLoggingIn) {
+          return '/home';
+        }
+        
+        return null;
+      } catch (e) {
+        debugPrint('Router redirect error: $e');
+        // On error, go to login
+        return state.matchedLocation == '/login' ? null : '/login';
       }
-      
-      // Logged in but on login page - go to home (onboarding check happens in HomeScreen)
-      if (isLoggingIn) {
-        return '/home';
-      }
-      
-      return null;
     },
     routes: [
       // ═══════════════════════════════════════════════════════════════════════

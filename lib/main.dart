@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +15,8 @@ Future<void> main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   
+  debugPrint('Vespara: Starting app initialization...');
+  
   // Set system UI overlay style for luxury dark aesthetic
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -26,10 +28,13 @@ Future<void> main() async {
   );
   
   // Lock to portrait orientation for optimal Bento Grid experience
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Skip on web as it's not supported
+  if (!kIsWeb) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
   
   // Load environment variables (skip on web if using --dart-define)
   if (!kIsWeb) {
@@ -40,17 +45,25 @@ Future<void> main() async {
     }
   }
   
+  debugPrint('Vespara: Supabase URL = ${Env.supabaseUrl}');
+  debugPrint('Vespara: Initializing Supabase...');
+  
   // Initialize Supabase with configuration
-  await Supabase.initialize(
-    url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
-    realtimeClientOptions: const RealtimeClientOptions(
-      logLevel: RealtimeLogLevel.info,
-    ),
-    authOptions: const FlutterAuthClientOptions(
-      authFlowType: AuthFlowType.pkce,
-    ),
-  );
+  try {
+    await Supabase.initialize(
+      url: Env.supabaseUrl,
+      anonKey: Env.supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
+    );
+    debugPrint('Vespara: Supabase initialized successfully');
+  } catch (e) {
+    debugPrint('Vespara: Supabase initialization error: $e');
+    // Continue anyway - app should still load
+  }
+  
+  debugPrint('Vespara: Running app...');
   
   // Run the application wrapped in ProviderScope
   runApp(
