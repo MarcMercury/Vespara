@@ -122,10 +122,11 @@ class _AuthGateState extends State<AuthGate> {
       }
     } catch (e) {
       debugPrint('Vespara: Error checking onboarding: $e');
-      // If profile doesn't exist, user hasn't completed onboarding
+      // If profile doesn't exist or table error, skip onboarding for now
+      // and let user into the app
       if (mounted) {
         setState(() {
-          _hasCompletedOnboarding = false;
+          _hasCompletedOnboarding = true; // Skip onboarding if DB issue
         });
       }
     }
