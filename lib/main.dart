@@ -54,6 +54,7 @@ Future<void> main() async {
   debugPrint('Vespara: Initializing Supabase...');
   
   // Initialize Supabase with configuration
+  bool supabaseInitialized = false;
   try {
     await Supabase.initialize(
       url: Env.supabaseUrl,
@@ -62,10 +63,10 @@ Future<void> main() async {
         authFlowType: AuthFlowType.pkce,
       ),
     );
+    supabaseInitialized = true;
     debugPrint('Vespara: Supabase initialized successfully');
   } catch (e) {
     debugPrint('Vespara: Supabase initialization error: $e');
-    // Continue anyway - app should still load
   }
   
   debugPrint('Vespara: Running app...');
@@ -78,25 +79,64 @@ Future<void> main() async {
   
   // Run the application wrapped in ProviderScope
   runApp(
-    const ProviderScope(
-      child: VesparaApp(),
+    ProviderScope(
+      child: VesparaApp(supabaseReady: supabaseInitialized),
     ),
   );
 }
 
 /// The root Vespara application widget
 class VesparaApp extends ConsumerWidget {
-  const VesparaApp({super.key});
+  final bool supabaseReady;
+  
+  const VesparaApp({super.key, required this.supabaseReady});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Get router with error handling
+    debugPrint('VesparaApp.build called, supabaseReady: $supabaseReady');
+    
+    // If Supabase didn't initialize, show error
+    if (!supabaseReady) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark().copyWith(
+          scaffoldBackgroundColor: VesparaColors.background,
+        ),
+        home: const Scaffold(
+          backgroundColor: VesparaColors.background,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'VESPARA',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w500,
+                    color: VesparaColors.primary,
+                    letterSpacing: 12,
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Unable to connect to server',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Get router
     GoRouter router;
     try {
       router = ref.watch(routerProvider);
-    } catch (e) {
+      debugPrint('Router created successfully');
+    } catch (e, stack) {
       debugPrint('Router error: $e');
-      // Return a basic error screen if router fails
+      debugPrint('Stack: $stack');
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark().copyWith(
@@ -105,7 +145,26 @@ class VesparaApp extends ConsumerWidget {
         home: Scaffold(
           backgroundColor: VesparaColors.background,
           body: Center(
-            child: Text('Error loading app: $e', style: const TextStyle(color: Colors.white)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'VESPARA',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w500,
+                    color: VesparaColors.primary,
+                    letterSpacing: 12,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Router Error: $e',
+                  style: const TextStyle(color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -115,8 +174,10 @@ class VesparaApp extends ConsumerWidget {
     ThemeData theme;
     try {
       theme = VesparaTheme.dark;
-    } catch (e) {
+      debugPrint('Theme created successfully');
+    } catch (e, stack) {
       debugPrint('Theme error: $e');
+      debugPrint('Stack: $stack');
       theme = ThemeData.dark().copyWith(
         scaffoldBackgroundColor: VesparaColors.background,
         colorScheme: const ColorScheme.dark(
@@ -126,27 +187,15 @@ class VesparaApp extends ConsumerWidget {
       );
     }
     
+    debugPrint('Returning MaterialApp.router');
+    
     return MaterialApp.router(
-      // ═══════════════════════════════════════════════════════════════════════
-      // APP METADATA
-      // ═══════════════════════════════════════════════════════════════════════
       title: Env.appName,
       debugShowCheckedModeBanner: false,
-      
-      // ═══════════════════════════════════════════════════════════════════════
-      // THEME CONFIGURATION - THE VESPARA NIGHT
-      // ═══════════════════════════════════════════════════════════════════════
       theme: theme,
       darkTheme: theme,
-      themeMode: ThemeMode.dark, // Always dark - Vespara is nocturnal
-      
-      // ═══════════════════════════════════════════════════════════════════════
-      // NAVIGATION
-      // ═══════════════════════════════════════════════════════════════════════
+      themeMode: ThemeMode.dark,
       routerConfig: router,
     );
   }
 }
-
-/// Global Supabase client accessor
-SupabaseClient get supabase => Supabase.instance.client;

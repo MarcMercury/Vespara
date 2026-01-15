@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../main.dart';
 import '../domain/models/user_profile.dart';
 import '../domain/models/roster_match.dart';
 import '../domain/models/conversation.dart';
 import '../domain/models/analytics.dart';
 import '../domain/models/tags_game.dart';
+
+/// Global Supabase client accessor for providers
+SupabaseClient get _supabase => Supabase.instance.client;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AUTH PROVIDERS
@@ -14,12 +16,12 @@ import '../domain/models/tags_game.dart';
 
 /// Stream of authentication state changes
 final authStateProvider = StreamProvider<AuthState>((ref) {
-  return supabase.auth.onAuthStateChange;
+  return _supabase.auth.onAuthStateChange;
 });
 
 /// Current user provider
 final currentUserProvider = Provider<User?>((ref) {
-  return supabase.auth.currentUser;
+  return _supabase.auth.currentUser;
 });
 
 /// User profile provider
@@ -27,7 +29,7 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
   
-  final response = await supabase
+  final response = await _supabase
       .from('profiles')
       .select()
       .eq('id', user.id)
@@ -55,7 +57,7 @@ final nearbyMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
   if (!isTonightMode) return [];
   
   // In production, this would use actual geolocation
-  final response = await supabase
+  final response = await _supabase
       .from('roster_matches')
       .select()
       .eq('is_nearby', true)
@@ -76,7 +78,7 @@ final focusBatchProvider = FutureProvider<List<RosterMatch>>((ref) async {
   if (user == null) return [];
   
   // Uses pgvector for semantic matching
-  final response = await supabase
+  final response = await _supabase
       .rpc('get_focus_batch', params: {
         'user_id': user.id,
         'batch_size': 5,
@@ -99,7 +101,7 @@ final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
   
-  final response = await supabase
+  final response = await _supabase
       .from('roster_matches')
       .select()
       .eq('user_id', user.id)
@@ -131,7 +133,7 @@ final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
   
-  final response = await supabase
+  final response = await _supabase
       .from('conversations')
       .select()
       .eq('user_id', user.id)
@@ -189,7 +191,7 @@ final activeGameProvider = StateProvider<TagsGame?>((ref) => null);
 final gameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
   
-  final response = await supabase
+  final response = await _supabase
       .from('game_cards')
       .select()
       .eq('level', consentLevel.name)
@@ -215,7 +217,7 @@ final vouchLinkProvider = FutureProvider<String>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return '';
   
-  final response = await supabase
+  final response = await _supabase
       .rpc('generate_vouch_link', params: {'user_id': user.id});
   
   return response as String? ?? '';
@@ -230,7 +232,7 @@ final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
   
-  final response = await supabase
+  final response = await _supabase
       .from('user_analytics')
       .select()
       .eq('user_id', user.id)

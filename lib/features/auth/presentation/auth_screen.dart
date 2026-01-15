@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
-import '../../../main.dart';
 
 /// Auth Screen - Login / Sign Up
 class AuthScreen extends ConsumerStatefulWidget {
@@ -39,12 +38,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     
     try {
       if (_isSignUp) {
-        await supabase.auth.signUp(
+        await Supabase.instance.client.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
       } else {
-        await supabase.auth.signInWithPassword(
+        await Supabase.instance.client.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
