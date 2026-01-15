@@ -17,9 +17,14 @@ Future<void> main() async {
   runApp(const VesparaApp());
 }
 
-class VesparaApp extends StatelessWidget {
+class VesparaApp extends StatefulWidget {
   const VesparaApp({super.key});
 
+  @override
+  State<VesparaApp> createState() => _VesparaAppState();
+}
+
+class _VesparaAppState extends State<VesparaApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -28,7 +33,147 @@ class VesparaApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF1A1523),
       ),
-      home: const LoginScreen(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+/// Listens to auth state and shows appropriate screen
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  static const _background = Color(0xFF1A1523);
+  
+  @override
+  void initState() {
+    super.initState();
+    // Listen for auth changes
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
+    
+    if (session != null) {
+      return const HomeScreen();
+    }
+    return const LoginScreen();
+  }
+}
+
+/// Home screen shown after successful login
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  static const _background = Color(0xFF1A1523);
+  static const _primary = Color(0xFFE0D8EA);
+  static const _muted = Color(0xFF9A8EB5);
+
+  Future<void> _signOut(BuildContext context) async {
+    await Supabase.instance.client.auth.signOut();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    
+    return Scaffold(
+      backgroundColor: _background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              
+              // Welcome header
+              Text(
+                'Welcome to Vespara',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  color: _primary,
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+              
+              Text(
+                user?.email ?? 'Logged in',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: _muted,
+                ),
+              ),
+              
+              const SizedBox(height: 48),
+              
+              // Placeholder content
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [_primary, _primary.withOpacity(0.6)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _primary.withOpacity(0.3),
+                              blurRadius: 40,
+                              spreadRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Your secrets are safe here',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontStyle: FontStyle.italic,
+                          color: _muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Sign out button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: () => _signOut(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _primary,
+                    side: BorderSide(color: _primary.withOpacity(0.3)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Sign Out', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
