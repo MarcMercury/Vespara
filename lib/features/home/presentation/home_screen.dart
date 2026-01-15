@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 
 /// HomeScreen - The Bento Box Dashboard
-/// Simplified version that works on web without complex packages
+/// Uses GoRouter to navigate to real feature screens
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,16 +15,21 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int? _selectedTile;
+  // Route paths for each tile
+  static const _routes = [
+    '/home/strategist',  // 0: The Strategist
+    '/home/scope',       // 1: The Scope
+    '/home/roster',      // 2: The Roster
+    '/home/wire',        // 3: The Wire
+    '/home/shredder',    // 4: The Shredder
+    '/home/ludus',       // 5: The Ludus
+    '/home/core',        // 6: The Core
+    '/home/mirror',      // 7: The Mirror
+  ];
   
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    
-    // If a tile is selected, show that feature screen
-    if (_selectedTile != null) {
-      return _buildFeatureScreen(_selectedTile!);
-    }
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
@@ -275,9 +281,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedTile = index;
-        });
+        // Navigate to the actual feature screen using GoRouter
+        context.go(_routes[index]);
       },
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
@@ -338,145 +343,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   color: VesparaColors.secondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildFeatureScreen(int index) {
-    final titles = [
-      'The Strategist',
-      'The Scope', 
-      'The Roster',
-      'The Wire',
-      'The Shredder',
-      'The Ludus',
-      'The Core',
-      'The Mirror',
-    ];
-    
-    final descriptions = [
-      'AI-powered planning and Tonight Mode for spontaneous meetups.',
-      'Discover curated matches using vector similarity.',
-      'Your personal CRM - manage connections from Incoming to Legacy.',
-      'Priority messaging with Conversation Resuscitator.',
-      'Ghost Protocol - graceful exits with AI-drafted messages.',
-      'TAGS consent-forward games with the Consent Meter.',
-      'Your identity, settings, and Vouch Chain.',
-      'Brutal analytics on your behavior patterns.',
-    ];
-    
-    final icons = [
-      Icons.psychology,
-      Icons.explore,
-      Icons.people,
-      Icons.message,
-      Icons.delete_sweep,
-      Icons.casino,
-      Icons.settings,
-      Icons.analytics,
-    ];
-    
-    return Scaffold(
-      backgroundColor: VesparaColors.background,
-      appBar: AppBar(
-        backgroundColor: VesparaColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: VesparaColors.primary),
-          onPressed: () {
-            setState(() {
-              _selectedTile = null;
-            });
-          },
-        ),
-        title: Text(
-          titles[index].toUpperCase(),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 2,
-            color: VesparaColors.primary,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: VesparaColors.surface,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: VesparaColors.glow.withOpacity(0.3),
-                      blurRadius: 40,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  icons[index],
-                  color: VesparaColors.primary,
-                  size: 48,
-                ),
-              ),
-              
-              SizedBox(height: 32),
-              
-              // Title
-              Text(
-                titles[index],
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w500,
-                  color: VesparaColors.primary,
-                ),
-              ),
-              
-              SizedBox(height: 16),
-              
-              // Description
-              Text(
-                descriptions[index],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: VesparaColors.secondary,
-                  height: 1.5,
-                ),
-              ),
-              
-              SizedBox(height: 48),
-              
-              // Coming soon badge
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: VesparaColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: VesparaColors.glow.withOpacity(0.3),
-                  ),
-                ),
-                child: Text(
-                  'COMING SOON',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
-                    color: VesparaColors.glow,
-                  ),
                 ),
               ),
             ],

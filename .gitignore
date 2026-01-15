@@ -16,3 +16,4 @@ pubspec.lock
 # Generated plugin registrations
 .flutter-plugins
 .flutter-plugins-dependencies
+node_modules/

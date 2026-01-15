@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -14,7 +13,7 @@ import '../widgets/game_card_widget.dart';
 /// The TAGS Screen - Trusted Adult Games System
 /// A consent-forward interactive game engine with luxury tarot card aesthetics
 /// 
-/// PHASE 2: Now connected to real Ludus repository with consent-based filtering
+/// Web-safe version using PageView instead of CardSwiper
 class TagsScreen extends ConsumerStatefulWidget {
   const TagsScreen({super.key});
 
@@ -25,7 +24,7 @@ class TagsScreen extends ConsumerStatefulWidget {
 class _TagsScreenState extends ConsumerState<TagsScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _glowController;
-  final CardSwiperController _cardController = CardSwiperController();
+  final PageController _pageController = PageController(viewportFraction: 0.85);
   int _currentGameIndex = 0;
   bool _consentConfirmed = false;
   
@@ -41,7 +40,7 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
   @override
   void dispose() {
     _glowController.dispose();
-    _cardController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -291,7 +290,7 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
     );
   }
   
-  /// Build the game carousel
+  /// Build the game carousel using PageView (web-safe)
   Widget _buildGameCarousel(BuildContext context, List<GameCategory> games) {
     if (games.isEmpty) {
       return Center(
@@ -302,33 +301,52 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
       );
     }
     
-    return CardSwiper(
-      controller: _cardController,
-      cardsCount: games.length,
-      numberOfCardsDisplayed: games.length > 3 ? 3 : games.length,
-      backCardOffset: const Offset(0, 40),
-      padding: const EdgeInsets.symmetric(
-        horizontal: VesparaSpacing.lg,
-        vertical: VesparaSpacing.md,
-      ),
-      onSwipe: (previousIndex, currentIndex, direction) {
-        // PHASE 5: Carousel snap haptic feedback + swipe haptic
-        VesparaHaptics.swipeCard();
-        VesparaHaptics.carouselSnap();
-        if (currentIndex != null) {
-          setState(() {
-            _currentGameIndex = currentIndex;
-          });
-        }
-        return true;
-      },
-      cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-        return GameCardWidget(
-          game: games[index],
-          consentLevel: ref.watch(tagsConsentLevelProvider),
-          isActive: index == _currentGameIndex,
-        );
-      },
+    return Column(
+      children: [
+        // Progress dots
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(games.length, (index) {
+              return Container(
+                width: _currentGameIndex == index ? 24 : 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: _currentGameIndex == index 
+                    ? VesparaColors.glow 
+                    : VesparaColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+        ),
+        
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: games.length,
+            onPageChanged: (index) {
+              VesparaHaptics.carouselSnap();
+              setState(() {
+                _currentGameIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: GameCardWidget(
+                  game: games[index],
+                  consentLevel: ref.watch(tagsConsentLevelProvider),
+                  isActive: index == _currentGameIndex,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
   

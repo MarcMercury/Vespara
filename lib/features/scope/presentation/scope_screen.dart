@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -9,6 +8,7 @@ import '../../../core/providers/app_providers.dart';
 import '../../../core/domain/models/roster_match.dart';
 
 /// The Scope Screen - Discovery / Focus Batch
+/// Web-safe version using PageView instead of CardSwiper
 class ScopeScreen extends ConsumerStatefulWidget {
   const ScopeScreen({super.key});
 
@@ -17,12 +17,22 @@ class ScopeScreen extends ConsumerStatefulWidget {
 }
 
 class _ScopeScreenState extends ConsumerState<ScopeScreen> {
-  final CardSwiperController _controller = CardSwiperController();
+  final PageController _pageController = PageController(viewportFraction: 0.9);
+  int _currentIndex = 0;
   
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
     super.dispose();
+  }
+  
+  void _nextCard() {
+    if (_pageController.hasClients) {
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -150,22 +160,46 @@ class _ScopeScreenState extends ConsumerState<ScopeScreen> {
       );
     }
     
-    return CardSwiper(
-      controller: _controller,
-      cardsCount: matches.length,
-      numberOfCardsDisplayed: matches.length > 3 ? 3 : matches.length,
-      backCardOffset: const Offset(0, 40),
-      padding: const EdgeInsets.symmetric(
-        horizontal: VesparaSpacing.lg,
-        vertical: VesparaSpacing.md,
-      ),
-      onSwipe: (previousIndex, currentIndex, direction) {
-        VesparaHaptics.lightTap();
-        return true;
-      },
-      cardBuilder: (context, index, percentX, percentY) {
-        return _buildProfileCard(context, matches[index]);
-      },
+    return Column(
+      children: [
+        // Progress indicator
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(matches.length, (index) {
+              return Container(
+                width: _currentIndex == index ? 24 : 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: _currentIndex == index 
+                    ? VesparaColors.primary 
+                    : VesparaColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+        ),
+        
+        // Cards
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: matches.length,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+            },
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                child: _buildProfileCard(context, matches[index]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
   
@@ -261,7 +295,7 @@ class _ScopeScreenState extends ConsumerState<ScopeScreen> {
             color: VesparaColors.tagsRed,
             onTap: () {
               VesparaHaptics.lightTap();
-              _controller.swipe(CardSwiperDirection.left);
+              _nextCard();
             },
           ),
           
@@ -272,7 +306,7 @@ class _ScopeScreenState extends ConsumerState<ScopeScreen> {
             size: 64,
             onTap: () {
               VesparaHaptics.heavyTap();
-              _controller.swipe(CardSwiperDirection.top);
+              _nextCard();
             },
           ),
           
@@ -282,7 +316,7 @@ class _ScopeScreenState extends ConsumerState<ScopeScreen> {
             color: VesparaColors.tagsGreen,
             onTap: () {
               VesparaHaptics.success();
-              _controller.swipe(CardSwiperDirection.right);
+              _nextCard();
             },
           ),
         ],
