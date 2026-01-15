@@ -1,0 +1,41 @@
+# Supabase Configuration
+# Project: nazcwlfirmbuxuzlzjtz
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[functions.strategist]
+verify_jwt = true
+
+[functions.ghost-protocol]
+verify_jwt = true
+
+[functions.resuscitator]
+verify_jwt = true
+
+[functions.vouch-chain]
+verify_jwt = true
+
+[functions.tonight-mode]
+verify_jwt = true
+
+[functions.generate-bio]
+verify_jwt = true
+
+# Edge Functions require these environment variables
+# Set in Supabase Dashboard > Project Settings > Edge Functions > Secrets
+# - OPENAI_API_KEY
+# - GOOGLE_MAPS_API_KEY
