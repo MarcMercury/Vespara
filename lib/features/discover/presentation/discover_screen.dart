@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/discoverable_profile.dart';
+import '../../../core/providers/match_state_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DISCOVER SCREEN - Module 2
@@ -60,28 +61,58 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     if (_currentIndex >= _profiles.length) return;
     
     final profile = _profiles[_currentIndex];
+    final matchNotifier = ref.read(matchStateProvider.notifier);
     
-    // Show feedback based on swipe
+    // Process swipe action and update global state
     String message;
+    bool isMatch = false;
+    
     switch (direction) {
       case SwipeDirection.left:
+        matchNotifier.passProfile(profile.id);
         message = 'Passed on ${profile.displayName}';
         break;
       case SwipeDirection.right:
-        message = 'Liked ${profile.displayName}! 💜';
+        // Check for mutual match (simulated - 50% chance)
+        isMatch = DateTime.now().millisecond % 2 == 0;
+        matchNotifier.likeProfile(profile.id, profile.displayName, profile.photos.isNotEmpty ? profile.photos.first : null);
+        message = isMatch 
+            ? "It's a match with ${profile.displayName}! 💜" 
+            : 'Liked ${profile.displayName}! 💜';
         break;
       case SwipeDirection.superLike:
-        message = 'Super Liked ${profile.displayName}! ⭐';
+        matchNotifier.superLikeProfile(profile.id, profile.displayName, profile.photos.isNotEmpty ? profile.photos.first : null);
+        message = "Super Match with ${profile.displayName}! ⭐";
+        isMatch = true;
         break;
     }
     
+    // Show feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 1),
-        backgroundColor: direction == SwipeDirection.left 
-            ? VesparaColors.surface 
-            : VesparaColors.glow.withOpacity(0.9),
+        content: Row(
+          children: [
+            if (isMatch) ...[
+              const Icon(Icons.favorite, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+            ],
+            Expanded(child: Text(message)),
+          ],
+        ),
+        duration: Duration(seconds: isMatch ? 3 : 1),
+        backgroundColor: isMatch 
+            ? VesparaColors.success 
+            : (direction == SwipeDirection.left ? VesparaColors.surface : VesparaColors.glow.withOpacity(0.9)),
+        action: isMatch ? SnackBarAction(
+          label: 'Message',
+          textColor: Colors.white,
+          onPressed: () {
+            // Navigate to chat
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Opening chat...'), duration: Duration(seconds: 1)),
+            );
+          },
+        ) : null,
       ),
     );
     

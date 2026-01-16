@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/match.dart';
+import '../../../core/providers/match_state_provider.dart';
+import '../../wire/presentation/wire_screen_new.dart';
+import '../../planner/presentation/planner_screen.dart';
+import '../../ludus/presentation/tags_screen_new.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
@@ -20,7 +24,6 @@ class NestScreen extends ConsumerStatefulWidget {
 
 class _NestScreenState extends ConsumerState<NestScreen>
     with TickerProviderStateMixin {
-  late List<Match> _matches;
   late TabController _tabController;
   late AnimationController _glowController;
   
@@ -35,7 +38,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
   @override
   void initState() {
     super.initState();
-    _matches = MockDataProvider.matches;
     _tabController = TabController(length: _priorities.length, vsync: this);
     _glowController = AnimationController(
       vsync: this,
@@ -51,16 +53,14 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   List<Match> _getMatchesForPriority(MatchPriority priority) {
-    return _matches.where((m) => m.priority == priority && !m.isArchived).toList();
+    // Get matches from global state provider
+    final state = ref.watch(matchStateProvider);
+    return state.getMatchesByPriority(priority);
   }
 
   void _updateMatchPriority(Match match, MatchPriority newPriority) {
-    setState(() {
-      final index = _matches.indexOf(match);
-      if (index != -1) {
-        _matches[index] = match.copyWith(priority: newPriority);
-      }
-    });
+    // Use global state notifier
+    ref.read(matchStateProvider.notifier).updateMatchPriority(match.id, newPriority);
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -128,9 +128,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   Widget _buildStats() {
-    final totalMatches = _matches.where((m) => !m.isArchived).length;
-    final priorityCount = _getMatchesForPriority(MatchPriority.priority).length;
-    final newCount = _getMatchesForPriority(MatchPriority.new_).length;
+    final matchState = ref.watch(matchStateProvider);
+    final totalMatches = matchState.matches.where((m) => !m.isArchived).length;
+    final priorityCount = matchState.getMatchesByPriority(MatchPriority.priority).length;
+    final newCount = matchState.getMatchesByPriority(MatchPriority.new_).length;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -621,8 +622,11 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           color: VesparaColors.glow,
                           onTap: () {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Opening chat with ${match.matchedUserName}...'), backgroundColor: VesparaColors.glow),
+                            // Navigate to Wire screen for chat
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const WireScreen(),
+                              ),
                             );
                           },
                         ),
@@ -635,7 +639,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           color: VesparaColors.success,
                           onTap: () {
                             Navigator.pop(context);
-                            _showPlanDateDialog(match);
+                            // Navigate to Planner screen
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const PlannerScreen(),
+                              ),
+                            );
                           },
                         ),
                       ),
@@ -647,7 +656,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           color: VesparaColors.tagsYellow,
                           onTap: () {
                             Navigator.pop(context);
-                            _showPlayTagDialog(match);
+                            // Navigate to TAG screen
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const TagScreen(),
+                              ),
+                            );
                           },
                         ),
                       ),

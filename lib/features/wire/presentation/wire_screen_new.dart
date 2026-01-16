@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/chat.dart';
+import '../../../core/providers/match_state_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE WIRE - Module 4
@@ -19,20 +20,30 @@ class WireScreen extends ConsumerStatefulWidget {
 }
 
 class _WireScreenState extends ConsumerState<WireScreen> {
-  late List<ChatConversation> _conversations;
   String? _selectedConversationId;
 
   @override
   void initState() {
     super.initState();
-    _conversations = MockDataProvider.conversations;
+  }
+
+  List<ChatConversation> get _conversations {
+    // Combine mock data with global state conversations
+    final stateConversations = ref.watch(allConversationsProvider);
+    if (stateConversations.isNotEmpty) {
+      return stateConversations;
+    }
+    return MockDataProvider.conversations;
   }
 
   @override
   Widget build(BuildContext context) {
+    final conversations = _conversations;
+    
     if (_selectedConversationId != null) {
-      final conversation = _conversations.firstWhere(
+      final conversation = conversations.firstWhere(
         (c) => c.id == _selectedConversationId,
+        orElse: () => conversations.first,
       );
       return _ChatDetailScreen(
         conversation: conversation,
