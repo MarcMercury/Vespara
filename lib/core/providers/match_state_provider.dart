@@ -124,7 +124,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
       priority: MatchPriority.new_,
       compatibilityScore: 0.85 + (DateTime.now().millisecond % 15) / 100,
       conversationId: 'conv-${DateTime.now().millisecondsSinceEpoch}',
-      isSuperLike: true,
+      isSuperMatch: true,
     );
     
     final newConversation = ChatConversation(

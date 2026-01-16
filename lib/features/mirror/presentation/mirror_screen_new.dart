@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/analytics.dart';
+import '../widgets/qr_connect_modal.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE MIRROR - Module 1
@@ -104,12 +105,17 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
             ],
           ),
           IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sharing your profile...')),
-              );
-            },
-            icon: const Icon(Icons.share_outlined, color: VesparaColors.secondary),
+            onPressed: () => showQrConnectModal(context),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [VesparaColors.glow, VesparaColors.primary],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+            ),
           ),
         ],
       ),

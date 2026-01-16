@@ -325,6 +325,40 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
                           ),
                         ),
                       ),
+                    const SizedBox(width: 6),
+                    // Public/Private indicator
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: event.isPublic
+                            ? VesparaColors.success.withOpacity(0.2)
+                            : VesparaColors.secondary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            event.isPublic ? Icons.public : Icons.lock_outline,
+                            size: 10,
+                            color: event.isPublic 
+                                ? VesparaColors.success 
+                                : VesparaColors.secondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            event.isPublic ? 'Public' : 'Private',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: event.isPublic 
+                                  ? VesparaColors.success 
+                                  : VesparaColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -579,25 +613,122 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
   void _createEventOfType(String type) {
     Navigator.pop(context);
     final titleController = TextEditingController(text: type == 'Custom' ? '' : 'My $type');
+    bool isPublic = false; // Default to private
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Create $type', style: TextStyle(color: VesparaColors.glow)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                hintText: 'Event name',
-                hintStyle: TextStyle(color: VesparaColors.secondary),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: VesparaColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Create $type', style: TextStyle(color: VesparaColors.glow)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  hintText: 'Event name',
+                  hintStyle: TextStyle(color: VesparaColors.secondary),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                style: TextStyle(color: VesparaColors.primary),
               ),
-              style: TextStyle(color: VesparaColors.primary),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              
+              // PUBLIC / PRIVATE TOGGLE
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => isPublic = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: !isPublic 
+                                ? VesparaColors.glow.withOpacity(0.2) 
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lock_outline,
+                                size: 16,
+                                color: !isPublic ? VesparaColors.glow : VesparaColors.secondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Private',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: !isPublic ? VesparaColors.glow : VesparaColors.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => isPublic = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isPublic 
+                                ? VesparaColors.success.withOpacity(0.2) 
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.public,
+                                size: 16,
+                                color: isPublic ? VesparaColors.success : VesparaColors.secondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Public',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isPublic ? VesparaColors.success : VesparaColors.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+              Text(
+                isPublic 
+                    ? 'Anyone on Vespara can see and join this event'
+                    : 'Only people you invite can see this event',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: VesparaColors.secondary,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 12),
             Text('When?', style: TextStyle(color: VesparaColors.secondary)),
             const SizedBox(height: 8),
             Wrap(
@@ -607,9 +738,10 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
                   label: Text(time),
                   onPressed: () {
                     Navigator.pop(context);
+                    final visibility = isPublic ? '🌍 Public' : '🔒 Private';
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${titleController.text} scheduled for $time!'),
+                        content: Text('$visibility: ${titleController.text} scheduled for $time!'),
                         backgroundColor: VesparaColors.success,
                       ),
                     );
@@ -620,6 +752,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
               ).toList(),
             ),
           ],
+        ),
         ),
       ),
     );

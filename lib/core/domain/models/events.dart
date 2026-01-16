@@ -267,6 +267,9 @@ class GroupEvent extends Equatable {
     return currentAttendees >= maxAttendees!;
   }
 
+  /// Is public (inverse of isPrivate)
+  bool get isPublic => !isPrivate;
+
   @override
   List<Object?> get props => [id, title, startTime, hostId];
 }

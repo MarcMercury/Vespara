@@ -878,7 +878,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
               ),
               onSubmitted: (query) {
                 Navigator.pop(context);
-                final results = _matches.where((m) => m.matchedUserName?.toLowerCase().contains(query.toLowerCase()) ?? false).toList();
+                final matchState = ref.read(matchStateProvider);
+                final results = matchState.matches.where((m) => m.matchedUserName?.toLowerCase().contains(query.toLowerCase()) ?? false).toList();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found ${results.length} matches for "$query"'), backgroundColor: VesparaColors.glow));
               },
             ),

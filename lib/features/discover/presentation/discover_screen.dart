@@ -6,6 +6,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/discoverable_profile.dart';
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/providers/connection_state_provider.dart' 
+    show connectionStateProvider, metAtEventsProvider, VesparaConnectionState, EventAttendee;
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DISCOVER SCREEN - Module 2
@@ -24,7 +26,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     with TickerProviderStateMixin {
   late List<DiscoverableProfile> _profiles;
   int _currentIndex = 0;
-  bool _showLooseMatches = false;
+  int _selectedTabIndex = 0; // 0 = Strict, 1 = Explore, 2 = Met IRL
+  int _metIrlIndex = 0;
   
   // Animation controllers
   late AnimationController _cardController;
@@ -75,13 +78,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       case SwipeDirection.right:
         // Check for mutual match (simulated - 50% chance)
         isMatch = DateTime.now().millisecond % 2 == 0;
-        matchNotifier.likeProfile(profile.id, profile.displayName, profile.photos.isNotEmpty ? profile.photos.first : null);
+        matchNotifier.likeProfile(profile.id, profile.displayName ?? 'Someone', profile.photos.isNotEmpty ? profile.photos.first : null);
         message = isMatch 
             ? "It's a match with ${profile.displayName}! 💜" 
             : 'Liked ${profile.displayName}! 💜';
         break;
       case SwipeDirection.superLike:
-        matchNotifier.superLikeProfile(profile.id, profile.displayName, profile.photos.isNotEmpty ? profile.photos.first : null);
+        matchNotifier.superLikeProfile(profile.id, profile.displayName ?? 'Someone', profile.photos.isNotEmpty ? profile.photos.first : null);
         message = "Super Match with ${profile.displayName}! ⭐";
         isMatch = true;
         break;
@@ -267,9 +270,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           children: [
             _buildHeader(),
             _buildMatchTypeToggle(),
-            Expanded(child: _buildCardStack()),
-            _buildActionButtons(),
-            const SizedBox(height: 16),
+            Expanded(
+              child: _selectedTabIndex == 2 
+                  ? _buildMetIrlContent()
+                  : _buildCardStack(),
+            ),
+            if (_selectedTabIndex != 2) ...[
+              _buildActionButtons(),
+              const SizedBox(height: 16),
+            ],
           ],
         ),
       ),
@@ -316,6 +325,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildMatchTypeToggle() {
+    final metIrlCount = ref.watch(metAtEventsProvider).length;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(4),
@@ -325,26 +336,27 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       ),
       child: Row(
         children: [
+          // Strict Matches
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _showLooseMatches = false),
+              onTap: () => setState(() => _selectedTabIndex = 0),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: !_showLooseMatches 
+                  color: _selectedTabIndex == 0 
                       ? VesparaColors.glow.withOpacity(0.2) 
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'STRICT MATCHES',
+                  'STRICT',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1,
-                    color: !_showLooseMatches 
+                    color: _selectedTabIndex == 0 
                         ? VesparaColors.primary 
                         : VesparaColors.secondary,
                   ),
@@ -352,14 +364,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               ),
             ),
           ),
+          // Explore / AI Wildcards
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _showLooseMatches = true),
+              onTap: () => setState(() => _selectedTabIndex = 1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _showLooseMatches 
+                  color: _selectedTabIndex == 1 
                       ? VesparaColors.tagsYellow.withOpacity(0.2) 
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
@@ -368,23 +381,74 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'EXPLORE ',
+                      'EXPLORE',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
-                        color: _showLooseMatches 
+                        color: _selectedTabIndex == 1 
                             ? VesparaColors.tagsYellow 
                             : VesparaColors.secondary,
                       ),
                     ),
+                    const SizedBox(width: 4),
                     Icon(
                       Icons.auto_awesome,
-                      size: 14,
-                      color: _showLooseMatches 
+                      size: 12,
+                      color: _selectedTabIndex == 1 
                           ? VesparaColors.tagsYellow 
                           : VesparaColors.secondary,
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Met IRL
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedTabIndex = 2),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: _selectedTabIndex == 2 
+                      ? VesparaColors.success.withOpacity(0.2) 
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'MET IRL',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                        color: _selectedTabIndex == 2 
+                            ? VesparaColors.success 
+                            : VesparaColors.secondary,
+                      ),
+                    ),
+                    if (metIrlCount > 0) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.success,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$metIrlCount',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: VesparaColors.background,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -397,7 +461,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
   Widget _buildCardStack() {
     final filteredProfiles = _profiles.where((p) => 
-        _showLooseMatches ? p.isWildcard : p.isStrictMatch
+        _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch
     ).toList();
     
     if (_currentIndex >= _profiles.length) {
@@ -962,6 +1026,490 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         return 'Monogamy';
       default:
         return type;
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // MET IRL TAB - People from shared events
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildMetIrlContent() {
+    final metIrlAttendees = ref.watch(metAtEventsProvider);
+    final connectionState = ref.watch(connectionStateProvider);
+    
+    if (metIrlAttendees.isEmpty) {
+      return _buildMetIrlEmptyState();
+    }
+
+    return Column(
+      children: [
+        // Header info
+        Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                VesparaColors.success.withOpacity(0.1),
+                VesparaColors.glow.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: VesparaColors.success.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: VesparaColors.success.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.people,
+                  color: VesparaColors.success,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'People you\'ve met',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                    Text(
+                      '${metIrlAttendees.length} from past events',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Swipeable cards
+        Expanded(
+          child: _metIrlIndex < metIrlAttendees.length
+              ? _buildMetIrlCard(metIrlAttendees[_metIrlIndex], connectionState)
+              : _buildMetIrlDoneState(),
+        ),
+
+        // Action buttons
+        if (_metIrlIndex < metIrlAttendees.length)
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildMetIrlActionButton(
+                  icon: Icons.close,
+                  label: 'Skip',
+                  color: VesparaColors.secondary,
+                  onTap: () {
+                    setState(() => _metIrlIndex++);
+                  },
+                ),
+                _buildMetIrlActionButton(
+                  icon: Icons.waving_hand,
+                  label: 'Say Hi',
+                  color: VesparaColors.success,
+                  isPrimary: true,
+                  onTap: () {
+                    final attendee = metIrlAttendees[_metIrlIndex];
+                    // Find the event they attended
+                    String? eventName;
+                    String? eventId;
+                    for (final event in connectionState.events) {
+                      if (event.attendees.any((a) => a.userId == attendee.userId)) {
+                        eventName = event.title;
+                        eventId = event.id;
+                        break;
+                      }
+                    }
+                    
+                    ref.read(connectionStateProvider.notifier).connectViaEvent(
+                      attendee.userId,
+                      attendee.name,
+                      attendee.avatar,
+                      eventId ?? '',
+                      eventName,
+                    );
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            Icon(Icons.favorite, color: VesparaColors.success),
+                            const SizedBox(width: 12),
+                            Text('Connected with ${attendee.name}!'),
+                          ],
+                        ),
+                        backgroundColor: VesparaColors.surface,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                    
+                    setState(() => _metIrlIndex++);
+                  },
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMetIrlCard(EventAttendee attendee, VesparaConnectionState connectionState) {
+    // Find event details for this attendee
+    String? eventName;
+    DateTime? eventDate;
+    for (final event in connectionState.events) {
+      if (event.attendees.any((a) => a.userId == attendee.userId)) {
+        eventName = event.title;
+        eventDate = event.startTime;
+        break;
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: VesparaColors.success.withOpacity(0.2),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: VesparaColors.success.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Avatar area
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    VesparaColors.glow.withOpacity(0.3),
+                    VesparaColors.primary.withOpacity(0.3),
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Avatar placeholder
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: VesparaColors.background,
+                        border: Border.all(
+                          color: VesparaColors.success,
+                          width: 3,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: VesparaColors.success.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          attendee.name.isNotEmpty ? attendee.name[0].toUpperCase() : '?',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: VesparaColors.success,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      attendee.name,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Event info
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: VesparaColors.background.withOpacity(0.5),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+            ),
+            child: Column(
+              children: [
+                // Met at badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: VesparaColors.success.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.event,
+                        color: VesparaColors.success,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Met at ${eventName ?? "an event"}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: VesparaColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (eventDate != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatEventDate(eventDate),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: VesparaColors.secondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetIrlActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: isPrimary ? 72 : 56,
+            height: isPrimary ? 72 : 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isPrimary ? color : VesparaColors.surface,
+              border: isPrimary ? null : Border.all(
+                color: color.withOpacity(0.3),
+                width: 2,
+              ),
+              boxShadow: isPrimary ? [
+                BoxShadow(
+                  color: color.withOpacity(0.4),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ] : null,
+            ),
+            child: Icon(
+              icon,
+              color: isPrimary ? VesparaColors.background : color,
+              size: isPrimary ? 32 : 24,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetIrlEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.event_available,
+                size: 64,
+                color: VesparaColors.glow.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No event connections yet',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Attend events to meet people IRL!\nAfter the event, you can connect with\npeople you\'ve met here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: VesparaColors.secondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                // Would navigate to events/group screen
+              },
+              icon: const Icon(Icons.search),
+              label: const Text('Find Events'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.success,
+                foregroundColor: VesparaColors.background,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetIrlDoneState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [VesparaColors.success, VesparaColors.glow],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check,
+                size: 48,
+                color: VesparaColors.background,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'All caught up!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You\'ve reviewed everyone from your events.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () {
+                setState(() => _metIrlIndex = 0);
+              },
+              child: Text(
+                'Start Over',
+                style: TextStyle(
+                  color: VesparaColors.glow,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatEventDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    
+    if (diff.inDays == 0) {
+      return 'Today';
+    } else if (diff.inDays == 1) {
+      return 'Yesterday';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays} days ago';
+    } else if (diff.inDays < 30) {
+      return '${(diff.inDays / 7).floor()} weeks ago';
+    } else {
+      return '${(diff.inDays / 30).floor()} months ago';
     }
   }
 }
