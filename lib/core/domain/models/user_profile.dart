@@ -8,8 +8,10 @@ class UserProfile extends Equatable {
   final String? avatarUrl;
   final String? bio;
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
   final double trustScore;
+  final int vouchCount;
+  final bool isVerified;
   final List<String> verifications;
   final Map<String, dynamic>? preferences;
   
@@ -20,8 +22,10 @@ class UserProfile extends Equatable {
     this.avatarUrl,
     this.bio,
     required this.createdAt,
-    required this.updatedAt,
+    this.updatedAt,
     this.trustScore = 0.0,
+    this.vouchCount = 0,
+    this.isVerified = false,
     this.verifications = const [],
     this.preferences,
   });
@@ -29,13 +33,19 @@ class UserProfile extends Equatable {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'] as String,
-      email: json['email'] as String,
+      email: json['email'] as String? ?? '',
       displayName: json['display_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null 
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
       trustScore: (json['trust_score'] as num?)?.toDouble() ?? 0.0,
+      vouchCount: json['vouch_count'] as int? ?? 0,
+      isVerified: json['is_verified'] as bool? ?? false,
       verifications: List<String>.from(json['verifications'] ?? []),
       preferences: json['preferences'] as Map<String, dynamic>?,
     );
@@ -49,8 +59,10 @@ class UserProfile extends Equatable {
       'avatar_url': avatarUrl,
       'bio': bio,
       'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
       'trust_score': trustScore,
+      'vouch_count': vouchCount,
+      'is_verified': isVerified,
       'verifications': verifications,
       'preferences': preferences,
     };

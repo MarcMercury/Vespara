@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
-import '../../../core/data/ludus_repository.dart';
 import '../../../core/domain/models/tags_game.dart';
 import '../../../core/providers/app_providers.dart';
 import '../widgets/consent_meter.dart';
@@ -46,16 +45,16 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // PHASE 2: Use repository-backed providers
+    // Use the consent level from providers
     final consentLevel = ref.watch(consentLevelProvider);
     final gamesAsync = ref.watch(filteredGamesProvider);
     
     // Convert consent string to ConsentLevel enum for UI
     final consentEnum = _stringToConsentLevel(consentLevel);
     
-    // Convert LudusGame list to GameCategory list for existing UI
+    // Get available games from provider (already returns GameCategory list)
     final availableGames = gamesAsync.when(
-      data: (games) => _gamesToCategories(games),
+      data: (games) => games,
       loading: () => <GameCategory>[],
       error: (_, __) => <GameCategory>[],
     );
@@ -447,7 +446,7 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // PHASE 2: HELPER METHODS FOR REPOSITORY INTEGRATION
+  // HELPER METHODS FOR CONSENT LEVEL CONVERSION
   // ═══════════════════════════════════════════════════════════════════════════
   
   /// Convert string consent level to enum
@@ -472,33 +471,5 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
       case ConsentLevel.green:
         return 'green';
     }
-  }
-  
-  /// Convert LudusGame list to GameCategory list for UI compatibility
-  List<GameCategory> _gamesToCategories(List<LudusGame> games) {
-    // Map database categories to enum values
-    final categoryMap = <String, GameCategory>{
-      'pleasure_deck': GameCategory.truthOrDare,
-      'path_of_pleasure': GameCategory.pathOfPleasure,
-      'other_room': GameCategory.theOtherRoom,
-      'icebreakers': GameCategory.icebreakers,
-      'sensory': GameCategory.sensoryPlay,
-      'kama_sutra': GameCategory.kamaSutra,
-      'party': GameCategory.coinTossBoard,
-    };
-    
-    // Get unique categories from loaded games
-    final categories = <GameCategory>{};
-    for (final game in games) {
-      final category = categoryMap[game.category];
-      if (category != null) {
-        categories.add(category);
-      }
-    }
-    
-    // Return available categories, or fallback to all if empty
-    return categories.isNotEmpty 
-        ? categories.toList() 
-        : GameCategory.values.toList();
   }
 }
