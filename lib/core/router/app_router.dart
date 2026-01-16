@@ -8,11 +8,17 @@ import '../../features/strategist/presentation/strategist_screen.dart';
 import '../../features/scope/presentation/scope_screen.dart';
 import '../../features/roster/presentation/roster_screen.dart';
 import '../../features/wire/presentation/wire_screen.dart';
+import '../../features/wire/presentation/wire_home_screen.dart';
+import '../../features/wire/presentation/wire_chat_screen.dart';
+import '../../features/wire/presentation/wire_create_group_screen.dart';
+import '../../features/wire/presentation/wire_group_info_screen.dart';
 import '../../features/shredder/presentation/shredder_screen.dart';
 import '../../features/ludus/presentation/tags_screen.dart';
 import '../../features/core/presentation/core_screen.dart';
 import '../../features/mirror/presentation/mirror_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/events/presentation/events_home_screen.dart';
+import '../../features/events/presentation/event_creation_screen.dart';
 
 /// App Router Provider
 /// Uses GoRouter for declarative routing with auth redirects
@@ -126,9 +132,47 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'wire',
             pageBuilder: (context, state) => CustomTransitionPage(
               key: state.pageKey,
-              child: const WireScreen(),
+              child: const WireHomeScreen(),
               transitionsBuilder: _fadeTransition,
             ),
+            routes: [
+              // Wire chat conversation
+              GoRoute(
+                path: 'chat/:conversationId',
+                name: 'wire-chat',
+                pageBuilder: (context, state) {
+                  final conversationId = state.pathParameters['conversationId']!;
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    child: WireChatScreen(conversationId: conversationId),
+                    transitionsBuilder: _slideTransition,
+                  );
+                },
+              ),
+              // Create new group
+              GoRoute(
+                path: 'create-group',
+                name: 'wire-create-group',
+                pageBuilder: (context, state) => CustomTransitionPage(
+                  key: state.pageKey,
+                  child: const WireCreateGroupScreen(),
+                  transitionsBuilder: _slideTransition,
+                ),
+              ),
+              // Group info/settings
+              GoRoute(
+                path: 'group-info/:conversationId',
+                name: 'wire-group-info',
+                pageBuilder: (context, state) {
+                  final conversationId = state.pathParameters['conversationId']!;
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    child: WireGroupInfoScreen(conversationId: conversationId),
+                    transitionsBuilder: _slideTransition,
+                  );
+                },
+              ),
+            ],
           ),
           
           // Tile 5: The Shredder
@@ -174,6 +218,28 @@ final routerProvider = Provider<GoRouter>((ref) {
               transitionsBuilder: _fadeTransition,
             ),
           ),
+          
+          // Events - Partiful-style event management
+          GoRoute(
+            path: 'events',
+            name: 'events',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              key: state.pageKey,
+              child: const EventsHomeScreen(),
+              transitionsBuilder: _fadeTransition,
+            ),
+            routes: [
+              GoRoute(
+                path: 'create',
+                name: 'event-create',
+                pageBuilder: (context, state) => CustomTransitionPage(
+                  key: state.pageKey,
+                  child: const EventCreationScreen(),
+                  transitionsBuilder: _fadeTransition,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -189,6 +255,25 @@ Widget _fadeTransition(
 ) {
   return FadeTransition(
     opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
+    child: child,
+  );
+}
+
+/// Slide transition for detail screens
+Widget _slideTransition(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  return SlideTransition(
+    position: Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+    )),
     child: child,
   );
 }

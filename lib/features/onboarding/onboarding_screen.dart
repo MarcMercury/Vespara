@@ -181,12 +181,41 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
   
+  /// Check which categories have at least one selection
+  Set<String> _getCategoriesWithSelections() {
+    final categoriesWithSelections = <String>{};
+    
+    for (final entry in _allTraits.entries) {
+      final category = entry.key;
+      final traits = entry.value;
+      
+      // Check if any trait from this category is selected
+      for (final trait in traits) {
+        if (_selectedTraits.contains(trait)) {
+          categoriesWithSelections.add(category);
+          break;
+        }
+      }
+    }
+    
+    return categoriesWithSelections;
+  }
+  
+  /// Get list of categories that still need selections
+  List<String> _getMissingCategories() {
+    final allCategories = _allTraits.keys.toSet();
+    final selectedCategories = _getCategoriesWithSelections();
+    return allCategories.difference(selectedCategories).toList();
+  }
+  
   bool _canProceed() {
     switch (_currentPage) {
       case 0:
         return _displayNameController.text.trim().isNotEmpty;
       case 1:
-        return _selectedTraits.length >= 5;
+        // Require at least one selection from EACH category
+        final missingCategories = _getMissingCategories();
+        return missingCategories.isEmpty;
       case 2:
         return true; // Bio is optional
       default:
@@ -607,6 +636,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
   
   Widget _buildTraitsPage() {
+    final missingCategories = _getMissingCategories();
+    final selectedCategories = _getCategoriesWithSelections();
+    final totalCategories = _allTraits.keys.length;
+    final completedCount = selectedCategories.length;
+    
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -614,33 +648,78 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           SizedBox(height: 8),
           
-          // Selection counter
+          // Category progress indicator
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${_selectedTraits.length} selected',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: _selectedTraits.length >= 5 
-                        ? VesparaColors.success 
-                        : VesparaColors.secondary,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          completedCount == totalCategories 
+                              ? Icons.check_circle 
+                              : Icons.radio_button_unchecked,
+                          color: completedCount == totalCategories 
+                              ? VesparaColors.success 
+                              : VesparaColors.secondary,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '$completedCount of $totalCategories categories',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: completedCount == totalCategories 
+                                ? VesparaColors.success 
+                                : VesparaColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_selectedTraits.isNotEmpty)
+                      TextButton(
+                        onPressed: () => setState(() => _selectedTraits.clear()),
+                        child: Text(
+                          'Clear all',
+                          style: TextStyle(
+                            color: VesparaColors.secondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: completedCount / totalCategories,
+                    backgroundColor: VesparaColors.surface,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      completedCount == totalCategories 
+                          ? VesparaColors.success 
+                          : VesparaColors.glow,
+                    ),
+                    minHeight: 6,
                   ),
                 ),
-                if (_selectedTraits.isNotEmpty)
-                  TextButton(
-                    onPressed: () => setState(() => _selectedTraits.clear()),
-                    child: Text(
-                      'Clear all',
-                      style: TextStyle(
-                        color: VesparaColors.secondary,
-                        fontSize: 12,
-                      ),
+                if (missingCategories.isNotEmpty) ...[
+                  SizedBox(height: 8),
+                  Text(
+                    'Select at least one from each category to continue',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: VesparaColors.secondary,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -649,19 +728,56 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           
           // Trait categories
           ..._allTraits.entries.map((category) {
+            final categoryName = category.key;
+            final hasCategorySelection = selectedCategories.contains(categoryName);
+            
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: EdgeInsets.fromLTRB(8, 16, 8, 8),
-                  child: Text(
-                    category.key,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary,
-                      letterSpacing: 1,
-                    ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        hasCategorySelection 
+                            ? Icons.check_circle 
+                            : Icons.circle_outlined,
+                        color: hasCategorySelection 
+                            ? VesparaColors.success 
+                            : VesparaColors.tagsYellow,
+                        size: 16,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        categoryName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: hasCategorySelection 
+                              ? VesparaColors.primary 
+                              : VesparaColors.tagsYellow,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      if (!hasCategorySelection) ...[
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: VesparaColors.tagsYellow.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Pick 1+',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.tagsYellow,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 Wrap(

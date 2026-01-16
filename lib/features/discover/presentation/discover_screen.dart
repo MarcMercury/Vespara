@@ -90,7 +90,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         break;
     }
     
-    // Show feedback
+    // Show feedback - clear any existing snackbar first
+    ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -103,6 +104,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ],
         ),
         duration: Duration(seconds: isMatch ? 3 : 1),
+        behavior: SnackBarBehavior.floating,
+        dismissDirection: DismissDirection.horizontal,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: isMatch 
             ? VesparaColors.success 
             : (direction == SwipeDirection.left ? VesparaColors.surface : VesparaColors.glow.withOpacity(0.9)),
@@ -110,10 +115,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           label: 'Message',
           textColor: Colors.white,
           onPressed: () {
-            // Navigate to chat
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Opening chat...'), duration: Duration(seconds: 1)),
-            );
+            // Dismiss this snackbar and navigate to Wire
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            // TODO: Navigate to Wire with this match conversation
           },
         ) : null,
       ),

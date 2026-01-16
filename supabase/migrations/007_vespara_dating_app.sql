@@ -8,33 +8,32 @@
 -- ============================================
 
 -- Add dating-specific fields to profiles
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS 
-    headline TEXT,
-    height_cm INTEGER,
-    body_type TEXT,
-    education TEXT,
-    occupation TEXT,
-    company TEXT,
-    drinking TEXT, -- 'never', 'socially', 'regularly'
-    smoking TEXT,  -- 'never', 'socially', 'regularly'
-    cannabis TEXT, -- 'never', 'socially', 'regularly'
-    relationship_type TEXT[], -- 'monogamy', 'ethicalNonMonogamy', 'polyamory', 'casual', 'exploring'
-    kinks TEXT[], -- User-defined kink list
-    boundaries TEXT[], -- Hard nos
-    love_languages TEXT[], -- 'words', 'touch', 'gifts', 'acts', 'time'
-    communication_style TEXT, -- 'texter', 'caller', 'inPerson'
-    photos TEXT[], -- Array of photo URLs
-    prompts JSONB DEFAULT '[]'::jsonb, -- Dating prompts and answers
-    is_discoverable BOOLEAN DEFAULT TRUE,
-    discovery_last_active TIMESTAMPTZ DEFAULT NOW(),
-    profile_completeness INTEGER DEFAULT 0, -- 0-100
-    -- Search preferences
-    pref_age_min INTEGER DEFAULT 18,
-    pref_age_max INTEGER DEFAULT 99,
-    pref_distance_km INTEGER DEFAULT 50,
-    pref_genders TEXT[] DEFAULT ARRAY['any']::TEXT[],
-    pref_relationship_types TEXT[] DEFAULT ARRAY['any']::TEXT[],
-    pref_body_types TEXT[] DEFAULT ARRAY['any']::TEXT[];
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS headline TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS height_cm INTEGER;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS body_type TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS education TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS occupation TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS drinking TEXT; -- 'never', 'socially', 'regularly'
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS smoking TEXT;  -- 'never', 'socially', 'regularly'
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS cannabis TEXT; -- 'never', 'socially', 'regularly'
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS relationship_type TEXT[]; -- 'monogamy', 'ethicalNonMonogamy', 'polyamory', 'casual', 'exploring'
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS kinks TEXT[]; -- User-defined kink list
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS boundaries TEXT[]; -- Hard nos
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS love_languages TEXT[]; -- 'words', 'touch', 'gifts', 'acts', 'time'
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS communication_style TEXT; -- 'texter', 'caller', 'inPerson'
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS photos TEXT[]; -- Array of photo URLs
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS prompts JSONB DEFAULT '[]'::jsonb; -- Dating prompts and answers
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_discoverable BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS discovery_last_active TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS profile_completeness INTEGER DEFAULT 0; -- 0-100
+-- Search preferences
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pref_age_min INTEGER DEFAULT 18;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pref_age_max INTEGER DEFAULT 99;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pref_distance_km INTEGER DEFAULT 50;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pref_genders TEXT[] DEFAULT ARRAY['any']::TEXT[];
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pref_relationship_types TEXT[] DEFAULT ARRAY['any']::TEXT[];
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pref_body_types TEXT[] DEFAULT ARRAY['any']::TEXT[];
 
 -- Index for discovery queries
 CREATE INDEX IF NOT EXISTS idx_profiles_discoverable 
@@ -136,23 +135,21 @@ CREATE POLICY "Users can update own match settings" ON public.matches
 -- ============================================
 
 -- Update conversations to link to matches
-ALTER TABLE public.conversations ADD COLUMN IF NOT EXISTS 
-    match_link_id UUID REFERENCES public.matches(id),
-    typing_indicator UUID, -- Who is currently typing
-    typing_started_at TIMESTAMPTZ;
+ALTER TABLE public.conversations ADD COLUMN IF NOT EXISTS match_link_id UUID REFERENCES public.matches(id);
+ALTER TABLE public.conversations ADD COLUMN IF NOT EXISTS typing_indicator UUID; -- Who is currently typing
+ALTER TABLE public.conversations ADD COLUMN IF NOT EXISTS typing_started_at TIMESTAMPTZ;
 
 -- Enhanced messages for modern chat
-ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS
-    message_type TEXT DEFAULT 'text', -- 'text', 'image', 'voice', 'gif', 'reaction', 'system'
-    media_url TEXT,
-    media_thumbnail_url TEXT,
-    media_duration_seconds INTEGER, -- For voice notes
-    reply_to_id UUID REFERENCES public.messages(id),
-    reactions JSONB DEFAULT '[]'::jsonb, -- [{emoji: '❤️', user_id: 'xxx'}]
-    is_edited BOOLEAN DEFAULT FALSE,
-    edited_at TIMESTAMPTZ,
-    is_deleted BOOLEAN DEFAULT FALSE,
-    deleted_at TIMESTAMPTZ;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'; -- 'text', 'image', 'voice', 'gif', 'reaction', 'system'
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS media_url TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS media_thumbnail_url TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS media_duration_seconds INTEGER; -- For voice notes
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS reply_to_id UUID REFERENCES public.messages(id);
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '[]'::jsonb; -- [{emoji: '❤️', user_id: 'xxx'}]
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 
 -- ============================================
 -- 5. THE PLANNER - Calendar Integration
@@ -244,11 +241,7 @@ CREATE TABLE IF NOT EXISTS public.group_events (
 
 ALTER TABLE public.group_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view events they're invited to or hosting" ON public.group_events
-    FOR SELECT USING (
-        auth.uid() = host_id OR 
-        EXISTS (SELECT 1 FROM public.event_invites WHERE event_id = id AND user_id = auth.uid())
-    );
+-- Note: group_events SELECT policy moved after event_invites table creation
 
 CREATE POLICY "Users can manage own events" ON public.group_events
     FOR ALL USING (auth.uid() = host_id);
@@ -269,6 +262,13 @@ CREATE TABLE IF NOT EXISTS public.event_invites (
 
 ALTER TABLE public.event_invites ENABLE ROW LEVEL SECURITY;
 
+-- Now create the group_events SELECT policy that references event_invites
+CREATE POLICY "Users can view events they're invited to or hosting" ON public.group_events
+    FOR SELECT USING (
+        auth.uid() = host_id OR 
+        EXISTS (SELECT 1 FROM public.event_invites WHERE event_id = id AND user_id = auth.uid())
+    );
+
 CREATE POLICY "Users can view own invites" ON public.event_invites
     FOR SELECT USING (auth.uid() = user_id OR auth.uid() = invited_by);
 
@@ -285,15 +285,14 @@ CREATE POLICY "Hosts can manage invites" ON public.event_invites
 -- ============================================
 
 -- Add AI analysis fields to shredder
-ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS
-    match_id UUID REFERENCES public.matches(id),
-    ai_recommendation BOOLEAN DEFAULT FALSE, -- Was this AI recommended
-    ai_reasoning TEXT, -- Why AI thinks you should move on
-    ai_confidence DOUBLE PRECISION, -- 0-1 confidence score
-    days_since_contact INTEGER,
-    message_sentiment_avg DOUBLE PRECISION, -- Overall sentiment analysis
-    reciprocation_ratio DOUBLE PRECISION, -- How balanced the conversation was
-    shred_method TEXT DEFAULT 'archive'; -- 'archive', 'block', 'ghost_protocol'
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS match_id UUID REFERENCES public.matches(id);
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS ai_recommendation BOOLEAN DEFAULT FALSE; -- Was this AI recommended
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS ai_reasoning TEXT; -- Why AI thinks you should move on
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS ai_confidence DOUBLE PRECISION; -- 0-1 confidence score
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS days_since_contact INTEGER;
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS message_sentiment_avg DOUBLE PRECISION; -- Overall sentiment analysis
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS reciprocation_ratio DOUBLE PRECISION; -- How balanced the conversation was
+ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS shred_method TEXT DEFAULT 'archive'; -- 'archive', 'block', 'ghost_protocol'
 
 -- AI shred suggestions (pre-shredder queue)
 CREATE TABLE IF NOT EXISTS public.shred_suggestions (
@@ -343,18 +342,17 @@ INSERT INTO public.tag_game_categories (name, description, icon, sort_order, min
 ON CONFLICT (name) DO NOTHING;
 
 -- Enhanced games table
-ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS
-    category_id UUID REFERENCES public.tag_game_categories(id),
-    min_players INTEGER DEFAULT 2,
-    max_players INTEGER DEFAULT 2,
-    estimated_duration_minutes INTEGER DEFAULT 15,
-    player_mode TEXT DEFAULT 'shared', -- 'shared' (1 phone), 'individual' (everyone on their own phone)
-    requires_account BOOLEAN DEFAULT FALSE,
-    thumbnail_url TEXT,
-    featured BOOLEAN DEFAULT FALSE,
-    rating_avg DOUBLE PRECISION DEFAULT 0,
-    rating_count INTEGER DEFAULT 0,
-    times_played INTEGER DEFAULT 0;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES public.tag_game_categories(id);
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS min_players INTEGER DEFAULT 2;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS max_players INTEGER DEFAULT 2;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS estimated_duration_minutes INTEGER DEFAULT 15;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS player_mode TEXT DEFAULT 'shared'; -- 'shared' (1 phone), 'individual' (everyone on their own phone)
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS requires_account BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS thumbnail_url TEXT;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS rating_avg DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0;
+ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS times_played INTEGER DEFAULT 0;
 
 -- Game ratings/reviews
 CREATE TABLE IF NOT EXISTS public.game_ratings (
@@ -402,26 +400,25 @@ CREATE POLICY "Users can view own context" ON public.relationship_context
 -- 10. ANALYTICS ENHANCEMENTS (Mirror)
 -- ============================================
 
-ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS
-    -- Discovery analytics
-    profiles_viewed INTEGER DEFAULT 0,
-    swipes_left INTEGER DEFAULT 0,
-    swipes_right INTEGER DEFAULT 0,
-    swipes_super INTEGER DEFAULT 0,
-    match_rate DOUBLE PRECISION DEFAULT 0, -- % of right swipes that match
-    -- Quality metrics (brutal honesty)
-    avg_match_quality DOUBLE PRECISION DEFAULT 0, -- Based on their engagement
-    avg_conversation_depth DOUBLE PRECISION DEFAULT 0, -- How deep do convos get
-    first_message_quality_score DOUBLE PRECISION DEFAULT 0,
-    -- Behavioral insights
-    most_active_time TEXT,
-    avg_response_time_minutes INTEGER,
-    conversation_starter_rate DOUBLE PRECISION DEFAULT 0, -- % of convos you start
-    date_conversion_rate DOUBLE PRECISION DEFAULT 0, -- % of matches that become dates
-    -- AI insights
-    ai_personality_summary TEXT,
-    ai_dating_style TEXT,
-    ai_improvement_tips TEXT[];
+-- Discovery analytics
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS profiles_viewed INTEGER DEFAULT 0;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS swipes_left INTEGER DEFAULT 0;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS swipes_right INTEGER DEFAULT 0;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS swipes_super INTEGER DEFAULT 0;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS match_rate DOUBLE PRECISION DEFAULT 0; -- % of right swipes that match
+-- Quality metrics (brutal honesty)
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS avg_match_quality DOUBLE PRECISION DEFAULT 0; -- Based on their engagement
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS avg_conversation_depth DOUBLE PRECISION DEFAULT 0; -- How deep do convos get
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS first_message_quality_score DOUBLE PRECISION DEFAULT 0;
+-- Behavioral insights
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS most_active_time TEXT;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS avg_response_time_minutes INTEGER;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS conversation_starter_rate DOUBLE PRECISION DEFAULT 0; -- % of convos you start
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS date_conversion_rate DOUBLE PRECISION DEFAULT 0; -- % of matches that become dates
+-- AI insights
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS ai_personality_summary TEXT;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS ai_dating_style TEXT;
+ALTER TABLE public.user_analytics ADD COLUMN IF NOT EXISTS ai_improvement_tips TEXT[];
 
 -- ============================================
 -- FUNCTIONS: Match Creation
@@ -544,7 +541,9 @@ CREATE INDEX IF NOT EXISTS idx_matches_users ON public.matches(user_a_id, user_b
 CREATE INDEX IF NOT EXISTS idx_matches_priority_a ON public.matches(user_a_id, user_a_priority) WHERE NOT user_a_archived;
 CREATE INDEX IF NOT EXISTS idx_matches_priority_b ON public.matches(user_b_id, user_b_priority) WHERE NOT user_b_archived;
 CREATE INDEX IF NOT EXISTS idx_calendar_events_match ON public.calendar_events(match_id);
-CREATE INDEX IF NOT EXISTS idx_group_events_upcoming ON public.group_events(start_time) WHERE start_time > NOW();
+-- Note: Cannot use NOW() in partial index predicate (not immutable)
+-- Using regular index instead - filter at query time
+CREATE INDEX IF NOT EXISTS idx_group_events_start_time ON public.group_events(start_time DESC);
 
 -- ============================================
 -- GRANT PERMISSIONS
