@@ -370,13 +370,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
         setState(() {
           _events.add(CalendarEvent(
             id: 'event-${_events.length + 1}',
+            userId: 'current-user',
             title: 'New Date',
             matchName: 'Someone Special',
-            matchAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
             startTime: DateTime.now().add(const Duration(hours: 3)),
             endTime: DateTime.now().add(const Duration(hours: 5)),
             location: 'Downtown Bar',
             status: EventStatus.tentative,
+            createdAt: DateTime.now(),
           ));
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -437,13 +438,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
                 setState(() {
                   _events.add(CalendarEvent(
                     id: 'event-${_events.length + 1}',
+                    userId: 'current-user',
                     title: titleController.text,
                     matchName: 'Custom Event',
-                    matchAvatar: '',
                     startTime: DateTime.now().add(const Duration(days: 1)),
                     endTime: DateTime.now().add(const Duration(days: 1, hours: 2)),
                     location: locationController.text.isEmpty ? 'TBD' : locationController.text,
                     status: EventStatus.tentative,
+                    createdAt: DateTime.now(),
                   ));
                 });
                 ScaffoldMessenger.of(context).showSnackBar(

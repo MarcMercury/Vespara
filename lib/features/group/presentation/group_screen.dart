@@ -757,12 +757,12 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
           children: [
             Text(event.title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: VesparaColors.glow)),
             const SizedBox(height: 8),
-            Text(event.description, style: TextStyle(color: VesparaColors.secondary)),
+            Text(event.description ?? '', style: TextStyle(color: VesparaColors.secondary)),
             const SizedBox(height: 20),
             Row(children: [
               Icon(Icons.calendar_today, size: 16, color: VesparaColors.glow),
               const SizedBox(width: 8),
-              Text(_formatDate(event.dateTime), style: TextStyle(color: VesparaColors.primary)),
+              Text(_formatDate(event.startTime), style: TextStyle(color: VesparaColors.primary)),
             ]),
             const SizedBox(height: 8),
             Row(children: [

@@ -420,7 +420,12 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundImage: NetworkImage(widget.conversation.otherUserAvatar),
+                backgroundImage: widget.conversation.otherUserAvatar != null
+                    ? NetworkImage(widget.conversation.otherUserAvatar!)
+                    : null,
+                child: widget.conversation.otherUserAvatar == null
+                    ? const Icon(Icons.person, size: 40)
+                    : null,
               ),
               const SizedBox(height: 16),
               Text(
