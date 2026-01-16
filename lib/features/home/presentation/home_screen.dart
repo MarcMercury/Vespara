@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math' as math;
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/providers/app_providers.dart';
+import '../../strategist/presentation/strategist_screen.dart';
+import '../../scope/presentation/scope_screen.dart';
+import '../../roster/presentation/roster_screen.dart';
+import '../../wire/presentation/wire_screen.dart';
+import '../../shredder/presentation/shredder_screen.dart';
+import '../../ludus/presentation/tags_screen.dart';
+import '../../core/presentation/core_screen.dart';
+import '../../mirror/presentation/mirror_screen.dart';
 
 /// HomeScreen - The Bento Box Dashboard
-/// Uses GoRouter to navigate to real feature screens
+/// Beautiful animated tiles that navigate to feature screens
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,22 +23,97 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  // Route paths for each tile
-  static const _routes = [
-    '/home/strategist',  // 0: The Strategist
-    '/home/scope',       // 1: The Scope
-    '/home/roster',      // 2: The Roster
-    '/home/wire',        // 3: The Wire
-    '/home/shredder',    // 4: The Shredder
-    '/home/ludus',       // 5: The Ludus
-    '/home/core',        // 6: The Core
-    '/home/mirror',      // 7: The Mirror
+class _HomeScreenState extends ConsumerState<HomeScreen> 
+    with TickerProviderStateMixin {
+  
+  late AnimationController _staggerController;
+  late AnimationController _pulseController;
+  late AnimationController _shimmerController;
+  late List<Animation<double>> _tileAnimations;
+  
+  // Screens for each tile
+  static const List<Widget> _screens = [
+    StrategistScreen(),  // 0: The Strategist
+    ScopeScreen(),       // 1: The Scope
+    RosterScreen(),      // 2: The Roster
+    WireScreen(),        // 3: The Wire
+    ShredderScreen(),    // 4: The Shredder
+    TagsScreen(),        // 5: The Ludus
+    CoreScreen(),        // 6: The Core
+    MirrorScreen(),      // 7: The Mirror
   ];
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Stagger animation for tile entrance
+    _staggerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    
+    // Pulse animation for tile glow
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    
+    // Shimmer animation for tile highlights
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat();
+    
+    // Create staggered animations for each tile
+    _tileAnimations = List.generate(8, (index) {
+      final startTime = index * 0.1;
+      final endTime = startTime + 0.4;
+      return CurvedAnimation(
+        parent: _staggerController,
+        curve: Interval(startTime, endTime.clamp(0.0, 1.0), curve: Curves.easeOutBack),
+      );
+    });
+    
+    _staggerController.forward();
+  }
+  
+  @override
+  void dispose() {
+    _staggerController.dispose();
+    _pulseController.dispose();
+    _shimmerController.dispose();
+    super.dispose();
+  }
+  
+  void _navigateToScreen(int index) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => _screens[index],
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.05),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
   
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
+    final profile = ref.watch(userProfileProvider);
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
@@ -42,75 +126,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // ═══════════════════════════════════════════════════════════════
               // HEADER
               // ═══════════════════════════════════════════════════════════════
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'VESPARA',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 4,
-                      color: VesparaColors.primary,
-                    ),
-                  ),
-                  
-                  // Profile avatar / sign out
-                  PopupMenuButton<String>(
-                    onSelected: (value) async {
-                      if (value == 'signout') {
-                        await Supabase.instance.client.auth.signOut();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'signout',
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout, color: VesparaColors.error, size: 20),
-                            SizedBox(width: 8),
-                            Text('Sign Out'),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: VesparaColors.surface,
-                        border: Border.all(
-                          color: VesparaColors.primary.withOpacity(0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          user?.email?.substring(0, 1).toUpperCase() ?? 'V',
-                          style: TextStyle(
-                            color: VesparaColors.primary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              _buildHeader(context, user, profile),
               
-              SizedBox(height: 8),
-              
-              Text(
-                user?.email ?? '',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: VesparaColors.secondary,
-                ),
-              ),
-              
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               
               // ═══════════════════════════════════════════════════════════════
               // BENTO GRID - 8 Tiles
@@ -125,16 +143,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
   
+  Widget _buildHeader(BuildContext context, dynamic user, AsyncValue profile) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'VESPARA',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 6,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              profile.when(
+                data: (p) => 'Welcome back, ${p?.displayName ?? 'Explorer'}',
+                loading: () => 'Loading...',
+                error: (_, __) => 'Demo Mode',
+              ),
+              style: TextStyle(
+                fontSize: 14,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ],
+        ),
+        
+        // Profile avatar with glow
+        AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            return Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: VesparaColors.surface,
+                border: Border.all(
+                  color: VesparaColors.glow.withOpacity(0.3 + _pulseController.value * 0.2),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: VesparaColors.glow.withOpacity(0.1 + _pulseController.value * 0.1),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  user?.email?.substring(0, 1).toUpperCase() ?? 'V',
+                  style: TextStyle(
+                    color: VesparaColors.primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+  
   Widget _buildBentoGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final tileSpacing = 12.0;
-        final tileWidth = (width - tileSpacing) / 2;
-        final smallTileHeight = tileWidth * 0.6;
-        final largeTileHeight = tileWidth * 1.2;
+        final totalWidth = constraints.maxWidth;
+        final spacing = 12.0;
+        final tileWidth = (totalWidth - spacing) / 2;
+        // Uniform height for all tiles - creates clean grid
+        final tileHeight = tileWidth * 0.9;
         
         return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
               // ═══════════════════════════════════════════════════════════════
@@ -143,30 +232,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 0,
-                      title: 'THE STRATEGIST',
-                      subtitle: 'AI Planning',
+                      label: 'STRATEGIST',
+                      subtitle: 'AI Dating Coach',
                       icon: Icons.psychology,
-                      height: largeTileHeight,
-                      color: VesparaColors.glow,
+                      height: tileHeight,
+                      accentColor: VesparaColors.glow,
                     ),
                   ),
-                  SizedBox(width: tileSpacing),
+                  SizedBox(width: spacing),
                   Expanded(
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 1,
-                      title: 'THE SCOPE',
-                      subtitle: 'Discovery',
+                      label: 'SCOPE',
+                      subtitle: 'Profile Analyzer',
                       icon: Icons.explore,
-                      height: largeTileHeight,
-                      color: VesparaColors.secondary,
+                      height: tileHeight,
+                      accentColor: VesparaColors.secondary,
                     ),
                   ),
                 ],
               ),
               
-              SizedBox(height: tileSpacing),
+              SizedBox(height: spacing),
               
               // ═══════════════════════════════════════════════════════════════
               // ROW 2: The Workflow (Roster + Wire)
@@ -174,30 +263,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 2,
-                      title: 'THE ROSTER',
-                      subtitle: 'Your CRM',
+                      label: 'ROSTER',
+                      subtitle: 'Match Manager',
                       icon: Icons.people,
-                      height: smallTileHeight,
-                      color: VesparaColors.tagsGreen,
+                      height: tileHeight,
+                      accentColor: VesparaColors.success,
                     ),
                   ),
-                  SizedBox(width: tileSpacing),
+                  SizedBox(width: spacing),
                   Expanded(
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 3,
-                      title: 'THE WIRE',
-                      subtitle: 'Messages',
+                      label: 'WIRE',
+                      subtitle: 'Conversations',
                       icon: Icons.message,
-                      height: smallTileHeight,
-                      color: VesparaColors.primary,
+                      height: tileHeight,
+                      accentColor: VesparaColors.secondary,
                     ),
                   ),
                 ],
               ),
               
-              SizedBox(height: tileSpacing),
+              SizedBox(height: spacing),
               
               // ═══════════════════════════════════════════════════════════════
               // ROW 3: The Experience (Shredder + Ludus)
@@ -205,32 +294,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Row(
                 children: [
                   Expanded(
-                    flex: 1,
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 4,
-                      title: 'SHREDDER',
+                      label: 'SHREDDER',
                       subtitle: 'Ghost Protocol',
                       icon: Icons.delete_sweep,
-                      height: smallTileHeight,
-                      color: VesparaColors.error,
+                      height: tileHeight,
+                      accentColor: VesparaColors.warning,
                     ),
                   ),
-                  SizedBox(width: tileSpacing),
+                  SizedBox(width: spacing),
                   Expanded(
-                    flex: 2,
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 5,
-                      title: 'THE LUDUS',
+                      label: 'LUDUS',
                       subtitle: 'TAGS Games',
                       icon: Icons.casino,
-                      height: smallTileHeight,
-                      color: VesparaColors.tagsYellow,
+                      height: tileHeight,
+                      accentColor: VesparaColors.tagsYellow,
                     ),
                   ),
                 ],
               ),
               
-              SizedBox(height: tileSpacing),
+              SizedBox(height: spacing),
               
               // ═══════════════════════════════════════════════════════════════
               // ROW 4: The Data (Core + Mirror)
@@ -238,26 +325,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Row(
                 children: [
                   Expanded(
-                    flex: 1,
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 6,
-                      title: 'CORE',
+                      label: 'CORE',
                       subtitle: 'Settings',
                       icon: Icons.settings,
-                      height: smallTileHeight,
-                      color: VesparaColors.secondary,
+                      height: tileHeight,
+                      accentColor: VesparaColors.primary,
                     ),
                   ),
-                  SizedBox(width: tileSpacing),
+                  SizedBox(width: spacing),
                   Expanded(
-                    flex: 2,
-                    child: _buildTile(
+                    child: _buildAnimatedTile(
                       index: 7,
-                      title: 'THE MIRROR',
+                      label: 'MIRROR',
                       subtitle: 'Analytics',
                       icon: Icons.analytics,
-                      height: smallTileHeight,
-                      color: VesparaColors.glow,
+                      height: tileHeight,
+                      accentColor: VesparaColors.glow,
                     ),
                   ),
                 ],
@@ -271,82 +356,281 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
   
-  Widget _buildTile({
+  Widget _buildAnimatedTile({
     required int index,
-    required String title,
+    required String label,
     required String subtitle,
     required IconData icon,
     required double height,
-    required Color color,
+    required Color accentColor,
   }) {
-    return GestureDetector(
-      onTap: () {
-        // Navigate to the actual feature screen using GoRouter
-        context.go(_routes[index]);
+    return AnimatedBuilder(
+      animation: _tileAnimations[index],
+      builder: (context, child) {
+        return Transform.scale(
+          scale: 0.5 + (_tileAnimations[index].value * 0.5),
+          child: Opacity(
+            opacity: _tileAnimations[index].value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
       },
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
+      child: _VesparaTile(
+        index: index,
+        label: label,
+        subtitle: subtitle,
+        icon: icon,
         height: height,
-        decoration: BoxDecoration(
-          color: VesparaColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 20,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon with glow
-              Container(
-                width: 40,
-                height: 40,
+        accentColor: accentColor,
+        pulseAnimation: _pulseController,
+        shimmerAnimation: _shimmerController,
+        onTap: () => _navigateToScreen(index),
+      ),
+    );
+  }
+}
+
+/// Individual animated tile with hover effects and glow
+class _VesparaTile extends StatefulWidget {
+  final int index;
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final double height;
+  final Color accentColor;
+  final AnimationController pulseAnimation;
+  final AnimationController shimmerAnimation;
+  final VoidCallback onTap;
+
+  const _VesparaTile({
+    required this.index,
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.height,
+    required this.accentColor,
+    required this.pulseAnimation,
+    required this.shimmerAnimation,
+    required this.onTap,
+  });
+
+  @override
+  State<_VesparaTile> createState() => _VesparaTileState();
+}
+
+class _VesparaTileState extends State<_VesparaTile> 
+    with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+  bool _isHovered = false;
+  late AnimationController _tapController;
+  late Animation<double> _scaleAnimation;
+  
+  @override
+  void initState() {
+    super.initState();
+    _tapController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _tapController, curve: Curves.easeInOut),
+    );
+  }
+  
+  @override
+  void dispose() {
+    _tapController.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: (_) {
+          setState(() => _isPressed = true);
+          _tapController.forward();
+        },
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          _tapController.reverse();
+          widget.onTap();
+        },
+        onTapCancel: () {
+          setState(() => _isPressed = false);
+          _tapController.reverse();
+        },
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            _scaleAnimation,
+            widget.pulseAnimation,
+            widget.shimmerAnimation,
+          ]),
+          builder: (context, child) {
+            final pulseValue = widget.pulseAnimation.value;
+            final shimmerValue = widget.shimmerAnimation.value;
+            
+            return Transform.scale(
+              scale: _scaleAnimation.value * (_isHovered ? 1.02 : 1.0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: widget.height,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.accentColor.withOpacity(0.08 + pulseValue * 0.04),
+                      VesparaColors.surface,
+                      VesparaColors.surface.withOpacity(0.95),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                  border: Border.all(
+                    color: _isHovered || _isPressed
+                        ? widget.accentColor.withOpacity(0.4)
+                        : VesparaColors.glow.withOpacity(0.08 + pulseValue * 0.05),
+                    width: _isHovered ? 1.5 : 1,
+                  ),
+                  boxShadow: [
+                    // Outer glow
+                    BoxShadow(
+                      color: widget.accentColor.withOpacity(
+                        _isHovered ? 0.15 : 0.05 + pulseValue * 0.03,
+                      ),
+                      blurRadius: _isHovered ? 20 : 12,
+                      spreadRadius: _isHovered ? 2 : 0,
+                    ),
+                    // Inner shadow for depth
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
+                    children: [
+                      // Shimmer effect
+                      Positioned.fill(
+                        child: Opacity(
+                          opacity: 0.05,
+                          child: Transform.translate(
+                            offset: Offset(
+                              (shimmerValue - 0.5) * 200,
+                              0,
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    widget.accentColor.withOpacity(0.3),
+                                    Colors.transparent,
+                                  ],
+                                  stops: const [0.0, 0.5, 1.0],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      // Floating particles effect
+                      ...List.generate(3, (i) {
+                        final angle = (shimmerValue * 2 * math.pi) + (i * math.pi / 1.5);
+                        final radius = 30.0 + i * 15;
+                        return Positioned(
+                          left: 30 + math.cos(angle) * radius,
+                          top: 30 + math.sin(angle) * radius,
+                          child: Container(
+                            width: 4 - i * 0.5,
+                            height: 4 - i * 0.5,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: widget.accentColor.withOpacity(0.2 - i * 0.05),
+                            ),
+                          ),
+                        );
+                      }),
+                      
+                      // Icon with glow
+                      Positioned(
+                        top: 20,
+                        left: 20,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: widget.accentColor.withOpacity(0.1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: widget.accentColor.withOpacity(0.2 + pulseValue * 0.1),
+                                blurRadius: 15,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            widget.icon,
+                            size: 28,
+                            color: widget.accentColor.withOpacity(0.9),
+                          ),
+                        ),
+                      ),
+                      
+                      // Labels
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.label,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 2.5,
+                                color: VesparaColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.subtitle,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: VesparaColors.secondary.withOpacity(0.8),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Tap ripple indicator
+                      if (_isPressed)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              color: widget.accentColor.withOpacity(0.1),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-              
-              Spacer(),
-              
-              // Title
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
-                  color: VesparaColors.primary,
-                ),
-              ),
-              
-              SizedBox(height: 4),
-              
-              // Subtitle
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: VesparaColors.secondary,
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
