@@ -1,14 +1,16 @@
 import 'package:equatable/equatable.dart';
 
-/// Analytics data for The Mirror
+/// Analytics data for The Mirror - Brutal Truth Edition
 class UserAnalytics extends Equatable {
   final String userId;
   final double ghostRate;
   final double flakeRate;
   final double swipeRatio;
   final double responseRate;
+  final double matchRate;
   final int totalMatches;
   final int activeConversations;
+  final int activeDays;
   final int datesScheduled;
   final int messagesSent;
   final int messagesReceived;
@@ -18,14 +20,21 @@ class UserAnalytics extends Equatable {
   final String peakActivityTime;
   final DateTime lastUpdated;
   
+  // AI Brutal Truth fields
+  final String? aiPersonalitySummary;
+  final String? aiDatingStyle;
+  final List<String>? aiImprovementTips;
+  
   const UserAnalytics({
     required this.userId,
     this.ghostRate = 0.0,
     this.flakeRate = 0.0,
     this.swipeRatio = 50.0,
     this.responseRate = 50.0,
+    this.matchRate = 0.0,
     this.totalMatches = 0,
     this.activeConversations = 0,
+    this.activeDays = 0,
     this.datesScheduled = 0,
     this.messagesSent = 0,
     this.messagesReceived = 0,
@@ -34,6 +43,9 @@ class UserAnalytics extends Equatable {
     this.weeklyActivity = const [0, 0, 0, 0, 0, 0, 0],
     this.peakActivityTime = '8pm - 10pm',
     required this.lastUpdated,
+    this.aiPersonalitySummary,
+    this.aiDatingStyle,
+    this.aiImprovementTips,
   });
   
   factory UserAnalytics.fromJson(Map<String, dynamic> json) {

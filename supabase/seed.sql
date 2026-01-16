@@ -298,3 +298,4 @@ SELECT id, 'green', 'prompt', 'Share a personal problem and ask your partner''s 
 -- Verify game content was inserted
 SELECT 'Games inserted: ' || COUNT(*) FROM ludus_games WHERE name IN ('The Pleasure Deck', 'Path of Pleasure', 'Truth or Dare: Elevated', 'Intimacy Builder');
 SELECT 'Cards inserted: ' || COUNT(*) FROM ludus_cards WHERE game_id IN (SELECT id FROM ludus_games WHERE name IN ('The Pleasure Deck', 'Path of Pleasure', 'Truth or Dare: Elevated', 'Intimacy Builder'));
+

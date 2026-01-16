@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 
-/// User profile model for Vespara
+/// User profile model for Vespara Dating App
 class UserProfile extends Equatable {
   final String id;
   final String email;
-  final String? displayName;
+  final String displayName;
   final String? avatarUrl;
   final String? bio;
   final DateTime createdAt;
@@ -15,10 +15,21 @@ class UserProfile extends Equatable {
   final List<String> verifications;
   final Map<String, dynamic>? preferences;
   
+  // Dating-specific fields
+  final String? headline;
+  final int? age;
+  final String? occupation;
+  final String? location;
+  final List<String> photos;
+  final List<String> relationshipTypes;
+  final List<String> loveLanguages;
+  final List<String> kinks;
+  final List<String> boundaries;
+  
   const UserProfile({
     required this.id,
     required this.email,
-    this.displayName,
+    required this.displayName,
     this.avatarUrl,
     this.bio,
     required this.createdAt,
@@ -28,15 +39,33 @@ class UserProfile extends Equatable {
     this.isVerified = false,
     this.verifications = const [],
     this.preferences,
+    this.headline,
+    this.age,
+    this.occupation,
+    this.location,
+    this.photos = const [],
+    this.relationshipTypes = const [],
+    this.loveLanguages = const [],
+    this.kinks = const [],
+    this.boundaries = const [],
   });
   
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'] as String,
       email: json['email'] as String? ?? '',
-      displayName: json['display_name'] as String?,
+      displayName: json['display_name'] as String? ?? 'Unknown',
       avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
+      headline: json['headline'] as String?,
+      age: json['age'] as int?,
+      occupation: json['occupation'] as String?,
+      location: json['location'] as String?,
+      photos: List<String>.from(json['photos'] ?? []),
+      relationshipTypes: List<String>.from(json['relationship_types'] ?? []),
+      loveLanguages: List<String>.from(json['love_languages'] ?? []),
+      kinks: List<String>.from(json['kinks'] ?? []),
+      boundaries: List<String>.from(json['boundaries'] ?? []),
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
