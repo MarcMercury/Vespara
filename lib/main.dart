@@ -19,6 +19,26 @@ Future<void> main() async {
     ),
   );
   
+  // On web, if we're returning from OAuth callback, wait for session to be established
+  // BEFORE running the app to prevent network request interruption
+  if (kIsWeb) {
+    final uri = Uri.base;
+    if (uri.hasFragment || uri.queryParameters.containsKey('code')) {
+      debugPrint('Vespara Main: OAuth callback detected, waiting for session...');
+      // Wait for Supabase to complete the PKCE code exchange
+      // This must happen BEFORE runApp to prevent network interruption
+      for (int i = 0; i < 30; i++) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session != null) {
+          debugPrint('Vespara Main: Session established after ${(i + 1) * 200}ms');
+          break;
+        }
+        debugPrint('Vespara Main: Waiting for session... attempt ${i + 1}/30');
+      }
+    }
+  }
+  
   runApp(const ProviderScope(child: VesparaApp()));
 }
 
@@ -58,9 +78,19 @@ class _AuthGateState extends State<AuthGate> {
   
   Future<void> _initAuth() async {
     try {
-      // Listen for auth changes FIRST
+      // Get current session (OAuth processing already completed in main())
+      _session = Supabase.instance.client.auth.currentSession;
+      debugPrint('Vespara AuthGate: Initial session = ${_session != null}');
+      
+      // Check onboarding status if we have a session
+      if (_session != null) {
+        await _checkOnboardingStatus(_session!.user.id);
+      }
+      
+      // Listen for auth changes (sign in, sign out, token refresh)
       Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
+        
         if (mounted) {
           setState(() {
             _session = data.session;
@@ -73,27 +103,7 @@ class _AuthGateState extends State<AuthGate> {
         }
       });
       
-      // On web, check if we're returning from OAuth
-      if (kIsWeb) {
-        final uri = Uri.base;
-        debugPrint('Vespara: Current URL = $uri');
-        
-        // Check for OAuth callback parameters
-        if (uri.hasFragment || uri.queryParameters.containsKey('code')) {
-          debugPrint('Vespara: Detected OAuth callback, waiting for session...');
-          // Wait longer for PKCE code exchange
-          await Future.delayed(const Duration(seconds: 2));
-        }
-      }
-      
-      // Get current session
-      _session = Supabase.instance.client.auth.currentSession;
       debugPrint('Vespara: Final session check = ${_session != null}');
-      
-      // Check onboarding status if we have a session
-      if (_session != null) {
-        await _checkOnboardingStatus(_session!.user.id);
-      }
       
     } catch (e) {
       debugPrint('Vespara Auth Error: $e');

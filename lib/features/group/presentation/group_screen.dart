@@ -99,7 +99,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
             ],
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showNotificationsDialog(),
             icon: const Icon(Icons.notifications_outlined, color: VesparaColors.secondary),
           ),
         ],
@@ -376,7 +376,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () => isHost ? _showManageEventDialog(event) : _showEventDetailsDialog(event),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: VesparaColors.glow,
                           side: BorderSide(color: VesparaColors.glow),
@@ -388,7 +388,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () => isHost ? _showInviteDialog(event) : _showRSVPDialog(event),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VesparaColors.glow,
                           foregroundColor: VesparaColors.background,
@@ -549,7 +549,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
 
   Widget _buildEventTypeOption(String title, String subtitle, IconData icon) {
     return ListTile(
-      onTap: () => Navigator.pop(context),
+      onTap: () => _createEventOfType(title),
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -574,5 +574,345 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
         color: VesparaColors.secondary,
       ),
     );
+  }
+
+  void _createEventOfType(String type) {
+    Navigator.pop(context);
+    final titleController = TextEditingController(text: type == 'Custom' ? '' : 'My $type');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Create $type', style: TextStyle(color: VesparaColors.glow)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(
+                hintText: 'Event name',
+                hintStyle: TextStyle(color: VesparaColors.secondary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              style: TextStyle(color: VesparaColors.primary),
+            ),
+            const SizedBox(height: 12),
+            Text('When?', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: ['Tonight', 'Tomorrow', 'This Weekend'].map((time) =>
+                ActionChip(
+                  label: Text(time),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${titleController.text} scheduled for $time!'),
+                        backgroundColor: VesparaColors.success,
+                      ),
+                    );
+                  },
+                  backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                  labelStyle: TextStyle(color: VesparaColors.glow),
+                ),
+              ).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationsDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Notifications', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Icon(Icons.person_add, color: VesparaColors.success),
+              title: Text('Sarah accepted your invite!', style: TextStyle(color: VesparaColors.primary)),
+              subtitle: Text('2 hours ago', style: TextStyle(color: VesparaColors.secondary)),
+            ),
+            ListTile(
+              leading: Icon(Icons.event, color: VesparaColors.glow),
+              title: Text('New event: Game Night', style: TextStyle(color: VesparaColors.primary)),
+              subtitle: Text('5 hours ago', style: TextStyle(color: VesparaColors.secondary)),
+            ),
+            ListTile(
+              leading: Icon(Icons.question_mark, color: VesparaColors.tagsYellow),
+              title: Text('Mark marked "maybe" for Dinner', style: TextStyle(color: VesparaColors.primary)),
+              subtitle: Text('Yesterday', style: TextStyle(color: VesparaColors.secondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showManageEventDialog(GroupEvent event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Manage Event', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 8),
+            Text(event.title, style: TextStyle(color: VesparaColors.glow)),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.edit, color: VesparaColors.glow),
+              title: Text('Edit Details', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening event editor...')));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.share, color: VesparaColors.glow),
+              title: Text('Share Event', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sharing event link...')));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.message, color: VesparaColors.glow),
+              title: Text('Message Guests', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opening group chat...')));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.cancel, color: VesparaColors.error),
+              title: Text('Cancel Event', style: TextStyle(color: VesparaColors.error)),
+              onTap: () {
+                Navigator.pop(context);
+                _showCancelEventConfirmation(event);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCancelEventConfirmation(GroupEvent event) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Cancel Event?', style: TextStyle(color: VesparaColors.error)),
+        content: Text('This will notify all ${event.invites.length} guests that "${event.title}" has been cancelled.',
+          style: TextStyle(color: VesparaColors.secondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Keep Event', style: TextStyle(color: VesparaColors.secondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Event cancelled. Guests notified.'), backgroundColor: VesparaColors.error));
+            },
+            child: Text('Cancel Event', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEventDetailsDialog(GroupEvent event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(event.title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: VesparaColors.glow)),
+            const SizedBox(height: 8),
+            Text(event.description, style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 20),
+            Row(children: [
+              Icon(Icons.calendar_today, size: 16, color: VesparaColors.glow),
+              const SizedBox(width: 8),
+              Text(_formatDate(event.dateTime), style: TextStyle(color: VesparaColors.primary)),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.location_on, size: 16, color: VesparaColors.glow),
+              const SizedBox(width: 8),
+              Text(event.venueAddress ?? 'TBD', style: TextStyle(color: VesparaColors.primary)),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.group, size: 16, color: VesparaColors.glow),
+              const SizedBox(width: 8),
+              Text('${event.invites.length} invited', style: TextStyle(color: VesparaColors.primary)),
+            ]),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.glow,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showRSVPDialog(event);
+                },
+                child: Text('RSVP Now', style: TextStyle(color: VesparaColors.background, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showInviteDialog(GroupEvent event) {
+    final contacts = ['Alex', 'Jordan', 'Casey', 'Morgan', 'Riley', 'Sam'];
+    final selected = <String>{};
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Invite to ${event.title}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: contacts.map((name) => FilterChip(
+                  label: Text(name),
+                  selected: selected.contains(name),
+                  onSelected: (v) => setModalState(() => v ? selected.add(name) : selected.remove(name)),
+                  selectedColor: VesparaColors.glow.withOpacity(0.3),
+                  checkmarkColor: VesparaColors.glow,
+                  backgroundColor: VesparaColors.background,
+                  labelStyle: TextStyle(color: selected.contains(name) ? VesparaColors.glow : VesparaColors.primary),
+                )).toList(),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VesparaColors.glow,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: selected.isEmpty ? null : () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Invited ${selected.length} people!'), backgroundColor: VesparaColors.success),
+                    );
+                  },
+                  child: Text('Send ${selected.isEmpty ? '' : selected.length} Invite${selected.length == 1 ? '' : 's'}',
+                    style: TextStyle(color: VesparaColors.background, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRSVPDialog(GroupEvent event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('RSVP to ${event.title}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildRSVPOption('Going', Icons.check_circle, VesparaColors.success, event),
+                _buildRSVPOption('Maybe', Icons.help_outline, VesparaColors.tagsYellow, event),
+                _buildRSVPOption('Can\'t Go', Icons.cancel, VesparaColors.error, event),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRSVPOption(String label, IconData icon, Color color, GroupEvent event) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('You\'re marked as "$label" for ${event.title}'),
+            backgroundColor: color,
+          ),
+        );
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withOpacity(0.2),
+            ),
+            child: Icon(icon, color: color, size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: TextStyle(color: VesparaColors.primary)),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day} at ${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}';
   }
 }

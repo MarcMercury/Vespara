@@ -19,6 +19,7 @@ class ShredderScreen extends ConsumerStatefulWidget {
 
 class _ShredderScreenState extends ConsumerState<ShredderScreen> {
   late List<Map<String, dynamic>> _suggestions;
+  final List<Map<String, dynamic>> _shreddedHistory = [];
   
   @override
   void initState() {
@@ -73,7 +74,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             ],
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showHistoryDialog(),
             icon: const Icon(Icons.history, color: VesparaColors.secondary),
           ),
         ],
@@ -469,6 +470,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
           ElevatedButton(
             onPressed: () {
               setState(() {
+                _shreddedHistory.add(suggestion);
                 _suggestions.removeWhere((s) => s['name'] == suggestion['name']);
               });
               Navigator.pop(context);
@@ -557,6 +559,84 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             child: Text('Keep', style: TextStyle(color: VesparaColors.background)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showHistoryDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Shred History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close, color: VesparaColors.secondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Connections you\'ve moved on from', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 20),
+            Expanded(
+              child: _shreddedHistory.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.auto_delete, size: 48, color: VesparaColors.glow.withOpacity(0.5)),
+                          const SizedBox(height: 16),
+                          Text('No shredded connections yet', style: TextStyle(color: VesparaColors.secondary)),
+                          const SizedBox(height: 8),
+                          Text('When you shred someone, they\'ll appear here', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _shreddedHistory.length,
+                      itemBuilder: (context, index) {
+                        final item = _shreddedHistory[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: VesparaColors.error.withOpacity(0.3),
+                            child: Text(item['name'][0], style: TextStyle(color: VesparaColors.error)),
+                          ),
+                          title: Text(item['name'], style: TextStyle(color: VesparaColors.primary)),
+                          subtitle: Text(item['reason'] ?? 'No reason given', style: TextStyle(color: VesparaColors.secondary, fontSize: 12)),
+                          trailing: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _shreddedHistory.remove(item);
+                                _suggestions.add(item);
+                              });
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('${item['name']} restored to your roster'), backgroundColor: VesparaColors.success),
+                              );
+                            },
+                            child: Text('Restore', style: TextStyle(color: VesparaColors.glow)),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -84,7 +84,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
             ],
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showNewMessageDialog(),
             icon: const Icon(Icons.edit_square, color: VesparaColors.secondary),
           ),
         ],
@@ -307,6 +307,46 @@ class _WireScreenState extends ConsumerState<WireScreen> {
     if (diff.inDays < 7) return '${diff.inDays}d';
     return '${time.month}/${time.day}';
   }
+
+  void _showNewMessageDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: VesparaColors.secondary, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text('New Message', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 16),
+            TextField(
+              style: TextStyle(color: VesparaColors.primary),
+              decoration: InputDecoration(
+                hintText: 'Search your matches...',
+                hintStyle: TextStyle(color: VesparaColors.secondary),
+                prefixIcon: Icon(Icons.search, color: VesparaColors.glow),
+                filled: true, fillColor: VesparaColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Recent Matches', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: VesparaColors.secondary, letterSpacing: 1)),
+            const SizedBox(height: 12),
+            ...(_conversations.take(3).map((c) => ListTile(
+              leading: CircleAvatar(backgroundColor: VesparaColors.glow.withOpacity(0.2), child: Text(c.otherUserName?[0] ?? '?', style: TextStyle(color: VesparaColors.primary))),
+              title: Text(c.otherUserName ?? 'Unknown', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () { Navigator.pop(context); setState(() => _selectedConversationId = c.id); },
+            ))),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Individual chat screen
@@ -365,6 +405,307 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
         curve: Curves.easeOut,
       );
     });
+  }
+
+  void _showVideoCallDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: NetworkImage(widget.conversation.otherUserAvatar),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Video call with ${widget.conversation.otherUserName}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Ready to connect?',
+                style: TextStyle(color: VesparaColors.secondary),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildCallOption(Icons.videocam, 'Video', VesparaColors.glow, () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Starting video call with ${widget.conversation.otherUserName}...'),
+                        backgroundColor: VesparaColors.glow,
+                      ),
+                    );
+                  }),
+                  _buildCallOption(Icons.phone, 'Voice', VesparaColors.success, () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Starting voice call with ${widget.conversation.otherUserName}...'),
+                        backgroundColor: VesparaColors.success,
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCallOption(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withOpacity(0.2),
+            ),
+            child: Icon(icon, color: color, size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: TextStyle(color: VesparaColors.primary)),
+        ],
+      ),
+    );
+  }
+
+  void _showChatOptionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 20),
+                decoration: BoxDecoration(
+                  color: VesparaColors.secondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              _buildOptionTile(Icons.person, 'View Profile', () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Opening ${widget.conversation.otherUserName}\'s profile...')),
+                );
+              }),
+              _buildOptionTile(Icons.notifications_off, 'Mute Notifications', () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notifications muted for 8 hours')),
+                );
+              }),
+              _buildOptionTile(Icons.search, 'Search in Chat', () {
+                Navigator.pop(context);
+                _showSearchInChatDialog();
+              }),
+              _buildOptionTile(Icons.photo_library, 'Shared Media', () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Opening shared media...')),
+                );
+              }),
+              _buildOptionTile(Icons.block, 'Block User', () {
+                Navigator.pop(context);
+                _showBlockConfirmation();
+              }, isDestructive: true),
+              _buildOptionTile(Icons.delete_outline, 'Delete Chat', () {
+                Navigator.pop(context);
+                _showDeleteConfirmation();
+              }, isDestructive: true),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
+    final color = isDestructive ? VesparaColors.error : VesparaColors.primary;
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(color: color)),
+      onTap: onTap,
+    );
+  }
+
+  void _showSearchInChatDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Search in Chat', style: TextStyle(color: VesparaColors.primary)),
+        content: TextField(
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Search messages...',
+            hintStyle: TextStyle(color: VesparaColors.secondary),
+            prefixIcon: Icon(Icons.search, color: VesparaColors.glow),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow.withOpacity(0.3)),
+            ),
+          ),
+          style: TextStyle(color: VesparaColors.primary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Searching...')),
+              );
+            },
+            child: Text('Search', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBlockConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Block ${widget.conversation.otherUserName}?', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(
+          'They won\'t be able to message you or see your profile.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to chat list
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${widget.conversation.otherUserName} has been blocked'),
+                  backgroundColor: VesparaColors.error,
+                ),
+              );
+            },
+            child: Text('Block', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete this chat?', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(
+          'This will permanently delete all messages in this conversation.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to chat list
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Chat deleted'),
+                  backgroundColor: VesparaColors.error,
+                ),
+              );
+            },
+            child: Text('Delete', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _startVoiceRecording() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.mic, color: VesparaColors.background),
+            const SizedBox(width: 8),
+            const Text('Recording... (tap again to stop)'),
+          ],
+        ),
+        backgroundColor: VesparaColors.warning,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _handleMediaOption(String type) {
+    Navigator.pop(context); // Close media options
+    String message;
+    switch (type) {
+      case 'Photo':
+        message = 'Opening photo library...';
+        break;
+      case 'Camera':
+        message = 'Opening camera...';
+        break;
+      case 'GIF':
+        message = 'Opening GIF picker...';
+        break;
+      case 'Voice':
+        _startVoiceRecording();
+        return;
+      default:
+        message = 'Opening $type...';
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -442,11 +783,11 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showVideoCallDialog(),
             icon: const Icon(Icons.videocam_outlined, color: VesparaColors.secondary),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showChatOptionsMenu(),
             icon: const Icon(Icons.more_vert, color: VesparaColors.secondary),
           ),
         ],
@@ -591,7 +932,7 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () {},
+                onPressed: _startVoiceRecording,
                 icon: Icon(Icons.mic, color: VesparaColors.secondary),
               ),
               IconButton(
@@ -632,25 +973,28 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
   }
 
   Widget _buildMediaOption(IconData icon, String label, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withOpacity(0.2),
+    return GestureDetector(
+      onTap: () => _handleMediaOption(label),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withOpacity(0.2),
+            ),
+            child: Icon(icon, color: color),
           ),
-          child: Icon(icon, color: color),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: VesparaColors.secondary,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: VesparaColors.secondary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

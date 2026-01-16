@@ -53,9 +53,101 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         child: analytics.when(
           data: (data) => data != null 
             ? _buildContent(context, data)
-            : const Center(child: Text('No analytics data')),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+            : _buildEmptyState(context),
+          loading: () => _buildLoadingState(context),
+          error: (e, stack) => _buildErrorState(context, e),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLoadingState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            color: VesparaColors.primary,
+          ),
+          const SizedBox(height: VesparaSpacing.md),
+          Text(
+            'Loading your analytics...',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.analytics_outlined,
+            color: VesparaColors.secondary,
+            size: 64,
+          ),
+          const SizedBox(height: VesparaSpacing.md),
+          Text(
+            'No analytics data yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: VesparaSpacing.sm),
+          Text(
+            'Start swiping to see your stats',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: VesparaSpacing.lg),
+          ElevatedButton(
+            onPressed: () => context.go('/home'),
+            child: const Text('Go Home'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildErrorState(BuildContext context, Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(VesparaSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: VesparaColors.error,
+              size: 48,
+            ),
+            const SizedBox(height: VesparaSpacing.md),
+            Text(
+              'Unable to load analytics',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: VesparaSpacing.sm),
+            Text(
+              'Please try again later',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: VesparaSpacing.lg),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  onPressed: () => context.go('/home'),
+                  child: const Text('Go Home'),
+                ),
+                const SizedBox(width: VesparaSpacing.md),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(userAnalyticsProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

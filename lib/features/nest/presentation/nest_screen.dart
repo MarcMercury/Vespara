@@ -119,9 +119,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
             ],
           ),
           IconButton(
-            onPressed: () {
-              // Search/filter
-            },
+            onPressed: () => _showSearchDialog(),
             icon: const Icon(Icons.search, color: VesparaColors.secondary),
           ),
         ],
@@ -621,7 +619,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           icon: Icons.chat,
                           label: 'Message',
                           color: VesparaColors.glow,
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Opening chat with ${match.matchedUserName}...'), backgroundColor: VesparaColors.glow),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -630,7 +633,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           icon: Icons.calendar_today,
                           label: 'Plan Date',
                           color: VesparaColors.success,
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showPlanDateDialog(match);
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -639,7 +645,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           icon: Icons.games,
                           label: 'Play TAG',
                           color: VesparaColors.tagsYellow,
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showPlayTagDialog(match);
+                          },
                         ),
                       ),
                     ],
@@ -710,7 +719,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                   _buildSectionTitle('Danger Zone'),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => _moveToShredder(match),
                     icon: Icon(Icons.delete_sweep, color: VesparaColors.error),
                     label: Text('Move to Shredder', style: TextStyle(color: VesparaColors.error)),
                     style: OutlinedButton.styleFrom(
@@ -827,6 +836,131 @@ class _NestScreenState extends ConsumerState<NestScreen>
     if (score >= 0.6) return VesparaColors.glow;
     if (score >= 0.4) return VesparaColors.warning;
     return VesparaColors.secondary;
+  }
+
+  void _showSearchDialog() {
+    final searchController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: searchController,
+              autofocus: true,
+              style: TextStyle(color: VesparaColors.primary),
+              decoration: InputDecoration(
+                hintText: 'Search your roster...',
+                hintStyle: TextStyle(color: VesparaColors.secondary),
+                prefixIcon: Icon(Icons.search, color: VesparaColors.glow),
+                filled: true,
+                fillColor: VesparaColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              ),
+              onSubmitted: (query) {
+                Navigator.pop(context);
+                final results = _matches.where((m) => m.matchedUserName?.toLowerCase().contains(query.toLowerCase()) ?? false).toList();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found ${results.length} matches for "$query"'), backgroundColor: VesparaColors.glow));
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPlanDateDialog(Match match) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: VesparaColors.secondary, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text('Plan a Date with ${match.matchedUserName}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 20),
+            ...['Drinks Tonight', 'Dinner This Week', 'Weekend Adventure', 'Something Special'].map((option) => ListTile(
+              leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: VesparaColors.success.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(Icons.calendar_today, color: VesparaColors.success, size: 20)),
+              title: Text(option, style: TextStyle(color: VesparaColors.primary, fontWeight: FontWeight.w500)),
+              trailing: Icon(Icons.chevron_right, color: VesparaColors.secondary),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Scheduling "$option" with ${match.matchedUserName}...'), backgroundColor: VesparaColors.success));
+              },
+            )),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPlayTagDialog(Match match) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: VesparaColors.secondary, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+            Text('Play TAG with ${match.matchedUserName} 🎮', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 12),
+            Text('Choose a game to play together:', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 16),
+            ...['🧊 Icebreakers', '🃏 Truth or Dare', '🔥 Spicy Edition', '💜 Fantasy Exploration'].map((game) => ListTile(
+              title: Text(game, style: TextStyle(color: VesparaColors.primary, fontWeight: FontWeight.w500)),
+              trailing: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: VesparaColors.tagsYellow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Text('Play', style: TextStyle(color: VesparaColors.tagsYellow, fontWeight: FontWeight.w600, fontSize: 12))),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Starting $game with ${match.matchedUserName}...'), backgroundColor: VesparaColors.tagsYellow));
+              },
+            )),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _moveToShredder(Match match) {
+    Navigator.pop(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(children: [Icon(Icons.delete_sweep, color: VesparaColors.error), const SizedBox(width: 8), Text('Move to Shredder?', style: TextStyle(color: VesparaColors.primary))]),
+        content: Text('${match.matchedUserName} will be flagged for review in The Shredder. You can always bring them back.', style: TextStyle(color: VesparaColors.secondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary))),
+          ElevatedButton(
+            onPressed: () {
+              setState(() { _updateMatchPriority(match, MatchPriority.onWayOut); });
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${match.matchedUserName} moved to On The Way Out'), backgroundColor: VesparaColors.error));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: VesparaColors.error),
+            child: Text('Move', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatMatchDate(DateTime date) {

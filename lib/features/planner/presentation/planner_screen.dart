@@ -81,7 +81,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
             ],
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showCalendarDialog(),
             icon: Icon(Icons.calendar_month, color: VesparaColors.secondary),
           ),
         ],
@@ -301,9 +301,218 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
             const SizedBox(height: 20),
             Text('Schedule a Date', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
             const SizedBox(height: 24),
-            ListTile(onTap: () => Navigator.pop(context), leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.local_bar, color: VesparaColors.glow)), title: Text('Drinks Tonight', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)), subtitle: Text('Quick cocktails or wine', style: TextStyle(color: VesparaColors.secondary))),
-            ListTile(onTap: () => Navigator.pop(context), leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.restaurant, color: VesparaColors.glow)), title: Text('Dinner Date', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)), subtitle: Text('Restaurant reservation', style: TextStyle(color: VesparaColors.secondary))),
+            ListTile(
+              onTap: () => _scheduleDateOption('Drinks Tonight', 'Find a bar nearby'),
+              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.local_bar, color: VesparaColors.glow)),
+              title: Text('Drinks Tonight', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              subtitle: Text('Quick cocktails or wine', style: TextStyle(color: VesparaColors.secondary)),
+            ),
+            ListTile(
+              onTap: () => _scheduleDateOption('Dinner Date', 'Make a reservation'),
+              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.restaurant, color: VesparaColors.glow)),
+              title: Text('Dinner Date', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              subtitle: Text('Restaurant reservation', style: TextStyle(color: VesparaColors.secondary)),
+            ),
+            ListTile(
+              onTap: () => _scheduleDateOption('Coffee Meetup', 'Low-key first date'),
+              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.coffee, color: VesparaColors.glow)),
+              title: Text('Coffee Meetup', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              subtitle: Text('Low-key first date', style: TextStyle(color: VesparaColors.secondary)),
+            ),
+            ListTile(
+              onTap: () => _showCustomEventDialog(),
+              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.edit_calendar, color: VesparaColors.glow)),
+              title: Text('Custom Event', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              subtitle: Text('Create your own date', style: TextStyle(color: VesparaColors.secondary)),
+            ),
             const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _scheduleDateOption(String type, String subtitle) {
+    Navigator.pop(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(type, style: TextStyle(color: VesparaColors.glow)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(subtitle, style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 20),
+            _buildTimeSlot('Tonight, 7 PM'),
+            _buildTimeSlot('Tomorrow, 8 PM'),
+            _buildTimeSlot('This Weekend'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSlot(String time) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(time, style: TextStyle(color: VesparaColors.primary)),
+      trailing: Icon(Icons.chevron_right, color: VesparaColors.glow),
+      onTap: () {
+        Navigator.pop(context);
+        setState(() {
+          _events.add(CalendarEvent(
+            id: 'event-${_events.length + 1}',
+            title: 'New Date',
+            matchName: 'Someone Special',
+            matchAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+            startTime: DateTime.now().add(const Duration(hours: 3)),
+            endTime: DateTime.now().add(const Duration(hours: 5)),
+            location: 'Downtown Bar',
+            status: EventStatus.tentative,
+          ));
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Date scheduled for $time'),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCustomEventDialog() {
+    Navigator.pop(context);
+    final titleController = TextEditingController();
+    final locationController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Create Custom Event', style: TextStyle(color: VesparaColors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(
+                hintText: 'Event name',
+                hintStyle: TextStyle(color: VesparaColors.secondary),
+                prefixIcon: Icon(Icons.event, color: VesparaColors.glow),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              style: TextStyle(color: VesparaColors.primary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: locationController,
+              decoration: InputDecoration(
+                hintText: 'Location',
+                hintStyle: TextStyle(color: VesparaColors.secondary),
+                prefixIcon: Icon(Icons.location_on, color: VesparaColors.glow),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              style: TextStyle(color: VesparaColors.primary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (titleController.text.isNotEmpty) {
+                setState(() {
+                  _events.add(CalendarEvent(
+                    id: 'event-${_events.length + 1}',
+                    title: titleController.text,
+                    matchName: 'Custom Event',
+                    matchAvatar: '',
+                    startTime: DateTime.now().add(const Duration(days: 1)),
+                    endTime: DateTime.now().add(const Duration(days: 1, hours: 2)),
+                    location: locationController.text.isEmpty ? 'TBD' : locationController.text,
+                    status: EventStatus.tentative,
+                  ));
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Event "${titleController.text}" created'),
+                    backgroundColor: VesparaColors.success,
+                  ),
+                );
+              }
+            },
+            child: Text('Create', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCalendarDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Calendar Options', style: TextStyle(color: VesparaColors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.sync, color: VesparaColors.glow),
+              title: Text('Sync Now', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Syncing with calendar...')),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.calendar_today, color: VesparaColors.glow),
+              title: Text('Google Calendar', style: TextStyle(color: VesparaColors.primary)),
+              subtitle: Text('Connected', style: TextStyle(color: VesparaColors.success)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Opening Google Calendar settings...')),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.event, color: VesparaColors.glow),
+              title: Text('Apple Calendar', style: TextStyle(color: VesparaColors.primary)),
+              subtitle: Text('Not connected', style: TextStyle(color: VesparaColors.secondary)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Connecting to Apple Calendar...')),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings, color: VesparaColors.glow),
+              title: Text('Calendar Settings', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Opening calendar settings...')),
+                );
+              },
+            ),
           ],
         ),
       ),
