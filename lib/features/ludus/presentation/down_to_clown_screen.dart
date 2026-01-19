@@ -7,6 +7,7 @@ import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/tag_rating.dart';
+import '../../../core/providers/dtc_game_provider.dart';
 import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -14,9 +15,10 @@ import '../widgets/tag_rating_display.dart';
 /// "If you know, you know. If you don't—tilt."
 /// ════════════════════════════════════════════════════════════════════════════
 
-/// Game state machine
+/// Game state machine - now includes heat selection
 enum DownToClownState {
   home,
+  heatSelect,
   instructions,
   countdown,
   playing,
@@ -39,12 +41,6 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   
   DownToClownState _gameState = DownToClownState.home;
   
-  // Prompt tracking
-  late List<String> _shuffledPrompts;
-  int _currentPromptIndex = 0;
-  final List<String> _correctPrompts = [];
-  final List<String> _passedPrompts = [];
-  
   // Timer
   int _timeRemaining = 60;
   Timer? _gameTimer;
@@ -61,75 +57,23 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   
   // Animation
   late AnimationController _flashController;
+  late AnimationController _pulseController;
   Color _flashColor = Colors.transparent;
   String _flashText = '';
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // THE NAUGHTY LIST - Single Deck (50 Prompts)
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  static const List<String> _theNaughtyList = [
-    'Flirting with intent',
-    'Bedroom eyes',
-    'Late-night "you up?" text',
-    'Thirst trap',
-    'Accidental moan',
-    'Situationship',
-    'Friends with benefits',
-    'Morning-after confidence',
-    '"I shouldn\'t be into this"',
-    'Sexual tension',
-    'Safe word',
-    'Aftercare',
-    'Praise kink',
-    'Power bottom',
-    'Brat energy',
-    'Switch vibes',
-    'Soft dom',
-    'Hard limit',
-    'Consent check',
-    'Negotiation kink',
-    'Rope bunny',
-    'Impact play',
-    'Service top',
-    'Exhibitionist',
-    'Voyeur',
-    'Pet play',
-    'Collar moment',
-    'Dungeon etiquette',
-    'Orgasm control',
-    'Edge play',
-    'CNC (consensual, not chaotic)',
-    'Mommy issues (the fun kind)',
-    'Daddy energy',
-    'Protocol scene',
-    'Subspace',
-    'Top drop',
-    'Marks with meaning',
-    'Public but subtle',
-    'Scene negotiation',
-    '"Use me" energy',
-    'Kink math',
-    'Group chat consent',
-    'Poly calendar nightmare',
-    'Compersion high',
-    'Afterparty cuddle puddle',
-    'Everyone\'s watching (they aren\'t)',
-    'Sex-positive panic',
-    'Too many safeties',
-    'Emotional aftercare spiral',
-    '"That escalated consensually"',
-  ];
   
   @override
   void initState() {
     super.initState();
-    _shuffledPrompts = List.from(_theNaughtyList)..shuffle();
     
     _flashController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
     
     _checkMotionPermissions();
   }
@@ -140,6 +84,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     _countdownTimer?.cancel();
     _accelerometerSubscription?.cancel();
     _flashController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
   
@@ -165,15 +110,32 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   
   @override
   Widget build(BuildContext context) {
+    final gameState = ref.watch(dtcGameProvider);
+    
     return Scaffold(
       backgroundColor: const Color(0xFF1A0A2E),
       body: SafeArea(
         child: Stack(
           children: [
+            // Background gradient
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF2D1B4E),
+                    const Color(0xFF1A0A2E),
+                    Colors.black,
+                  ],
+                ),
+              ),
+            ),
+            
             // Main content based on state
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
-              child: _buildCurrentState(),
+              child: _buildCurrentState(gameState),
             ),
             
             // Flash overlay for correct/pass feedback
@@ -183,7 +145,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                 builder: (context, child) {
                   return Container(
                     color: _flashColor.withOpacity(
-                      0.4 * (1 - _flashController.value),
+                      0.5 * (1 - _flashController.value),
                     ),
                     child: Center(
                       child: Opacity(
@@ -191,7 +153,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                         child: Text(
                           _flashText,
                           style: TextStyle(
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.w700,
                             color: _flashColor == Colors.green
                                 ? Colors.greenAccent
@@ -203,24 +165,35 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                   );
                 },
               ),
+            
+            // Loading overlay
+            if (gameState.isLoading)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.pinkAccent),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
   
-  Widget _buildCurrentState() {
+  Widget _buildCurrentState(DtcGameState gameState) {
     switch (_gameState) {
       case DownToClownState.home:
-        return _buildHomeScreen();
+        return _buildHomeScreen(gameState);
+      case DownToClownState.heatSelect:
+        return _buildHeatSelectScreen(gameState);
       case DownToClownState.instructions:
         return _buildInstructionsScreen();
       case DownToClownState.countdown:
         return _buildCountdownScreen();
       case DownToClownState.playing:
-        return _buildPlayingScreen();
+        return _buildPlayingScreen(gameState);
       case DownToClownState.results:
-        return _buildResultsScreen();
+        return _buildResultsScreen(gameState);
     }
   }
   
@@ -228,20 +201,9 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   // HOME SCREEN
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildHomeScreen() {
+  Widget _buildHomeScreen(DtcGameState gameState) {
     return Container(
       key: const ValueKey('home'),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFF2D1B4E),
-            const Color(0xFF1A0A2E),
-            Colors.black,
-          ],
-        ),
-      ),
       child: Column(
         children: [
           // Back button
@@ -260,23 +222,27 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                // Clown emoji with glow
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: VesparaColors.glow.withOpacity(0.4),
-                        blurRadius: 40,
-                        spreadRadius: 10,
+                // Clown emoji with animated glow
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: VesparaColors.glow.withOpacity(
+                              0.3 + (_pulseController.value * 0.3),
+                            ),
+                            blurRadius: 40 + (_pulseController.value * 20),
+                            spreadRadius: 10,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: const Text(
-                    '🤡',
-                    style: TextStyle(fontSize: 80),
-                  ),
+                      child: const Text('🤡', style: TextStyle(fontSize: 80)),
+                    );
+                  },
                 ),
                 
                 const SizedBox(height: 24),
@@ -304,7 +270,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                 const SizedBox(height: 12),
                 
                 // Tagline
-                Text(
+                const Text(
                   '"If you know, you know. If you don\'t—tilt."',
                   style: TextStyle(
                     fontSize: 16,
@@ -314,7 +280,61 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                   textAlign: TextAlign.center,
                 ),
                 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                
+                // Stats badge (if has games)
+                if (gameState.userStats != null && gameState.userStats!.totalGamesPlayed > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.emoji_events, color: Colors.amber, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'High Score: ${gameState.userStats!.highScore}',
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          '${gameState.userStats!.totalGamesPlayed} games',
+                          style: const TextStyle(color: Colors.white54),
+                        ),
+                      ],
+                    ),
+                  ),
+                
+                const SizedBox(height: 24),
+                
+                // Demo mode indicator
+                if (gameState.isDemoMode)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.play_circle_outline, color: Colors.orange, size: 16),
+                        SizedBox(width: 8),
+                        Text(
+                          'Demo Mode • 100 Prompts',
+                          style: TextStyle(color: Colors.orange, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                
+                const SizedBox(height: 16),
                 
                 // TAG Rating Display
                 const TagRatingDisplay(rating: TagRating.downToClown),
@@ -329,21 +349,18 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // Get Naughty button
+                // Get Naughty button -> now goes to heat select
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.heavyImpact();
-                    setState(() => _gameState = DownToClownState.instructions);
+                    setState(() => _gameState = DownToClownState.heatSelect);
                   },
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          VesparaColors.glow,
-                          Colors.pinkAccent,
-                        ],
+                        colors: [VesparaColors.glow, Colors.pinkAccent],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
@@ -396,6 +413,28 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                     ),
                   ),
                 ),
+                
+                const SizedBox(height: 12),
+                
+                // TAG Rating info
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (_) => const TagRatingInfoSheet(),
+                    );
+                  },
+                  child: const Text(
+                    'About TAG Ratings →',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white38,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -443,11 +482,193 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
             _buildHowToRow('⬇️', 'Tilt DOWN = Got it!'),
             _buildHowToRow('⬆️', 'Tilt UP = Pass'),
             _buildHowToRow('⏱️', '60 seconds per round'),
+            _buildHowToRow('🔥', 'Choose your heat level'),
             const SizedBox(height: 24),
           ],
         ),
       ),
     );
+  }
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEAT SELECT SCREEN
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  Widget _buildHeatSelectScreen(DtcGameState gameState) {
+    return Container(
+      key: const ValueKey('heat-select'),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const SizedBox(height: 24),
+          
+          const Text(
+            '🔥 SELECT YOUR HEAT 🔥',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2,
+              color: Colors.white,
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          Text(
+            'How spicy do you want it?',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.6),
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          Expanded(
+            child: ListView(
+              children: HeatFilter.values.map((filter) {
+                final isSelected = gameState.heatFilter == filter;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      ref.read(dtcGameProvider.notifier).setHeatFilter(filter);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                            ? LinearGradient(
+                                colors: [
+                                  _getHeatColor(filter).withOpacity(0.3),
+                                  _getHeatColor(filter).withOpacity(0.1),
+                                ],
+                              )
+                            : null,
+                        color: isSelected ? null : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? _getHeatColor(filter)
+                              : Colors.white24,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            _getHeatEmoji(filter),
+                            style: const TextStyle(fontSize: 32),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  filter.label,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? _getHeatColor(filter)
+                                        : Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  filter.description,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white.withOpacity(0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check_circle,
+                              color: _getHeatColor(filter),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Continue button
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.heavyImpact();
+              setState(() => _gameState = DownToClownState.instructions);
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    _getHeatColor(gameState.heatFilter),
+                    _getHeatColor(gameState.heatFilter).withOpacity(0.7),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  'CONTINUE WITH ${gameState.heatFilter.label.toUpperCase()}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          TextButton(
+            onPressed: () => setState(() => _gameState = DownToClownState.home),
+            child: const Text('Back', style: TextStyle(color: Colors.white54)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Color _getHeatColor(HeatFilter filter) {
+    switch (filter) {
+      case HeatFilter.mild:
+        return Colors.green;
+      case HeatFilter.spicy:
+        return Colors.orange;
+      case HeatFilter.xxx:
+        return Colors.red;
+      case HeatFilter.all:
+        return VesparaColors.glow;
+    }
+  }
+  
+  String _getHeatEmoji(HeatFilter filter) {
+    switch (filter) {
+      case HeatFilter.mild:
+        return '🌸';
+      case HeatFilter.spicy:
+        return '🌶️';
+      case HeatFilter.xxx:
+        return '🔥';
+      case HeatFilter.all:
+        return '🎲';
+    }
   }
   
   Widget _buildHowToRow(String emoji, String text) {
@@ -632,7 +853,10 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   // COUNTDOWN SCREEN
   // ═══════════════════════════════════════════════════════════════════════════
   
-  void _startCountdown() {
+  void _startCountdown() async {
+    // Start a new game in the provider (shuffles deck with Fisher-Yates)
+    await ref.read(dtcGameProvider.notifier).startNewGame();
+    
     setState(() {
       _gameState = DownToClownState.countdown;
       _countdownValue = 3;
@@ -690,11 +914,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   // ═══════════════════════════════════════════════════════════════════════════
   
   void _startPlaying() {
-    // Reset state
-    _correctPrompts.clear();
-    _passedPrompts.clear();
-    _currentPromptIndex = 0;
-    _shuffledPrompts = List.from(_theNaughtyList)..shuffle();
+    // Timer state
     _timeRemaining = 60;
     _calibratedPitch = null;
     _inputLocked = false;
@@ -748,18 +968,18 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     if (_inputLocked || _gameState != DownToClownState.playing) return;
     
     HapticFeedback.heavyImpact();
-    _correctPrompts.add(_shuffledPrompts[_currentPromptIndex]);
+    ref.read(dtcGameProvider.notifier).markCorrect();
     _showFlash(Colors.green, 'Yes, Daddy. 😈');
-    _nextPrompt();
+    _lockInput();
   }
   
   void _registerPass() {
     if (_inputLocked || _gameState != DownToClownState.playing) return;
     
     HapticFeedback.lightImpact();
-    _passedPrompts.add(_shuffledPrompts[_currentPromptIndex]);
+    ref.read(dtcGameProvider.notifier).markPassed();
     _showFlash(Colors.orange, 'Not Tonight. 😅');
-    _nextPrompt();
+    _lockInput();
   }
   
   void _showFlash(Color color, String text) {
@@ -776,37 +996,31 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     });
   }
   
-  void _nextPrompt() {
+  void _lockInput() {
     _inputLocked = true;
     
     // Lock input for 800ms
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted && _gameState == DownToClownState.playing) {
-        setState(() {
-          _currentPromptIndex++;
-          
-          // Reshuffle if we run out
-          if (_currentPromptIndex >= _shuffledPrompts.length) {
-            _shuffledPrompts.shuffle();
-            _currentPromptIndex = 0;
-          }
-          
-          _inputLocked = false;
-          _calibratedPitch = null; // Recalibrate
-        });
+        _inputLocked = false;
+        _calibratedPitch = null; // Recalibrate
       }
     });
   }
   
-  void _endGame() {
+  void _endGame() async {
     _gameTimer?.cancel();
     _accelerometerSubscription?.cancel();
     HapticFeedback.heavyImpact();
+    
+    // Save game session to database
+    await ref.read(dtcGameProvider.notifier).endGame();
+    
     setState(() => _gameState = DownToClownState.results);
   }
   
-  Widget _buildPlayingScreen() {
-    final currentPrompt = _shuffledPrompts[_currentPromptIndex];
+  Widget _buildPlayingScreen(DtcGameState gameState) {
+    final currentPrompt = gameState.currentPrompt;
     
     return Container(
       key: const ValueKey('playing'),
@@ -824,7 +1038,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                     const Text('😈', style: TextStyle(fontSize: 24)),
                     const SizedBox(width: 8),
                     Text(
-                      '${_correctPrompts.length}',
+                      '${gameState.correctPrompts.length}',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -857,7 +1071,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                 Row(
                   children: [
                     Text(
-                      '${_passedPrompts.length}',
+                      '${gameState.passedPrompts.length}',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -877,15 +1091,37 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
-                child: Text(
-                  currentPrompt,
-                  style: const TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    height: 1.2,
-                  ),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      currentPrompt?.prompt ?? 'Loading...',
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (currentPrompt != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _getPromptHeatColor(currentPrompt.heatLevel).withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          currentPrompt.heatLevel,
+                          style: TextStyle(
+                            color: _getPromptHeatColor(currentPrompt.heatLevel),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -955,7 +1191,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   // RESULTS SCREEN
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildResultsScreen() {
+  Widget _buildResultsScreen(DtcGameState gameState) {
     return Container(
       key: const ValueKey('results'),
       padding: const EdgeInsets.all(24),
@@ -965,7 +1201,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
           
           // Header
           Text(
-            'You came up with ${_correctPrompts.length}!',
+            'You came up with ${gameState.correctPrompts.length}!',
             style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -977,11 +1213,12 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
           const SizedBox(height: 8),
           
           Text(
-            _getResultMessage(),
+            ref.read(dtcGameProvider.notifier).getResultMessage(),
             style: TextStyle(
               fontSize: 18,
               color: Colors.white.withOpacity(0.7),
             ),
+            textAlign: TextAlign.center,
           ),
           
           const SizedBox(height: 32),
@@ -993,13 +1230,13 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Nailed It
-                  if (_correctPrompts.isNotEmpty) ...[
+                  if (gameState.correctPrompts.isNotEmpty) ...[
                     Row(
                       children: [
                         const Text('😈', style: TextStyle(fontSize: 24)),
                         const SizedBox(width: 8),
                         Text(
-                          'Nailed It (${_correctPrompts.length})',
+                          'Nailed It (${gameState.correctPrompts.length})',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -1012,7 +1249,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _correctPrompts.map((p) => Container(
+                      children: gameState.correctPrompts.map((p) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.green.withOpacity(0.2),
@@ -1020,7 +1257,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                           border: Border.all(color: Colors.green.withOpacity(0.5)),
                         ),
                         child: Text(
-                          p,
+                          p.prompt,
                           style: const TextStyle(color: Colors.greenAccent),
                         ),
                       )).toList(),
@@ -1029,13 +1266,13 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                   ],
                   
                   // Blue-Balled
-                  if (_passedPrompts.isNotEmpty) ...[
+                  if (gameState.passedPrompts.isNotEmpty) ...[
                     Row(
                       children: [
                         const Text('😅', style: TextStyle(fontSize: 24)),
                         const SizedBox(width: 8),
                         Text(
-                          'Blue-Balled (${_passedPrompts.length})',
+                          'Blue-Balled (${gameState.passedPrompts.length})',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -1048,7 +1285,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _passedPrompts.map((p) => Container(
+                      children: gameState.passedPrompts.map((p) => Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.orange.withOpacity(0.2),
@@ -1056,7 +1293,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                           border: Border.all(color: Colors.orange.withOpacity(0.5)),
                         ),
                         child: Text(
-                          p,
+                          p.prompt,
                           style: const TextStyle(color: Colors.orangeAccent),
                         ),
                       )).toList(),
@@ -1076,6 +1313,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
+                    ref.read(dtcGameProvider.notifier).reset();
                     setState(() => _gameState = DownToClownState.home);
                   },
                   child: Container(
@@ -1134,12 +1372,20 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     );
   }
   
-  String _getResultMessage() {
-    final count = _correctPrompts.length;
-    if (count >= 15) return 'Absolute deviant. We respect it. 🔥';
-    if (count >= 10) return 'You definitely know your kinks. 😏';
-    if (count >= 5) return 'Not bad, keep practicing! 😈';
-    if (count >= 1) return 'Baby steps into the dark side. 🌙';
-    return 'Maybe stick to vanilla? 🍦';
+  Color _getPromptHeatColor(String heat) {
+    switch (heat) {
+      case 'PG':
+        return Colors.green;
+      case 'PG-13':
+        return Colors.lime;
+      case 'R':
+        return Colors.orange;
+      case 'X':
+        return Colors.deepOrange;
+      case 'XXX':
+        return Colors.red;
+      default:
+        return Colors.white;
+    }
   }
 }
