@@ -8,7 +8,7 @@ import '../../../core/providers/app_providers.dart';
 import '../../strategist/presentation/strategist_screen.dart';
 import '../../scope/presentation/scope_screen.dart';
 import '../../roster/presentation/roster_screen.dart';
-import '../../wire/presentation/wire_screen.dart';
+import '../../wire/presentation/wire_home_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
 import '../../events/presentation/events_home_screen.dart';
@@ -37,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     StrategistScreen(),  // 0: The Strategist
     ScopeScreen(),       // 1: The Scope
     RosterScreen(),      // 2: The Roster
-    WireScreen(),        // 3: The Wire
+    WireHomeScreen(),    // 3: The Wire (WhatsApp-style)
     ShredderScreen(),    // 4: The Shredder
     EventsHomeScreen(),  // 5: The Ludus (Events - Partiful-style)
     CoreScreen(),        // 6: The Core
