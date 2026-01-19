@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -475,7 +476,129 @@ class WireNotifier extends StateNotifier<WireState> {
     }
   }
   
+  /// Send a media message from bytes (cross-platform compatible)
+  /// This method works on both mobile and web platforms
+  Future<WireMessage?> sendMediaMessageFromBytes({
+    required String conversationId,
+    required Uint8List fileBytes,
+    required String filename,
+    required MessageType type,
+    String? mimeType,
+    String? caption,
+    String? replyToId,
+    List<double>? waveform,
+  }) async {
+    final clientMessageId = const Uuid().v4();
+    
+    // Create optimistic message
+    final optimisticMessage = WireMessage(
+      id: clientMessageId,
+      conversationId: conversationId,
+      senderId: _currentUserId,
+      content: caption,
+      type: type,
+      status: MessageStatus.sending,
+      mediaFilename: filename,
+      clientMessageId: clientMessageId,
+      replyToId: replyToId,
+      createdAt: DateTime.now(),
+    );
+    
+    _addOptimisticMessage(conversationId, optimisticMessage);
+    
+    try {
+      // Upload file bytes to storage
+      final storagePath = '$_currentUserId/$conversationId/$clientMessageId-$filename';
+      await _supabase.storage
+          .from('chat-media')
+          .uploadBinary(
+            storagePath, 
+            fileBytes,
+            fileOptions: FileOptions(
+              contentType: mimeType ?? _getMimeType(filename),
+            ),
+          );
+      
+      final mediaUrl = _supabase.storage
+          .from('chat-media')
+          .getPublicUrl(storagePath);
+      
+      // Create message
+      final response = await _supabase
+          .from('messages')
+          .insert({
+            'conversation_id': conversationId,
+            'sender_id': _currentUserId,
+            'content': caption,
+            'message_type': type.name,
+            'media_url': mediaUrl,
+            'media_filename': filename,
+            'media_filesize_bytes': fileBytes.length,
+            'media_waveform': waveform,
+            'reply_to_id': replyToId,
+            'client_message_id': clientMessageId,
+          })
+          .select()
+          .single();
+      
+      final message = WireMessage.fromJson(response as Map<String, dynamic>);
+      _replaceOptimisticMessage(conversationId, clientMessageId, message);
+      return message;
+    } catch (e) {
+      debugPrint('Error sending media message from bytes: $e');
+      _markMessageFailed(conversationId, clientMessageId);
+      return null;
+    }
+  }
+  
+  /// Helper to get MIME type from filename
+  String _getMimeType(String filename) {
+    final ext = filename.toLowerCase().split('.').last;
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      case 'mp4':
+        return 'video/mp4';
+      case 'mov':
+        return 'video/quicktime';
+      case 'webm':
+        return 'video/webm';
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'm4a':
+        return 'audio/mp4';
+      case 'wav':
+        return 'audio/wav';
+      case 'ogg':
+        return 'audio/ogg';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xls':
+        return 'application/vnd.ms-excel';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      case 'txt':
+        return 'text/plain';
+      case 'csv':
+        return 'text/csv';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+  
   /// Send a media message (image, video, voice, file)
+  /// For mobile platforms using dart:io File
   Future<WireMessage?> sendMediaMessage({
     required String conversationId,
     required File file,

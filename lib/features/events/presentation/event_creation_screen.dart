@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/vespara_event.dart';
+import '../../../core/providers/events_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// EVENT CREATION SCREEN - Partiful-Style Comprehensive Event Builder
@@ -1578,18 +1579,51 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
     );
   }
 
-  void _saveDraft() {
+  void _saveDraft() async {
     HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Event saved as draft'),
-        backgroundColor: VesparaColors.surface,
-      ),
-    );
-    Navigator.pop(context);
+    
+    // Create and save event as draft
+    if (_titleController.text.isNotEmpty) {
+      final draftEvent = VesparaEvent(
+        id: 'draft-${DateTime.now().millisecondsSinceEpoch}',
+        hostId: 'current-user',
+        hostName: 'Marc Mercury',
+        title: _titleController.text,
+        titleStyle: _titleStyle,
+        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        coverImageUrl: _coverImageUrl,
+        startTime: _eventDate ?? DateTime.now().add(const Duration(days: 1)),
+        endTime: _eventDate?.add(const Duration(hours: 3)),
+        venueName: _locationController.text.isEmpty ? null : _locationController.text,
+        venueAddress: _locationController.text.isEmpty ? null : _locationController.text,
+        maxSpots: _unlimitedSpots ? null : int.tryParse(_spotsController.text),
+        costPerPerson: _hasCost ? double.tryParse(_costController.text) : null,
+        visibility: _visibility,
+        requiresApproval: _requiresApproval,
+        collectGuestInfo: _collectGuestInfo,
+        sendReminders: _sendReminders,
+        links: _links,
+        coHosts: _coHosts,
+        createdAt: DateTime.now(),
+        isDraft: true, // Mark as draft
+      );
+      
+      // Save to database as draft
+      await ref.read(eventsProvider.notifier).createVesparaEvent(draftEvent);
+    }
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Event saved as draft'),
+          backgroundColor: VesparaColors.surface,
+        ),
+      );
+      Navigator.pop(context);
+    }
   }
 
-  void _publishEvent() {
+  void _publishEvent() async {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1626,13 +1660,27 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       createdAt: DateTime.now(),
     );
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🎉 "${event.title}" created successfully!'),
-        backgroundColor: VesparaColors.success,
-      ),
+    // SAVE TO DATABASE using the events provider
+    await ref.read(eventsProvider.notifier).createVesparaEvent(event);
+    
+    // Also create a calendar event for visibility in The Planner
+    await ref.read(eventsProvider.notifier).createCalendarEvent(
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime ?? event.startTime.add(const Duration(hours: 3)),
+      description: event.description,
+      location: event.venueName ?? event.venueAddress,
     );
     
-    Navigator.pop(context);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎉 "${event.title}" created successfully!'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+      
+      Navigator.pop(context, event); // Return the created event
+    }
   }
 }

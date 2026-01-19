@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/models/match.dart';
 import '../domain/models/chat.dart';
 import '../data/vespara_mock_data.dart';
+import '../services/supabase_service.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// MATCH STATE PROVIDER
@@ -155,7 +158,8 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
   }
 
   /// Update match priority (move between Nest categories)
-  void updateMatchPriority(String matchId, MatchPriority newPriority) {
+  Future<void> updateMatchPriority(String matchId, MatchPriority newPriority) async {
+    // Update local state first (optimistic update)
     final updatedMatches = state.matches.map((m) {
       if (m.id == matchId) {
         return m.copyWith(priority: newPriority);
@@ -164,10 +168,19 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
     }).toList();
     
     state = state.copyWith(matches: updatedMatches);
+    
+    // Persist to database
+    try {
+      await SupabaseService.updateMatchPipeline(matchId, newPriority.name);
+    } catch (e) {
+      debugPrint('Error updating match priority: $e');
+      // Keep optimistic update even if database fails
+    }
   }
 
   /// Archive a match
-  void archiveMatch(String matchId) {
+  Future<void> archiveMatch(String matchId, {String? reason}) async {
+    // Update local state first (optimistic update)
     final updatedMatches = state.matches.map((m) {
       if (m.id == matchId) {
         return m.copyWith(isArchived: true);
@@ -176,6 +189,14 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
     }).toList();
     
     state = state.copyWith(matches: updatedMatches);
+    
+    // Persist to database
+    try {
+      await SupabaseService.archiveMatch(matchId, reason: reason);
+    } catch (e) {
+      debugPrint('Error archiving match: $e');
+      // Keep optimistic update even if database fails
+    }
   }
 
   /// Send a message to a match (creates/updates conversation)

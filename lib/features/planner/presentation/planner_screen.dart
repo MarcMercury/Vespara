@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/events.dart';
+import '../../../core/providers/events_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE PLANNER - Module 5
@@ -19,26 +20,22 @@ class PlannerScreen extends ConsumerStatefulWidget {
 }
 
 class _PlannerScreenState extends ConsumerState<PlannerScreen> {
-  late List<CalendarEvent> _events;
   DateTime _selectedDate = DateTime.now();
 
   @override
-  void initState() {
-    super.initState();
-    _events = MockDataProvider.calendarEvents;
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Watch the events provider for real-time updates
+    final eventsState = ref.watch(eventsProvider);
+    final events = eventsState.calendarEvents;
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
-            _buildQuickStats(),
-            _buildWeekStrip(),
-            Expanded(child: _buildEventsList()),
+            _buildQuickStats(events),
+            _buildWeekStrip(events),
+            Expanded(child: _buildEventsList(events)),
           ],
         ),
       ),
@@ -89,13 +86,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
     );
   }
 
-  Widget _buildQuickStats() {
-    final thisWeekEvents = _events.where((e) {
+  Widget _buildQuickStats(List<CalendarEvent> events) {
+    final thisWeekEvents = events.where((e) {
       final diff = e.startTime.difference(DateTime.now()).inDays;
       return diff >= 0 && diff <= 7;
     }).length;
     
-    final conflicts = _events.where((e) => e.aiConflictDetected).length;
+    final conflicts = events.where((e) => e.aiConflictDetected).length;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -115,7 +112,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
         children: [
           _buildStatItem('This Week', thisWeekEvents.toString(), Icons.event),
           Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildStatItem('Total', _events.length.toString(), Icons.calendar_today),
+          _buildStatItem('Total', events.length.toString(), Icons.calendar_today),
           Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
           _buildStatItem('Conflicts', conflicts.toString(), Icons.warning_amber, highlight: conflicts > 0),
         ],
@@ -134,7 +131,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
     );
   }
 
-  Widget _buildWeekStrip() {
+  Widget _buildWeekStrip(List<CalendarEvent> events) {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
     
@@ -146,7 +143,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
           final day = weekStart.add(Duration(days: index));
           final isSelected = day.day == _selectedDate.day && day.month == _selectedDate.month;
           final isToday = day.day == now.day && day.month == now.month;
-          final hasEvent = _events.any((e) => e.startTime.day == day.day && e.startTime.month == day.month);
+          final hasEvent = events.any((e) => e.startTime.day == day.day && e.startTime.month == day.month);
           
           return GestureDetector(
             onTap: () => setState(() => _selectedDate = day),
@@ -172,8 +169,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
     );
   }
 
-  Widget _buildEventsList() {
-    final dayEvents = _events.where((e) => e.startTime.day == _selectedDate.day && e.startTime.month == _selectedDate.month && e.startTime.year == _selectedDate.year).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
+  Widget _buildEventsList(List<CalendarEvent> events) {
+    final dayEvents = events.where((e) => e.startTime.day == _selectedDate.day && e.startTime.month == _selectedDate.month && e.startTime.year == _selectedDate.year).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
     
     if (dayEvents.isEmpty) return _buildEmptyDay();
     
@@ -345,9 +342,9 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
           children: [
             Text(subtitle, style: TextStyle(color: VesparaColors.secondary)),
             const SizedBox(height: 20),
-            _buildTimeSlot('Tonight, 7 PM'),
-            _buildTimeSlot('Tomorrow, 8 PM'),
-            _buildTimeSlot('This Weekend'),
+            _buildTimeSlot('Tonight, 7 PM', type),
+            _buildTimeSlot('Tomorrow, 8 PM', type),
+            _buildTimeSlot('This Weekend', type),
           ],
         ),
         actions: [
@@ -360,32 +357,44 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
     );
   }
 
-  Widget _buildTimeSlot(String time) {
+  Widget _buildTimeSlot(String time, String dateType) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(time, style: TextStyle(color: VesparaColors.primary)),
       trailing: Icon(Icons.chevron_right, color: VesparaColors.glow),
-      onTap: () {
+      onTap: () async {
         Navigator.pop(context);
-        setState(() {
-          _events.add(CalendarEvent(
-            id: 'event-${_events.length + 1}',
-            userId: 'current-user',
-            title: 'New Date',
-            matchName: 'Someone Special',
-            startTime: DateTime.now().add(const Duration(hours: 3)),
-            endTime: DateTime.now().add(const Duration(hours: 5)),
-            location: 'Downtown Bar',
-            status: EventStatus.tentative,
-            createdAt: DateTime.now(),
-          ));
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Date scheduled for $time'),
-            backgroundColor: VesparaColors.success,
-          ),
+        
+        // Calculate the actual date/time based on selection
+        DateTime eventTime;
+        if (time.contains('Tonight')) {
+          eventTime = DateTime.now().copyWith(hour: 19, minute: 0, second: 0);
+        } else if (time.contains('Tomorrow')) {
+          eventTime = DateTime.now().add(const Duration(days: 1)).copyWith(hour: 20, minute: 0, second: 0);
+        } else {
+          // This Weekend - next Saturday at 7 PM
+          final now = DateTime.now();
+          final daysUntilSaturday = (6 - now.weekday + 7) % 7;
+          eventTime = now.add(Duration(days: daysUntilSaturday == 0 ? 7 : daysUntilSaturday)).copyWith(hour: 19, minute: 0, second: 0);
+        }
+        
+        // Create event using the provider
+        HapticFeedback.mediumImpact();
+        await ref.read(eventsProvider.notifier).scheduleQuickDate(
+          type: dateType,
+          dateTime: eventTime,
+          matchName: 'Someone Special',
+          location: 'Downtown',
         );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Date scheduled for $time'),
+              backgroundColor: VesparaColors.success,
+            ),
+          );
+        }
       },
     );
   }
@@ -432,28 +441,29 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
             child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               if (titleController.text.isNotEmpty) {
-                setState(() {
-                  _events.add(CalendarEvent(
-                    id: 'event-${_events.length + 1}',
-                    userId: 'current-user',
-                    title: titleController.text,
-                    matchName: 'Custom Event',
-                    startTime: DateTime.now().add(const Duration(days: 1)),
-                    endTime: DateTime.now().add(const Duration(days: 1, hours: 2)),
-                    location: locationController.text.isEmpty ? 'TBD' : locationController.text,
-                    status: EventStatus.tentative,
-                    createdAt: DateTime.now(),
-                  ));
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Event "${titleController.text}" created'),
-                    backgroundColor: VesparaColors.success,
-                  ),
+                HapticFeedback.mediumImpact();
+                
+                // Create event using the provider - saves to database
+                await ref.read(eventsProvider.notifier).createCalendarEvent(
+                  title: titleController.text,
+                  startTime: DateTime.now().add(const Duration(days: 1)),
+                  endTime: DateTime.now().add(const Duration(days: 1, hours: 2)),
+                  matchName: 'Custom Event',
+                  location: locationController.text.isEmpty ? 'TBD' : locationController.text,
+                  status: EventStatus.tentative,
                 );
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Event "${titleController.text}" created'),
+                      backgroundColor: VesparaColors.success,
+                    ),
+                  );
+                }
               }
             },
             child: Text('Create', style: TextStyle(color: VesparaColors.glow)),

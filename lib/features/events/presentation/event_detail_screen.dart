@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/vespara_event.dart';
@@ -1170,7 +1172,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     );
   }
 
-  void _updateRsvp(String status) {
+  void _updateRsvp(String status) async {
     HapticFeedback.heavyImpact();
     
     // Update the event's RSVPs
@@ -1191,9 +1193,11 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     }).toList();
     
     // If user wasn't in the list, add them
+    String? rsvpId;
     if (!updatedRsvps.any((r) => r.userId == _currentUserId)) {
+      rsvpId = 'rsvp-${DateTime.now().millisecondsSinceEpoch}';
       updatedRsvps.add(EventRsvp(
-        id: 'rsvp-${DateTime.now().millisecondsSinceEpoch}',
+        id: rsvpId,
         eventId: _event.id,
         userId: _currentUserId,
         userName: 'You',
@@ -1203,9 +1207,29 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       ));
     }
     
+    // Update local state (optimistic update)
     setState(() {
       _event = _event.copyWith(rsvps: updatedRsvps);
     });
+    
+    // Persist RSVP to database
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      
+      if (userId != null && userId.isNotEmpty) {
+        // Try to upsert the RSVP
+        await supabase.from('event_rsvps').upsert({
+          'event_id': _event.id,
+          'user_id': userId,
+          'status': status,
+          'responded_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'event_id,user_id');
+      }
+    } catch (e) {
+      debugPrint('Error saving RSVP: $e');
+      // Keep optimistic update even if database fails
+    }
     
     String message;
     switch (status) {

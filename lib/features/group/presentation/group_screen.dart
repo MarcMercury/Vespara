@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/events.dart';
+import '../../../core/domain/models/vespara_event.dart';
+import '../../../core/providers/events_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// GROUP STUFF - Module 6
@@ -736,15 +739,54 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
               children: ['Tonight', 'Tomorrow', 'This Weekend'].map((time) =>
                 ActionChip(
                   label: Text(time),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
-                    final visibility = isPublic ? '🌍 Public' : '🔒 Private';
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$visibility: ${titleController.text} scheduled for $time!'),
-                        backgroundColor: VesparaColors.success,
-                      ),
+                    
+                    // Calculate actual date/time
+                    DateTime eventTime;
+                    if (time == 'Tonight') {
+                      eventTime = DateTime.now().copyWith(hour: 20, minute: 0, second: 0);
+                    } else if (time == 'Tomorrow') {
+                      eventTime = DateTime.now().add(const Duration(days: 1)).copyWith(hour: 20, minute: 0, second: 0);
+                    } else {
+                      // This Weekend - next Saturday
+                      final now = DateTime.now();
+                      final daysUntilSaturday = (6 - now.weekday + 7) % 7;
+                      eventTime = now.add(Duration(days: daysUntilSaturday == 0 ? 7 : daysUntilSaturday)).copyWith(hour: 20, minute: 0, second: 0);
+                    }
+                    
+                    // Create and save event to database
+                    HapticFeedback.mediumImpact();
+                    
+                    final event = VesparaEvent(
+                      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+                      hostId: 'current-user',
+                      hostName: 'Marc Mercury',
+                      title: titleController.text.isNotEmpty ? titleController.text : 'My $type',
+                      startTime: eventTime,
+                      endTime: eventTime.add(const Duration(hours: 3)),
+                      visibility: isPublic ? EventVisibility.public : EventVisibility.private,
+                      createdAt: DateTime.now(),
                     );
+                    
+                    await ref.read(eventsProvider.notifier).createVesparaEvent(event);
+                    
+                    // Also add to calendar view
+                    await ref.read(eventsProvider.notifier).createCalendarEvent(
+                      title: event.title,
+                      startTime: eventTime,
+                      endTime: eventTime.add(const Duration(hours: 3)),
+                    );
+                    
+                    final visibility = isPublic ? '🌍 Public' : '🔒 Private';
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$visibility: ${event.title} scheduled for $time!'),
+                          backgroundColor: VesparaColors.success,
+                        ),
+                      );
+                    }
                   },
                   backgroundColor: VesparaColors.glow.withOpacity(0.2),
                   labelStyle: TextStyle(color: VesparaColors.glow),
