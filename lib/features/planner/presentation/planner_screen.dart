@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/events.dart';
 import '../../../core/providers/events_provider.dart';
+import '../../events/presentation/event_creation_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE PLANNER - Module 5
@@ -298,6 +299,37 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
             const SizedBox(height: 20),
             Text('Schedule a Date', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
             const SizedBox(height: 24),
+            // NEW: Full Event Creator (Partiful-style)
+            ListTile(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EventCreationScreen()),
+                );
+              },
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [VesparaColors.glow, VesparaColors.glow.withOpacity(0.6)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.celebration, color: VesparaColors.background),
+              ),
+              title: Text('Create Full Event', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.glow)),
+              subtitle: Text('Partiful-style with all options', style: TextStyle(color: VesparaColors.secondary)),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: VesparaColors.success,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('NEW', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: VesparaColors.background)),
+              ),
+            ),
+            const Divider(height: 24),
             ListTile(
               onTap: () => _scheduleDateOption('Drinks Tonight', 'Find a bar nearby'),
               leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.local_bar, color: VesparaColors.glow)),

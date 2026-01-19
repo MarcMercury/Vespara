@@ -11,6 +11,7 @@ import '../../roster/presentation/roster_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
+import '../../events/presentation/events_home_screen.dart';
 import '../../core/presentation/core_screen.dart';
 import '../../mirror/presentation/mirror_screen.dart';
 
@@ -38,7 +39,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     RosterScreen(),      // 2: The Roster
     WireScreen(),        // 3: The Wire
     ShredderScreen(),    // 4: The Shredder
-    TagsScreen(),        // 5: The Ludus
+    EventsHomeScreen(),  // 5: The Ludus (Events - Partiful-style)
     CoreScreen(),        // 6: The Core
     MirrorScreen(),      // 7: The Mirror
   ];
@@ -307,11 +308,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   Expanded(
                     child: _buildAnimatedTile(
                       index: 5,
-                      label: 'LUDUS',
-                      subtitle: 'TAGS Games',
-                      icon: Icons.casino,
+                      label: 'EVENTS',
+                      subtitle: 'Partiful-Style',
+                      icon: Icons.celebration,
                       height: tileHeight,
-                      accentColor: VesparaColors.tagsYellow,
+                      accentColor: VesparaColors.glow,
                     ),
                   ),
                 ],
