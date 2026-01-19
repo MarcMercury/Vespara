@@ -54,6 +54,12 @@ dependencies:
   # Image Handling
   image_picker: ^1.1.2
   
+  # File Handling
+  file_picker: ^8.0.0+1
+  
+  # Sensors
+  sensors_plus: ^4.0.2
+  
   # Icons
   cupertino_icons: ^1.0.6
   iconsax: ^0.0.8

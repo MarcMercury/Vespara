@@ -8,6 +8,7 @@ import '../../../core/domain/models/tags_game.dart';
 import '../../../core/providers/app_providers.dart';
 import '../widgets/consent_meter.dart';
 import '../widgets/game_card_widget.dart';
+import 'down_to_clown_screen.dart';
 
 /// The TAGS Screen - Trusted Adult Games System
 /// A consent-forward interactive game engine with luxury tarot card aesthetics
@@ -394,26 +395,33 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
   void _launchGame(BuildContext context, GameCategory game) {
     VesparaHaptics.heavyTap();
     
-    // Show game launch animation / navigate to game screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.casino,
-              color: VesparaColors.primary,
+    // Navigate to specific game screen based on category
+    switch (game) {
+      case GameCategory.downToClown:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DownToClownScreen()),
+        );
+        return;
+      default:
+        // Show coming soon for other games
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.casino,
+                  color: VesparaColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text('${game.displayName} coming soon...'),
+              ],
             ),
-            const SizedBox(width: 12),
-            Text('Launching ${game.displayName}...'),
-          ],
-        ),
-        backgroundColor: VesparaColors.surfaceElevated,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-    
-    // Navigate to specific game screen
-    // context.go('/home/ludus/${game.name}');
+            backgroundColor: VesparaColors.surfaceElevated,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+    }
   }
   
   String _getConsentText(ConsentLevel level) {

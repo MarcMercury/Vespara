@@ -67,6 +67,7 @@ enum GameCategory {
   icebreakers,
   sensoryPlay,
   kamaSutra,
+  downToClown, // NEW: Heads Up-style guessing game
 }
 
 extension GameCategoryExtension on GameCategory {
@@ -86,6 +87,8 @@ extension GameCategoryExtension on GameCategory {
         return 'Sensory Play';
       case GameCategory.kamaSutra:
         return 'Kama Sutra';
+      case GameCategory.downToClown:
+        return 'Down to Clown';
     }
   }
   
@@ -105,12 +108,15 @@ extension GameCategoryExtension on GameCategory {
         return 'Guided sensory exploration with a partner.';
       case GameCategory.kamaSutra:
         return 'Ancient wisdom for modern intimacy.';
+      case GameCategory.downToClown:
+        return 'Heads Up-style guessing game with kink vocab.';
     }
   }
   
   ConsentLevel get minimumConsentLevel {
     switch (this) {
       case GameCategory.icebreakers:
+      case GameCategory.downToClown:
         return ConsentLevel.green;
       case GameCategory.truthOrDare:
       case GameCategory.pathOfPleasure:
@@ -133,6 +139,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.truthOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.coinTossBoard:
+      case GameCategory.downToClown:
         return 2;
       case GameCategory.theOtherRoom:
         return 4;
@@ -149,6 +156,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.pathOfPleasure:
       case GameCategory.theOtherRoom:
       case GameCategory.coinTossBoard:
+      case GameCategory.downToClown:
         return 8;
     }
   }
