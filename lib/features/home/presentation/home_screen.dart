@@ -5,18 +5,23 @@ import 'dart:math' as math;
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
-import '../../strategist/presentation/strategist_screen.dart';
-import '../../scope/presentation/scope_screen.dart';
-import '../../roster/presentation/roster_screen.dart';
-import '../../wire/presentation/wire_home_screen.dart';
-import '../../shredder/presentation/shredder_screen.dart';
-import '../../ludus/presentation/tags_screen_new.dart';
-import '../../events/presentation/events_home_screen.dart';
-import '../../core/presentation/core_screen.dart';
-import '../../mirror/presentation/mirror_screen.dart';
+import '../../../core/data/vespara_mock_data.dart';
 
-/// HomeScreen - The Bento Box Dashboard
-/// Beautiful animated tiles that navigate to feature screens
+// Import all 8 module screens
+import '../../mirror/presentation/mirror_screen.dart';
+import '../../discover/presentation/discover_screen.dart';
+import '../../nest/presentation/nest_screen.dart';
+import '../../wire/presentation/wire_screen.dart';
+import '../../planner/presentation/planner_screen.dart';
+import '../../events/presentation/events_home_screen.dart';
+import '../../shredder/presentation/shredder_screen.dart';
+import '../../ludus/presentation/tags_screen.dart';
+
+/// ════════════════════════════════════════════════════════════════════════════
+/// VESPARA HOME SCREEN
+/// The Bento Box Dashboard - 8 Interconnected Modules
+/// ════════════════════════════════════════════════════════════════════════════
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -29,19 +34,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   
   late AnimationController _staggerController;
   late AnimationController _pulseController;
-  late AnimationController _shimmerController;
   late List<Animation<double>> _tileAnimations;
   
-  // Screens for each tile
+  /// The 8 Modules per user specification
+  static const List<Map<String, dynamic>> _modules = [
+    {
+      'name': 'MIRROR',
+      'subtitle': 'Profile & Analytics',
+      'icon': Icons.face_retouching_natural,
+      'color': Color(0xFFBFA6D8), // Glow
+      'description': 'Brutal AI feedback',
+    },
+    {
+      'name': 'DISCOVER',
+      'subtitle': 'Swipe Marketplace',
+      'icon': Icons.explore,
+      'color': Color(0xFFE57373), // Pink/Red
+      'description': 'Find your next match',
+    },
+    {
+      'name': 'NEST',
+      'subtitle': 'Match Roster',
+      'icon': Icons.favorite,
+      'color': Color(0xFF4DB6AC), // Teal
+      'description': 'CRM for connections',
+    },
+    {
+      'name': 'WIRE',
+      'subtitle': 'Conversations',
+      'icon': Icons.chat_bubble,
+      'color': Color(0xFF64B5F6), // Blue
+      'description': 'Chat with matches',
+    },
+    {
+      'name': 'PLANNER',
+      'subtitle': 'AI Calendar',
+      'icon': Icons.calendar_month,
+      'color': Color(0xFFBA68C8), // Purple
+      'description': 'Schedule dates',
+    },
+    {
+      'name': 'GROUP',
+      'subtitle': 'Events & Parties',
+      'icon': Icons.celebration,
+      'color': Color(0xFFFFB74D), // Orange
+      'description': 'Plan group activities',
+    },
+    {
+      'name': 'SHREDDER',
+      'subtitle': 'Time to Move On',
+      'icon': Icons.delete_sweep,
+      'color': Color(0xFFE57373), // Red
+      'description': 'AI cleanup crew',
+    },
+    {
+      'name': 'TAG',
+      'subtitle': 'Adult Games',
+      'icon': Icons.casino,
+      'color': Color(0xFFFFD54F), // Yellow
+      'description': 'Games for two+',
+    },
+  ];
+
+  /// Screens for each module
   static const List<Widget> _screens = [
-    StrategistScreen(),  // 0: The Strategist
-    ScopeScreen(),       // 1: The Scope
-    RosterScreen(),      // 2: The Roster
-    WireHomeScreen(),    // 3: The Wire (WhatsApp-style)
-    ShredderScreen(),    // 4: The Shredder
-    EventsHomeScreen(),  // 5: The Ludus (Events - Partiful-style)
-    CoreScreen(),        // 6: The Core
-    MirrorScreen(),      // 7: The Mirror
+    MirrorScreen(),      // 0: Mirror - Profile/Analytics
+    DiscoverScreen(),    // 1: Discover - Swipe Marketplace
+    NestScreen(),        // 2: Nest - CRM Roster
+    WireScreen(),        // 3: Wire - Chat
+    PlannerScreen(),     // 4: Planner - Calendar
+    EventsHomeScreen(),  // 5: Group - Partiful-Style Events
+    ShredderScreen(),    // 6: Shredder - AI Cleanup
+    TagScreen(),         // 7: TAG - Games
   ];
   
   @override
@@ -54,17 +118,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(milliseconds: 1200),
     );
     
-    // Pulse animation for tile glow
+    // Pulse animation for highlights
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2500),
     )..repeat(reverse: true);
-    
-    // Shimmer animation for tile highlights
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3000),
-    )..repeat();
     
     // Create staggered animations for each tile
     _tileAnimations = List.generate(8, (index) {
@@ -83,7 +141,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void dispose() {
     _staggerController.dispose();
     _pulseController.dispose();
-    _shimmerController.dispose();
     super.dispose();
   }
   
@@ -96,7 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             opacity: animation,
             child: SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0, 0.05),
+                begin: const Offset(0, 0.03),
                 end: Offset.zero,
               ).animate(CurvedAnimation(
                 parent: animation,
@@ -106,15 +163,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           );
         },
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }
   
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final profile = ref.watch(userProfileProvider);
+    final analytics = MockDataProvider.analytics;
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
@@ -124,19 +180,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ═══════════════════════════════════════════════════════════════
-              // HEADER
-              // ═══════════════════════════════════════════════════════════════
-              _buildHeader(context, user, profile),
-              
-              const SizedBox(height: 24),
-              
-              // ═══════════════════════════════════════════════════════════════
-              // BENTO GRID - 8 Tiles
-              // ═══════════════════════════════════════════════════════════════
-              Expanded(
-                child: _buildBentoGrid(),
-              ),
+              _buildHeader(),
+              const SizedBox(height: 16),
+              _buildQuickStats(analytics),
+              const SizedBox(height: 20),
+              Expanded(child: _buildModuleGrid()),
             ],
           ),
         ),
@@ -144,7 +192,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
   
-  Widget _buildHeader(BuildContext context, dynamic user, AsyncValue profile) {
+  Widget _buildHeader() {
+    final profile = MockDataProvider.currentUserProfile;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -155,18 +205,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               'VESPARA',
               style: TextStyle(
                 fontSize: 28,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 6,
                 color: VesparaColors.primary,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
-              profile.when(
-                data: (p) => 'Welcome back, ${p?.displayName ?? 'Explorer'}',
-                loading: () => 'Loading...',
-                error: (_, __) => 'Demo Mode',
-              ),
+              'Welcome back, ${profile.displayName}',
               style: TextStyle(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -175,35 +221,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
         
-        // Profile avatar with glow
+        // Profile avatar with pulse
         AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
-            return Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: VesparaColors.surface,
-                border: Border.all(
-                  color: VesparaColors.glow.withOpacity(0.3 + _pulseController.value * 0.2),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: VesparaColors.glow.withOpacity(0.1 + _pulseController.value * 0.1),
-                    blurRadius: 15,
-                    spreadRadius: 2,
+            return GestureDetector(
+              onTap: () => _navigateToScreen(0), // Go to Mirror
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      VesparaColors.glow.withOpacity(0.7 + _pulseController.value * 0.3),
+                      VesparaColors.glow.withOpacity(0.4),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  user?.email?.substring(0, 1).toUpperCase() ?? 'V',
-                  style: TextStyle(
-                    color: VesparaColors.primary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                  boxShadow: [
+                    BoxShadow(
+                      color: VesparaColors.glow.withOpacity(0.2 + _pulseController.value * 0.1),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    profile.displayName[0].toUpperCase(),
+                    style: TextStyle(
+                      color: VesparaColors.background,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -214,142 +266,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
   
-  Widget _buildBentoGrid() {
+  Widget _buildQuickStats(dynamic analytics) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            VesparaColors.glow.withOpacity(0.15),
+            VesparaColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildQuickStat('${analytics.totalMatches}', 'Matches', Icons.favorite),
+          Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildQuickStat('${analytics.activeConversations}', 'Active', Icons.chat_bubble),
+          Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildQuickStat('${analytics.datesScheduled}', 'Dates', Icons.calendar_today),
+          Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildQuickStat('${analytics.matchRate.toInt()}%', 'Rate', Icons.trending_up),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildQuickStat(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 12, color: VesparaColors.glow),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: VesparaColors.secondary,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildModuleGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final totalWidth = constraints.maxWidth;
         final spacing = 12.0;
-        final tileWidth = (totalWidth - spacing) / 2;
-        // Uniform height for all tiles - creates clean grid
-        final tileHeight = tileWidth * 0.9;
+        final tileWidth = (constraints.maxWidth - spacing) / 2;
+        final tileHeight = tileWidth * 0.75;
         
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // ═══════════════════════════════════════════════════════════════
-              // ROW 1: The Engine (Strategist + Scope)
-              // ═══════════════════════════════════════════════════════════════
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 0,
-                      label: 'STRATEGIST',
-                      subtitle: 'AI Dating Coach',
-                      icon: Icons.psychology,
-                      height: tileHeight,
-                      accentColor: VesparaColors.glow,
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 1,
-                      label: 'SCOPE',
-                      subtitle: 'Profile Analyzer',
-                      icon: Icons.explore,
-                      height: tileHeight,
-                      accentColor: VesparaColors.secondary,
-                    ),
-                  ),
-                ],
-              ),
-              
+              // Row 1: Mirror + Discover
+              _buildModuleRow([0, 1], tileWidth, tileHeight, spacing),
               SizedBox(height: spacing),
-              
-              // ═══════════════════════════════════════════════════════════════
-              // ROW 2: The Workflow (Roster + Wire)
-              // ═══════════════════════════════════════════════════════════════
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 2,
-                      label: 'ROSTER',
-                      subtitle: 'Match Manager',
-                      icon: Icons.people,
-                      height: tileHeight,
-                      accentColor: VesparaColors.success,
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 3,
-                      label: 'WIRE',
-                      subtitle: 'Conversations',
-                      icon: Icons.message,
-                      height: tileHeight,
-                      accentColor: VesparaColors.secondary,
-                    ),
-                  ),
-                ],
-              ),
-              
+              // Row 2: Nest + Wire
+              _buildModuleRow([2, 3], tileWidth, tileHeight, spacing),
               SizedBox(height: spacing),
-              
-              // ═══════════════════════════════════════════════════════════════
-              // ROW 3: The Experience (Shredder + Ludus)
-              // ═══════════════════════════════════════════════════════════════
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 4,
-                      label: 'SHREDDER',
-                      subtitle: 'Ghost Protocol',
-                      icon: Icons.delete_sweep,
-                      height: tileHeight,
-                      accentColor: VesparaColors.warning,
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 5,
-                      label: 'EVENTS',
-                      subtitle: 'Partiful-Style',
-                      icon: Icons.celebration,
-                      height: tileHeight,
-                      accentColor: VesparaColors.glow,
-                    ),
-                  ),
-                ],
-              ),
-              
+              // Row 3: Planner + Group
+              _buildModuleRow([4, 5], tileWidth, tileHeight, spacing),
               SizedBox(height: spacing),
-              
-              // ═══════════════════════════════════════════════════════════════
-              // ROW 4: The Data (Core + Mirror)
-              // ═══════════════════════════════════════════════════════════════
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 6,
-                      label: 'CORE',
-                      subtitle: 'Settings',
-                      icon: Icons.settings,
-                      height: tileHeight,
-                      accentColor: VesparaColors.primary,
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-                  Expanded(
-                    child: _buildAnimatedTile(
-                      index: 7,
-                      label: 'MIRROR',
-                      subtitle: 'Analytics',
-                      icon: Icons.analytics,
-                      height: tileHeight,
-                      accentColor: VesparaColors.glow,
-                    ),
-                  ),
-                ],
-              ),
-              
-              SizedBox(height: 24),
+              // Row 4: Shredder + TAG
+              _buildModuleRow([6, 7], tileWidth, tileHeight, spacing),
+              const SizedBox(height: 24),
             ],
           ),
         );
@@ -357,283 +352,153 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
   
-  Widget _buildAnimatedTile({
-    required int index,
-    required String label,
-    required String subtitle,
-    required IconData icon,
-    required double height,
-    required Color accentColor,
-  }) {
+  Widget _buildModuleRow(List<int> indices, double width, double height, double spacing) {
+    return Row(
+      children: [
+        Expanded(child: _buildModuleTile(indices[0], height)),
+        SizedBox(width: spacing),
+        Expanded(child: _buildModuleTile(indices[1], height)),
+      ],
+    );
+  }
+  
+  Widget _buildModuleTile(int index, double height) {
+    final module = _modules[index];
+    final color = module['color'] as Color;
+    
     return AnimatedBuilder(
       animation: _tileAnimations[index],
       builder: (context, child) {
         return Transform.scale(
-          scale: 0.5 + (_tileAnimations[index].value * 0.5),
-          child: Opacity(
-            opacity: _tileAnimations[index].value.clamp(0.0, 1.0),
-            child: child,
+          scale: _tileAnimations[index].value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - _tileAnimations[index].value)),
+            child: Opacity(
+              opacity: _tileAnimations[index].value.clamp(0.0, 1.0),
+              child: child,
+            ),
           ),
         );
       },
-      child: _VesparaTile(
-        index: index,
-        label: label,
-        subtitle: subtitle,
-        icon: icon,
-        height: height,
-        accentColor: accentColor,
-        pulseAnimation: _pulseController,
-        shimmerAnimation: _shimmerController,
-        onTap: () => _navigateToScreen(index),
-      ),
-    );
-  }
-}
-
-/// Individual animated tile with hover effects and glow
-class _VesparaTile extends StatefulWidget {
-  final int index;
-  final String label;
-  final String subtitle;
-  final IconData icon;
-  final double height;
-  final Color accentColor;
-  final AnimationController pulseAnimation;
-  final AnimationController shimmerAnimation;
-  final VoidCallback onTap;
-
-  const _VesparaTile({
-    required this.index,
-    required this.label,
-    required this.subtitle,
-    required this.icon,
-    required this.height,
-    required this.accentColor,
-    required this.pulseAnimation,
-    required this.shimmerAnimation,
-    required this.onTap,
-  });
-
-  @override
-  State<_VesparaTile> createState() => _VesparaTileState();
-}
-
-class _VesparaTileState extends State<_VesparaTile> 
-    with SingleTickerProviderStateMixin {
-  bool _isPressed = false;
-  bool _isHovered = false;
-  late AnimationController _tapController;
-  late Animation<double> _scaleAnimation;
-  
-  @override
-  void initState() {
-    super.initState();
-    _tapController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _tapController, curve: Curves.easeInOut),
-    );
-  }
-  
-  @override
-  void dispose() {
-    _tapController.dispose();
-    super.dispose();
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onTapDown: (_) {
-          setState(() => _isPressed = true);
-          _tapController.forward();
-        },
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          _tapController.reverse();
-          widget.onTap();
-        },
-        onTapCancel: () {
-          setState(() => _isPressed = false);
-          _tapController.reverse();
-        },
-        child: AnimatedBuilder(
-          animation: Listenable.merge([
-            _scaleAnimation,
-            widget.pulseAnimation,
-            widget.shimmerAnimation,
-          ]),
-          builder: (context, child) {
-            final pulseValue = widget.pulseAnimation.value;
-            final shimmerValue = widget.shimmerAnimation.value;
-            
-            return Transform.scale(
-              scale: _scaleAnimation.value * (_isHovered ? 1.02 : 1.0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: widget.height,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      widget.accentColor.withOpacity(0.08 + pulseValue * 0.04),
-                      VesparaColors.surface,
-                      VesparaColors.surface.withOpacity(0.95),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                  border: Border.all(
-                    color: _isHovered || _isPressed
-                        ? widget.accentColor.withOpacity(0.4)
-                        : VesparaColors.glow.withOpacity(0.08 + pulseValue * 0.05),
-                    width: _isHovered ? 1.5 : 1,
-                  ),
-                  boxShadow: [
-                    // Outer glow
-                    BoxShadow(
-                      color: widget.accentColor.withOpacity(
-                        _isHovered ? 0.15 : 0.05 + pulseValue * 0.03,
-                      ),
-                      blurRadius: _isHovered ? 20 : 12,
-                      spreadRadius: _isHovered ? 2 : 0,
+        onTap: () => _navigateToScreen(index),
+        child: Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Background gradient
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withOpacity(0.15),
+                        Colors.transparent,
+                      ],
                     ),
-                    // Inner shadow for depth
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Stack(
-                    children: [
-                      // Shimmer effect
-                      Positioned.fill(
-                        child: Opacity(
-                          opacity: 0.05,
-                          child: Transform.translate(
-                            offset: Offset(
-                              (shimmerValue - 0.5) * 200,
-                              0,
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    widget.accentColor.withOpacity(0.3),
-                                    Colors.transparent,
-                                  ],
-                                  stops: const [0.0, 0.5, 1.0],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      // Floating particles effect
-                      ...List.generate(3, (i) {
-                        final angle = (shimmerValue * 2 * math.pi) + (i * math.pi / 1.5);
-                        final radius = 30.0 + i * 15;
-                        return Positioned(
-                          left: 30 + math.cos(angle) * radius,
-                          top: 30 + math.sin(angle) * radius,
-                          child: Container(
-                            width: 4 - i * 0.5,
-                            height: 4 - i * 0.5,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: widget.accentColor.withOpacity(0.2 - i * 0.05),
-                            ),
-                          ),
-                        );
-                      }),
-                      
-                      // Icon with glow
-                      Positioned(
-                        top: 20,
-                        left: 20,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: widget.accentColor.withOpacity(0.1),
-                            boxShadow: [
-                              BoxShadow(
-                                color: widget.accentColor.withOpacity(0.2 + pulseValue * 0.1),
-                                blurRadius: 15,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            widget.icon,
-                            size: 28,
-                            color: widget.accentColor.withOpacity(0.9),
-                          ),
-                        ),
-                      ),
-                      
-                      // Labels
-                      Positioned(
-                        bottom: 20,
-                        left: 20,
-                        right: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.label,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 2.5,
-                                color: VesparaColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.subtitle,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: VesparaColors.secondary.withOpacity(0.8),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      // Tap ripple indicator
-                      if (_isPressed)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              color: widget.accentColor.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
-                    ],
                   ),
                 ),
               ),
-            );
-          },
+              
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Icon
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        module['icon'] as IconData,
+                        color: color,
+                        size: 22,
+                      ),
+                    ),
+                    
+                    // Text
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          module['name'] as String,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          module['subtitle'] as String,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: VesparaColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Notification badge (example for some modules)
+              if (_hasNotification(index))
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(0.5),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
+  }
+  
+  bool _hasNotification(int index) {
+    // Show notifications for certain modules
+    switch (index) {
+      case 1: return true;  // Discover - new profiles
+      case 2: return true;  // Nest - new match
+      case 3: return true;  // Wire - unread messages
+      case 6: return true;  // Shredder - suggestions
+      default: return false;
+    }
   }
 }

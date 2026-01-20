@@ -17,29 +17,29 @@ We solve "Match Burnout" by replacing the slot-machine mechanics of modern datin
 
 ---
 
-## 📱 The 8-Tile Architecture (The Hub)
+## 📱 The 8-Module Architecture (The Hub)
 
-The application is structured around a **Staggered Grid of 8 "Live Tiles."**
+The application is structured around a **Bento Grid of 8 Modules.**
 
-### Row 1: The Engine | Row 2: The Workflow
+### Row 1 & 2: Core Modules
 
-| Tile 1: The Strategist | Tile 2: The Scope |
-|------------------------|-------------------|
-| **The Brain.** Uses AI to calculate "Match Momentum." Features **"Tonight Mode"** (Geo-fenced beacon for spontaneous meetups). | **The Eye.** A "Feeld x Beyond" hybrid feed. Shows curated "Batches" of profiles using Vector Similarity matching. |
+| MIRROR | DISCOVER |
+|--------|----------|
+| **Profile & Analytics.** View your profile, brutal AI feedback, and connection stats. | **Swipe Marketplace.** Card-based discovery with swipe gestures. |
 
-| Tile 3: The Roster | Tile 4: The Wire |
-|--------------------|------------------|
-| **The CRM.** A Kanban board managing connections: `Incoming → Bench → Active Rotation → Legacy`. | **The Comm Center.** Priority messaging. Features **"Conversation Resuscitator"** (AI-generated openers for stale chats). |
+| NEST | WIRE |
+|------|------|
+| **Connection CRM.** Manage your matches, track relationships, organize connections. | **Messaging Hub.** Chat with matches, group conversations, voice messages. |
 
-### Row 3: The Experience | Row 4: The Data
+### Row 3 & 4: Experience & Games
 
-| Tile 5: The Shredder | Tile 6: The Ludus |
-|----------------------|-------------------|
-| **The Janitor.** Features **"Ghost Protocol"** — Drag a match here, and AI drafts a polite, firm closure text. | **The Playground.** (A) Plan: Partiful-style event creator. (B) Play: The TAGS Game Engine with Consent Meter. |
+| PLANNER | GROUP |
+|---------|-------|
+| **AI Calendar.** Smart scheduling for dates and meetups. | **Events & Parties.** Partiful-style event creation and discovery. |
 
-| Tile 7: The Core | Tile 8: The Mirror |
-|------------------|-------------------|
-| **The Soul.** User Preferences & Identity. Features **"The Vouch Chain"** (Social verification link). | **The Coach.** Brutal analytics on your behavior: *"You ghosted 40% of matches."* |
+| SHREDDER | TAG |
+|----------|-----|
+| **Ghost Protocol.** AI-drafted graceful exit messages for stale connections. | **Adult Games (Ludus).** 7 consent-forward games with heat levels. |
 
 ---
 
@@ -117,31 +117,36 @@ We strictly adhere to the **Vespara Night** palette. **Do not use default Flutte
 
 ---
 
-## 📂 Project Structure (Clean Architecture)
+## 📂 Project Structure (Feature-First Architecture)
 
 ```
 lib/
+├── main.dart            # Entry point + AuthGate
 ├── core/
-│   ├── config/          # Env, Constants
-│   ├── theme/           # AppTheme, Palettes
-│   ├── providers/       # Riverpod Providers
-│   ├── router/          # GoRouter Config
-│   ├── services/        # SupabaseService, OpenAIService, LocationService
-│   └── domain/models/   # Data Models (User, Match, Game, Analytics)
+│   ├── config/          # Environment configuration
+│   ├── constants/       # App constants
+│   ├── data/            # Repositories & mock data
+│   ├── domain/models/   # Data models (12 total)
+│   ├── providers/       # Riverpod state management
+│   ├── services/        # Business logic services
+│   ├── theme/           # Design system
+│   └── utils/           # Helpers (haptics, etc.)
 ├── features/
-│   ├── home/            # The 8-Tile Dashboard (Bento Grid)
-│   ├── strategist/      # AI Advisor + Tonight Mode
-│   ├── scope/           # Profile Swiper (Focus Batch)
-│   ├── roster/          # CRM Kanban Board
-│   ├── wire/            # Priority Messaging + Resuscitator
+│   ├── home/            # Bento Grid dashboard (8 modules)
+│   ├── auth/            # Login & authentication
+│   ├── onboarding/      # Profile setup wizard
+│   ├── mirror/          # Profile & analytics
+│   ├── discover/        # Swipe marketplace
+│   ├── nest/            # Connection CRM
+│   ├── wire/            # Messaging (5 screens)
+│   ├── planner/         # AI calendar
+│   ├── events/          # Event management
+│   ├── group/           # Group activities
 │   ├── shredder/        # Ghost Protocol
-│   ├── ludus/           # TAGS Engine + Consent Meter
-│   ├── core/            # Settings + Vouch Chain
-│   ├── mirror/          # Brutal Analytics
-│   └── auth/            # Login & Onboarding
+│   └── ludus/           # TAG games (7 games)
 supabase/
-├── migrations/          # 001_initial_schema.sql (15 tables)
-└── functions/           # 5 Edge Functions (Deployed)
+├── migrations/          # 17+ SQL migrations
+└── functions/           # 7 Edge Functions
 ```
 
 ---

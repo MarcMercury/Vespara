@@ -1,490 +1,598 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/haptics.dart';
+import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/tags_game.dart';
-import '../../../core/providers/app_providers.dart';
-import '../widgets/consent_meter.dart';
-import '../widgets/game_card_widget.dart';
-import 'down_to_clown_screen.dart';
 import 'ice_breakers_screen.dart';
+import 'velvet_rope_screen.dart';
+import 'down_to_clown_screen.dart';
+import 'path_of_pleasure_screen.dart';
+import 'lane_of_lust_screen.dart';
+import 'drama_sutra_screen.dart';
+import 'flash_freeze_screen.dart';
 
-/// The TAGS Screen - Trusted Adult Games System
-/// A consent-forward interactive game engine with luxury tarot card aesthetics
-/// 
-/// Web-safe version using PageView instead of CardSwiper
-class TagsScreen extends ConsumerStatefulWidget {
-  const TagsScreen({super.key});
+/// ════════════════════════════════════════════════════════════════════════════
+/// TAG - Module 8 (Adult Games)
+/// Directory of games for 2+ players
+/// Ice breakers, conversation starters, and... more 🔥
+/// ════════════════════════════════════════════════════════════════════════════
+
+class TagScreen extends ConsumerStatefulWidget {
+  const TagScreen({super.key});
 
   @override
-  ConsumerState<TagsScreen> createState() => _TagsScreenState();
+  ConsumerState<TagScreen> createState() => _TagScreenState();
 }
 
-class _TagsScreenState extends ConsumerState<TagsScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _glowController;
-  final PageController _pageController = PageController(viewportFraction: 0.85);
-  int _currentGameIndex = 0;
-  bool _consentConfirmed = false;
+class _TagScreenState extends ConsumerState<TagScreen> {
+  late List<TagsGame> _games;
+  GameCategory? _selectedCategory;
   
   @override
   void initState() {
     super.initState();
-    _glowController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-  }
-  
-  @override
-  void dispose() {
-    _glowController.dispose();
-    _pageController.dispose();
-    super.dispose();
+    _games = MockDataProvider.tagsGames;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Use the consent level from providers
-    final consentLevel = ref.watch(consentLevelProvider);
-    final gamesAsync = ref.watch(filteredGamesProvider);
-    
-    // Convert consent string to ConsentLevel enum for UI
-    final consentEnum = _stringToConsentLevel(consentLevel);
-    
-    // Get available games from provider (already returns GameCategory list)
-    final availableGames = gamesAsync.when(
-      data: (games) => games,
-      loading: () => <GameCategory>[],
-      error: (_, __) => <GameCategory>[],
-    );
-    
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // ═══════════════════════════════════════════════════════════════════
-            // HEADER
-            // ═══════════════════════════════════════════════════════════════════
-            _buildHeader(context),
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // CONSENT METER (TOP)
-            // ═══════════════════════════════════════════════════════════════════
-            Padding(
-              padding: const EdgeInsets.all(VesparaSpacing.md),
-              child: ConsentMeter(
-                currentLevel: consentEnum,
-                onLevelChanged: (level) {
-                  VesparaHaptics.selectionClick();
-                  // PHASE 2: Update consent level which triggers game reload
-                  ref.read(consentLevelProvider.notifier).state = _consentLevelToString(level);
-                  setState(() {
-                    _consentConfirmed = false;
-                    _currentGameIndex = 0;
-                  });
-                },
-              ),
-            ),
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // CONSENT CONFIRMATION
-            // ═══════════════════════════════════════════════════════════════════
-            if (!_consentConfirmed)
-              _buildConsentConfirmation(context, consentEnum),
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // GAME CARD CAROUSEL (CENTER)
-            // ═══════════════════════════════════════════════════════════════════
-            if (_consentConfirmed)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: VesparaSpacing.md,
-                  ),
-                  child: _buildGameCarousel(context, availableGames),
-                ),
-              ),
-            
-            // ═══════════════════════════════════════════════════════════════════
-            // LAUNCH GAME BUTTON (BOTTOM)
-            // ═══════════════════════════════════════════════════════════════════
-            if (_consentConfirmed && availableGames.isNotEmpty)
-              _buildLaunchButton(context, availableGames[_currentGameIndex]),
-            
-            const SizedBox(height: VesparaSpacing.lg),
+            _buildHeader(),
+            _buildCategoryFilter(),
+            Expanded(child: _buildGamesList()),
           ],
         ),
       ),
     );
   }
-  
-  /// Build the header with back button and title
-  Widget _buildHeader(BuildContext context) {
+
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
+      padding: const EdgeInsets.all(16),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(
-            onTap: () {
-              VesparaHaptics.lightTap();
-              context.go('/home');
-            },
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: VesparaColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: VesparaColors.border,
-                  width: 1,
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+          ),
+          Column(
+            children: [
+              Text(
+                'TAG',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 4,
+                  color: VesparaColors.tagsYellow,
                 ),
               ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: VesparaColors.primary,
-                size: 20,
+              Text(
+                "You're It 🎯",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: VesparaColors.secondary,
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: VesparaSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'THE LUDUS',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    letterSpacing: 3,
-                  ),
-                ),
-                Text(
-                  'Trusted Adult Games',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          // Arcade icon
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow.withOpacity(
-                    0.1 + (_glowController.value * 0.1),
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: VesparaColors.glow.withOpacity(
-                      0.3 + (_glowController.value * 0.2),
-                    ),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: VesparaColors.glow.withOpacity(
-                        0.1 + (_glowController.value * 0.1),
-                      ),
-                      blurRadius: 15,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.casino,
-                  color: VesparaColors.primary,
-                  size: 24,
-                ),
-              );
-            },
+          IconButton(
+            onPressed: () => _showRandomGame(),
+            icon: const Icon(Icons.casino, color: VesparaColors.tagsYellow),
           ),
         ],
       ),
     );
   }
-  
-  /// Build consent confirmation dialog
-  Widget _buildConsentConfirmation(BuildContext context, ConsentLevel level) {
-    return Expanded(
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(VesparaSpacing.lg),
-          padding: const EdgeInsets.all(VesparaSpacing.lg),
-          decoration: VesparaGlass.elevated,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Emoji and title
-              Text(
-                level.emoji,
-                style: const TextStyle(fontSize: 48),
+
+  Widget _buildCategoryFilter() {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          _buildCategoryChip(null, 'All', Icons.apps, VesparaColors.glow),
+          ...GameCategory.values.map((cat) => _buildCategoryChip(
+            cat,
+            cat.displayName,
+            _getCategoryIcon(cat),
+            _getCategoryColor(cat),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(GameCategory? category, String name, IconData icon, Color color) {
+    final isSelected = _selectedCategory == category;
+    
+    return GestureDetector(
+      onTap: () => setState(() => _selectedCategory = category),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : VesparaColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : VesparaColors.glow.withOpacity(0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: isSelected ? color : VesparaColors.secondary),
+            const SizedBox(width: 6),
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? color : VesparaColors.secondary,
               ),
-              const SizedBox(height: VesparaSpacing.md),
-              Text(
-                'VIBE CHECK',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  letterSpacing: 3,
-                ),
-              ),
-              const SizedBox(height: VesparaSpacing.sm),
-              
-              // Level description
-              Text(
-                level.description,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: VesparaSpacing.lg),
-              
-              // Agreement text
-              Container(
-                padding: const EdgeInsets.all(VesparaSpacing.md),
-                decoration: BoxDecoration(
-                  color: VesparaColors.background.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: VesparaColors.border,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGamesList() {
+    final filteredGames = _selectedCategory == null
+        ? _games
+        : _games.where((g) => g.category == _selectedCategory).toList();
+    
+    if (filteredGames.isEmpty) {
+      return _buildEmptyState();
+    }
+    
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: filteredGames.length,
+      itemBuilder: (context, index) => _buildGameCard(filteredGames[index]),
+    );
+  }
+
+  Widget _buildGameCard(TagsGame game) {
+    final categoryColor = _getCategoryColor(game.category);
+    
+    return GestureDetector(
+      onTap: () => _showGameDetails(game),
+      child: Container(
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      _getCategoryIcon(game.category),
+                      color: categoryColor,
+                      size: 24,
+                    ),
                   ),
+                  const SizedBox(height: 12),
+                  
+                  // Title
+                  Text(
+                    game.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.primary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  
+                  // Description
+                  Text(
+                    game.description ?? game.category.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: VesparaColors.secondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // Meta info
+                  Row(
+                    children: [
+                      Icon(Icons.people, size: 12, color: VesparaColors.secondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${game.category.minPlayers}-${game.category.maxPlayers}',
+                        style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        game.currentConsentLevel.emoji,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // Category badge
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: categoryColor,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _getConsentText(level),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    height: 1.5,
+                  game.currentConsentLevel.displayName,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: VesparaColors.background,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: VesparaSpacing.lg),
-              
-              // Confirm button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    VesparaHaptics.success();
-                    setState(() {
-                      _consentConfirmed = true;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _getConsentColor(level),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: Text(
-                    'I UNDERSTAND & CONSENT',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: VesparaColors.background,
-                      letterSpacing: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.games,
+            size: 80,
+            color: VesparaColors.tagsYellow.withOpacity(0.3),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No games in this category',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try a different category',
+            style: TextStyle(
+              fontSize: 14,
+              color: VesparaColors.secondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getCategoryIcon(GameCategory category) {
+    switch (category) {
+      case GameCategory.downToClown:
+        return Icons.sentiment_very_satisfied;
+      case GameCategory.icebreakers:
+        return Icons.ac_unit;
+      case GameCategory.velvetRope:
+        return Icons.style;
+      case GameCategory.pathOfPleasure:
+        return Icons.route;
+      case GameCategory.laneOfLust:
+        return Icons.linear_scale;
+      case GameCategory.dramaSutra:
+        return Icons.theaters;
+      case GameCategory.flashFreeze:
+        return Icons.flash_on;
+    }
+  }
+
+  Color _getCategoryColor(GameCategory category) {
+    switch (category.minimumConsentLevel) {
+      case ConsentLevel.green:
+        return Colors.lightBlue;
+      case ConsentLevel.yellow:
+        return Colors.orange;
+      case ConsentLevel.red:
+        return VesparaColors.error;
+    }
+  }
+
+  void _showGameDetails(TagsGame game) {
+    final categoryColor = _getCategoryColor(game.category);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: VesparaColors.secondary,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  /// Build the game carousel using PageView (web-safe)
-  Widget _buildGameCarousel(BuildContext context, List<GameCategory> games) {
-    if (games.isEmpty) {
-      return Center(
-        child: Text(
-          'No games available at this consent level',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      );
-    }
-    
-    return Column(
-      children: [
-        // Progress dots
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(games.length, (index) {
-              return Container(
-                width: _currentGameIndex == index ? 24 : 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: _currentGameIndex == index 
-                    ? VesparaColors.glow 
-                    : VesparaColors.border,
-                  borderRadius: BorderRadius.circular(4),
+                const SizedBox(height: 24),
+                
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: categoryColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        _getCategoryIcon(game.category),
+                        color: categoryColor,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            game.title,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: categoryColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  game.category.displayName,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                game.currentConsentLevel.emoji,
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                game.currentConsentLevel.displayName,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: VesparaColors.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-          ),
-        ),
-        
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: games.length,
-            onPageChanged: (index) {
-              VesparaHaptics.carouselSnap();
-              setState(() {
-                _currentGameIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                child: GameCardWidget(
-                  game: games[index],
-                  consentLevel: ref.watch(tagsConsentLevelProvider),
-                  isActive: index == _currentGameIndex,
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-  
-  /// Build the launch game button
-  Widget _buildLaunchButton(BuildContext context, GameCategory game) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: VesparaSpacing.lg),
-      child: AnimatedBuilder(
-        animation: _glowController,
-        builder: (context, child) {
-          return Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
-              boxShadow: [
-                BoxShadow(
-                  color: VesparaColors.glow.withOpacity(
-                    0.2 + (_glowController.value * 0.1),
+                
+                const SizedBox(height: 24),
+                
+                // Description
+                Text(
+                  game.description ?? game.category.description,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: VesparaColors.primary,
+                    height: 1.5,
                   ),
-                  blurRadius: 20,
-                  spreadRadius: 0,
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Info cards
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoCard(
+                        'Players',
+                        '${game.category.minPlayers}-${game.category.maxPlayers}',
+                        Icons.people,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildInfoCard(
+                        'Level',
+                        game.currentConsentLevel.displayName,
+                        Icons.thermostat,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Start button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _startGame(game);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: categoryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.play_arrow),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Start Game',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
-            child: ElevatedButton.icon(
-              onPressed: () => _launchGame(context, game),
-              icon: const Icon(Icons.play_arrow),
-              label: Text(
-                'LAUNCH ${game.displayName.toUpperCase()}',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: VesparaColors.background,
-                  letterSpacing: 1,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-              ),
-            ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
-  
-  /// Launch the selected game
-  void _launchGame(BuildContext context, GameCategory game) {
-    VesparaHaptics.heavyTap();
-    
-    // Navigate to specific game screen based on category
-    switch (game) {
-      case GameCategory.icebreakers:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const IceBreakersScreen()),
-        );
-        return;
+
+  Widget _buildInfoCard(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: VesparaColors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: VesparaColors.glow),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: VesparaColors.secondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRandomGame() {
+    if (_games.isEmpty) return;
+    final randomGame = _games[DateTime.now().millisecond % _games.length];
+    _showGameDetails(randomGame);
+  }
+
+  void _startGame(TagsGame game) {
+    // Navigate to the appropriate game screen based on category
+    switch (game.category) {
       case GameCategory.downToClown:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const DownToClownScreen()),
         );
-        return;
-      default:
-        // Show coming soon for other games
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.casino,
-                  color: VesparaColors.primary,
-                ),
-                const SizedBox(width: 12),
-                Text('${game.displayName} coming soon...'),
-              ],
-            ),
-            backgroundColor: VesparaColors.surfaceElevated,
-            duration: const Duration(seconds: 2),
-          ),
+        break;
+      case GameCategory.icebreakers:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const IceBreakersScreen()),
         );
-    }
-  }
-  
-  String _getConsentText(ConsentLevel level) {
-    switch (level) {
-      case ConsentLevel.green:
-        return 'All activities at this level are social and flirtatious. '
-               'No physical contact or nudity is required. '
-               'This is a safe space for playful conversation.';
-      case ConsentLevel.yellow:
-        return 'Activities may include light touch and suggestive content. '
-               'All participants must actively consent to each activity. '
-               'You can opt out at any time without judgment.';
-      case ConsentLevel.red:
-        return 'This level includes explicit adult content. '
-               'All participants must be consenting adults. '
-               'Boundaries are respected. Safe words are honored. '
-               'What happens in the Ludus stays in the Ludus.';
-    }
-  }
-  
-  Color _getConsentColor(ConsentLevel level) {
-    switch (level) {
-      case ConsentLevel.green:
-        return VesparaColors.tagsGreen;
-      case ConsentLevel.yellow:
-        return VesparaColors.tagsYellow;
-      case ConsentLevel.red:
-        return VesparaColors.tagsRed;
-    }
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // HELPER METHODS FOR CONSENT LEVEL CONVERSION
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  /// Convert string consent level to enum
-  ConsentLevel _stringToConsentLevel(String level) {
-    switch (level) {
-      case 'red':
-        return ConsentLevel.red;
-      case 'yellow':
-        return ConsentLevel.yellow;
-      default:
-        return ConsentLevel.green;
-    }
-  }
-  
-  /// Convert enum consent level to string
-  String _consentLevelToString(ConsentLevel level) {
-    switch (level) {
-      case ConsentLevel.red:
-        return 'red';
-      case ConsentLevel.yellow:
-        return 'yellow';
-      case ConsentLevel.green:
-        return 'green';
+        break;
+      case GameCategory.velvetRope:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),
+        );
+        break;
+      case GameCategory.pathOfPleasure:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PathOfPleasureScreen()),
+        );
+        break;
+      case GameCategory.laneOfLust:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LaneOfLustScreen()),
+        );
+        break;
+      case GameCategory.dramaSutra:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DramaSutraScreen()),
+        );
+        break;
+      case GameCategory.flashFreeze:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const FlashFreezeScreen()),
+        );
+        break;
     }
   }
 }

@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/presentation/home_screen_new.dart';
+import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 
 Future<void> main() async {

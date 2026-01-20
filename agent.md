@@ -1,385 +1,254 @@
 # 🤖 VESPARA AI CONTEXT FILE
 
-> **🤖 AI CONTEXT FILE:** This is the primary reference document for AI assistants working on Vespara.
+> **AI CONTEXT FILE:** Primary reference for AI assistants working on Vespara.
 > Read this file first before making any changes.
 
 ---
 
-## 🚨 IMPORTANT DIRECTIVES
-
-### Auto-Push Supabase Migrations
-
-**DIRECTIVE:** When creating SQL migrations, automatically run them against the database.
-
-- Run `supabase db reset --local` to test locally first (if configured).
-- Use `supabase db push` to push to remote (requires auth token).
-- If push fails due to auth, create a combined SQL file in `/scripts/` for manual execution via the Dashboard SQL Editor.
+## 🚨 CRITICAL DIRECTIVES
 
 ### Credentials Access
+All credentials are in [`CREDENTIALS.md`](CREDENTIALS.md). **Never ask for credentials.**
 
-**DIRECTIVE:** All credentials are stored in [`CREDENTIALS.md`](CREDENTIALS.md).
+### Auto-Push Migrations
+When creating SQL migrations:
+```bash
+supabase db push  # Push to remote
+```
 
-- **Never ask the user for credentials** — they are already saved.
-- Save any NEW credentials (Apple, DNS, etc.) to `CREDENTIALS.md` immediately.
-- The `.env` file is pre-configured. Do not regenerate it.
+### No Blue Colors
+The brand explicitly forbids blue. Use the Vespara Night palette only.
 
 ---
 
-## Project Vision
+## 📱 Project Overview
 
-**Vespara** is a "Social Operating System" and Relationship Management System (RMS) designed to cure match burnout. It combines high-end dating CRM features with **TAGS** (Trusted Adult Games), a consent-forward game engine.
+**Vespara** is a Social Operating System and Relationship Management System (RMS).
 
 | Attribute | Value |
 |-----------|-------|
-| **Aesthetic** | Celestial Luxury (Deep Slate `#1A1523`, Lavender `#E0D8EA`) |
-| **Stack** | Flutter (Mobile/Web), Riverpod, GoRouter, Supabase (PostgreSQL + Auth + Edge Functions) |
+| **Stack** | Flutter + Riverpod + Supabase |
 | **Status** | Pre-Alpha |
-| **Codename** | The Hub |
+| **Theme** | Celestial Luxury (Deep Slate `#1A1523`) |
 
 ---
 
-## 📚 DOCUMENTATION INDEX
+## 🏗️ The 8 Modules
 
-All documentation is centralized in the root and `/docs` folder:
+The app is built around 8 interconnected modules on a Bento Grid home screen:
 
-| Document | Purpose |
-|----------|---------|
-| [`README.md`](README.md) | **The Master Vision & 8-Tile Architecture** |
-| [`CREDENTIALS.md`](CREDENTIALS.md) | **All API Keys & Secrets** (Supabase, OpenAI, Google, Vercel) |
-| [`PROJECT_STATUS.md`](PROJECT_STATUS.md) | Build progress & completion checklist |
-| [`tech-stack.md`](tech-stack.md) | Infrastructure & Tooling details |
-| [`tags.md`](tags.md) | **TAGS Protocol** (Game Rules & Consent Meter logic) |
-| [`design-system.md`](design-system.md) | Color palette, Typography, and UI rules |
-| [`docs/SUPABASE_SCHEMA.md`](docs/SUPABASE_SCHEMA.md) | Database Schema & RLS Policies |
-
-### Agent Protocols
-
-Specialized behaviors for this project:
-
-| Agent | Purpose |
-|-------|---------|
-| `Chief Architect` | Enforces Clean Architecture & Riverpod patterns |
-| `UI Designer` | Enforces "Celestial Luxury" & Bento Grid layout |
-| `Game Mechanic` | Logic for TAGS (Consent flow, Card decks) |
+| # | Module | Feature | Description |
+|---|--------|---------|-------------|
+| 1 | **MIRROR** | Profile & Analytics | User profile, brutal AI feedback |
+| 2 | **DISCOVER** | Swipe Marketplace | Find matches with card swipes |
+| 3 | **NEST** | Match Roster | CRM for managing connections |
+| 4 | **WIRE** | Messaging | Chat with matches & groups |
+| 5 | **PLANNER** | AI Calendar | Schedule dates intelligently |
+| 6 | **GROUP** | Events | Partiful-style event planning |
+| 7 | **SHREDDER** | Ghost Protocol | AI-powered graceful exits |
+| 8 | **TAG** | Adult Games | Consent-forward game engine (Ludus) |
 
 ---
 
-## 🔌 INTEGRATIONS (READ FIRST!)
+## 📁 File Structure
 
-> **CRITICAL:** Before suggesting ANY integration setup, CHECK the existing configuration.
+```
+lib/
+├── main.dart                    # Entry + AuthGate
+├── core/
+│   ├── config/env.dart          # Environment config
+│   ├── constants/               # App constants
+│   ├── data/                    # Repositories
+│   │   ├── vespara_mock_data.dart
+│   │   ├── ludus_repository.dart
+│   │   ├── roster_repository.dart
+│   │   └── strategist_repository.dart
+│   ├── domain/models/           # Data models
+│   │   ├── user_profile.dart
+│   │   ├── conversation.dart
+│   │   ├── tags_game.dart
+│   │   └── ... (12 models)
+│   ├── providers/               # Riverpod state
+│   │   ├── app_providers.dart
+│   │   ├── wire_provider.dart
+│   │   ├── events_provider.dart
+│   │   └── *_provider.dart (game providers)
+│   ├── services/                # Business logic
+│   │   ├── supabase_service.dart
+│   │   ├── openai_service.dart
+│   │   ├── permission_service.dart
+│   │   └── image_upload_service.dart
+│   ├── theme/app_theme.dart     # Design system
+│   └── utils/haptics.dart       # Utilities
+└── features/
+    ├── home/presentation/home_screen.dart      # Bento Grid
+    ├── auth/login_screen.dart                  # Authentication
+    ├── onboarding/                             # Profile setup
+    ├── mirror/presentation/mirror_screen.dart  # Profile
+    ├── discover/presentation/discover_screen.dart
+    ├── nest/presentation/nest_screen.dart
+    ├── wire/presentation/                      # 5 screens
+    ├── planner/presentation/planner_screen.dart
+    ├── events/presentation/                    # 3 screens
+    ├── group/presentation/group_screen.dart
+    ├── shredder/presentation/shredder_screen.dart
+    └── ludus/presentation/                     # 7 game screens
+```
+
+---
+
+## 🔌 Integrations (Already Configured)
 
 | Service | Status | Purpose |
 |---------|--------|---------|
 | Supabase | ✅ LIVE | Database, Auth, Realtime, Edge Functions |
-| OpenAI | ✅ LIVE | Intelligence (Strategist, Ghost Protocol, Resuscitator) |
-| Google Maps | ✅ LIVE | Location Services ("Tonight Mode") |
-| Vercel | ⏳ PENDING | Web Hosting (Future) |
+| OpenAI | ✅ LIVE | GPT-4 for AI features |
+| Google Maps | ✅ LIVE | Location services |
+| Vercel | ✅ LIVE | Web hosting (vespara.co) |
 
-**DO NOT** suggest re-connecting these services. They are configured in `.env`.
-
-### Edge Functions (Deployed)
-
-| Function | Status | Purpose |
-|----------|--------|---------|
-| `strategist` | ✅ ACTIVE | AI dating advice |
-| `ghost-protocol` | ✅ ACTIVE | Closure message generator |
-| `resuscitator` | ✅ ACTIVE | Stale conversation revival |
-| `vouch-chain` | ✅ ACTIVE | Verification link management |
-| `tonight-mode` | ✅ ACTIVE | Location features |
+### Edge Functions
+| Function | Purpose |
+|----------|---------|
+| `strategist` | AI dating advice |
+| `ghost-protocol` | Closure messages |
+| `resuscitator` | Revive stale chats |
+| `vouch-chain` | Social verification |
+| `tonight-mode` | Location features |
+| `generate-bio` | AI bio generation |
 
 ---
 
-## 🔑 CRITICAL PATTERNS
+## 🔑 Code Patterns
 
-### Supabase Client Access (Flutter)
-
+### Supabase Client Access
 ```dart
-// ❌ WRONG: Initializing new clients indiscriminately
-final supabase = SupabaseClient(...);
-
-// ✅ CORRECT: Use the Singleton from main.dart
+// ✅ CORRECT: Use singleton
 final supabase = Supabase.instance.client;
 
-// ✅ CORRECT: Via Riverpod Provider
+// ✅ Via Riverpod
 ref.read(supabaseServiceProvider);
 ```
 
-### Profile vs Auth ID
-
-```dart
-// profiles.id is the Primary Key, but usually matches auth.users.id
-// ALWAYS verify linking logic in triggers.
-
-// Fetching current user profile
-final user = supabase.auth.currentUser;
-final profile = await supabase
-    .from('profiles')
-    .select()
-    .eq('id', user.id) // ✅ Correct (1:1 mapping)
-    .single();
-```
-
-### RLS Policy Pattern
-
-```sql
--- Check if user owns the record
-auth.uid() = id
-
--- Check if user owns via user_id column
-auth.uid() = user_id
-
--- TAGS Game Access (Public games readable by authenticated users)
-auth.role() = 'authenticated'
-
--- Vouches (User can see if they're voucher OR vouchee)
-auth.uid() = voucher_id OR auth.uid() = vouchee_id
-```
-
-### Data Fetching with Riverpod
-
+### State Management (Riverpod Only)
 ```dart
 // ❌ WRONG: setState in UI
-void fetchData() async {
-  setState(() { ... });
-}
+setState(() { _loading = true; });
 
-// ✅ CORRECT: Riverpod FutureProvider
-final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return [];
-  
-  final response = await supabase
-      .from('roster_matches')
-      .select()
-      .eq('user_id', user.id)
-      .order('momentum_score', ascending: false);
-  
-  return (response as List).map((json) => RosterMatch.fromJson(json)).toList();
+// ✅ CORRECT: Riverpod provider
+final dataProvider = FutureProvider<List<Match>>((ref) async {
+  return ref.read(supabaseServiceProvider).getMatches();
 });
 ```
 
----
-
-## 📁 Key File Locations
-
-| Purpose | Path |
-|---------|------|
-| AI Context | `/agent.md` (this file) |
-| Credentials | `/CREDENTIALS.md` |
-| App Entry | `/lib/main.dart` |
-| Theming | `/lib/core/theme/app_theme.dart` |
-| Providers | `/lib/core/providers/app_providers.dart` |
-| Services | `/lib/core/services/` |
-| Models | `/lib/core/domain/models/` |
-| Router | `/lib/core/router/app_router.dart` |
-| Feature: Home | `/lib/features/home/` (The 8-Tile Grid) |
-| Feature: CRM | `/lib/features/roster/` (Kanban Board) |
-| Feature: TAGS | `/lib/features/ludus/` (Games & Events) |
-| Feature: Messaging | `/lib/features/wire/` |
-| Feature: Analytics | `/lib/features/mirror/` |
-| SQL Schema | `/supabase/migrations/001_initial_schema.sql` |
-| Edge Functions | `/supabase/functions/` |
-
----
-
-## 🗃️ Database Architecture
-
-### Unified User Model
-
-```
-auth.users (Supabase Auth)
-└── profiles (Public User Data)
-    ├── roster_matches (CRM Data)
-    ├── conversations (Messaging)
-    ├── game_sessions (TAGS History)
-    ├── user_analytics (The Mirror)
-    └── user_settings (Preferences)
-```
-
-### Core Tables (15 Total)
-
-| Table | Purpose |
-|-------|---------|
-| `profiles` | User identity, Vouch Score, Avatar |
-| `roster_matches` | The Roster (CRM entries with pipeline stage) |
-| `conversations` | Chat threads with momentum score |
-| `messages` | Individual messages |
-| `tags_games` | TAGS Game definitions (Card decks, Rules) |
-| `game_cards` | Pleasure Deck cards (30 seeded) |
-| `game_sessions` | Active game instances |
-| `vouches` | User verifications |
-| `vouch_links` | Shareable verification links |
-| `user_analytics` | Usage stats for The Mirror |
-| `strategist_logs` | AI conversation history |
-| `shredder_archive` | Ghost Protocol history |
-| `user_settings` | Notification & privacy preferences |
-| `blocked_users` | Block list |
-| `tonight_locations` | Location check-ins for Tonight Mode |
-
----
-
-## 🔔 Notification System (Realtime)
-
-### Triggers
-
-| Trigger | Events |
-|---------|--------|
-| `update_vouch_count_trigger` | INSERT/DELETE on `vouches` |
-| `on_auth_user_created` | INSERT on `auth.users` (auto-creates profile) |
-| `update_*_updated_at` | UPDATE on tables (auto-timestamp) |
-
-### Realtime Subscriptions (Future)
-
-| Channel | Purpose |
-|---------|---------|
-| `conversations:{id}` | Real-time messaging |
-| `tonight_locations` | Nearby user updates |
-| `game_sessions:{id}` | Live game state sync |
-
----
-
-## 🎮 TAGS System (Consent Logic)
-
-| Level | Color | Hex | Description |
-|-------|-------|-----|-------------|
-| 🟢 | GREEN | `#4CAF50` | Social. No nudity. Flirtatious conversation. |
-| 🟡 | YELLOW | `#FFC107` | Sensual. Light touch. Suggestive themes. |
-| 🔴 | RED | `#D32F2F` | Erotic. Explicit play. Pre-consented only. |
-
-**RULE:** The UI **MUST** force a "Consent Check" before loading any `tags_games` or `game_cards`.
-
+### Navigation
 ```dart
-// ✅ CORRECT: Check consent before game loads
-final consentLevel = ref.watch(tagsConsentLevelProvider);
-if (game.minConsentLevel.value > consentLevel.value) {
-  throw ConsentException('User has not consented to this level');
-}
+// Using Navigator.push (no GoRouter)
+Navigator.push(context, MaterialPageRoute(
+  builder: (context) => const TargetScreen(),
+));
 ```
 
 ---
 
-## 🧭 Navigation Structure (GoRouter)
+## 🎮 TAG System (Consent Levels)
 
-### Main Routes
+| Level | Color | Hex | Content |
+|-------|-------|-----|---------|
+| 🟢 GREEN | Safe | `#4CAF50` | Flirtatious, no nudity |
+| 🟡 YELLOW | Moderate | `#FFC107` | Sensual, suggestive |
+| 🔴 RED | Adult | `#D32F2F` | Explicit, pre-consented |
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Splash Screen |
-| `/auth` | Login/Signup |
-| `/home` | The Hub (8-Tile Dashboard) |
-| `/home/strategist` | AI Advisor + Tonight Mode |
-| `/home/scope` | Profile Swiper (Focus Batch) |
-| `/home/roster` | Full Kanban CRM View |
-| `/home/wire` | Messaging Inbox + Resuscitator |
-| `/home/shredder` | Ghost Protocol |
-| `/home/ludus` | TAGS Game Engine |
-| `/home/core` | User Settings & Vouch Chain |
-| `/home/mirror` | Analytics Dashboard |
+### Available Games
+1. **Path of Pleasure** - Ranking game
+2. **Ice Breakers** - Conversation starters
+3. **Down to Clown** - Fun challenges
+4. **Velvet Rope** - VIP entrance
+5. **Lane of Lust** - Desire pathway
+6. **Drama Sutra** - Roleplay
+7. **Flash Freeze** - Quick reactions
+
+---
+
+## 🎨 Design System
+
+### Colors (NO BLUE)
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Void | `#1A1523` | Background |
+| Tile | `#2D2638` | Surfaces |
+| Starlight | `#E0D8EA` | Primary text |
+| Glow | `#BFA6D8` | Accents |
+
+### Typography
+- **Headers:** Cinzel (serif, uppercase)
+- **Body:** Inter (sans-serif)
+
+### Border Radius
+- Tiles: 24px | Cards: 20px | Buttons: 16px | Inputs: 12px
+
+---
+
+## 🗄️ Database
+
+### Migrations (17+)
+Located in `/supabase/migrations/`. Key migrations:
+- `001` - Core schema
+- `002` - Onboarding fields
+- `008` - Wire group chat
+- `010+` - Game schemas
+- `017` - Exclusive onboarding
+
+### RLS Pattern
+```sql
+-- User owns record
+auth.uid() = user_id
+
+-- Authenticated access
+auth.role() = 'authenticated'
+```
 
 ---
 
 ## ✅ Pre-Flight Checklist
 
 Before every change:
-
-- [ ] **Check `app_theme.dart`:** Are you using the correct hex codes (`#1A1523`)? **NO BLUE.**
-- [ ] **Check Riverpod:** Are you using a Provider or Service? No raw API calls in UI.
-- [ ] **Check Mobile Responsiveness:** Does the Bento Grid flow correctly on small screens?
-- [ ] **Check Security:** Are RLS policies enabled for new tables?
-- [ ] **Check AI Latency:** Are Edge Functions optimized?
-- [ ] **Check Models:** Does the Dart model map 1:1 to the Supabase table?
-- [ ] **Check Credentials:** Are new API keys saved to `CREDENTIALS.md`?
+- [ ] Using Vespara Night colors? (No blue)
+- [ ] State via Riverpod? (No setState for business logic)
+- [ ] Models map to Supabase tables?
+- [ ] RLS policies on new tables?
+- [ ] Credentials saved to CREDENTIALS.md?
 
 ---
 
-## 🎨 Design System Quick Reference
+## 💡 Quick Tips
 
-### Colors (NO BLUE EVER)
-
-| Name | Hex | Usage |
-|------|-----|-------|
-| The Void | `#1A1523` | Main Background |
-| The Tile | `#2D2638` | Card Surfaces |
-| Starlight | `#E0D8EA` | Primary Text |
-| Moonlight | `#9D85B1` | Secondary Text |
-| Glow | `#BFA6D8` | Glassmorphism (20% opacity) |
-
-### Typography
-
-| Type | Font |
-|------|------|
-| Headers | Cinzel (Serif, Tracking 1.2, Uppercase) |
-| Body | Inter (Sans-Serif, Clean) |
-
-### Border Radius
-
-| Element | Radius |
-|---------|--------|
-| Tiles | 24px |
-| Cards | 20px |
-| Buttons | 16px |
-| Inputs | 12px |
+1. **Check before creating** - File may already exist
+2. **Use services** - All DB ops through `SupabaseService`
+3. **Complete widgets** - No `...` in build methods
+4. **Strict typing** - Always use model classes
+5. **Never log secrets** - No API keys in console
 
 ---
 
-## 💡 Tips for AI Assistants
-
-1. **Flutter is Verbose:** Write complete Widgets, do not leave `...` in build methods.
-
-2. **Context Matters:**
-   - "Ghost Protocol" = Tile 5 (The Shredder)
-   - "Partiful" = Tile 6 Events (The Ludus)
-   - "Tonight Mode" = Tile 1 (The Strategist)
-   - "Vouch Chain" = Tile 7 (The Core)
-
-3. **Strict Typing:** Always define a Model class for Supabase tables. Do not use `Map<String, dynamic>` loosely.
-
-4. **Secrets:** Never print `OPENAI_API_KEY` to console logs. Never ask the user for credentials.
-
-5. **Riverpod Only:** Do not use `setState` for business logic. All state goes through providers.
-
-6. **Check Before Creating:** Before creating a new file, check if it already exists.
-
-7. **Use Services:** All Supabase operations go through `SupabaseService`. All AI operations go through `OpenAIService`.
-
----
-
-## 🔐 Environment Variables (.env)
-
-```properties
-APP_NAME=Vespara
-APP_DOMAIN=www.vespara.co
-
-SUPABASE_URL=https://nazcwlfirmbuxuzlzjtz.supabase.co
-SUPABASE_ANON_KEY=[SEE CREDENTIALS.md]
-SUPABASE_SERVICE_ROLE_KEY=[SEE CREDENTIALS.md]
-
-OPENAI_API_KEY=[SEE CREDENTIALS.md]
-GOOGLE_MAPS_API_KEY=[SEE CREDENTIALS.md]
-```
-
----
-
-## 📞 Quick Commands
+## 📞 Commands
 
 ```bash
-# Run the app
+# Run app
 flutter run
 
-# Get dependencies
+# Dependencies
 flutter pub get
 
-# Deploy Edge Function
-export SUPABASE_ACCESS_TOKEN=sbp_d32317ed1d85f3a478dfc28f04eadbcb2777f5fa
-supabase functions deploy <function-name>
+# Build web
+flutter build web
 
-# Push database changes
+# Deploy edge function
+supabase functions deploy <name>
+
+# Push DB changes
 supabase db push
-
-# List functions
-supabase functions list
 ```
 
 ---
 
-**Copyright © 2026 Vespara. All Rights Reserved.**
+**© 2026 Vespara. All Rights Reserved.**
