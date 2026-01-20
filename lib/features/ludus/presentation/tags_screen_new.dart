@@ -73,7 +73,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                 ),
               ),
               Text(
-                'Games for Two... or More 😏',
+                "You're It 🎯",
                 style: TextStyle(
                   fontSize: 12,
                   color: VesparaColors.secondary,

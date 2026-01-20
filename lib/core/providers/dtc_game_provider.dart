@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 import 'dart:math';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -203,8 +204,13 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
     state = state.copyWith(isLoading: true);
     
     try {
-      await _loadPrompts();
-      await _loadUserStats();
+      // Add timeout to prevent infinite loading
+      await Future.any([
+        _loadPromptsAndStats(),
+        Future.delayed(const Duration(seconds: 5), () {
+          throw TimeoutException('Database connection timed out');
+        }),
+      ]);
       state = state.copyWith(isLoading: false);
     } catch (e) {
       // Fall back to demo mode with hardcoded prompts
@@ -215,6 +221,12 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
         error: 'Using offline mode',
       );
     }
+  }
+  
+  /// Load prompts and user stats from database
+  Future<void> _loadPromptsAndStats() async {
+    await _loadPrompts();
+    await _loadUserStats();
   }
   
   /// Load prompts from database
