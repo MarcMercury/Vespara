@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/services/permission_service.dart';
+import '../../../core/services/image_upload_service.dart';
 
 /// The Core Screen - Settings & Vouch Chain
 /// User profile, preferences, and verification link generation
@@ -17,6 +20,9 @@ class CoreScreen extends ConsumerStatefulWidget {
 }
 
 class _CoreScreenState extends ConsumerState<CoreScreen> {
+  bool _isUploadingPhoto = false;
+  final ImageUploadService _imageUploadService = ImageUploadService();
+  
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
@@ -150,20 +156,37 @@ class _CoreScreenState extends ConsumerState<CoreScreen> {
                     width: 3,
                   ),
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: VesparaColors.secondary,
-                  size: 48,
+                child: ClipOval(
+                  child: profile?.avatarUrl != null && profile.avatarUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: profile.avatarUrl,
+                          fit: BoxFit.cover,
+                          width: 100,
+                          height: 100,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => const Icon(
+                            Icons.person,
+                            color: VesparaColors.secondary,
+                            size: 48,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          color: VesparaColors.secondary,
+                          size: 48,
+                        ),
                 ),
               ),
               Positioned(
                 right: 0,
                 bottom: 0,
                 child: GestureDetector(
-                  onTap: () {
-                    VesparaHaptics.lightTap();
-                    // Open photo picker
-                  },
+                  onTap: _isUploadingPhoto ? null : () => _handleProfilePhotoUpload(context),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -174,11 +197,20 @@ class _CoreScreenState extends ConsumerState<CoreScreen> {
                         width: 2,
                       ),
                     ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: VesparaColors.background,
-                      size: 16,
-                    ),
+                    child: _isUploadingPhoto
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: VesparaColors.background,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt,
+                            color: VesparaColors.background,
+                            size: 16,
+                          ),
                   ),
                 ),
               ),
@@ -255,6 +287,77 @@ class _CoreScreenState extends ConsumerState<CoreScreen> {
         ),
       ],
     );
+  }
+  
+  /// Handle profile photo upload with permission handling
+  Future<void> _handleProfilePhotoUpload(BuildContext context) async {
+    VesparaHaptics.lightTap();
+    
+    setState(() => _isUploadingPhoto = true);
+    
+    final url = await _imageUploadService.uploadProfilePhoto(
+      context: context,
+      onUploadStart: () {
+        // Show uploading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Text('Uploading photo...'),
+              ],
+            ),
+            duration: Duration(seconds: 10),
+            backgroundColor: VesparaColors.surface,
+          ),
+        );
+      },
+      onUploadComplete: () {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 12),
+                Text('Photo updated successfully!'),
+              ],
+            ),
+            backgroundColor: VesparaColors.surface,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // Refresh user data
+        ref.invalidate(currentUserProvider);
+      },
+      onError: (error) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.red),
+                const SizedBox(width: 12),
+                Expanded(child: Text(error)),
+              ],
+            ),
+            backgroundColor: VesparaColors.surface,
+          ),
+        );
+      },
+    );
+    
+    if (mounted) {
+      setState(() => _isUploadingPhoto = false);
+    }
   }
   
   Widget _buildVouchChainSection(BuildContext context) {
