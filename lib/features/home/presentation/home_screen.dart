@@ -10,7 +10,7 @@ import '../../scope/presentation/scope_screen.dart';
 import '../../roster/presentation/roster_screen.dart';
 import '../../wire/presentation/wire_home_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
-import '../../ludus/presentation/tags_screen.dart';
+import '../../ludus/presentation/tags_screen_new.dart';
 import '../../events/presentation/events_home_screen.dart';
 import '../../core/presentation/core_screen.dart';
 import '../../mirror/presentation/mirror_screen.dart';

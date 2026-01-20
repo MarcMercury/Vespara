@@ -345,6 +345,13 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   DramaSutraNotifier() : super(const DramaSutraState());
   
   final Random _random = Random();
+  bool _disposed = false;
+  
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
   
   // ─────────────────────────────────────────────────────────────────────────
   // DEMO DATA (Would come from Supabase in production)
@@ -542,15 +549,16 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   }
   
   void _runTimer() async {
-    while (state.gameState == DramaGameState.action && state.timerRemaining > 0) {
+    while (state.gameState == DramaGameState.action && state.timerRemaining > 0 && !_disposed) {
       await Future.delayed(const Duration(seconds: 1));
+      if (_disposed) return;
       if (state.gameState == DramaGameState.action) {
         state = state.copyWith(timerRemaining: state.timerRemaining - 1);
       }
     }
     
     // Timer finished - automatically go to scoring if still in action
-    if (state.gameState == DramaGameState.action) {
+    if (!_disposed && state.gameState == DramaGameState.action) {
       cutAction();
     }
   }

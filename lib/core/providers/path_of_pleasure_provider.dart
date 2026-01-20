@@ -335,8 +335,16 @@ class PathOfPleasureState {
 
 class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   Timer? _discussionTimer;
+  bool _disposed = false;
   
   PathOfPleasureNotifier() : super(const PathOfPleasureState());
+  
+  @override
+  void dispose() {
+    _disposed = true;
+    _discussionTimer?.cancel();
+    super.dispose();
+  }
   
   // Player colors for avatars
   static const _playerColors = [
@@ -563,7 +571,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   
   void _simulateOtherPlayersLockIn() {
     Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+      if (_disposed) return;
       
       final players = state.players.map((p) {
         p.isLockedIn = true;
@@ -589,7 +597,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     
     // After a brief reveal, start discussion timer
     Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
+      if (_disposed) return;
       _startDiscussionPhase();
     });
   }
@@ -646,7 +654,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     
     _discussionTimer?.cancel();
     _discussionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
+      if (_disposed) {
         timer.cancel();
         return;
       }
@@ -730,6 +738,8 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   
   /// Play again with same players
   void playAgain() {
+    _discussionTimer?.cancel();
+    
     final players = state.players.map((p) {
       p.isLockedIn = false;
       return p;
@@ -750,12 +760,6 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   void exitGame() {
     _discussionTimer?.cancel();
     state = const PathOfPleasureState();
-  }
-  
-  @override
-  void dispose() {
-    _discussionTimer?.cancel();
-    super.dispose();
   }
   
   // ═════════════════════════════════════════════════════════════════════════

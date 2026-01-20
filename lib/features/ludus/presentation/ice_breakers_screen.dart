@@ -8,6 +8,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/ice_breakers_provider.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
+import 'velvet_rope_screen.dart';
+import 'down_to_clown_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// ICE BREAKERS - The Gateway Game to Vespara
@@ -735,8 +737,9 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
     final card = state.currentCard;
     if (card == null) return const SizedBox();
     
-    // Start timer if needed
+    // Start timer if needed - cancel existing timer first to prevent multiple timers
     if (state.phase == IceGamePhase.timer && (_cardTimer == null || !_cardTimer!.isActive)) {
+      _cardTimer?.cancel();
       _cardTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         HapticFeedback.lightImpact();
         ref.read(iceBreakersProvider.notifier).tickTimer();
@@ -1260,8 +1263,11 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
             onTap: () {
               HapticFeedback.heavyImpact();
               ref.read(iceBreakersProvider.notifier).escalateTo('truth_or_dare');
-              // TODO: Navigate to Truth or Dare
-              Navigator.pop(context);
+              // Navigate to Velvet Rope (Truth or Dare)
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),
+              );
             },
             child: Container(
               width: double.infinity,
@@ -1290,8 +1296,11 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
             onTap: () {
               HapticFeedback.heavyImpact();
               ref.read(iceBreakersProvider.notifier).escalateTo('down_to_clown');
-              // TODO: Navigate to Down to Clown
-              Navigator.pop(context);
+              // Navigate to Down to Clown
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DownToClownScreen()),
+              );
             },
             child: Container(
               width: double.infinity,

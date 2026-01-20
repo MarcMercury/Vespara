@@ -309,6 +309,14 @@ class PlacementResult {
 class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
   LaneOfLustNotifier() : super(const LaneOfLustState());
   
+  bool _disposed = false;
+  
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+  
   static const _playerColors = [
     Color(0xFF4A9EFF), Color(0xFFDC143C), Color(0xFF9B59B6), Color(0xFF2ECC71),
     Color(0xFFF39C12), Color(0xFF1ABC9C), Color(0xFFE74C3C), Color(0xFF3498DB),
@@ -477,7 +485,7 @@ class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
     
     // Process result after animation delay
     Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
+      if (_disposed) return;
       
       if (isValid) {
         _handleSuccessfulPlacement(player, card, insertIndex);

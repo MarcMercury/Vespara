@@ -288,20 +288,20 @@ class GameCardWidget extends StatelessWidget {
   
   IconData _getGameIcon(GameCategory game) {
     switch (game) {
-      case GameCategory.truthOrDare:
+      case GameCategory.downToClown:
+        return Icons.sentiment_very_satisfied;
+      case GameCategory.icebreakers:
+        return Icons.ac_unit_outlined;
+      case GameCategory.velvetRope:
         return Icons.style_outlined;
       case GameCategory.pathOfPleasure:
         return Icons.route_outlined;
-      case GameCategory.theOtherRoom:
-        return Icons.meeting_room_outlined;
-      case GameCategory.coinTossBoard:
-        return Icons.casino_outlined;
-      case GameCategory.icebreakers:
-        return Icons.ac_unit_outlined;
-      case GameCategory.sensoryPlay:
-        return Icons.touch_app_outlined;
-      case GameCategory.kamaSutra:
-        return Icons.favorite_outline;
+      case GameCategory.laneOfLust:
+        return Icons.linear_scale;
+      case GameCategory.dramaSutra:
+        return Icons.theaters;
+      case GameCategory.flashFreeze:
+        return Icons.flash_on;
     }
   }
   

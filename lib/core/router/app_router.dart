@@ -13,7 +13,7 @@ import '../../features/wire/presentation/wire_chat_screen.dart';
 import '../../features/wire/presentation/wire_create_group_screen.dart';
 import '../../features/wire/presentation/wire_group_info_screen.dart';
 import '../../features/shredder/presentation/shredder_screen.dart';
-import '../../features/ludus/presentation/tags_screen.dart';
+import '../../features/ludus/presentation/tags_screen_new.dart';
 import '../../features/core/presentation/core_screen.dart';
 import '../../features/mirror/presentation/mirror_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
@@ -192,7 +192,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'ludus',
             pageBuilder: (context, state) => CustomTransitionPage(
               key: state.pageKey,
-              child: const TagsScreen(),
+              child: const TagScreen(),
               transitionsBuilder: _fadeTransition,
             ),
           ),

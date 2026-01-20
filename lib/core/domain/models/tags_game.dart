@@ -181,7 +181,7 @@ class TagsGame extends Equatable {
       id: json['id'] as String,
       category: GameCategory.values.firstWhere(
         (e) => e.name == json['category'],
-        orElse: () => GameCategory.truthOrDare,
+        orElse: () => GameCategory.downToClown,
       ),
       title: json['title'] as String,
       description: json['description'] as String?,
