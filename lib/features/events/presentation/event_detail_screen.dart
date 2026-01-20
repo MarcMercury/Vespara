@@ -701,7 +701,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         // RSVP summary chips
         Row(
           children: [
-            _buildGuestChip('👍 ${going.length} Going', VesparaColors.success),
+            _buildGuestChip('� ${going.length} Going', VesparaColors.success),
             const SizedBox(width: 8),
             _buildGuestChip('🤔 ${maybe.length} Maybe', VesparaColors.tagsYellow),
             const SizedBox(width: 8),
@@ -867,10 +867,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   Widget _buildRsvpActions() {
     return Row(
       children: [
-        // Going button
+        // Going button - enthusiastic
         Expanded(
           child: _buildRsvpButton(
-            '👍',
+            '🙌',
             'Going',
             VesparaColors.success,
             _myRsvpStatus == 'going',
@@ -878,7 +878,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        // Maybe button
+        // Maybe button - contemplative
         Expanded(
           child: _buildRsvpButton(
             '🤔',
@@ -889,10 +889,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        // Can't go button
+        // Can't go button - graceful decline
         Expanded(
           child: _buildRsvpButton(
-            '😢',
+            '🥀',
             "Can't Go",
             VesparaColors.error,
             _myRsvpStatus == 'cant_go',

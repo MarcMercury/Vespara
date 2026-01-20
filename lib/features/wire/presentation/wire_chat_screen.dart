@@ -629,7 +629,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
           shape: BoxShape.circle,
         ),
         child: const Icon(
-          Icons.send,
+          Icons.send_rounded,
           color: VesparaColors.background,
           size: 22,
         ),
@@ -656,7 +656,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
           shape: BoxShape.circle,
         ),
         child: Icon(
-          Icons.mic,
+          Icons.mic_rounded,
           color: VesparaColors.background,
           size: 22,
         ),

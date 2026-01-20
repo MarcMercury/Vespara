@@ -45,10 +45,10 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   final List<EventLink> _links = [];
   final List<EventCoHost> _coHosts = [];
   
-  // Emoji customization for RSVP
-  String _goingEmoji = '👍';
-  String _maybeEmoji = '🥺';
-  String _cantGoEmoji = '😢';
+  // Emoji customization for RSVP - alluring and sophisticated
+  String _goingEmoji = '🙌';
+  String _maybeEmoji = '🤔';
+  String _cantGoEmoji = '🥀';
   
   bool get _isEditing => widget.eventToEdit != null;
 
@@ -1428,7 +1428,8 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   }
 
   void _customizeEmoji(String label) {
-    final emojis = ['👍', '🔥', '❤️', '🎉', '✨', '🤔', '😅', '🥺', '😢', '💔', '👎', '❌'];
+    // Curated emoji options - sophisticated and alluring for events
+    final emojis = ['🙌', '🔥', '❤️‍🔥', '🥂', '✧', '🤔', '🤭', '💌', '🥀', '💔', '🫠', '❌'];
     
     showModalBottomSheet(
       context: context,

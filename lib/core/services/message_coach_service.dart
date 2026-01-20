@@ -100,7 +100,7 @@ class MessageCoachService {
     if (_isAllCaps(text) && text.length > 5) {
       checks.add(CoachingTip(
         type: TipType.warning,
-        message: 'All caps can feel like shouting 📢',
+        message: 'All caps can feel like shouting �',
         suggestion: text[0] + text.substring(1).toLowerCase(),
       ));
     }
@@ -110,7 +110,7 @@ class MessageCoachService {
     if (exclamationCount > 2) {
       checks.add(CoachingTip(
         type: TipType.gentle,
-        message: 'Easy on the exclamation marks 😅',
+        message: 'Easy on the exclamation marks 🤭',
       ));
     }
 
@@ -118,7 +118,7 @@ class MessageCoachService {
     if (text.length < 20 && !text.contains('?')) {
       checks.add(CoachingTip(
         type: TipType.suggestion,
-        message: 'Maybe add a question to keep the chat going?',
+        message: 'Maybe add a question to keep the intrigue going?',
       ));
     }
 
@@ -126,7 +126,7 @@ class MessageCoachService {
     if (text.contains('???') || text.contains('...?')) {
       checks.add(CoachingTip(
         type: TipType.gentle,
-        message: 'One question mark is enough 😊',
+        message: 'One question mark is enough 😏',
         suggestion: text.replaceAll(RegExp(r'\?+'), '?'),
       ));
     }
@@ -136,7 +136,7 @@ class MessageCoachService {
     if (trimmed == 'k' || trimmed == 'ok' || trimmed == 'kk') {
       checks.add(CoachingTip(
         type: TipType.warning,
-        message: 'This might seem cold - add something more?',
+        message: 'This might seem cold - add some warmth? 🥀',
         suggestion: 'Okay, sounds good!',
       ));
     }
@@ -146,7 +146,7 @@ class MessageCoachService {
     if (emojiCount > 5) {
       checks.add(CoachingTip(
         type: TipType.gentle,
-        message: 'Less is more with emojis 🙂',
+        message: 'Less is more with emojis ✧',
       ));
     }
 

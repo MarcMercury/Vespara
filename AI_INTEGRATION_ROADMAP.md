@@ -8,12 +8,6 @@
 **Timeline**: Week 1-2  
 **User Visibility**: None - works behind the scenes
 
-### 1.1 Content Moderation & Safety
-- Auto-scan all messages for toxicity/harassment before delivery
-- Flag inappropriate profile photos for review
-- Detect spam patterns in conversations
-- **User Experience**: They never see bad content - it just doesn't exist
-
 ### 1.2 Smart Caching & Prefetching
 - Predict which profiles user will view next → prefetch data
 - Cache AI responses for common queries
@@ -278,5 +272,3 @@ All features work without AI - just enhanced with it.
 1. `content_moderation_service.dart` - Safety first
 2. `prefetch_service.dart` - Performance foundation  
 3. Migration for AI preference tables
-
-Which phase would you like to implement first?

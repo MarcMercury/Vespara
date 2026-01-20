@@ -897,25 +897,25 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Pass button
+          // Pass button - sleek X
           _buildActionButton(
-            icon: Icons.close,
+            icon: Icons.close_rounded,
             color: VesparaColors.error,
             size: 60,
             onTap: () => _onSwipe(SwipeDirection.left),
           ),
           
-          // Super Like button
+          // Super Like button - cosmic star
           _buildActionButton(
-            icon: Icons.star,
+            icon: Icons.auto_awesome_rounded,
             color: VesparaColors.tagsYellow,
             size: 48,
             onTap: () => _onSwipe(SwipeDirection.superLike),
           ),
           
-          // Like button
+          // Like button - passionate heart
           _buildActionButton(
-            icon: Icons.favorite,
+            icon: Icons.favorite_rounded,
             color: VesparaColors.success,
             size: 60,
             onTap: () => _onSwipe(SwipeDirection.right),

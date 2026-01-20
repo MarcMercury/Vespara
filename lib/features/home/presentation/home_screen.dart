@@ -37,62 +37,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late List<Animation<double>> _tileAnimations;
   
   /// The 8 Modules per user specification
+  /// Icons carefully curated for allure and mystery
   static const List<Map<String, dynamic>> _modules = [
     {
       'name': 'MIRROR',
-      'subtitle': 'Profile & Analytics',
-      'icon': Icons.face_retouching_natural,
+      'subtitle': 'Your Reflection ✧',
+      'icon': Icons.face_retouching_natural_rounded,
+      'emoji': '🪞',
       'color': Color(0xFFBFA6D8), // Glow
       'description': 'Brutal AI feedback',
     },
     {
       'name': 'DISCOVER',
-      'subtitle': 'Swipe Marketplace',
-      'icon': Icons.explore,
+      'subtitle': 'The Hunt 🔮',
+      'icon': Icons.travel_explore_rounded,
+      'emoji': '🔮',
       'color': Color(0xFFE57373), // Pink/Red
-      'description': 'Find your next match',
+      'description': 'Find your next obsession',
     },
     {
       'name': 'NEST',
-      'subtitle': 'Match Roster',
-      'icon': Icons.favorite,
+      'subtitle': 'Your Conquests 💜',
+      'icon': Icons.favorite_rounded,
+      'emoji': '💜',
       'color': Color(0xFF4DB6AC), // Teal
       'description': 'CRM for connections',
     },
     {
       'name': 'WIRE',
-      'subtitle': 'Conversations',
-      'icon': Icons.chat_bubble,
+      'subtitle': 'Whispers 🫦',
+      'icon': Icons.forum_rounded,
+      'emoji': '🫦',
       'color': Color(0xFF64B5F6), // Blue
-      'description': 'Chat with matches',
+      'description': 'Secrets exchanged',
     },
     {
       'name': 'PLANNER',
-      'subtitle': 'AI Calendar',
-      'icon': Icons.calendar_month,
+      'subtitle': 'Rendezvous 🌙',
+      'icon': Icons.event_available_rounded,
+      'emoji': '🌙',
       'color': Color(0xFFBA68C8), // Purple
-      'description': 'Schedule dates',
+      'description': 'Schedule encounters',
     },
     {
       'name': 'GROUP',
-      'subtitle': 'Events & Parties',
-      'icon': Icons.celebration,
+      'subtitle': 'The Scene 🥂',
+      'icon': Icons.local_fire_department_rounded,
+      'emoji': '🥂',
       'color': Color(0xFFFFB74D), // Orange
-      'description': 'Plan group activities',
+      'description': 'Curate gatherings',
     },
     {
       'name': 'SHREDDER',
-      'subtitle': 'Time to Move On',
-      'icon': Icons.delete_sweep,
+      'subtitle': 'Clean Slate 🥀',
+      'icon': Icons.auto_delete_rounded,
+      'emoji': '🥀',
       'color': Color(0xFFE57373), // Red
       'description': 'AI cleanup crew',
     },
     {
       'name': 'TAG',
-      'subtitle': 'Adult Games',
-      'icon': Icons.casino,
+      'subtitle': 'Play Games 🎭',
+      'icon': Icons.local_fire_department_rounded,
+      'emoji': '🎭',
       'color': Color(0xFFFFD54F), // Yellow
-      'description': 'Games for two+',
+      'description': 'Games for the daring',
     },
   ];
 

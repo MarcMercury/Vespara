@@ -99,16 +99,16 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   // ═══════════════════════════════════════════════════════════════════════════
   
   static const List<Map<String, dynamic>> _genderOptions = [
-    {'id': 'man', 'label': 'Man', 'emoji': '👨'},
-    {'id': 'woman', 'label': 'Woman', 'emoji': '👩'},
-    {'id': 'non_binary', 'label': 'Non-Binary', 'emoji': '🧑'},
+    {'id': 'man', 'label': 'Man', 'emoji': '♂️'},
+    {'id': 'woman', 'label': 'Woman', 'emoji': '♀️'},
+    {'id': 'non_binary', 'label': 'Non-Binary', 'emoji': '⚧️'},
     {'id': 'trans_man', 'label': 'Trans Man', 'emoji': '🏳️‍⚧️'},
     {'id': 'trans_woman', 'label': 'Trans Woman', 'emoji': '🏳️‍⚧️'},
     {'id': 'genderqueer', 'label': 'Genderqueer', 'emoji': '🌈'},
-    {'id': 'genderfluid', 'label': 'Genderfluid', 'emoji': '💫'},
-    {'id': 'agender', 'label': 'Agender', 'emoji': '⚪'},
+    {'id': 'genderfluid', 'label': 'Genderfluid', 'emoji': '🌊'},
+    {'id': 'agender', 'label': 'Agender', 'emoji': '✧'},
     {'id': 'two_spirit', 'label': 'Two-Spirit', 'emoji': '🪶'},
-    {'id': 'other', 'label': 'Other', 'emoji': '✨'},
+    {'id': 'other', 'label': 'Other', 'emoji': '🔮'},
   ];
   
   static const List<Map<String, String>> _pronounOptions = [
@@ -152,17 +152,17 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   ];
   
   static const List<Map<String, dynamic>> _seekingOptions = [
-    {'id': 'friends', 'label': 'Friends', 'emoji': '👋', 'desc': 'New friends & community'},
-    {'id': 'dates', 'label': 'Casual Dates', 'emoji': '🍷', 'desc': 'Coffee, drinks, good times'},
+    {'id': 'friends', 'label': 'Friends', 'emoji': '🤝', 'desc': 'New friends & community'},
+    {'id': 'dates', 'label': 'Casual Dates', 'emoji': '🥂', 'desc': 'Coffee, drinks, good times'},
     {'id': 'fwb', 'label': 'FWB', 'emoji': '🔥', 'desc': 'Friends with benefits'},
-    {'id': 'ongoing', 'label': 'Ongoing Connection', 'emoji': '🔄', 'desc': 'Regular thing, not one-off'},
-    {'id': 'relationship', 'label': 'Relationship', 'emoji': '❤️', 'desc': 'Something serious'},
+    {'id': 'ongoing', 'label': 'Ongoing Connection', 'emoji': '♾️', 'desc': 'Regular thing, not one-off'},
+    {'id': 'relationship', 'label': 'Relationship', 'emoji': '❤️‍🔥', 'desc': 'Something serious'},
     {'id': 'play_partners', 'label': 'Play Partners', 'emoji': '🎭', 'desc': 'For scenes & play'},
     {'id': 'third', 'label': 'Third', 'emoji': '🦄', 'desc': 'Looking to join a couple'},
-    {'id': 'couple', 'label': 'Couples', 'emoji': '👫', 'desc': 'Looking for couples'},
-    {'id': 'group', 'label': 'Group Experiences', 'emoji': '🎉', 'desc': 'Moresomes, parties'},
-    {'id': 'events', 'label': 'Events & Parties', 'emoji': '✨', 'desc': 'Social gatherings'},
-    {'id': 'exploring', 'label': 'Just Exploring', 'emoji': '🌟', 'desc': 'See what happens'},
+    {'id': 'couple', 'label': 'Couples', 'emoji': '💑', 'desc': 'Looking for couples'},
+    {'id': 'group', 'label': 'Group Experiences', 'emoji': '🫦', 'desc': 'Moresomes, parties'},
+    {'id': 'events', 'label': 'Events & Parties', 'emoji': '🪩', 'desc': 'Social gatherings'},
+    {'id': 'exploring', 'label': 'Just Exploring', 'emoji': '🔮', 'desc': 'See what happens'},
   ];
   
   static const List<Map<String, dynamic>> _partnerInvolvementOptions = [
@@ -212,11 +212,11 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   
   static const List<Map<String, dynamic>> _partyOptions = [
     {'id': 'house_parties', 'label': 'House Parties', 'emoji': '🏠'},
-    {'id': 'club_events', 'label': 'Club Events', 'emoji': '🎪'},
+    {'id': 'club_events', 'label': 'Club Events', 'emoji': '🪩'},
     {'id': 'lifestyle_events', 'label': 'Lifestyle Events', 'emoji': '🎭'},
     {'id': 'hotel_takeovers', 'label': 'Hotel Takeovers', 'emoji': '🏨'},
-    {'id': 'vacations', 'label': 'Lifestyle Vacations', 'emoji': '✈️'},
-    {'id': 'dinner_parties', 'label': 'Dinner Parties', 'emoji': '🍽️'},
+    {'id': 'vacations', 'label': 'Lifestyle Vacations', 'emoji': '🌴'},
+    {'id': 'dinner_parties', 'label': 'Dinner Parties', 'emoji': '🥂'},
     {'id': 'none', 'label': 'Not Interested', 'emoji': '🚫'},
   ];
   
