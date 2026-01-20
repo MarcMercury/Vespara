@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/tags_game.dart';
+import 'ice_breakers_screen.dart';
+import 'velvet_rope_screen.dart';
+import 'down_to_clown_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TAG - Module 8 (Adult Games)
@@ -544,12 +547,35 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   }
 
   void _startGame(TagsGame game) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Starting ${game.title}...'),
-        backgroundColor: VesparaColors.tagsYellow,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Navigate to the appropriate game screen based on category
+    switch (game.category) {
+      case GameCategory.icebreakers:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const IceBreakersScreen()),
+        );
+        break;
+      case GameCategory.truthOrDare:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),
+        );
+        break;
+      case GameCategory.downToClown:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DownToClownScreen()),
+        );
+        break;
+      default:
+        // Other games coming soon
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${game.title} coming soon...'),
+            backgroundColor: VesparaColors.tagsYellow,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    }
   }
 }

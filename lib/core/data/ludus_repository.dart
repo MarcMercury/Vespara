@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/models/tags_game.dart';
+import '../providers/velvet_rope_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// LUDUS REPOSITORY
@@ -326,6 +327,49 @@ class LudusRepository {
         .stream(primaryKey: ['id'])
         .eq('id', sessionId)
         .map((data) => data.isNotEmpty ? GameSession.fromJson(data.first) : null);
+  }
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VELVET ROPE (Truth or Dare)
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  /// Fetch Velvet Rope cards filtered by heat level
+  Future<List<VelvetRopeCard>> getVelvetRopeCards(String maxHeat) async {
+    try {
+      final response = await _supabase.rpc('get_velvet_rope_deck', params: {
+        'p_max_heat': maxHeat,
+        'p_limit': 50,
+      });
+      
+      return (response as List)
+          .map((json) => VelvetRopeCard.fromJson(json))
+          .toList();
+    } catch (e) {
+      // Fallback to direct query
+      try {
+        List<String> allowedLevels;
+        switch (maxHeat) {
+          case 'X': allowedLevels = ['PG', 'PG-13', 'R', 'X']; break;
+          case 'R': allowedLevels = ['PG', 'PG-13', 'R']; break;
+          case 'PG-13': allowedLevels = ['PG', 'PG-13']; break;
+          default: allowedLevels = ['PG'];
+        }
+        
+        final response = await _supabase
+            .from('velvet_rope_cards')
+            .select()
+            .inFilter('heat_level', allowedLevels)
+            .limit(50);
+        
+        final cards = (response as List)
+            .map((json) => VelvetRopeCard.fromJson(json))
+            .toList();
+        cards.shuffle();
+        return cards;
+      } catch (e) {
+        return [];
+      }
+    }
   }
 }
 
