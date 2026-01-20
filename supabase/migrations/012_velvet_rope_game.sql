@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- VELVET ROPE - The Spicy Truth or Dare
+-- VELVET ROPE - The Spicy Share or Dare
 -- TAG Engine Signature Game
 -- "Celestial Luxury" - Deep Obsidian, Ethereal Blue, Burning Crimson
 -- ════════════════════════════════════════════════════════════════════════════
@@ -10,7 +10,7 @@
 
 CREATE TABLE IF NOT EXISTS public.velvet_rope_cards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type TEXT NOT NULL CHECK (type IN ('truth', 'dare')),
+    type TEXT NOT NULL CHECK (type IN ('share', 'dare')),
     text TEXT NOT NULL,
     heat_level TEXT NOT NULL CHECK (heat_level IN ('PG', 'PG-13', 'R', 'X')),
     category TEXT NOT NULL CHECK (category IN ('icebreaker', 'physical', 'deep', 'kinky')),
@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS public.velvet_rope_sessions (
     host_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     player_count INTEGER NOT NULL DEFAULT 2,
     heat_level TEXT NOT NULL DEFAULT 'PG',
-    truths_completed INTEGER DEFAULT 0,
+    shares_completed INTEGER DEFAULT 0,
     dares_completed INTEGER DEFAULT 0,
-    truths_skipped INTEGER DEFAULT 0,
+    shares_skipped INTEGER DEFAULT 0,
     dares_skipped INTEGER DEFAULT 0,
     total_spins INTEGER DEFAULT 0,
     started_at TIMESTAMPTZ DEFAULT NOW(),
@@ -106,17 +106,17 @@ $$;
 -- └─────────────────────────────────────────────────────────────────────────┘
 
 INSERT INTO public.velvet_rope_cards (type, text, heat_level, category) VALUES
--- Truths
-('truth', 'What is the most embarrassing thing in your search history right now?', 'PG', 'icebreaker'),
-('truth', 'What''s your most irrational fear that you''ve never told anyone?', 'PG', 'icebreaker'),
-('truth', 'If you could read anyone''s mind in this room for 60 seconds, whose would it be?', 'PG', 'icebreaker'),
-('truth', 'What''s a compliment you want but never receive?', 'PG', 'deep'),
-('truth', 'What song do you secretly listen to that would ruin your reputation?', 'PG', 'icebreaker'),
-('truth', 'What''s the pettiest reason you stopped talking to someone?', 'PG', 'icebreaker'),
-('truth', 'If your romantic history was a movie genre, what would it be?', 'PG', 'icebreaker'),
-('truth', 'What''s a red flag you''ve ignored because the person was hot?', 'PG', 'deep'),
-('truth', 'What celebrity would you absolutely not be able to act cool around?', 'PG', 'icebreaker'),
-('truth', 'What''s the most unhinged thing you''ve done for a crush?', 'PG', 'icebreaker'),
+-- Shares
+('share', 'Share the most embarrassing thing in your search history right now.', 'PG', 'icebreaker'),
+('share', 'Share your most irrational fear that you''ve never told anyone.', 'PG', 'icebreaker'),
+('share', 'Share a secret talent that nobody in this room knows about.', 'PG', 'icebreaker'),
+('share', 'Share a compliment you desperately want but never receive.', 'PG', 'deep'),
+('share', 'Share a guilty pleasure song that would absolutely ruin your reputation.', 'PG', 'icebreaker'),
+('share', 'Share the pettiest reason you stopped talking to someone.', 'PG', 'icebreaker'),
+('share', 'Share what movie genre best describes your romantic history—and why.', 'PG', 'icebreaker'),
+('share', 'Share a red flag you ignored because the person was just that attractive.', 'PG', 'deep'),
+('share', 'Share a celebrity encounter that would make you completely lose your cool.', 'PG', 'icebreaker'),
+('share', 'Share the most unhinged thing you''ve ever done for a crush.', 'PG', 'icebreaker'),
 
 -- Dares
 ('dare', 'Let the group DM your crush only using emojis.', 'PG', 'icebreaker'),
@@ -134,19 +134,19 @@ INSERT INTO public.velvet_rope_cards (type, text, heat_level, category) VALUES
 -- │ 🟡 YELLOW / PG-13 - Sensual & Suggestive                                │
 -- └─────────────────────────────────────────────────────────────────────────┘
 
--- Truths
-('truth', 'Describe your favorite way to be touched using only 3 adjectives.', 'PG-13', 'deep'),
-('truth', 'What is a "vanilla" act that turns you on more than it should?', 'PG-13', 'deep'),
-('truth', 'What''s the most attractive thing someone has ever done for you?', 'PG-13', 'deep'),
-('truth', 'Describe your type without describing anyone in this room.', 'PG-13', 'icebreaker'),
-('truth', 'What''s a fantasy you''re embarrassed to admit you have?', 'PG-13', 'deep'),
-('truth', 'What''s the most romantic thing you''ve ever done for someone?', 'PG-13', 'deep'),
-('truth', 'Rate every person in this room on a scale of 1-10. Be honest.', 'PG-13', 'icebreaker'),
-('truth', 'What''s the longest you''ve gone without kissing someone and how did it end?', 'PG-13', 'deep'),
-('truth', 'What physical feature do you get complimented on most?', 'PG-13', 'icebreaker'),
-('truth', 'What''s your biggest turn-on that most people would find surprising?', 'PG-13', 'deep'),
-('truth', 'Have you ever had a dream about someone in this room? Describe it.', 'PG-13', 'deep'),
-('truth', 'What''s the most attractive thing about the person to your left?', 'PG-13', 'icebreaker'),
+-- Shares
+('share', 'Share your favorite way to be touched—describe it in 3 adjectives.', 'PG-13', 'deep'),
+('share', 'Share a "vanilla" act that secretly turns you on more than it should.', 'PG-13', 'deep'),
+('share', 'Share the most attractive thing someone has ever done for you.', 'PG-13', 'deep'),
+('share', 'Share your type without describing anyone in this room.', 'PG-13', 'icebreaker'),
+('share', 'Share a fantasy you''re embarrassed to admit you have.', 'PG-13', 'deep'),
+('share', 'Share the most romantic gesture you''ve ever made for someone.', 'PG-13', 'deep'),
+('share', 'Share your honest rating of everyone in this room on a scale of 1-10.', 'PG-13', 'icebreaker'),
+('share', 'Share the longest you''ve gone without kissing someone—and how that drought ended.', 'PG-13', 'deep'),
+('share', 'Share which physical feature you get complimented on the most.', 'PG-13', 'icebreaker'),
+('share', 'Share your biggest turn-on that would surprise most people.', 'PG-13', 'deep'),
+('share', 'Share a dream you''ve had about someone in this room—spare no details.', 'PG-13', 'deep'),
+('share', 'Share the most attractive thing about the person to your left.', 'PG-13', 'icebreaker'),
 
 -- Dares
 ('dare', 'Give the person to your left a neck massage for 60 seconds. No talking.', 'PG-13', 'physical'),
@@ -166,17 +166,17 @@ INSERT INTO public.velvet_rope_cards (type, text, heat_level, category) VALUES
 -- │ 🔴 RED / R - Explicit & Erotic                                          │
 -- └─────────────────────────────────────────────────────────────────────────┘
 
--- Truths
-('truth', 'Detailed description: What is the best sexual experience you''ve ever had?', 'R', 'kinky'),
-('truth', 'What''s your most unconventional turn-on that you''ve acted on?', 'R', 'kinky'),
-('truth', 'Describe your ultimate fantasy scenario in vivid detail.', 'R', 'kinky'),
-('truth', 'What''s something you''ve always wanted to try but haven''t found the right partner for?', 'R', 'kinky'),
-('truth', 'What''s the kinkiest thing you''ve ever done? Spare no details.', 'R', 'kinky'),
-('truth', 'If you could have a no-consequences night with anyone here, who and why?', 'R', 'deep'),
-('truth', 'What''s your safe word and why did you choose it?', 'R', 'kinky'),
-('truth', 'Describe a time you surprised yourself with how adventurous you were.', 'R', 'kinky'),
-('truth', 'What''s a boundary you never thought you''d cross but did?', 'R', 'deep'),
-('truth', 'Rate your own performance in bed on a scale of 1-10 and justify it.', 'R', 'kinky'),
+-- Shares
+('share', 'Share the best sexual experience you''ve ever had—in vivid detail.', 'R', 'kinky'),
+('share', 'Share your most unconventional turn-on that you''ve actually acted on.', 'R', 'kinky'),
+('share', 'Share your ultimate fantasy scenario—paint the picture vividly.', 'R', 'kinky'),
+('share', 'Share something you''ve always wanted to try but haven''t found the right partner for.', 'R', 'kinky'),
+('share', 'Share the kinkiest thing you''ve ever done—spare no details.', 'R', 'kinky'),
+('share', 'Share who you''d choose for a no-consequences night here—and why them.', 'R', 'deep'),
+('share', 'Share your safe word and the story behind why you chose it.', 'R', 'kinky'),
+('share', 'Share a time you completely surprised yourself with how adventurous you were.', 'R', 'kinky'),
+('share', 'Share a boundary you never thought you''d cross—but did anyway.', 'R', 'deep'),
+('share', 'Share your honest self-rating in bed on a scale of 1-10—and justify it.', 'R', 'kinky'),
 
 -- Dares
 ('dare', 'Blindfold yourself and guess who is touching your neck.', 'R', 'physical'),
@@ -194,12 +194,12 @@ INSERT INTO public.velvet_rope_cards (type, text, heat_level, category) VALUES
 -- │ ⚫ BLACK / X - Extreme (Affirmative Consent Required)                   │
 -- └─────────────────────────────────────────────────────────────────────────┘
 
--- Truths
-('truth', 'What is your absolute darkest fantasy that you''ve never told anyone?', 'X', 'kinky'),
-('truth', 'Describe in explicit detail your ideal scenario with someone in this room.', 'X', 'kinky'),
-('truth', 'What taboo have you broken that you don''t regret?', 'X', 'kinky'),
-('truth', 'Rate everyone here on who you''d most want to... and describe why.', 'X', 'kinky'),
-('truth', 'What''s the most explicit message you''ve ever sent? Read it aloud.', 'X', 'kinky'),
+-- Shares
+('share', 'Share your absolute darkest fantasy—the one you''ve never told a soul.', 'X', 'kinky'),
+('share', 'Share in explicit detail your ideal scenario with someone in this room.', 'X', 'kinky'),
+('share', 'Share a taboo you''ve broken that you absolutely don''t regret.', 'X', 'kinky'),
+('share', 'Share who in this room you''d most want to... and describe exactly why.', 'X', 'kinky'),
+('share', 'Share the most explicit message you''ve ever sent—read it aloud now.', 'X', 'kinky'),
 
 -- Dares
 ('dare', '[CONSENT CHECK] Remove clothing of someone else''s choosing - if they agree.', 'X', 'kinky'),

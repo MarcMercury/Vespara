@@ -7,7 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/velvet_rope_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// VELVET ROPE - The Spicy Truth or Dare
+/// VELVET ROPE - The Spicy Share or Dare
 /// "Celestial Luxury" - Deep Obsidian, Ethereal Blue, Burning Crimson
 /// TAG Engine Signature Game
 /// ════════════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ import '../../../core/providers/velvet_rope_provider.dart';
 class VelvetColors {
   static const background = Color(0xFF1A1523);      // Deep Obsidian
   static const surface = Color(0xFF2D2438);          // Elevated surface
-  static const truthBlue = Color(0xFF4A9EFF);        // Ethereal Blue (Mind)
+  static const shareBlue = Color(0xFF4A9EFF);        // Ethereal Blue (Mind)
   static const dareCrimson = Color(0xFFDC143C);      // Burning Crimson (Body)
   static const gold = Color(0xFFFFD700);             // Accent gold
   static const lavender = Color(0xFFE0D8EA);         // Soft text
@@ -196,13 +196,13 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                       foreground: Paint()
                         ..shader = LinearGradient(
                           colors: [
-                            VelvetColors.truthBlue,
+                            VelvetColors.shareBlue,
                             VelvetColors.dareCrimson,
                           ],
                         ).createShader(const Rect.fromLTWH(0, 0, 200, 30)),
                       shadows: [
                         Shadow(
-                          color: VelvetColors.truthBlue.withOpacity(0.3 + _glowController.value * 0.3),
+                          color: VelvetColors.shareBlue.withOpacity(0.3 + _glowController.value * 0.3),
                           blurRadius: 20,
                         ),
                       ],
@@ -218,7 +218,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
           const SizedBox(height: 16),
           
           const Text(
-            'The Spicy Truth or Dare',
+            'The Spicy Share or Dare',
             style: TextStyle(
               fontSize: 16,
               fontStyle: FontStyle.italic,
@@ -307,7 +307,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [VelvetColors.truthBlue, VelvetColors.dareCrimson],
+                    colors: [VelvetColors.shareBlue, VelvetColors.dareCrimson],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
@@ -520,7 +520,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 _nameController.clear();
               }
             },
-            icon: Icon(Icons.add_circle, color: VelvetColors.truthBlue),
+            icon: Icon(Icons.add_circle, color: VelvetColors.shareBlue),
           ),
         ],
       ),
@@ -594,7 +594,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: VelvetColors.truthBlue.withOpacity(0.2 + _pulseController.value * 0.2),
+                              color: VelvetColors.shareBlue.withOpacity(0.2 + _pulseController.value * 0.2),
                               blurRadius: 40 + _pulseController.value * 20,
                               spreadRadius: 10,
                             ),
@@ -680,7 +680,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // SELECTION PHASE - TRUTH OR DARE
+  // SELECTION PHASE - SHARE OR DARE
   // ═══════════════════════════════════════════════════════════════════════════
   
   Widget _buildSelection(VelvetRopeState state) {
@@ -725,11 +725,11 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
           
           const Spacer(),
           
-          // TRUTH Button
+          // SHARE Button
           GestureDetector(
             onTap: () {
               HapticFeedback.heavyImpact();
-              ref.read(velvetRopeProvider.notifier).selectType(CardType.truth);
+              ref.read(velvetRopeProvider.notifier).selectType(CardType.share);
             },
             child: AnimatedBuilder(
               animation: _pulseController,
@@ -740,14 +740,14 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        VelvetColors.truthBlue.withOpacity(0.8),
-                        VelvetColors.truthBlue.withOpacity(0.6),
+                        VelvetColors.shareBlue.withOpacity(0.8),
+                        VelvetColors.shareBlue.withOpacity(0.6),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: VelvetColors.truthBlue.withOpacity(0.3 + _pulseController.value * 0.3),
+                        color: VelvetColors.shareBlue.withOpacity(0.3 + _pulseController.value * 0.3),
                         blurRadius: 25 + _pulseController.value * 15,
                         spreadRadius: 5 + _pulseController.value * 5,
                       ),
@@ -758,7 +758,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                       Text('🔮', style: TextStyle(fontSize: 40)),
                       SizedBox(height: 8),
                       Text(
-                        'TRUTH',
+                        'SHARE',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
@@ -768,7 +768,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Bare your soul',
+                        'Reveal something personal',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white70,
@@ -881,7 +881,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                     Text(card.typeEmoji, style: const TextStyle(fontSize: 20)),
                     const SizedBox(width: 8),
                     Text(
-                      card.type == CardType.truth ? 'TRUTH' : 'DARE',
+                      card.type == CardType.share ? 'SHARE' : 'DARE',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -955,7 +955,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                card.type == CardType.truth ? 'TRUTH' : 'DARE',
+                                card.type == CardType.share ? 'SHARE' : 'DARE',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w800,
@@ -1106,7 +1106,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem('🔮', 'Truths', state.totalTruths, VelvetColors.truthBlue),
+                    _buildStatItem('🔮', 'Shares', state.totalShares, VelvetColors.shareBlue),
                     _buildStatItem('🔥', 'Dares', state.totalDares, VelvetColors.dareCrimson),
                     _buildStatItem('⏭️', 'Skipped', state.totalSkips, Colors.grey),
                   ],
@@ -1153,7 +1153,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                         ),
                       ),
                       Text(
-                        '🔮 ${player.truthsCompleted}  🔥 ${player.daresCompleted}',
+                        '🔮 ${player.sharesCompleted}  🔥 ${player.daresCompleted}',
                         style: const TextStyle(color: Colors.white70),
                       ),
                     ],
@@ -1196,7 +1196,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [VelvetColors.truthBlue, VelvetColors.dareCrimson],
+                        colors: [VelvetColors.shareBlue, VelvetColors.dareCrimson],
                       ),
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -1271,7 +1271,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               const SizedBox(height: 24),
               ShaderMask(
                 shaderCallback: (bounds) => LinearGradient(
-                  colors: [VelvetColors.truthBlue, VelvetColors.dareCrimson],
+                  colors: [VelvetColors.shareBlue, VelvetColors.dareCrimson],
                 ).createShader(bounds),
                 child: const Text(
                   'HOW TO PLAY',
@@ -1306,15 +1306,15 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               _buildRuleSection('🎡', 'THE SPIN', [
                 'Tap "SPIN" to spin the wheel',
                 'The wheel selects a random player',
-                'Selected player must choose Truth or Dare',
+                'Selected player must choose Share or Dare',
               ]),
               const SizedBox(height: 20),
               
-              // Truth vs Dare
-              _buildRuleSection('🔮', 'TRUTH (Blue)', [
-                'Answer a question honestly',
-                'Questions match your heat level',
-                'Skipping costs 1 point',
+              // Share vs Dare
+              _buildRuleSection('🔮', 'SHARE (Blue)', [
+                'Reveal something personal about yourself',
+                'Share a secret, desire, talent, or memory',
+                'Prompts match your heat level',
               ]),
               const SizedBox(height: 20),
               
@@ -1337,7 +1337,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               // Scoring
               _buildRuleSection('🏆', 'SCORING', [
                 'Complete prompts to earn points',
-                'Track truths and dares completed',
+                'Track shares and dares completed',
                 'Final results show everyone\'s stats',
               ]),
               const SizedBox(height: 32),

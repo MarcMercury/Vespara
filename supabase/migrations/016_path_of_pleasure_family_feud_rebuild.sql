@@ -442,7 +442,7 @@ SELECT
   COUNT(DISTINCT p.session_id) as games_played,
   ROUND(SUM(p.correct_guesses)::decimal / NULLIF(SUM(p.total_guesses), 0) * 100, 1) as accuracy_percent
 FROM pop_players p
-JOIN profiles pr ON pr.user_id = p.user_id
+JOIN profiles pr ON pr.id = p.user_id
 GROUP BY p.user_id, pr.display_name, pr.avatar_url
 ORDER BY total_score DESC;
 

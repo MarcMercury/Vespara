@@ -54,6 +54,12 @@ dependencies:
   # Image Handling
   image_picker: ^1.1.2
   
+  # Camera
+  camera: ^0.10.5+9
+  
+  # Image Gallery Saver
+  image_gallery_saver: ^2.0.3
+  
   # File Handling
   file_picker: ^8.0.0+1
   

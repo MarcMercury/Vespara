@@ -5,7 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/ludus_repository.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// VELVET ROPE - The Spicy Truth or Dare
+/// VELVET ROPE - The Spicy Share or Dare
 /// Provider & State Management
 /// ════════════════════════════════════════════════════════════════════════════
 
@@ -13,7 +13,7 @@ import '../../../core/data/ludus_repository.dart';
 // ENUMS & TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-enum CardType { truth, dare }
+enum CardType { share, dare }
 
 enum HeatLevel { pg, pg13, r, x }
 
@@ -51,7 +51,7 @@ enum VelvetCategory { icebreaker, physical, deep, kinky }
 enum VelvetPhase {
   lobby,        // Setting up players and heat level
   spinning,     // Wheel is spinning
-  selecting,    // Player choosing Truth or Dare
+  selecting,    // Player choosing Share or Dare
   revealing,    // Card flip animation
   reading,      // Player reads/performs the prompt
   results,      // Game over stats
@@ -76,17 +76,17 @@ class VelvetRopeCard {
     required this.category,
   });
   
-  /// Ethereal Blue for Truth, Burning Crimson for Dare
-  Color get typeColor => type == CardType.truth
+  /// Ethereal Blue for Share, Burning Crimson for Dare
+  Color get typeColor => type == CardType.share
       ? const Color(0xFF4A9EFF)   // Ethereal Blue
       : const Color(0xFFDC143C);   // Burning Crimson
   
-  String get typeEmoji => type == CardType.truth ? '🔮' : '🔥';
+  String get typeEmoji => type == CardType.share ? '🔮' : '🔥';
   
   factory VelvetRopeCard.fromJson(Map<String, dynamic> json) {
     return VelvetRopeCard(
       id: json['id'] as String,
-      type: json['type'] == 'truth' ? CardType.truth : CardType.dare,
+      type: json['type'] == 'share' ? CardType.share : CardType.dare,
       text: json['text'] as String,
       heatLevel: _parseHeatLevel(json['heat_level'] as String),
       category: _parseCategory(json['category'] as String),
@@ -95,7 +95,7 @@ class VelvetRopeCard {
   
   Map<String, dynamic> toJson() => {
     'id': id,
-    'type': type == CardType.truth ? 'truth' : 'dare',
+    'type': type == CardType.share ? 'share' : 'dare',
     'text': text,
     'heat_level': heatLevel.dbValue,
     'category': category.name,
@@ -125,19 +125,19 @@ class VelvetRopeCard {
 class VelvetPlayer {
   final String name;
   final Color color;
-  int truthsCompleted;
+  int sharesCompleted;
   int daresCompleted;
   int skips;
   
   VelvetPlayer({
     required this.name,
     required this.color,
-    this.truthsCompleted = 0,
+    this.sharesCompleted = 0,
     this.daresCompleted = 0,
     this.skips = 0,
   });
   
-  int get totalCompleted => truthsCompleted + daresCompleted;
+  int get totalCompleted => sharesCompleted + daresCompleted;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -150,9 +150,9 @@ class VelvetRopeState {
   final int selectedPlayerIndex;
   final CardType? selectedType;
   final VelvetRopeCard? currentCard;
-  final List<VelvetRopeCard> truthDeck;
+  final List<VelvetRopeCard> shareDeck;
   final List<VelvetRopeCard> dareDeck;
-  final int truthIndex;
+  final int shareIndex;
   final int dareIndex;
   final HeatLevel heatLevel;
   final int totalSpins;
@@ -167,9 +167,9 @@ class VelvetRopeState {
     this.selectedPlayerIndex = -1,
     this.selectedType,
     this.currentCard,
-    this.truthDeck = const [],
+    this.shareDeck = const [],
     this.dareDeck = const [],
-    this.truthIndex = 0,
+    this.shareIndex = 0,
     this.dareIndex = 0,
     this.heatLevel = HeatLevel.pg,
     this.totalSpins = 0,
@@ -184,7 +184,7 @@ class VelvetRopeState {
           ? players[selectedPlayerIndex]
           : null;
   
-  int get totalTruths => players.fold(0, (sum, p) => sum + p.truthsCompleted);
+  int get totalShares => players.fold(0, (sum, p) => sum + p.sharesCompleted);
   int get totalDares => players.fold(0, (sum, p) => sum + p.daresCompleted);
   int get totalSkips => players.fold(0, (sum, p) => sum + p.skips);
   
@@ -194,9 +194,9 @@ class VelvetRopeState {
     int? selectedPlayerIndex,
     CardType? selectedType,
     VelvetRopeCard? currentCard,
-    List<VelvetRopeCard>? truthDeck,
+    List<VelvetRopeCard>? shareDeck,
     List<VelvetRopeCard>? dareDeck,
-    int? truthIndex,
+    int? shareIndex,
     int? dareIndex,
     HeatLevel? heatLevel,
     int? totalSpins,
@@ -211,9 +211,9 @@ class VelvetRopeState {
       selectedPlayerIndex: selectedPlayerIndex ?? this.selectedPlayerIndex,
       selectedType: selectedType ?? this.selectedType,
       currentCard: currentCard ?? this.currentCard,
-      truthDeck: truthDeck ?? this.truthDeck,
+      shareDeck: shareDeck ?? this.shareDeck,
       dareDeck: dareDeck ?? this.dareDeck,
-      truthIndex: truthIndex ?? this.truthIndex,
+      shareIndex: shareIndex ?? this.shareIndex,
       dareIndex: dareIndex ?? this.dareIndex,
       heatLevel: heatLevel ?? this.heatLevel,
       totalSpins: totalSpins ?? this.totalSpins,
@@ -279,12 +279,12 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
       final cards = await _repository.getVelvetRopeCards(state.heatLevel.dbValue);
       
       if (cards.isNotEmpty) {
-        final truths = cards.where((c) => c.type == CardType.truth).toList()..shuffle();
+        final shares = cards.where((c) => c.type == CardType.share).toList()..shuffle();
         final dares = cards.where((c) => c.type == CardType.dare).toList()..shuffle();
         
         state = state.copyWith(
           phase: VelvetPhase.spinning,
-          truthDeck: truths,
+          shareDeck: shares,
           dareDeck: dares,
           isDemoMode: false,
           isLoading: false,
@@ -302,12 +302,12 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
   
   void _loadDemoCards() {
     final demoCards = _getDemoCards(state.heatLevel);
-    final truths = demoCards.where((c) => c.type == CardType.truth).toList()..shuffle();
+    final shares = demoCards.where((c) => c.type == CardType.share).toList()..shuffle();
     final dares = demoCards.where((c) => c.type == CardType.dare).toList()..shuffle();
     
     state = state.copyWith(
       phase: VelvetPhase.spinning,
-      truthDeck: truths,
+      shareDeck: shares,
       dareDeck: dares,
       isDemoMode: true,
       isLoading: false,
@@ -328,14 +328,14 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     VelvetRopeCard? card;
     int newIndex;
     
-    if (type == CardType.truth) {
-      if (state.truthDeck.isEmpty) return;
-      newIndex = state.truthIndex % state.truthDeck.length;
-      card = state.truthDeck[newIndex];
+    if (type == CardType.share) {
+      if (state.shareDeck.isEmpty) return;
+      newIndex = state.shareIndex % state.shareDeck.length;
+      card = state.shareDeck[newIndex];
       state = state.copyWith(
         selectedType: type,
         currentCard: card,
-        truthIndex: newIndex + 1,
+        shareIndex: newIndex + 1,
         phase: VelvetPhase.revealing,
       );
     } else {
@@ -361,8 +361,8 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     final players = [...state.players];
     final player = players[state.selectedPlayerIndex];
     
-    if (state.currentCard!.type == CardType.truth) {
-      player.truthsCompleted++;
+    if (state.currentCard!.type == CardType.share) {
+      player.sharesCompleted++;
     } else {
       player.daresCompleted++;
     }
@@ -410,7 +410,7 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     
     // Reset player stats
     for (final player in state.players) {
-      player.truthsCompleted = 0;
+      player.sharesCompleted = 0;
       player.daresCompleted = 0;
       player.skips = 0;
     }
@@ -426,11 +426,11 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     
     // PG cards (always included)
     cards.addAll([
-      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What is the most embarrassing thing in your search history right now?', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
-      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What\'s your most irrational fear that you\'ve never told anyone?', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
-      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'If you could read anyone\'s mind in this room for 60 seconds, whose would it be?', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
-      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What song do you secretly listen to that would ruin your reputation?', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
-      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What\'s the pettiest reason you stopped talking to someone?', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
+      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share the most embarrassing thing in your search history right now.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
+      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share your most irrational fear that you\'ve never told anyone.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
+      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share a secret talent that nobody in this room knows about.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
+      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share a guilty pleasure song that would absolutely ruin your reputation.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
+      VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share the pettiest reason you stopped talking to someone.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
       VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Let the group DM your crush only using emojis.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
       VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Talk with a fake accent for the next 2 rounds.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
       VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Show the last 5 photos in your camera roll. No deleting.', heatLevel: HeatLevel.pg, category: VelvetCategory.icebreaker),
@@ -440,10 +440,10 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     
     if (maxHeat.index >= HeatLevel.pg13.index) {
       cards.addAll([
-        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'Describe your favorite way to be touched using only 3 adjectives.', heatLevel: HeatLevel.pg13, category: VelvetCategory.deep),
-        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What is a "vanilla" act that turns you on more than it should?', heatLevel: HeatLevel.pg13, category: VelvetCategory.deep),
-        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'Rate every person in this room on a scale of 1-10. Be honest.', heatLevel: HeatLevel.pg13, category: VelvetCategory.icebreaker),
-        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What\'s the most attractive thing about the person to your left?', heatLevel: HeatLevel.pg13, category: VelvetCategory.icebreaker),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share your favorite way to be touched—describe it in 3 adjectives.', heatLevel: HeatLevel.pg13, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share a "vanilla" act that secretly turns you on more than it should.', heatLevel: HeatLevel.pg13, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share your honest rating of everyone in this room on a scale of 1-10.', heatLevel: HeatLevel.pg13, category: VelvetCategory.icebreaker),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share the most attractive thing about the person to your left.', heatLevel: HeatLevel.pg13, category: VelvetCategory.icebreaker),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Give the person to your left a neck massage for 60 seconds. No talking.', heatLevel: HeatLevel.pg13, category: VelvetCategory.physical),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Make prolonged eye contact with someone for 60 seconds without laughing.', heatLevel: HeatLevel.pg13, category: VelvetCategory.physical),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Slow dance with someone in the room for the duration of one song.', heatLevel: HeatLevel.pg13, category: VelvetCategory.physical),
@@ -453,8 +453,8 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     
     if (maxHeat.index >= HeatLevel.r.index) {
       cards.addAll([
-        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'What is the best intimate experience you\'ve ever had? Details.', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
-        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.truth, text: 'If you could have a no-consequences night with anyone here, who and why?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share the best intimate experience you\'ve ever had—in vivid detail.', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share who you\'d choose for a no-consequences night here—and why them.', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Blindfold yourself and guess who is touching your neck.', heatLevel: HeatLevel.r, category: VelvetCategory.physical),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Sit on the lap of the person the wheel spins to next (if consenting).', heatLevel: HeatLevel.r, category: VelvetCategory.physical),
       ]);

@@ -330,7 +330,7 @@ class LudusRepository {
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // VELVET ROPE (Truth or Dare)
+  // VELVET ROPE (Share or Dare)
   // ═══════════════════════════════════════════════════════════════════════════
   
   /// Fetch Velvet Rope cards filtered by heat level

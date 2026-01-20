@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'flash_freeze_game_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// FLASH & FREEZE - "Exposure requires endurance"
@@ -273,7 +274,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
               ),
               SizedBox(height: 16),
               Text(
-                'One player acts as The Signal.\nEveryone else is just trying to get naked without falling over.',
+                'Your phone becomes The Signal.\nWatch it flash colors while trying to strip without getting caught!\n\n📸 Bonus: The camera captures freeze moments!',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.white54,
@@ -727,22 +728,14 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
         
         const SizedBox(height: 20),
         
-        // Coming Soon / Play Button
+        // Play Button - Navigate to Game
         GestureDetector(
           onTap: () {
             HapticFeedback.heavyImpact();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Row(
-                  children: [
-                    Text('⚡', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 8),
-                    Text('Signal Controller coming soon!'),
-                  ],
-                ),
-                backgroundColor: FlashColors.surface,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FlashFreezeGameScreen(),
               ),
             );
           },
@@ -789,7 +782,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
         const SizedBox(height: 12),
         
         const Text(
-          'Signal Controller Mode Coming Soon',
+          'Phone flashes signals • Camera captures freeze moments',
           style: TextStyle(
             fontSize: 12,
             color: Colors.white38,

@@ -27,6 +27,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Policy: Users can upload their own photos
 -- Path pattern: {user_id}/{filename}
+DROP POLICY IF EXISTS "Users can upload their own photos" ON storage.objects;
 CREATE POLICY "Users can upload their own photos"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -35,6 +36,7 @@ WITH CHECK (
 );
 
 -- Policy: Users can update their own photos
+DROP POLICY IF EXISTS "Users can update their own photos" ON storage.objects;
 CREATE POLICY "Users can update their own photos"
 ON storage.objects FOR UPDATE
 USING (
@@ -43,6 +45,7 @@ USING (
 );
 
 -- Policy: Users can delete their own photos
+DROP POLICY IF EXISTS "Users can delete their own photos" ON storage.objects;
 CREATE POLICY "Users can delete their own photos"
 ON storage.objects FOR DELETE
 USING (
@@ -51,6 +54,7 @@ USING (
 );
 
 -- Policy: Anyone can view photos (public bucket)
+DROP POLICY IF EXISTS "Photos are publicly accessible" ON storage.objects;
 CREATE POLICY "Photos are publicly accessible"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'photos');
