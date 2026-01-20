@@ -121,21 +121,28 @@ class _AuthGateState extends State<AuthGate> {
     try {
       final response = await Supabase.instance.client
           .from('profiles')
-          .select('is_verified, display_name')
+          .select('onboarding_complete, is_verified, display_name')
           .eq('id', userId)
           .maybeSingle();
       
+      debugPrint('Vespara: Profile check result: $response');
+      
       if (mounted) {
         setState(() {
-          // User has completed onboarding if they have a profile with is_verified=true
-          // or if they have a display_name set
+          // User has completed onboarding if:
+          // 1. onboarding_complete is true, OR
+          // 2. is_verified is true, OR
+          // 3. display_name is set (legacy check)
           _hasCompletedOnboarding = response != null && 
-              (response['is_verified'] == true || response['display_name'] != null);
+              (response['onboarding_complete'] == true ||
+               response['is_verified'] == true || 
+               (response['display_name'] != null && response['display_name'].toString().isNotEmpty));
         });
+        debugPrint('Vespara: Onboarding complete = $_hasCompletedOnboarding');
       }
     } catch (e) {
       debugPrint('Vespara: Error checking onboarding: $e');
-      // If profile doesn't exist, show onboarding
+      // If profile doesn't exist or error, show onboarding
       if (mounted) {
         setState(() {
           _hasCompletedOnboarding = false;

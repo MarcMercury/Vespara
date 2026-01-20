@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/image_upload_service.dart';
 import '../../../core/services/permission_service.dart';
 import '../../../core/services/location_service.dart';
+import '../../../core/services/zipcode_service.dart';
 import 'velvet_rope_intro.dart';
 
 /// ExclusiveOnboardingScreen - The Club Interview
@@ -56,6 +57,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   
   String? _city;
   String? _state;
+  String? _zipCode;
   final List<String> _uploadedPhotos = [];
   String? _avatarUrl;
   
@@ -376,7 +378,8 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       if (user == null) throw Exception('No user');
       
       final bucket = isAvatar ? 'avatars' : 'photos';
-      final fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      // Use folder structure: {user_id}/{timestamp}.jpg to match RLS policy
+      final fileName = '${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
       
       await Supabase.instance.client.storage.from(bucket).uploadBinary(
         fileName,
@@ -423,8 +426,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   // ═══════════════════════════════════════════════════════════════════════════
   
   Future<void> _getLocation() async {
-    // For now, just use a simple dialog
-    // In production, use actual geolocation + reverse geocoding
+    // Show ZIP code input dialog for easy location entry
     final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (context) => _LocationInputDialog(),
@@ -434,6 +436,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       setState(() {
         _city = result['city'];
         _state = result['state'];
+        _zipCode = result['zipCode'];
       });
     }
   }
@@ -544,6 +547,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
         // Location
         'city': _city,
         'state': _state,
+        'zip_code': _zipCode,
         
         // Photos
         'avatar_url': _avatarUrl,
@@ -2041,9 +2045,49 @@ class _LocationInputDialog extends StatefulWidget {
 }
 
 class _LocationInputDialogState extends State<_LocationInputDialog> {
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  
+  final _zipController = TextEditingController();
+  String? _city;
+  String? _state;
+  bool _isLoading = false;
+  String? _error;
+
+  Future<void> _lookupZip(String zip) async {
+    if (zip.length != 5) {
+      setState(() {
+        _city = null;
+        _state = null;
+        _error = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final result = await ZipCodeService.lookup(zip);
+
+    setState(() {
+      _isLoading = false;
+      if (result != null) {
+        _city = result.city;
+        _state = result.state;
+        _error = null;
+      } else {
+        _city = null;
+        _state = null;
+        _error = 'Invalid ZIP code';
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _zipController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -2056,28 +2100,72 @@ class _LocationInputDialogState extends State<_LocationInputDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            controller: _cityController,
+            controller: _zipController,
             style: TextStyle(color: VesparaColors.primary),
+            keyboardType: TextInputType.number,
+            maxLength: 5,
             decoration: InputDecoration(
-              labelText: 'City',
+              labelText: 'ZIP Code',
+              hintText: '12345',
+              hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
               labelStyle: TextStyle(color: VesparaColors.secondary),
+              counterText: '',
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: VesparaColors.border),
               ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: VesparaColors.glow),
+              ),
+              suffixIcon: _isLoading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: VesparaColors.glow,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
+            onChanged: _lookupZip,
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _stateController,
-            style: TextStyle(color: VesparaColors.primary),
-            decoration: InputDecoration(
-              labelText: 'State',
-              labelStyle: TextStyle(color: VesparaColors.secondary),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: VesparaColors.border),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                _error!,
+                style: TextStyle(color: VesparaColors.error, fontSize: 12),
               ),
             ),
-          ),
+          if (_city != null && _state != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.location_on, color: VesparaColors.glow, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$_city, $_state',
+                      style: TextStyle(
+                        color: VesparaColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.check_circle, color: VesparaColors.glow, size: 18),
+                ],
+              ),
+            ),
         ],
       ),
       actions: [
@@ -2086,16 +2174,18 @@ class _LocationInputDialogState extends State<_LocationInputDialog> {
           child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_cityController.text.isNotEmpty) {
-              Navigator.pop(context, {
-                'city': _cityController.text.trim(),
-                'state': _stateController.text.trim(),
-              });
-            }
-          },
+          onPressed: _city != null && _state != null
+              ? () {
+                  Navigator.pop(context, {
+                    'city': _city,
+                    'state': _state,
+                    'zipCode': _zipController.text.trim(),
+                  });
+                }
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: VesparaColors.glow,
+            disabledBackgroundColor: VesparaColors.border,
           ),
           child: const Text('Save'),
         ),
