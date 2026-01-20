@@ -1,6 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/models/user_profile.dart';
 import '../data/vespara_mock_data.dart';
+import 'app_providers.dart';
+
+/// Global Supabase client accessor
+SupabaseClient get _supabase => Supabase.instance.client;
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// CONNECTION STATE PROVIDER
@@ -381,7 +386,96 @@ final publicEventsProvider = Provider<List<VesparaEvent>>((ref) {
   return state.publicUpcomingEvents;
 });
 
-final metAtEventsProvider = Provider<List<EventAttendee>>((ref) {
-  final state = ref.watch(connectionStateProvider);
-  return state.getUnconnectedEventAttendees('current-user');
+/// Met IRL provider - fetches people who attended the same events as current user
+/// This is the key feature: shows matches who were at the same events
+final metAtEventsProvider = FutureProvider<List<EventAttendee>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) {
+    // Use mock data when not logged in
+    final state = ref.watch(connectionStateProvider);
+    return state.getUnconnectedEventAttendees('current-user');
+  }
+
+  try {
+    // Step 1: Get all events the current user attended
+    final myEventAttendance = await _supabase
+        .from('event_attendees')
+        .select('event_id')
+        .eq('user_id', user.id)
+        .eq('status', 'accepted');
+    
+    if (myEventAttendance.isEmpty) {
+      return [];
+    }
+    
+    final myEventIds = (myEventAttendance as List)
+        .map((e) => e['event_id'] as String)
+        .toList();
+    
+    // Step 2: Get all other attendees from those events (excluding current user)
+    final otherAttendees = await _supabase
+        .from('event_attendees')
+        .select('''
+          user_id,
+          event_id,
+          created_at,
+          events!inner(id, title, start_time)
+        ''')
+        .inFilter('event_id', myEventIds)
+        .neq('user_id', user.id)
+        .eq('status', 'accepted');
+    
+    // Step 3: Get my current matches/connections to exclude them
+    final myMatches = await _supabase
+        .from('matches')
+        .select('user_a_id, user_b_id')
+        .or('user_a_id.eq.${user.id},user_b_id.eq.${user.id}');
+    
+    final connectedUserIds = <String>{};
+    for (final match in myMatches) {
+      final aId = match['user_a_id'] as String;
+      final bId = match['user_b_id'] as String;
+      if (aId == user.id) {
+        connectedUserIds.add(bId);
+      } else {
+        connectedUserIds.add(aId);
+      }
+    }
+    
+    // Step 4: Filter to unconnected attendees and get their profile info
+    final uniqueUsers = <String, EventAttendee>{};
+    
+    for (final attendee in otherAttendees) {
+      final attendeeUserId = attendee['user_id'] as String;
+      if (connectedUserIds.contains(attendeeUserId)) continue;
+      
+      if (!uniqueUsers.containsKey(attendeeUserId)) {
+        // Fetch the profile for this user
+        try {
+          final profile = await _supabase
+              .from('profiles')
+              .select('id, display_name, avatar_url')
+              .eq('id', attendeeUserId)
+              .single();
+          
+          uniqueUsers[attendeeUserId] = EventAttendee(
+            userId: attendeeUserId,
+            name: profile['display_name'] as String? ?? 'Unknown',
+            avatar: profile['avatar_url'] as String?,
+            joinedAt: DateTime.tryParse(attendee['created_at'] as String) ?? DateTime.now(),
+          );
+        } catch (e) {
+          // Profile not found, skip
+          continue;
+        }
+      }
+    }
+    
+    return uniqueUsers.values.toList();
+  } catch (e) {
+    print('Error fetching met IRL data: $e');
+    // Fallback to mock data on error
+    final state = ref.watch(connectionStateProvider);
+    return state.getUnconnectedEventAttendees('current-user');
+  }
 });

@@ -11,8 +11,8 @@ import '../data/mock_data_provider.dart';
 /// Global Supabase client accessor for providers
 SupabaseClient get _supabase => Supabase.instance.client;
 
-/// Demo mode flag - set to true to use mock data
-final demoModeProvider = StateProvider<bool>((ref) => true);
+/// Demo mode flag - defaults to false (uses real data when user is logged in)
+final demoModeProvider = StateProvider<bool>((ref) => false);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AUTH PROVIDERS
@@ -28,15 +28,14 @@ final currentUserProvider = Provider<User?>((ref) {
   return _supabase.auth.currentUser;
 });
 
-/// User profile provider
+/// User profile provider - fetches real profile from Supabase
 final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.currentUserProfile;
-  }
-  
   final user = ref.watch(currentUserProvider);
-  if (user == null) return null;
+  if (user == null) {
+    // Not logged in - use mock data for demo
+    final isDemoMode = ref.watch(demoModeProvider);
+    return isDemoMode ? MockDataProvider.currentUserProfile : null;
+  }
   
   try {
     final response = await _supabase
@@ -46,7 +45,9 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
         .single();
     return UserProfile.fromJson(response);
   } catch (e) {
-    return MockDataProvider.currentUserProfile;
+    // Log error but don't fall back to mock data silently
+    print('Error fetching profile: $e');
+    return null;
   }
 });
 

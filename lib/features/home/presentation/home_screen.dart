@@ -170,7 +170,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   
   @override
   Widget build(BuildContext context) {
-    final analytics = MockDataProvider.analytics;
+    final analyticsAsync = ref.watch(userAnalyticsProvider);
+    final analytics = analyticsAsync.valueOrNull ?? MockDataProvider.analytics;
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
@@ -193,7 +194,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
   
   Widget _buildHeader() {
-    final profile = MockDataProvider.currentUserProfile;
+    final profileAsync = ref.watch(userProfileProvider);
+    final profile = profileAsync.valueOrNull;
+    final displayName = profile?.displayName ?? 'there';
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -212,7 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
             const SizedBox(height: 2),
             Text(
-              'Welcome back, ${profile.displayName}',
+              'Welcome back, $displayName',
               style: TextStyle(
                 fontSize: 14,
                 color: VesparaColors.secondary,

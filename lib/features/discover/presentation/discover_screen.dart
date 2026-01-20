@@ -329,7 +329,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildMatchTypeToggle() {
-    final metIrlCount = ref.watch(metAtEventsProvider).length;
+    final metIrlAsync = ref.watch(metAtEventsProvider);
+    final metIrlCount = metIrlAsync.valueOrNull?.length ?? 0;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1038,12 +1039,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildMetIrlContent() {
-    final metIrlAttendees = ref.watch(metAtEventsProvider);
+    final metIrlAsync = ref.watch(metAtEventsProvider);
     final connectionState = ref.watch(connectionStateProvider);
     
-    if (metIrlAttendees.isEmpty) {
-      return _buildMetIrlEmptyState();
-    }
+    return metIrlAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => _buildMetIrlEmptyState(),
+      data: (metIrlAttendees) {
+        if (metIrlAttendees.isEmpty) {
+          return _buildMetIrlEmptyState();
+        }
+        return _buildMetIrlList(metIrlAttendees, connectionState);
+      },
+    );
+  }
+  
+  Widget _buildMetIrlList(List<EventAttendee> metIrlAttendees, VesparaConnectionState connectionState) {
 
     return Column(
       children: [

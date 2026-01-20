@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/analytics.dart';
+import '../../../core/providers/app_providers.dart';
 import '../widgets/qr_connect_modal.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -22,7 +23,6 @@ class MirrorScreen extends ConsumerStatefulWidget {
 
 class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late UserAnalytics _analytics;
   
   // Settings state
   final Map<String, bool> _toggleSettings = {
@@ -35,11 +35,17 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
     'Profile Visible': true,
   };
   
+  UserAnalytics? _cachedAnalytics;
+  
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _analytics = MockDataProvider.analytics;
+    // Analytics will be loaded via provider
+  }
+  
+  UserAnalytics get _analytics {
+    return _cachedAnalytics ?? MockDataProvider.analytics;
   }
 
   @override
@@ -50,6 +56,10 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    // Load analytics from provider
+    final analyticsAsync = ref.watch(userAnalyticsProvider);
+    _cachedAnalytics = analyticsAsync.valueOrNull;
+    
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
@@ -154,7 +164,29 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildProfileTab() {
-    final profile = MockDataProvider.currentUserProfile;
+    final profileAsync = ref.watch(userProfileProvider);
+    
+    return profileAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: VesparaColors.error, size: 48),
+            const SizedBox(height: 16),
+            Text('Failed to load profile', style: TextStyle(color: VesparaColors.secondary)),
+            TextButton(
+              onPressed: () => ref.invalidate(userProfileProvider),
+              child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
+            ),
+          ],
+        ),
+      ),
+      data: (profile) => _buildProfileContent(profile),
+    );
+  }
+  
+  Widget _buildProfileContent(UserProfile profile) {
     
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -231,10 +263,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
           
           // Profile sections
           _buildProfileSection('About Me', profile.bio ?? 'No bio yet', Icons.person_outline),
-          _buildProfileSection('Looking For', profile.relationshipTypes.join(', '), Icons.favorite_outline),
-          _buildProfileSection('Kinks & Interests', profile.kinks.join(', '), Icons.whatshot_outlined),
-          _buildProfileSection('Boundaries', profile.boundaries.join(', '), Icons.shield_outlined),
-          _buildProfileSection('Love Languages', profile.loveLanguages.join(', '), Icons.language),
+          _buildProfileSection('Location', profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Not set', Icons.location_on_outlined),
+          _buildProfileSection('Pronouns', profile.pronouns ?? 'Not set', Icons.person_pin_outlined),
+          _buildProfileSection('Gender', profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Not set', Icons.face_outlined),
+          _buildProfileSection('Orientation', profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Not set', Icons.favorite_border),
+          _buildProfileSection('Relationship Status', profile.relationshipStatus.isNotEmpty ? profile.relationshipStatus.join(', ') : 'Not set', Icons.people_outline),
+          _buildProfileSection('Seeking', profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Not set', Icons.search),
+          _buildProfileSection('Looking For', profile.lookingFor.isNotEmpty ? profile.lookingFor.join(', ') : 'Not set', Icons.favorite_outline),
+          _buildProfileSection('Kinks & Interests', profile.kinks.isNotEmpty ? profile.kinks.join(', ') : 'Not set', Icons.whatshot_outlined),
+          _buildProfileSection('Boundaries', profile.boundaries.isNotEmpty ? profile.boundaries.join(', ') : 'Not set', Icons.shield_outlined),
+          _buildProfileSection('Love Languages', profile.loveLanguages.isNotEmpty ? profile.loveLanguages.join(', ') : 'Not set', Icons.language),
+          _buildProfileSection('Availability', profile.availabilityGeneral.isNotEmpty ? profile.availabilityGeneral.join(', ') : 'Not set', Icons.schedule_outlined),
+          _buildProfileSection('Hosting Status', profile.hostingStatus ?? 'Not set', Icons.home_outlined),
+          _buildProfileSection('Discretion Level', profile.discretionLevel ?? 'Not set', Icons.visibility_outlined),
           
           const SizedBox(height: 24),
           
