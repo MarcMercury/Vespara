@@ -83,4 +83,5 @@ flutter:
   
   assets:
     - assets/images/
+    - assets/images/drama_sutra/
     - assets/icons/

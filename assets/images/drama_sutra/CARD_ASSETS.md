@@ -1,30 +1,47 @@
 # 🎭 Drama Sutra Card Assets
 
-Upload position card images to this folder for the Drama Sutra game.
+Position card images for the Drama Sutra game.
 
 ---
 
-## 📁 File Naming Convention
+## ✅ UPLOADED GROUP POSITIONS (12 Cards)
 
-Use the position ID as the filename:
+| File | Position Name | Difficulty | Intensity |
+|------|---------------|------------|-----------|
+| `group-sex-1_X5.png` | **The Constellation** | ★★★☆☆ | 🌙 Intimate |
+| `group-sex-2_X5.png` | **The Daisy Chain** | ★★★☆☆ | 🌙 Intimate |
+| `group-sex-3_X5.png` | **The Pyramid** | ★★★★☆ | 🤸 Acrobatic |
+| `group-sex-4_X5.png` | **The Thunderclap** | ★★★★☆ | 🤸 Acrobatic |
+| `group-sex-5_X5.png` | **The Velvet Sandwich** | ★★☆☆☆ | 💕 Romantic |
+| `group-sex-6_X5.png` | **The Serpentine** | ★★★☆☆ | 🌙 Intimate |
+| `group-sex-7_X5.png` | **The Triple Crown** | ★★★☆☆ | 💕 Romantic |
+| `group-sex-8_X5.png` | **The Circus Act** | ★★★★★ | 🤸 Acrobatic |
+| `group-sex-9_X5.png` | **The Love Knot** | ★★★★☆ | 🌙 Intimate |
+| `group-sex-10_X5.png` | **The Tidal Wave** | ★★★☆☆ | 💕 Romantic |
+| `group-sex-11_X5.png` | **The Phoenix Rising** | ★★★★☆ | 🤸 Acrobatic |
+| `group-sex-12_X5.png` | **The Grand Finale** | ★★★★★ | 🌙 Intimate |
 
-| Position ID | Position Name | Filename |
-|-------------|---------------|----------|
-| `p1` | The Spoons | `p1_spoons.png` |
-| `p2` | The Lotus | `p2_lotus.png` |
-| `p3` | The Lazy Dog | `p3_lazy_dog.png` |
-| `p4` | The Cowgirl | `p4_cowgirl.png` |
-| `p5` | The Reverse Cowgirl | `p5_reverse_cowgirl.png` |
-| `p6` | The Throne | `p6_throne.png` |
-| `p7` | The Standing Ovation | `p7_standing_ovation.png` |
-| `p8` | The Wheelbarrow | `p8_wheelbarrow.png` |
-| `p9` | The Pretzel | `p9_pretzel.png` |
-| `p10` | The Spider | `p10_spider.png` |
-| `p11` | The Splitting Bamboo | `p11_splitting_bamboo.png` |
-| `p12` | The Suspended Congress | `p12_suspended_congress.png` |
-| `p13` | The Glowing Firefly | `p13_glowing_firefly.png` |
-| `p14` | The Propeller | `p14_propeller.png` |
-| `p15` | The Acrobat | `p15_acrobat.png` |
+---
+
+## 📋 CLASSIC COUPLES POSITIONS (15 Cards - Need Images)
+
+| ID | Position Name | Difficulty | Intensity |
+|----|---------------|------------|-----------|
+| p1 | **The Spoons** | ★☆☆☆☆ | 💕 Romantic |
+| p2 | **The Lotus** | ★☆☆☆☆ | 🌙 Intimate |
+| p3 | **The Lazy Dog** | ★☆☆☆☆ | 💕 Romantic |
+| p4 | **The Cowgirl** | ★★☆☆☆ | 💕 Romantic |
+| p5 | **The Reverse Cowgirl** | ★★☆☆☆ | 🤸 Acrobatic |
+| p6 | **The Throne** | ★★☆☆☆ | 💕 Romantic |
+| p7 | **The Standing Ovation** | ★★★☆☆ | 🤸 Acrobatic |
+| p8 | **The Wheelbarrow** | ★★★☆☆ | 🤸 Acrobatic |
+| p9 | **The Pretzel** | ★★★☆☆ | 🌙 Intimate |
+| p10 | **The Spider** | ★★★☆☆ | 🤸 Acrobatic |
+| p11 | **The Splitting Bamboo** | ★★★★☆ | 🤸 Acrobatic |
+| p12 | **The Suspended Congress** | ★★★★☆ | 🤸 Acrobatic |
+| p13 | **The Glowing Firefly** | ★★★★☆ | 🌙 Intimate |
+| p14 | **The Propeller** | ★★★★☆ | 🤸 Acrobatic |
+| p15 | **The Acrobat** | ★★★★★ | 🤸 Acrobatic |
 
 ---
 

@@ -354,10 +354,113 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   }
   
   // ─────────────────────────────────────────────────────────────────────────
-  // DEMO DATA (Would come from Supabase in production)
+  // POSITION DATA WITH CARD IMAGES
   // ─────────────────────────────────────────────────────────────────────────
   
   static const List<DramaPosition> _demoPositions = [
+    // ═══════════════════════════════════════════════════════════════════════
+    // GROUP POSITIONS (From uploaded assets)
+    // ═══════════════════════════════════════════════════════════════════════
+    DramaPosition(
+      id: 'g1', 
+      name: 'The Constellation', 
+      description: 'Three bodies intertwined like stars forming a celestial pattern.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-1_X5.png',
+      difficulty: 3, 
+      intensity: PositionIntensity.intimate,
+    ),
+    DramaPosition(
+      id: 'g2', 
+      name: 'The Daisy Chain', 
+      description: 'A continuous circle of pleasure where everyone gives and receives.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-2_X5.png',
+      difficulty: 3, 
+      intensity: PositionIntensity.intimate,
+    ),
+    DramaPosition(
+      id: 'g3', 
+      name: 'The Pyramid', 
+      description: 'Bodies stacked and intertwined forming an ancient shape.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-3_X5.png',
+      difficulty: 4, 
+      intensity: PositionIntensity.acrobatic,
+    ),
+    DramaPosition(
+      id: 'g4', 
+      name: 'The Thunderclap', 
+      description: 'An explosive arrangement where all parties converge at the center.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-4_X5.png',
+      difficulty: 4, 
+      intensity: PositionIntensity.acrobatic,
+    ),
+    DramaPosition(
+      id: 'g5', 
+      name: 'The Velvet Sandwich', 
+      description: 'Layered intimacy with one in the middle receiving from both sides.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-5_X5.png',
+      difficulty: 2, 
+      intensity: PositionIntensity.romantic,
+    ),
+    DramaPosition(
+      id: 'g6', 
+      name: 'The Serpentine', 
+      description: 'Bodies curve and weave together like an undulating wave.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-6_X5.png',
+      difficulty: 3, 
+      intensity: PositionIntensity.intimate,
+    ),
+    DramaPosition(
+      id: 'g7', 
+      name: 'The Triple Crown', 
+      description: 'A royal arrangement where one wears the crown of attention.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-7_X5.png',
+      difficulty: 3, 
+      intensity: PositionIntensity.romantic,
+    ),
+    DramaPosition(
+      id: 'g8', 
+      name: 'The Circus Act', 
+      description: 'An acrobatic feat requiring balance, trust, and flexibility.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-8_X5.png',
+      difficulty: 5, 
+      intensity: PositionIntensity.acrobatic,
+    ),
+    DramaPosition(
+      id: 'g9', 
+      name: 'The Love Knot', 
+      description: 'Limbs intertwined in a beautiful, complex embrace.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-9_X5.png',
+      difficulty: 4, 
+      intensity: PositionIntensity.intimate,
+    ),
+    DramaPosition(
+      id: 'g10', 
+      name: 'The Tidal Wave', 
+      description: 'A flowing arrangement where bodies rise and fall in rhythm.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-10_X5.png',
+      difficulty: 3, 
+      intensity: PositionIntensity.romantic,
+    ),
+    DramaPosition(
+      id: 'g11', 
+      name: 'The Phoenix Rising', 
+      description: 'One rises from the embrace of others, reborn in pleasure.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-11_X5.png',
+      difficulty: 4, 
+      intensity: PositionIntensity.acrobatic,
+    ),
+    DramaPosition(
+      id: 'g12', 
+      name: 'The Grand Finale', 
+      description: 'The ultimate arrangement where all participants reach the crescendo together.',
+      imageUrl: 'assets/images/drama_sutra/group-sex-12_X5.png',
+      difficulty: 5, 
+      intensity: PositionIntensity.intimate,
+    ),
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // CLASSIC COUPLES POSITIONS
+    // ═══════════════════════════════════════════════════════════════════════
     DramaPosition(id: 'p1', name: 'The Spoons', description: 'Partners lie on their sides, curved like nested spoons.', difficulty: 1, intensity: PositionIntensity.romantic),
     DramaPosition(id: 'p2', name: 'The Lotus', description: 'Partner A sits cross-legged while Partner B sits in their lap.', difficulty: 1, intensity: PositionIntensity.intimate),
     DramaPosition(id: 'p3', name: 'The Lazy Dog', description: 'Partner A on hands and knees, Partner B behind.', difficulty: 1, intensity: PositionIntensity.romantic),
