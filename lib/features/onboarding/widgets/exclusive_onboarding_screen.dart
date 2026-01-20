@@ -465,59 +465,267 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   String _buildBioFromSelections(String name) {
-    // Build a compelling bio from all the data we've collected
-    final statusLabel = _relationshipOptions
-        .where((o) => _relationshipStatus.contains(o['id']))
-        .map((o) => o['label'])
-        .join(' & ');
+    // Gather all the raw data
+    final relationshipIds = _relationshipStatus.toList();
+    final seekingIds = _seeking.toList();
+    final traits = _selectedTraits.toList();
+    final isSpontaneous = _availability.contains('spontaneous');
+    final isNightOwl = traits.any((t) => t.contains('Night Owl'));
+    final isEarlyRiser = traits.any((t) => t.contains('Early Riser'));
+    final isHighEnergy = traits.any((t) => t.contains('High Energy'));
+    final isCalm = traits.any((t) => t.contains('Calm'));
+    final isLifeOfParty = traits.any((t) => t.contains('Life of the Party'));
+    final isHomebody = traits.any((t) => t.contains('Homebody'));
+    final isWitty = traits.any((t) => t.contains('Witty'));
+    final isRomantic = traits.any((t) => t.contains('Romantic'));
+    final isMischievous = traits.any((t) => t.contains('Mischievous'));
+    final isPassionate = traits.any((t) => t.contains('Passionate'));
+    final isDominant = traits.any((t) => t.contains('Dominant'));
+    final isSubmissive = traits.any((t) => t.contains('Submissive'));
+    final isSwitch = traits.any((t) => t.contains('Switch'));
+    final isBeginner = traits.any((t) => t.contains('Beginner') || t.contains('Learning'));
+    final isExperienced = traits.any((t) => t.contains('Experienced'));
+    final canTeach = traits.any((t) => t.contains('Teach'));
     
-    final seekingLabels = _seekingOptions
-        .where((o) => _seeking.contains(o['id']))
-        .map((o) => o['label'] as String)
-        .take(2)
-        .join(', ');
+    // Location with flair
+    final locationPhrase = _city != null && _state != null 
+        ? _getLocationPhrase('$_city, $_state')
+        : '';
     
-    final vibeTraits = _selectedTraits
-        .map((t) => t.replaceAll(RegExp(r'^[^\w]*'), '').trim().toLowerCase())
-        .take(3)
-        .join(', ');
+    // Build personality snippet
+    final personalityBits = <String>[];
+    if (isWitty) personalityBits.add('fluent in sarcasm');
+    if (isRomantic) personalityBits.add('secretly a romantic');
+    if (isMischievous) personalityBits.add('trouble in the best way');
+    if (isPassionate) personalityBits.add('intensity is my love language');
+    if (isCalm) personalityBits.add('unfairly calm under pressure');
+    if (isHighEnergy) personalityBits.add('powered by an internal espresso machine');
     
-    final location = _city != null && _state != null 
-        ? '$_city, $_state' 
-        : 'somewhere interesting';
+    // Build vibe snippet
+    final vibeSnippet = personalityBits.isNotEmpty 
+        ? personalityBits.take(2).join(', ')
+        : 'still figuring out my brand';
     
-    final discretionText = _discretionLevel == 'very_discreet' 
-        ? 'Discretion is paramount.' 
-        : _discretionLevel == 'discreet' 
-            ? 'Privacy appreciated.' 
+    // Lifestyle context
+    final lifestyleHint = _getLifestyleHint(relationshipIds);
+    
+    // What they want (natural language)
+    final wantingPhrase = _getWantingPhrase(seekingIds);
+    
+    // Energy/timing style
+    final timingStyle = isSpontaneous 
+        ? 'Spontaneity appreciated.'
+        : _schedulingStyle == 'same_day' 
+            ? 'Same-day plans? Yes please.'
+            : 'I like a little runway.';
+    
+    // Discretion (only if relevant)
+    final discretionNote = _discretionLevel == 'very_discreet'
+        ? 'Discretion isn\'t a preference—it\'s non-negotiable.'
+        : _discretionLevel == 'discreet'
+            ? 'Privacy matters here.'
             : '';
     
-    final hostingText = _hostingStatus == 'can_host' 
-        ? 'Can host.' 
-        : _hostingStatus == 'hotel' 
-            ? 'Hotels preferred.' 
+    // Experience level (tasteful)
+    final experienceNote = isBeginner
+        ? 'New to this scene. Patient guides welcome.'
+        : canTeach
+            ? 'Happy to show someone the ropes.'
             : '';
     
-    // Generate different bio styles
-    final bios = [
-      "$name here. $statusLabel in $location.\n\n"
-      "Looking for: $seekingLabels.\n"
-      "$vibeTraits - that's my vibe.\n\n"
-      "$discretionText $hostingText".trim(),
+    // Dynamic power hint
+    final powerHint = isDominant
+        ? 'I know what I want.'
+        : isSubmissive
+            ? 'I aim to please.'
+            : isSwitch
+                ? 'Depends on my mood—and yours.'
+                : '';
+    
+    // Generate multiple bio styles and pick one
+    final bios = <String>[
+      // Style 1: Confident & Playful
+      _buildStyle1(name, vibeSnippet, lifestyleHint, wantingPhrase, 
+                   locationPhrase, timingStyle, discretionNote, powerHint),
       
-      "They call me $name. $vibeTraits.\n\n"
-      "Currently: $statusLabel. Seeking: $seekingLabels.\n"
-      "$discretionText\n\n"
-      "Based in $location. ${_availability.contains('spontaneous') ? 'Spontaneous works.' : 'Plan ahead.'}"
-      .trim(),
+      // Style 2: Mysterious & Intriguing  
+      _buildStyle2(name, personalityBits, lifestyleHint, wantingPhrase,
+                   locationPhrase, discretionNote, experienceNote),
       
-      "$name ✨ $location\n\n"
-      "$statusLabel | $seekingLabels\n\n"
-      "$vibeTraits\n"
-      "$discretionText $hostingText".trim(),
+      // Style 3: Warm & Direct
+      _buildStyle3(name, traits, lifestyleHint, wantingPhrase,
+                   locationPhrase, timingStyle, powerHint),
     ];
     
-    return bios[DateTime.now().millisecond % bios.length];
+    // Pick based on personality to match tone
+    int styleIndex = 0;
+    if (isWitty || isMischievous) {
+      styleIndex = 0; // Playful style
+    } else if (isCalm || isRomantic) {
+      styleIndex = 1; // Mysterious style
+    } else {
+      styleIndex = 2; // Warm & direct
+    }
+    
+    return bios[styleIndex];
+  }
+  
+  String _buildStyle1(String name, String vibeSnippet, String lifestyleHint,
+      String wantingPhrase, String locationPhrase, String timingStyle, 
+      String discretionNote, String powerHint) {
+    final lines = <String>[
+      '$name. $vibeSnippet.',
+      '',
+      lifestyleHint,
+      wantingPhrase,
+      '',
+    ];
+    
+    if (powerHint.isNotEmpty) lines.add(powerHint);
+    if (timingStyle.isNotEmpty) lines.add(timingStyle);
+    if (discretionNote.isNotEmpty) lines.add(discretionNote);
+    if (locationPhrase.isNotEmpty) lines.add(locationPhrase);
+    
+    return lines.where((l) => l.isNotEmpty || l == '').join('\n').trim();
+  }
+  
+  String _buildStyle2(String name, List<String> personalityBits, String lifestyleHint,
+      String wantingPhrase, String locationPhrase, String discretionNote, 
+      String experienceNote) {
+    final opener = personalityBits.isNotEmpty
+        ? 'They say I\'m ${personalityBits.first}. They\'re not wrong.'
+        : 'Some things are better discovered in person.';
+    
+    final lines = <String>[
+      opener,
+      '',
+      lifestyleHint,
+      wantingPhrase,
+      '',
+    ];
+    
+    if (experienceNote.isNotEmpty) lines.add(experienceNote);
+    if (discretionNote.isNotEmpty) lines.add(discretionNote);
+    if (locationPhrase.isNotEmpty) lines.add(locationPhrase);
+    lines.add('');
+    lines.add('— $name');
+    
+    return lines.where((l) => l.isNotEmpty || l == '').join('\n').trim();
+  }
+  
+  String _buildStyle3(String name, List<String> traits, String lifestyleHint,
+      String wantingPhrase, String locationPhrase, String timingStyle,
+      String powerHint) {
+    // Extract clean trait words
+    final cleanTraits = traits
+        .map((t) => t.replaceAll(RegExp(r'^[^\w]*'), '').trim())
+        .where((t) => t.isNotEmpty)
+        .take(3)
+        .toList();
+    
+    final traitLine = cleanTraits.isNotEmpty 
+        ? cleanTraits.join(' · ')
+        : '';
+    
+    final lines = <String>[
+      'Hi, I\'m $name.',
+      '',
+      lifestyleHint,
+      wantingPhrase,
+      '',
+    ];
+    
+    if (traitLine.isNotEmpty) lines.add(traitLine);
+    if (powerHint.isNotEmpty) lines.add(powerHint);
+    if (timingStyle.isNotEmpty) lines.add(timingStyle);
+    if (locationPhrase.isNotEmpty) lines.add(locationPhrase);
+    
+    return lines.where((l) => l.isNotEmpty || l == '').join('\n').trim();
+  }
+  
+  String _getLocationPhrase(String location) {
+    final phrases = [
+      'Based in $location.',
+      '$location, for now.',
+      'You\'ll find me in $location.',
+      'Home base: $location.',
+    ];
+    return phrases[location.length % phrases.length];
+  }
+  
+  String _getLifestyleHint(List<String> relationshipIds) {
+    if (relationshipIds.contains('single')) {
+      return 'Happily unattached and keeping my options open.';
+    } else if (relationshipIds.contains('partnered_open') || 
+               relationshipIds.contains('married_open')) {
+      return 'Partnered and playing with permission—enthusiastic permission.';
+    } else if (relationshipIds.contains('poly_solo')) {
+      return 'Solo poly. My heart has room, but no one has the keys.';
+    } else if (relationshipIds.contains('poly_nested') || 
+               relationshipIds.contains('poly_network')) {
+      return 'Part of a happy polycule. More love to go around.';
+    } else if (relationshipIds.contains('relationship_anarchist')) {
+      return 'I don\'t do labels. Connections happen on their own terms.';
+    } else if (relationshipIds.contains('exploring')) {
+      return 'Figuring out what I want—and enjoying the journey.';
+    } else if (relationshipIds.contains('situationship')) {
+      return 'It\'s complicated. And I kind of like it that way.';
+    } else if (relationshipIds.contains('divorced')) {
+      return 'New chapter, new adventures.';
+    } else if (relationshipIds.contains('dating')) {
+      return 'Dating around, not settling down.';
+    } else if (relationshipIds.contains('partnered')) {
+      return 'In a relationship, exploring together.';
+    }
+    return 'Living life on my own terms.';
+  }
+  
+  String _getWantingPhrase(List<String> seekingIds) {
+    final phrases = <String>[];
+    
+    if (seekingIds.contains('friends')) {
+      phrases.add('genuine connections');
+    }
+    if (seekingIds.contains('fwb')) {
+      phrases.add('the fun kind of friendship');
+    }
+    if (seekingIds.contains('ongoing')) {
+      phrases.add('something consistent');
+    }
+    if (seekingIds.contains('relationship')) {
+      phrases.add('something real');
+    }
+    if (seekingIds.contains('play_partners')) {
+      phrases.add('playmates who get it');
+    }
+    if (seekingIds.contains('dates')) {
+      phrases.add('good conversation over drinks');
+    }
+    if (seekingIds.contains('group')) {
+      phrases.add('memorable group experiences');
+    }
+    if (seekingIds.contains('third')) {
+      phrases.add('the right couple');
+    }
+    if (seekingIds.contains('couple')) {
+      phrases.add('couples who click');
+    }
+    if (seekingIds.contains('events')) {
+      phrases.add('the right parties');
+    }
+    if (seekingIds.contains('exploring')) {
+      phrases.add('seeing where things go');
+    }
+    
+    if (phrases.isEmpty) {
+      return 'Open to what comes my way.';
+    } else if (phrases.length == 1) {
+      return 'Here for ${phrases.first}.';
+    } else if (phrases.length == 2) {
+      return 'Looking for ${phrases[0]} and ${phrases[1]}.';
+    } else {
+      return 'Here for ${phrases.take(2).join(', ')}, and more.';
+    }
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
