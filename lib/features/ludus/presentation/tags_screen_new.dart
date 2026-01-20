@@ -7,6 +7,7 @@ import '../../../core/domain/models/tags_game.dart';
 import 'ice_breakers_screen.dart';
 import 'velvet_rope_screen.dart';
 import 'down_to_clown_screen.dart';
+import 'path_of_pleasure_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TAG - Module 8 (Adult Games)
@@ -565,6 +566,12 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const DownToClownScreen()),
+        );
+        break;
+      case GameCategory.pathOfPleasure:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PathOfPleasureScreen()),
         );
         break;
       default:
