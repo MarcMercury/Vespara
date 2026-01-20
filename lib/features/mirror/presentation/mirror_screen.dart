@@ -182,7 +182,22 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
           ],
         ),
       ),
-      data: (profile) => _buildProfileContent(profile),
+      data: (profile) => profile != null 
+          ? _buildProfileContent(profile)
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_off_outlined, color: VesparaColors.secondary, size: 48),
+                  const SizedBox(height: 16),
+                  Text('No profile found', style: TextStyle(color: VesparaColors.secondary)),
+                  TextButton(
+                    onPressed: () => ref.invalidate(userProfileProvider),
+                    child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
+                  ),
+                ],
+              ),
+            ),
     );
   }
   

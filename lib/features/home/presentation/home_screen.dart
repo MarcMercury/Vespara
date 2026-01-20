@@ -253,7 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
                 child: Center(
                   child: Text(
-                    profile.displayName[0].toUpperCase(),
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : 'V',
                     style: TextStyle(
                       color: VesparaColors.background,
                       fontSize: 22,
