@@ -7,6 +7,7 @@ import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/analytics.dart';
 import '../../../core/providers/app_providers.dart';
 import '../widgets/qr_connect_modal.dart';
+import 'edit_profile_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE MIRROR - Module 1
@@ -46,6 +47,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   
   UserAnalytics get _analytics {
     return _cachedAnalytics ?? MockDataProvider.analytics;
+  }
+  
+  void _navigateToEditProfile(UserProfile profile) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(profile: profile),
+      ),
+    ).then((updated) {
+      // Refresh profile if changes were made
+      if (updated == true) {
+        ref.invalidate(userProfileProvider);
+      }
+    });
   }
 
   @override
@@ -298,7 +312,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () => _navigateToEditProfile(profile),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VesparaColors.glow,
                 foregroundColor: VesparaColors.background,
