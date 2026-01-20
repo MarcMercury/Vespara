@@ -33,7 +33,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isLoading = false;
-  bool _showIntro = false; // Disabled temporarily to debug crash
+  bool _showIntro = true; // Re-enabled VelvetRopeIntro
   bool _isGeneratingBio = false;
   
   // Image services
