@@ -1,32 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:math';
-
+import 'package:go_router/go_router.dart';
+import 'dart:math' as math;
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/motion.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/providers/path_of_pleasure_provider.dart';
 
-/// ════════════════════════════════════════════════════════════════════════════
-/// PATH OF PLEASURE - The Compatibility Engine
-/// "Timeline/Shit Happens" meets intimate discovery
-/// TAG Engine Signature Game
-/// ════════════════════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════════════════
-// COLOR PALETTE
-// ═══════════════════════════════════════════════════════════════════════════
-
-class PleasureColors {
-  static const background = Color(0xFF1A1523);      // Deep Obsidian
-  static const surface = Color(0xFF2D2438);          // Elevated surface
-  static const gold = Color(0xFFFFD700);             // Craving zone / Match
-  static const purple = Color(0xFF9B59B6);           // Open zone
-  static const darkGrey = Color(0xFF2C2C2C);         // Limit zone
-  static const friction = Color(0xFFE74C3C);         // Friction point
-  static const lavender = Color(0xFFE0D8EA);         // Soft text
-  static const glow = Color(0xFF4A9EFF);             // Ethereal accent
-}
-
+/// Path of Pleasure - Family Feud Style
+/// Predict what's popular! Rank cards by global popularity and score points.
 class PathOfPleasureScreen extends ConsumerStatefulWidget {
   const PathOfPleasureScreen({super.key});
 
@@ -36,1067 +19,1256 @@ class PathOfPleasureScreen extends ConsumerStatefulWidget {
 
 class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     with TickerProviderStateMixin {
-  
   late AnimationController _pulseController;
-  late AnimationController _glowController;
+  late AnimationController _revealController;
+  late Animation<double> _pulseAnimation;
   
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _roomCodeController = TextEditingController();
+  // For drag-and-drop ranking
+  int? _draggedIndex;
   
   @override
   void initState() {
     super.initState();
-    
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
     
-    _glowController = AnimationController(
+    _revealController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 800),
+    );
+    
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
-  
+
   @override
   void dispose() {
     _pulseController.dispose();
-    _glowController.dispose();
-    _nameController.dispose();
-    _roomCodeController.dispose();
+    _revealController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pathOfPleasureProvider);
     
     return Scaffold(
-      backgroundColor: PleasureColors.background,
+      backgroundColor: AppTheme.backgroundDark,
       body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          child: _buildPhase(state),
-        ),
+        child: _buildPhaseContent(state),
       ),
     );
   }
-  
-  Widget _buildPhase(PathOfPleasureState state) {
+
+  Widget _buildPhaseContent(PathOfPleasureState state) {
     switch (state.phase) {
       case GamePhase.idle:
-        return _buildEntryScreen(state);
+        return _buildEntryScreen();
       case GamePhase.lobby:
-        return _buildLobby(state);
-      case GamePhase.sorting:
-        return _buildSortingPhase(state);
+        return _buildLobbyScreen(state);
+      case GamePhase.ranking:
+        return _buildRankingScreen(state);
       case GamePhase.reveal:
-        return _buildRevealPhase(state);
-      case GamePhase.discussion:
-        return _buildDiscussionPhase(state);
+        return _buildRevealScreen(state);
+      case GamePhase.roundScore:
+        return _buildRoundScoreScreen(state);
+      case GamePhase.leaderboard:
+        return _buildLeaderboardScreen(state);
       case GamePhase.finished:
-        return _buildResultsScreen(state);
+        return _buildFinishedScreen(state);
     }
   }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ============================================================
   // ENTRY SCREEN - Host or Join
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildEntryScreen(PathOfPleasureState state) {
-    return Container(
-      key: const ValueKey('entry'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // Back button
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, color: Colors.white70),
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Logo
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              return Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      PleasureColors.gold.withOpacity(0.3),
-                      Colors.transparent,
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: PleasureColors.gold.withOpacity(0.2 + _glowController.value * 0.2),
-                      blurRadius: 40 + _glowController.value * 20,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: const Text('🛤️', style: TextStyle(fontSize: 80)),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 24),
-          
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [PleasureColors.gold, PleasureColors.purple],
-            ).createShader(bounds),
-            child: const Text(
-              'PATH OF PLEASURE',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 3,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          const Text(
-            'The Compatibility Engine',
-            style: TextStyle(
-              fontSize: 16,
-              fontStyle: FontStyle.italic,
-              color: Colors.white54,
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Host Game Button
-          GestureDetector(
-            onTap: () => _showHostDialog(),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [PleasureColors.gold, Color(0xFFFF8C00)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: PleasureColors.gold.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_circle, color: Colors.black87, size: 24),
-                  SizedBox(width: 12),
-                  Text(
-                    'HOST A ROOM',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Join Game Button
-          GestureDetector(
-            onTap: () => _showJoinDialog(),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                color: PleasureColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: PleasureColors.purple, width: 2),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.login, color: PleasureColors.purple, size: 24),
-                  SizedBox(width: 12),
-                  Text(
-                    'JOIN A ROOM',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: PleasureColors.purple,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // How to play
-          GestureDetector(
-            onTap: () => _showHowToPlay(),
-            child: const Text(
-              'How to Play',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white38,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-  
-  void _showHostDialog() {
-    _nameController.clear();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PleasureColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 24, right: 24, top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Create Your Room',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              decoration: InputDecoration(
-                hintText: 'Your name',
-                hintStyle: const TextStyle(color: Colors.white38),
-                filled: true,
-                fillColor: PleasureColors.background,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                prefixIcon: const Icon(Icons.person, color: PleasureColors.gold),
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_nameController.text.trim().isNotEmpty) {
-                    Navigator.pop(context);
-                    HapticFeedback.heavyImpact();
-                    ref.read(pathOfPleasureProvider.notifier).hostGame(_nameController.text.trim());
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PleasureColors.gold,
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'CREATE ROOM',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  void _showJoinDialog() {
-    _nameController.clear();
-    _roomCodeController.clear();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PleasureColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 24, right: 24, top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Join a Room',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _roomCodeController,
-              style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 8),
-              textAlign: TextAlign.center,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                hintText: 'ROOM CODE',
-                hintStyle: const TextStyle(color: Colors.white24, letterSpacing: 4),
-                filled: true,
-                fillColor: PleasureColors.background,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              decoration: InputDecoration(
-                hintText: 'Your name',
-                hintStyle: const TextStyle(color: Colors.white38),
-                filled: true,
-                fillColor: PleasureColors.background,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                prefixIcon: const Icon(Icons.person, color: PleasureColors.purple),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_roomCodeController.text.trim().isNotEmpty && 
-                      _nameController.text.trim().isNotEmpty) {
-                    Navigator.pop(context);
-                    HapticFeedback.heavyImpact();
-                    ref.read(pathOfPleasureProvider.notifier).joinGame(
-                      _roomCodeController.text.trim(),
-                      _nameController.text.trim(),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PleasureColors.purple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'JOIN ROOM',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  void _showHowToPlay() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PleasureColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
+  // ============================================================
+  Widget _buildEntryScreen() {
+    return Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Game logo/icon
+                Container(
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Center(
-                child: Text(
-                  'How to Play',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildHowToStep('1', 'Create or Join', 'One person hosts the room, others join with the code'),
-              _buildHowToStep('2', 'Sort the Cards', 'Privately rank 5 cards from "Craving" to "Limit"'),
-              _buildHowToStep('3', 'See the Results', 'Discover your Golden Matches and Friction Points'),
-              _buildHowToStep('4', 'Discuss', 'Take 30 seconds to talk about the results'),
-              _buildHowToStep('5', 'Progress', '3 rounds: Vanilla → Spicy → Edgy'),
-              const SizedBox(height: 24),
-              const Center(
-                child: Text(
-                  '🔥 Golden Match = Both want it\n😬 Friction = Major disagreement',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white54, height: 1.6),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildHowToStep(String number, String title, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32, height: 32,
-            decoration: BoxDecoration(
-              color: PleasureColors.gold,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LOBBY PHASE - Waiting for Players
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildLobby(PathOfPleasureState state) {
-    return Container(
-      key: const ValueKey('lobby'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // Header
-          Row(
-            children: [
-              IconButton(
-                onPressed: () {
-                  ref.read(pathOfPleasureProvider.notifier).exitGame();
-                },
-                icon: const Icon(Icons.close, color: Colors.white54),
-              ),
-              const Spacer(),
-              const Text(
-                'WAITING ROOM',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
-                  color: Colors.white70,
-                ),
-              ),
-              const Spacer(),
-              const SizedBox(width: 48),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Room Code Display
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      PleasureColors.gold.withOpacity(0.2),
-                      PleasureColors.purple.withOpacity(0.2),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.pink.shade400,
+                        Colors.purple.shade600,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.pink.withOpacity(0.4),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: PleasureColors.gold.withOpacity(0.5 + _pulseController.value * 0.3),
-                    width: 2,
+                  child: const Icon(
+                    Icons.whatshot,
+                    size: 60,
+                    color: Colors.white,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: PleasureColors.gold.withOpacity(0.2 + _pulseController.value * 0.2),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
                 ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'ROOM CODE',
-                      style: TextStyle(
-                        fontSize: 12,
-                        letterSpacing: 2,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: state.roomCode ?? ''));
-                        HapticFeedback.lightImpact();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Code copied!'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            state.roomCode ?? '----',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 8,
-                              color: PleasureColors.gold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.copy, color: Colors.white38, size: 20),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Players List
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                const SizedBox(height: 32),
+                
+                // Title
                 Text(
-                  'PLAYERS (${state.players.length}/8)',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                    color: Colors.white54,
+                  'Path of Pleasure',
+                  style: AppTheme.headlineLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.players.length + (state.isHost ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == state.players.length && state.isHost) {
-                        return _buildAddPlayerButton();
-                      }
-                      return _buildPlayerCard(state.players[index], index);
-                    },
+                
+                // Tagline
+                Text(
+                  'Predict what\'s popular!',
+                  style: AppTheme.bodyLarge.copyWith(
+                    color: Colors.white70,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Rank scenarios by what everyone loves most',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: Colors.white54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                
+                const Spacer(),
+                
+                // How to Play button
+                TextButton.icon(
+                  onPressed: () => _showHowToPlay(context),
+                  icon: const Icon(Icons.help_outline, color: Colors.white70),
+                  label: Text(
+                    'How to Play',
+                    style: AppTheme.labelLarge.copyWith(color: Colors.white70),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Host Game button
+                _buildPrimaryButton(
+                  label: 'Host Game',
+                  icon: Icons.add_circle_outline,
+                  onTap: () {
+                    Haptics.light();
+                    ref.read(pathOfPleasureProvider.notifier).createSession('Player');
+                  },
+                ),
+                const SizedBox(height: 16),
+                
+                // Join Game button
+                _buildSecondaryButton(
+                  label: 'Join Game',
+                  icon: Icons.login,
+                  onTap: () => _showJoinDialog(context),
                 ),
               ],
             ),
           ),
-          
-          // Deal Cards Button (Host only)
-          if (state.isHost)
-            GestureDetector(
-              onTap: state.players.length >= 2 ? () {
-                HapticFeedback.heavyImpact();
-                ref.read(pathOfPleasureProvider.notifier).dealCards();
-              } : null,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: state.players.length >= 2 ? 1.0 : 0.5,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // LOBBY SCREEN - Configure & Wait for Players
+  // ============================================================
+  Widget _buildLobbyScreen(PathOfPleasureState state) {
+    final isHost = state.isHost;
+    
+    return Column(
+      children: [
+        _buildHeader(showBack: true),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                // Session Code
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [PleasureColors.gold, Color(0xFFFF8C00)],
-                    ),
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: state.players.length >= 2 ? [
-                      BoxShadow(
-                        color: PleasureColors.gold.withOpacity(0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ] : null,
+                    border: Border.all(color: Colors.white24),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.style, color: Colors.black87),
-                      SizedBox(width: 12),
+                      const Icon(Icons.tag, color: Colors.white70),
+                      const SizedBox(width: 12),
                       Text(
-                        'DEAL THE CARDS',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                          letterSpacing: 2,
+                        state.sessionCode,
+                        style: AppTheme.headlineMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 4,
                         ),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton(
+                        icon: const Icon(Icons.copy, color: Colors.white70),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: state.sessionCode));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Code copied!')),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          
-          if (!state.isHost)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: PleasureColors.surface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: PleasureColors.gold,
-                    ),
+                const SizedBox(height: 32),
+                
+                // Heat Level Selection (Host only)
+                if (isHost) ...[
+                  Text(
+                    'Select Heat Level',
+                    style: AppTheme.titleMedium.copyWith(color: Colors.white),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(height: 16),
+                  _buildHeatLevelSelector(state),
+                  const SizedBox(height: 32),
+                ],
+                
+                // Players List
+                Text(
+                  'Players (${state.players.length})',
+                  style: AppTheme.titleMedium.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: state.players.length,
+                    itemBuilder: (context, index) {
+                      final player = state.players[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: player.isHost 
+                                ? Colors.amber.withOpacity(0.5)
+                                : Colors.white12,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.pink.shade400,
+                              child: Text(
+                                player.name[0].toUpperCase(),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                player.name,
+                                style: AppTheme.bodyLarge.copyWith(color: Colors.white),
+                              ),
+                            ),
+                            if (player.isHost)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'HOST',
+                                  style: AppTheme.labelSmall.copyWith(
+                                    color: Colors.amber,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                
+                // Start Game button (Host only)
+                if (isHost && state.players.length >= 2)
+                  _buildPrimaryButton(
+                    label: 'Start Game',
+                    icon: Icons.play_arrow,
+                    onTap: () {
+                      Haptics.medium();
+                      ref.read(pathOfPleasureProvider.notifier).startGame();
+                    },
+                  )
+                else if (isHost)
+                  Text(
+                    'Need at least 2 players to start',
+                    style: AppTheme.bodyMedium.copyWith(color: Colors.white54),
+                  )
+                else
                   Text(
                     'Waiting for host to start...',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ],
-              ),
-            ),
-          
-          if (state.players.length < 2)
-            const Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Text(
-                'Need at least 2 players',
-                style: TextStyle(color: Colors.white38, fontSize: 14),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPlayerCard(PopPlayer player, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: PleasureColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: player.isHost 
-              ? PleasureColors.gold.withOpacity(0.5) 
-              : player.avatarColor.withOpacity(0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: player.avatarColor.withOpacity(0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: player.avatarColor, width: 2),
-            ),
-            child: Center(
-              child: Text(
-                player.displayName[0].toUpperCase(),
-                style: TextStyle(
-                  fontSize: 18,
-                  color: player.avatarColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  player.displayName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                if (player.isHost)
-                  const Text(
-                    'HOST',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: PleasureColors.gold,
-                      letterSpacing: 1,
-                    ),
+                    style: AppTheme.bodyMedium.copyWith(color: Colors.white54),
                   ),
               ],
             ),
           ),
-          if (player.isLockedIn)
-            const Icon(Icons.check_circle, color: Colors.green, size: 24)
-          else
-            const Icon(Icons.hourglass_empty, color: Colors.white24, size: 24),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeatLevelSelector(PathOfPleasureState state) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: HeatLevel.values.map((level) {
+        final isSelected = state.heatLevel == level;
+        return GestureDetector(
+          onTap: () {
+            Haptics.light();
+            ref.read(pathOfPleasureProvider.notifier).setHeatLevel(level);
+          },
+          child: AnimatedContainer(
+            duration: Motion.fast,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: _getHeatLevelColors(level),
+                    )
+                  : null,
+              color: isSelected ? null : Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected 
+                    ? Colors.transparent 
+                    : Colors.white24,
+                width: 2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: _getHeatLevelColors(level).first.withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  _getHeatLevelIcon(level),
+                  color: Colors.white,
+                  size: 28,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getHeatLevelName(level),
+                  style: AppTheme.labelMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ============================================================
+  // RANKING SCREEN - Drag to rank by predicted popularity
+  // ============================================================
+  Widget _buildRankingScreen(PathOfPleasureState state) {
+    final timeLeft = state.roundTimeRemaining;
+    final isLowTime = timeLeft <= 10;
+    
+    return Column(
+      children: [
+        _buildGameHeader(state),
+        
+        // Timer bar
+        Container(
+          height: 6,
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            color: Colors.white12,
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: timeLeft / 60,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isLowTime
+                      ? [Colors.red, Colors.orange]
+                      : [Colors.pink, Colors.purple],
+                ),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        
+        // Timer text
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: isLowTime ? _pulseAnimation.value : 1.0,
+              child: Text(
+                '${timeLeft}s',
+                style: AppTheme.headlineSmall.copyWith(
+                  color: isLowTime ? Colors.red : Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        
+        // Instructions
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.purple.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.trending_up, color: Colors.purple),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Rank from MOST popular (#1) to LEAST popular',
+                  style: AppTheme.bodyMedium.copyWith(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Rankable cards
+        Expanded(
+          child: ReorderableListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            itemCount: state.currentRoundCards.length,
+            onReorder: (oldIndex, newIndex) {
+              Haptics.light();
+              ref.read(pathOfPleasureProvider.notifier)
+                  .reorderCard(oldIndex, newIndex);
+            },
+            proxyDecorator: (child, index, animation) {
+              return AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) {
+                  final animValue = Curves.easeInOut.transform(animation.value);
+                  final scale = 1.0 + (animValue * 0.05);
+                  return Transform.scale(
+                    scale: scale,
+                    child: child,
+                  );
+                },
+                child: child,
+              );
+            },
+            itemBuilder: (context, index) {
+              final card = state.currentRoundCards[index];
+              return _buildRankableCard(
+                key: ValueKey(card.id),
+                card: card,
+                rank: index + 1,
+              );
+            },
+          ),
+        ),
+        
+        // Submit button
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: _buildPrimaryButton(
+            label: state.hasSubmitted ? 'Submitted!' : 'Lock In Rankings',
+            icon: state.hasSubmitted ? Icons.check : Icons.lock,
+            onTap: state.hasSubmitted
+                ? null
+                : () {
+                    Haptics.heavy();
+                    ref.read(pathOfPleasureProvider.notifier).submitRanking();
+                  },
+            disabled: state.hasSubmitted,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRankableCard({
+    required Key key,
+    required PopCard card,
+    required int rank,
+  }) {
+    return Container(
+      key: key,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade900,
+            Colors.grey.shade800,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Rank number
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: _getRankColors(rank),
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '#$rank',
+                    style: AppTheme.labelLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              
+              // Card content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      card.text,
+                      style: AppTheme.bodyLarge.copyWith(color: Colors.white),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildHeatBadge(card.heatLevel),
+                  ],
+                ),
+              ),
+              
+              // Drag handle
+              const Icon(
+                Icons.drag_handle,
+                color: Colors.white38,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-  
-  Widget _buildAddPlayerButton() {
-    return GestureDetector(
-      onTap: () => _showAddLocalPlayerDialog(),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: PleasureColors.surface.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12, style: BorderStyle.solid),
+
+  // ============================================================
+  // REVEAL SCREEN - Animated reveal of correct order
+  // ============================================================
+  Widget _buildRevealScreen(PathOfPleasureState state) {
+    return Column(
+      children: [
+        _buildGameHeader(state),
+        const SizedBox(height: 24),
+        
+        // Title
+        Text(
+          'The Real Rankings!',
+          style: AppTheme.headlineMedium.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        const SizedBox(height: 8),
+        Text(
+          'Based on what players love most',
+          style: AppTheme.bodyMedium.copyWith(color: Colors.white54),
+        ),
+        const SizedBox(height: 24),
+        
+        // Revealed cards with animation
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            itemCount: state.currentRoundCards.length,
+            itemBuilder: (context, index) {
+              final card = state.currentRoundCards[index];
+              // Sort by actual global rank for reveal
+              final sortedCards = List<PopCard>.from(state.currentRoundCards)
+                ..sort((a, b) => a.globalRank.compareTo(b.globalRank));
+              final actualRank = sortedCards.indexOf(card) + 1;
+              final playerRank = index + 1;
+              final isCorrect = actualRank == playerRank;
+              
+              return TweenAnimationBuilder<double>(
+                duration: Duration(milliseconds: 300 + (index * 100)),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset((1 - value) * 100, 0),
+                    child: Opacity(
+                      opacity: value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildRevealCard(card, actualRank, playerRank, isCorrect),
+              );
+            },
+          ),
+        ),
+        
+        // Continue button
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: _buildPrimaryButton(
+            label: 'See Your Score',
+            icon: Icons.arrow_forward,
+            onTap: () {
+              Haptics.medium();
+              ref.read(pathOfPleasureProvider.notifier).showRoundScore();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRevealCard(PopCard card, int actualRank, int playerRank, bool isCorrect) {
+    final difference = (actualRank - playerRank).abs();
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isCorrect
+              ? [Colors.green.shade700, Colors.green.shade900]
+              : difference == 1
+                  ? [Colors.orange.shade700, Colors.orange.shade900]
+                  : [Colors.grey.shade800, Colors.grey.shade900],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCorrect
+              ? Colors.green.shade400
+              : difference == 1
+                  ? Colors.orange.shade400
+                  : Colors.white12,
+          width: isCorrect ? 2 : 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            Icon(Icons.person_add, color: Colors.white38),
-            SizedBox(width: 8),
-            Text(
-              'Add Local Player (Pass & Play)',
-              style: TextStyle(color: Colors.white38),
+            // Actual rank (big)
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: _getRankColors(actualRank)),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: _getRankColors(actualRank).first.withOpacity(0.5),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '#$actualRank',
+                  style: AppTheme.titleMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            
+            // Card text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    card.text,
+                    style: AppTheme.bodyLarge.copyWith(color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _buildHeatBadge(card.heatLevel),
+                      const Spacer(),
+                      // Trend indicator
+                      if (card.rankChange != 0)
+                        Row(
+                          children: [
+                            Icon(
+                              card.rankChange > 0
+                                  ? Icons.trending_up
+                                  : Icons.trending_down,
+                              size: 16,
+                              color: card.rankChange > 0
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              card.rankChange.abs().toString(),
+                              style: AppTheme.labelSmall.copyWith(
+                                color: card.rankChange > 0
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // Your guess vs actual
+            Column(
+              children: [
+                Text(
+                  'You: #$playerRank',
+                  style: AppTheme.labelSmall.copyWith(
+                    color: Colors.white54,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Icon(
+                  isCorrect
+                      ? Icons.check_circle
+                      : difference == 1
+                          ? Icons.remove_circle
+                          : Icons.cancel,
+                  color: isCorrect
+                      ? Colors.green
+                      : difference == 1
+                          ? Colors.orange
+                          : Colors.red.shade300,
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-  
-  void _showAddLocalPlayerDialog() {
-    _nameController.clear();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: PleasureColors.surface,
-        title: const Text('Add Player', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: _nameController,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Player name',
-            hintStyle: TextStyle(color: Colors.white38),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (_nameController.text.trim().isNotEmpty) {
-                ref.read(pathOfPleasureProvider.notifier).addLocalPlayer(_nameController.text);
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: PleasureColors.gold),
-            child: const Text('Add', style: TextStyle(color: Colors.black87)),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SORTING PHASE - Drag & Drop Cards
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildSortingPhase(PathOfPleasureState state) {
-    // Sort rankings by position for display
-    final sortedRankings = [...state.myRankings]
-      ..sort((a, b) => a.position.compareTo(b.position));
+
+  // ============================================================
+  // ROUND SCORE SCREEN
+  // ============================================================
+  Widget _buildRoundScoreScreen(PathOfPleasureState state) {
+    final roundResult = state.lastRoundResult;
+    if (roundResult == null) return const SizedBox();
     
-    final cards = sortedRankings.map((r) => 
-      state.currentCards.firstWhere((c) => c.id == r.cardId)
-    ).toList();
-    
-    return Container(
-      key: const ValueKey('sorting'),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: state.currentCategory.color.withOpacity(0.1),
-              border: Border(
-                bottom: BorderSide(color: state.currentCategory.color.withOpacity(0.3)),
-              ),
-            ),
-            child: Row(
+    return Column(
+      children: [
+        _buildGameHeader(state),
+        
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Round complete title
                 Text(
-                  state.currentCategory.displayName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: state.currentCategory.color,
+                  'Round ${state.currentRound} Complete!',
+                  style: AppTheme.headlineMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  'Round ${state.currentRound}/${state.totalRounds}',
-                  style: const TextStyle(color: Colors.white54),
+                const SizedBox(height: 40),
+                
+                // Score display with animation
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 1000),
+                  tween: Tween(begin: 0, end: roundResult.totalScore.toDouble()),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Column(
+                      children: [
+                        Text(
+                          '+${value.toInt()}',
+                          style: AppTheme.displayLarge.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 72,
+                          ),
+                        ),
+                        Text(
+                          'points',
+                          style: AppTheme.titleLarge.copyWith(
+                            color: Colors.white54,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(height: 32),
+                
+                // Breakdown
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: PleasureColors.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    '${state.lockedCount}/${state.players.length} Locked',
-                    style: const TextStyle(fontSize: 12, color: Colors.white54),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Instructions
-          const Padding(
-            padding: EdgeInsets.all(12),
-            child: Text(
-              'Drag cards to rank from CRAVING (top) to LIMIT (bottom)',
-              style: TextStyle(color: Colors.white54, fontSize: 13),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          
-          // Ranking zones + Cards
-          Expanded(
-            child: Row(
-              children: [
-                // Zone indicator
-                Container(
-                  width: 60,
-                  margin: const EdgeInsets.symmetric(vertical: 16),
                   child: Column(
                     children: [
-                      _buildZoneLabel(RankZone.craving, 2),
-                      _buildZoneLabel(RankZone.open, 1),
-                      _buildZoneLabel(RankZone.limit, 2),
+                      _buildScoreRow(
+                        'Exact matches',
+                        roundResult.cardResults.where((r) => r.pointsEarned == 100).length,
+                        Icons.check_circle,
+                        Colors.green,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildScoreRow(
+                        'Off by 1',
+                        roundResult.cardResults.where((r) => r.pointsEarned == 50).length,
+                        Icons.remove_circle,
+                        Colors.orange,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildScoreRow(
+                        'Off by 2',
+                        roundResult.cardResults.where((r) => r.pointsEarned == 25).length,
+                        Icons.radio_button_unchecked,
+                        Colors.yellow,
+                      ),
+                      if (roundResult.perfectRound) ...[
+                        const Divider(color: Colors.white24, height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber),
+                            const SizedBox(width: 8),
+                            Text(
+                              'PERFECT ROUND! +200 Bonus',
+                              style: AppTheme.titleMedium.copyWith(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.star, color: Colors.amber),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 
-                // Cards
-                Expanded(
-                  child: ReorderableListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                    itemCount: cards.length,
-                    onReorder: (oldIndex, newIndex) {
-                      HapticFeedback.selectionClick();
-                      ref.read(pathOfPleasureProvider.notifier).reorderCards(oldIndex, newIndex);
-                    },
-                    itemBuilder: (context, index) {
-                      final card = cards[index];
-                      final ranking = sortedRankings[index];
-                      
-                      return _buildSortableCard(card, ranking, index);
-                    },
-                  ),
+                const Spacer(),
+                
+                // Next round / Finish button
+                _buildPrimaryButton(
+                  label: state.currentRound >= state.totalRounds
+                      ? 'See Final Results'
+                      : 'Next Round',
+                  icon: Icons.arrow_forward,
+                  onTap: () {
+                    Haptics.medium();
+                    if (state.currentRound >= state.totalRounds) {
+                      ref.read(pathOfPleasureProvider.notifier).showLeaderboard();
+                    } else {
+                      ref.read(pathOfPleasureProvider.notifier).nextRound();
+                    }
+                  },
                 ),
               ],
             ),
           ),
-          
-          // Lock In Button
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: GestureDetector(
-              onTap: state.me?.isLockedIn == true ? null : () {
-                HapticFeedback.heavyImpact();
-                ref.read(pathOfPleasureProvider.notifier).lockIn();
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                decoration: BoxDecoration(
-                  gradient: state.me?.isLockedIn == true 
-                      ? null 
-                      : const LinearGradient(colors: [PleasureColors.gold, Color(0xFFFF8C00)]),
-                  color: state.me?.isLockedIn == true ? Colors.green.withOpacity(0.3) : null,
-                  borderRadius: BorderRadius.circular(16),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScoreRow(String label, int count, IconData icon, Color color) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
+          ),
+        ),
+        Text(
+          'x$count',
+          style: AppTheme.titleMedium.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // LEADERBOARD SCREEN
+  // ============================================================
+  Widget _buildLeaderboardScreen(PathOfPleasureState state) {
+    final sortedPlayers = List<PopPlayer>.from(state.players)
+      ..sort((a, b) => b.score.compareTo(a.score));
+    
+    return Column(
+      children: [
+        _buildGameHeader(state),
+        
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Text(
+                  'Leaderboard',
+                  style: AppTheme.headlineMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(height: 24),
+                
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: sortedPlayers.length,
+                    itemBuilder: (context, index) {
+                      final player = sortedPlayers[index];
+                      final isWinner = index == 0;
+                      
+                      return TweenAnimationBuilder<double>(
+                        duration: Duration(milliseconds: 300 + (index * 100)),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: 0.8 + (0.2 * value),
+                            child: Opacity(opacity: value, child: child),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: isWinner
+                                ? LinearGradient(
+                                    colors: [
+                                      Colors.amber.shade700,
+                                      Colors.orange.shade800,
+                                    ],
+                                  )
+                                : null,
+                            color: isWinner ? null : Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isWinner
+                                  ? Colors.amber.shade400
+                                  : Colors.white12,
+                              width: isWinner ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Position
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _getPositionColor(index),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: index < 3
+                                      ? Icon(
+                                          Icons.emoji_events,
+                                          color: index == 0
+                                              ? Colors.amber
+                                              : index == 1
+                                                  ? Colors.grey.shade300
+                                                  : Colors.brown.shade400,
+                                          size: 24,
+                                        )
+                                      : Text(
+                                          '${index + 1}',
+                                          style: AppTheme.titleMedium.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              
+                              // Player info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      player.name,
+                                      style: AppTheme.titleMedium.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (player.perfectRounds > 0)
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.star,
+                                            size: 14,
+                                            color: Colors.amber,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${player.perfectRounds} perfect round${player.perfectRounds > 1 ? 's' : ''}',
+                                            style: AppTheme.labelSmall.copyWith(
+                                              color: Colors.amber,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              
+                              // Score
+                              Text(
+                                '${player.score}',
+                                style: AppTheme.headlineSmall.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Play again / Exit buttons
+                Row(
                   children: [
-                    Icon(
-                      state.me?.isLockedIn == true ? Icons.check_circle : Icons.lock,
-                      color: state.me?.isLockedIn == true ? Colors.green : Colors.black87,
+                    Expanded(
+                      child: _buildSecondaryButton(
+                        label: 'Exit',
+                        icon: Icons.exit_to_app,
+                        onTap: () {
+                          ref.read(pathOfPleasureProvider.notifier).leaveSession();
+                        },
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      state.me?.isLockedIn == true ? 'LOCKED IN!' : 'LOCK IN',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: state.me?.isLockedIn == true ? Colors.green : Colors.black87,
-                        letterSpacing: 2,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildPrimaryButton(
+                        label: 'Play Again',
+                        icon: Icons.refresh,
+                        onTap: () {
+                          Haptics.medium();
+                          ref.read(pathOfPleasureProvider.notifier).playAgain();
+                        },
                       ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // FINISHED SCREEN (same as leaderboard but with exit focus)
+  // ============================================================
+  Widget _buildFinishedScreen(PathOfPleasureState state) {
+    return _buildLeaderboardScreen(state);
+  }
+
+  // ============================================================
+  // HELPER WIDGETS
+  // ============================================================
+  Widget _buildHeader({bool showBack = false}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          if (showBack)
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                ref.read(pathOfPleasureProvider.notifier).leaveSession();
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => context.pop(),
+            ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white70),
+            onPressed: () => _showHowToPlay(context),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildZoneLabel(RankZone zone, int flex) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              zone.color.withOpacity(0.3),
-              zone.color.withOpacity(0.1),
+
+  Widget _buildGameHeader(PathOfPleasureState state) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          // Round indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Round ${state.currentRound}/${state.totalRounds}',
+              style: AppTheme.labelLarge.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const Spacer(),
+          
+          // Score
+          Row(
+            children: [
+              const Icon(Icons.star, color: Colors.amber, size: 20),
+              const SizedBox(width: 4),
+              Text(
+                '${state.players.firstWhere((p) => p.id == state.currentPlayerId, orElse: () => state.players.first).score}',
+                style: AppTheme.titleMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryButton({
+    required String label,
+    required IconData icon,
+    VoidCallback? onTap,
+    bool disabled = false,
+  }) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: AnimatedContainer(
+        duration: Motion.fast,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          gradient: disabled
+              ? null
+              : const LinearGradient(
+                  colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                ),
+          color: disabled ? Colors.grey.shade800 : null,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: disabled
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.pink.withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
-        child: Column(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(zone.emoji, style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 4),
-            RotatedBox(
-              quarterTurns: 3,
-              child: Text(
-                zone.label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: zone.color,
-                  letterSpacing: 1,
-                ),
+            Icon(icon, color: disabled ? Colors.white38 : Colors.white),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: AppTheme.titleMedium.copyWith(
+                color: disabled ? Colors.white38 : Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -1104,707 +1276,486 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
       ),
     );
   }
-  
-  Widget _buildSortableCard(PopCard card, CardRanking ranking, int index) {
-    return Container(
-      key: ValueKey(card.id),
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PleasureColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: ranking.zone.color.withOpacity(0.5),
-          width: 2,
+
+  Widget _buildSecondaryButton({
+    required String label,
+    required IconData icon,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white24),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: ranking.zone.color.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white70),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: AppTheme.titleMedium.copyWith(
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeatBadge(HeatLevel level) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _getHeatLevelColors(level),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _getHeatLevelIcon(level),
+            size: 12,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _getHeatLevelName(level),
+            style: AppTheme.labelSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  // ============================================================
+  // DIALOGS
+  // ============================================================
+  void _showJoinDialog(BuildContext context) {
+    final codeController = TextEditingController();
+    final nameController = TextEditingController(text: 'Player');
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceDark,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Join Game',
+                  style: AppTheme.headlineSmall.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: 24),
+                
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Your Name',
+                    labelStyle: const TextStyle(color: Colors.white54),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                TextField(
+                  controller: codeController,
+                  style: const TextStyle(color: Colors.white, letterSpacing: 4),
+                  textCapitalization: TextCapitalization.characters,
+                  maxLength: 6,
+                  decoration: InputDecoration(
+                    labelText: 'Game Code',
+                    labelStyle: const TextStyle(color: Colors.white54),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    counterText: '',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final code = codeController.text.trim().toUpperCase();
+                      final name = nameController.text.trim();
+                      if (code.length == 6 && name.isNotEmpty) {
+                        Navigator.pop(context);
+                        ref.read(pathOfPleasureProvider.notifier)
+                            .joinSession(code, name);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Join'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showHowToPlay(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(24),
+                      children: [
+                        // Title
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.pink.shade400, Colors.purple.shade600],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.whatshot, color: Colors.white, size: 28),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'How to Play',
+                                    style: AppTheme.headlineSmall.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Path of Pleasure',
+                                    style: AppTheme.bodyMedium.copyWith(
+                                      color: Colors.white54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // The Concept
+                        _buildHowToSection(
+                          icon: Icons.lightbulb_outline,
+                          title: 'The Concept',
+                          content: 'Think Family Feud, but spicy! Each round, you\'ll see '
+                              'a set of intimate scenarios and rank them from MOST to LEAST '
+                              'popular. Your ranking is compared against what ALL players '
+                              'across the app have voted - the global popularity!',
+                        ),
+                        
+                        // How to Score
+                        _buildHowToSection(
+                          icon: Icons.emoji_events,
+                          title: 'Scoring',
+                          content: '',
+                          child: Column(
+                            children: [
+                              _buildScoringRow('Exact match', '100 pts', Colors.green),
+                              _buildScoringRow('Off by 1', '50 pts', Colors.orange),
+                              _buildScoringRow('Off by 2', '25 pts', Colors.yellow.shade700),
+                              _buildScoringRow('Perfect round bonus', '+200 pts', Colors.amber),
+                            ],
+                          ),
+                        ),
+                        
+                        // Heat Levels
+                        _buildHowToSection(
+                          icon: Icons.whatshot,
+                          title: 'Heat Levels',
+                          content: '',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildHeatLevelRow(
+                                'Mild',
+                                'Romantic & sweet scenarios',
+                                [Colors.pink.shade300, Colors.pink.shade400],
+                              ),
+                              const SizedBox(height: 8),
+                              _buildHeatLevelRow(
+                                'Spicy',
+                                'Things are heating up!',
+                                [Colors.orange.shade400, Colors.red.shade400],
+                              ),
+                              const SizedBox(height: 8),
+                              _buildHeatLevelRow(
+                                'Sizzle',
+                                'No holds barred - explicit content',
+                                [Colors.red.shade600, Colors.purple.shade800],
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Dynamic Rankings
+                        _buildHowToSection(
+                          icon: Icons.trending_up,
+                          title: 'Living Rankings',
+                          content: 'Card popularity isn\'t static! As more players vote, '
+                              'rankings shift. You\'ll see trending indicators showing '
+                              'which scenarios are rising 🔥 or falling in popularity. '
+                              'Stay tuned to the zeitgeist!',
+                        ),
+                        
+                        // Tips
+                        _buildHowToSection(
+                          icon: Icons.tips_and_updates,
+                          title: 'Pro Tips',
+                          content: '• Don\'t just rank by YOUR preference - think about '
+                              'what MOST people would enjoy!\n'
+                              '• Watch the trends - rising cards might indicate '
+                              'shifting tastes\n'
+                              '• The timer is 60 seconds - trust your gut!\n'
+                              '• Perfect rounds give massive bonus points',
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Close button
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.pink,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Got it!'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHowToSection({
+    required IconData icon,
+    required String title,
+    required String content,
+    Widget? child,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.pink, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: AppTheme.titleMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (content.isNotEmpty)
+            Text(
+              content,
+              style: AppTheme.bodyMedium.copyWith(
+                color: Colors.white70,
+                height: 1.5,
+              ),
+            ),
+          if (child != null) child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoringRow(String label, String points, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Container(
-            width: 28, height: 28,
+            width: 12,
+            height: 12,
             decoration: BoxDecoration(
-              color: ranking.zone.color.withOpacity(0.2),
+              color: color,
               shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: ranking.zone.color,
-                ),
-              ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              card.text,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                height: 1.3,
-              ),
+              label,
+              style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
             ),
           ),
-          const Icon(Icons.drag_handle, color: Colors.white24),
-        ],
-      ),
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // REVEAL PHASE - Heat Map Results
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildRevealPhase(PathOfPleasureState state) {
-    // Get results for current round
-    final roundStart = (state.currentRound - 1) * 5;
-    final roundResults = state.roundResults.skip(roundStart).take(5).toList();
-    
-    return Container(
-      key: const ValueKey('reveal'),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  PleasureColors.gold.withOpacity(0.2),
-                  PleasureColors.friction.withOpacity(0.2),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('🔥', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
-                Text(
-                  'ROUND ${state.currentRound} RESULTS',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Results list
-          Expanded(
-            child: ListView.builder(
-              itemCount: roundResults.length,
-              itemBuilder: (context, index) {
-                final result = roundResults[index];
-                return _buildResultCard(result, state.players);
-              },
-            ),
-          ),
-          
-          // Loading indicator
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: PleasureColors.gold,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Preparing discussion...',
-                  style: TextStyle(color: Colors.white54),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildResultCard(CardResult result, List<PopPlayer> players) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PleasureColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: result.isGoldenMatch 
-              ? PleasureColors.gold 
-              : result.isFrictionPoint 
-                  ? PleasureColors.friction 
-                  : Colors.white24,
-          width: 2,
-        ),
-        boxShadow: result.isGoldenMatch ? [
-          BoxShadow(
-            color: PleasureColors.gold.withOpacity(0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-          ),
-        ] : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Status badge
-          Row(
-            children: [
-              if (result.isGoldenMatch)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: PleasureColors.gold,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('✨', style: TextStyle(fontSize: 12)),
-                      SizedBox(width: 4),
-                      Text(
-                        'GOLDEN MATCH',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (result.isFrictionPoint)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: PleasureColors.friction,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('⚡', style: TextStyle(fontSize: 12)),
-                      SizedBox(width: 4),
-                      Text(
-                        'FRICTION POINT',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              const Spacer(),
-              Text(
-                'Δ${result.maxDelta}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: result.maxDelta >= 3 ? PleasureColors.friction : Colors.white38,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Card text
           Text(
-            result.card.text,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.4,
-            ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Player rankings
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: result.playerRankings.entries.map((entry) {
-              final player = players.firstWhere(
-                (p) => p.id == entry.key,
-                orElse: () => PopPlayer(
-                  id: entry.key,
-                  oduserId: '',
-                  displayName: '?',
-                  avatarColor: Colors.grey,
-                ),
-              );
-              final zone = _getZoneForPosition(entry.value);
-              
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: zone.color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: zone.color.withOpacity(0.5)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 20, height: 20,
-                      decoration: BoxDecoration(
-                        color: player.avatarColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          player.displayName[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      zone.emoji,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '#${entry.value + 1}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: zone.color,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  RankZone _getZoneForPosition(int position) {
-    if (position <= 1) return RankZone.craving;
-    if (position >= 3) return RankZone.limit;
-    return RankZone.open;
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DISCUSSION PHASE - Timer
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildDiscussionPhase(PathOfPleasureState state) {
-    return Container(
-      key: const ValueKey('discussion'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const Spacer(),
-          
-          // Timer circle
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 200,
-                height: 200,
-                child: CircularProgressIndicator(
-                  value: state.discussionSecondsRemaining / 30,
-                  strokeWidth: 8,
-                  backgroundColor: Colors.white12,
-                  valueColor: AlwaysStoppedAnimation(
-                    state.discussionSecondsRemaining > 10 
-                        ? PleasureColors.gold 
-                        : PleasureColors.friction,
-                  ),
-                ),
-              ),
-              Column(
-                children: [
-                  Text(
-                    '${state.discussionSecondsRemaining}',
-                    style: TextStyle(
-                      fontSize: 64,
-                      fontWeight: FontWeight.w900,
-                      color: state.discussionSecondsRemaining > 10 
-                          ? PleasureColors.gold 
-                          : PleasureColors.friction,
-                    ),
-                  ),
-                  const Text(
-                    'SECONDS',
-                    style: TextStyle(
-                      fontSize: 14,
-                      letterSpacing: 2,
-                      color: Colors.white54,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 32),
-          
-          const Text(
-            '💬 DISCUSSION TIME',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 2,
-            ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          const Text(
-            'Talk about the results!\nWhat surprised you? Any friction points to explore?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white54,
-              height: 1.5,
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Skip button (host only)
-          if (state.isHost)
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                ref.read(pathOfPleasureProvider.notifier).skipDiscussion();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: PleasureColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Skip to Next Round →',
-                  style: TextStyle(color: Colors.white54),
-                ),
-              ),
-            ),
-          
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RESULTS SCREEN - Final Compatibility
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildResultsScreen(PathOfPleasureState state) {
-    final result = state.finalResult;
-    if (result == null) return const SizedBox();
-    
-    return Container(
-      key: const ValueKey('results'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const Spacer(),
-          
-          // Match percentage
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              return Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      PleasureColors.gold.withOpacity(0.3),
-                      Colors.transparent,
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: PleasureColors.gold.withOpacity(0.2 + _glowController.value * 0.2),
-                      blurRadius: 40 + _glowController.value * 20,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${result.matchPercent}%',
-                        style: const TextStyle(
-                          fontSize: 56,
-                          fontWeight: FontWeight.w900,
-                          color: PleasureColors.gold,
-                        ),
-                      ),
-                      const Text(
-                        'COMPATIBLE',
-                        style: TextStyle(
-                          fontSize: 14,
-                          letterSpacing: 2,
-                          color: Colors.white54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 32),
-          
-          const Text(
-            'PLEASURE PROFILE',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 3,
-              color: Colors.white,
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Stats
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  '✨',
-                  '${result.goldenMatches}',
-                  'Golden Matches',
-                  PleasureColors.gold,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  '⚡',
-                  '${result.frictionPoints}',
-                  'Friction Points',
-                  PleasureColors.friction,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Profile summary
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: PleasureColors.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Text('💕', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'YOUR SWEET SPOT',
-                            style: TextStyle(
-                              fontSize: 11,
-                              letterSpacing: 1,
-                              color: Colors.white54,
-                            ),
-                          ),
-                          Text(
-                            result.sweetSpot,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: PleasureColors.gold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(color: Colors.white12, height: 24),
-                Row(
-                  children: [
-                    const Text('🔀', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'YOU DIFFER ON',
-                            style: TextStyle(
-                              fontSize: 11,
-                              letterSpacing: 1,
-                              color: Colors.white54,
-                            ),
-                          ),
-                          Text(
-                            result.differOn,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: PleasureColors.friction,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Action buttons
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    ref.read(pathOfPleasureProvider.notifier).exitGame();
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: PleasureColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'EXIT',
-                        style: TextStyle(
-                          color: Colors.white54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.heavyImpact();
-                    ref.read(pathOfPleasureProvider.notifier).playAgain();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [PleasureColors.gold, Color(0xFFFF8C00)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: PleasureColors.gold.withOpacity(0.4),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'PLAY AGAIN',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildStatCard(String emoji, String value, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
+            points,
+            style: AppTheme.titleSmall.copyWith(
               color: color,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white54,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildHeatLevelRow(String name, String description, List<Color> colors) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: colors),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            name,
+            style: AppTheme.labelMedium.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            description,
+            style: AppTheme.bodySmall.copyWith(color: Colors.white54),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // UTILITY FUNCTIONS
+  // ============================================================
+  List<Color> _getHeatLevelColors(HeatLevel level) {
+    switch (level) {
+      case HeatLevel.mild:
+        return [Colors.pink.shade300, Colors.pink.shade400];
+      case HeatLevel.spicy:
+        return [Colors.orange.shade400, Colors.red.shade400];
+      case HeatLevel.sizzle:
+        return [Colors.red.shade600, Colors.purple.shade800];
+    }
+  }
+
+  IconData _getHeatLevelIcon(HeatLevel level) {
+    switch (level) {
+      case HeatLevel.mild:
+        return Icons.favorite;
+      case HeatLevel.spicy:
+        return Icons.local_fire_department;
+      case HeatLevel.sizzle:
+        return Icons.whatshot;
+    }
+  }
+
+  String _getHeatLevelName(HeatLevel level) {
+    switch (level) {
+      case HeatLevel.mild:
+        return 'Mild';
+      case HeatLevel.spicy:
+        return 'Spicy';
+      case HeatLevel.sizzle:
+        return 'Sizzle';
+    }
+  }
+
+  List<Color> _getRankColors(int rank) {
+    if (rank == 1) return [Colors.amber, Colors.orange];
+    if (rank == 2) return [Colors.grey.shade400, Colors.grey.shade500];
+    if (rank == 3) return [Colors.brown.shade300, Colors.brown.shade400];
+    return [Colors.purple.shade400, Colors.pink.shade400];
+  }
+
+  Color _getPositionColor(int index) {
+    if (index == 0) return Colors.amber.shade800;
+    if (index == 1) return Colors.grey.shade700;
+    if (index == 2) return Colors.brown.shade700;
+    return Colors.grey.shade800;
   }
 }

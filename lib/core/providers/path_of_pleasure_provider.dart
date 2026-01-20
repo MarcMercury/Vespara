@@ -4,9 +4,9 @@ import 'dart:async';
 import 'dart:math';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// PATH OF PLEASURE - The Compatibility Engine
+/// PATH OF PLEASURE - FAMILY FEUD EDITION
 /// Provider & State Management
-/// Real-time multiplayer card sorting game
+/// "Survey Says..." - Rank scenarios by predicted popularity
 /// ════════════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -16,68 +16,49 @@ import 'dart:math';
 enum GamePhase {
   idle,        // Not in a game
   lobby,       // Waiting for players
-  sorting,     // Players ranking cards
-  reveal,      // Showing results
-  discussion,  // Timer for conversation
+  ranking,     // Players ranking cards by popularity
+  reveal,      // Showing correct order with animations
+  roundScore,  // Show round scores
+  leaderboard, // Final scores
   finished,    // Game complete
 }
 
-enum CardCategory { vanilla, spicy, edgy }
+enum HeatLevel {
+  mild,    // Vanilla only (1-2)
+  spicy,   // Include spicy (1-3)
+  sizzle,  // Everything (1-5)
+}
 
-extension CardCategoryExtension on CardCategory {
+extension HeatLevelExtension on HeatLevel {
   String get displayName {
     switch (this) {
-      case CardCategory.vanilla: return '🌸 Vanilla';
-      case CardCategory.spicy: return '🌶️ Spicy';
-      case CardCategory.edgy: return '🔥 Edgy';
+      case HeatLevel.mild: return '🌸 Mild';
+      case HeatLevel.spicy: return '🌶️ Spicy';
+      case HeatLevel.sizzle: return '🔥 Sizzle';
+    }
+  }
+  
+  String get description {
+    switch (this) {
+      case HeatLevel.mild: return 'Sweet & innocent stuff';
+      case HeatLevel.spicy: return 'Getting warmer...';
+      case HeatLevel.sizzle: return 'No limits. Full send.';
+    }
+  }
+  
+  int get maxHeat {
+    switch (this) {
+      case HeatLevel.mild: return 2;
+      case HeatLevel.spicy: return 4;
+      case HeatLevel.sizzle: return 5;
     }
   }
   
   Color get color {
     switch (this) {
-      case CardCategory.vanilla: return const Color(0xFFE8B4D8); // Soft pink
-      case CardCategory.spicy: return const Color(0xFFFF6B35);   // Orange
-      case CardCategory.edgy: return const Color(0xFFDC143C);     // Crimson
-    }
-  }
-  
-  int get roundNumber {
-    switch (this) {
-      case CardCategory.vanilla: return 1;
-      case CardCategory.spicy: return 2;
-      case CardCategory.edgy: return 3;
-    }
-  }
-}
-
-enum RankZone {
-  craving,  // Top - "I need this constantly"
-  open,     // Middle - "I'd try it / I like it"
-  limit,    // Bottom - "Hard Pass / Never"
-}
-
-extension RankZoneExtension on RankZone {
-  String get label {
-    switch (this) {
-      case RankZone.craving: return 'CRAVING';
-      case RankZone.open: return 'OPEN';
-      case RankZone.limit: return 'LIMIT';
-    }
-  }
-  
-  Color get color {
-    switch (this) {
-      case RankZone.craving: return const Color(0xFFFFD700); // Gold
-      case RankZone.open: return const Color(0xFF9B59B6);    // Purple
-      case RankZone.limit: return const Color(0xFF2C2C2C);   // Dark grey
-    }
-  }
-  
-  String get emoji {
-    switch (this) {
-      case RankZone.craving: return '🔥';
-      case RankZone.open: return '💜';
-      case RankZone.limit: return '🚫';
+      case HeatLevel.mild: return const Color(0xFFE8B4D8);
+      case HeatLevel.spicy: return const Color(0xFFFF6B35);
+      case HeatLevel.sizzle: return const Color(0xFFDC143C);
     }
   }
 }
@@ -89,9 +70,12 @@ extension RankZoneExtension on RankZone {
 class PopCard {
   final String id;
   final String text;
-  final CardCategory category;
+  final String category;
   final String? subcategory;
   final int heatLevel;
+  final int globalRank;      // Actual popularity rank (1 = most popular)
+  final double popularityScore; // 0-100 popularity
+  final int rankChange;      // Week-over-week change (+5 = moved up 5 spots)
   
   const PopCard({
     required this.id,
@@ -99,23 +83,42 @@ class PopCard {
     required this.category,
     this.subcategory,
     this.heatLevel = 1,
+    this.globalRank = 50,
+    this.popularityScore = 50.0,
+    this.rankChange = 0,
   });
   
   factory PopCard.fromJson(Map<String, dynamic> json) {
     return PopCard(
       id: json['id'] as String,
       text: json['text'] as String,
-      category: _parseCategory(json['category'] as String),
+      category: json['category'] as String? ?? 'vanilla',
       subcategory: json['subcategory'] as String?,
       heatLevel: json['heat_level'] as int? ?? 1,
+      globalRank: json['global_rank'] as int? ?? 50,
+      popularityScore: (json['popularity_score'] as num?)?.toDouble() ?? 50.0,
+      rankChange: json['rank_change'] as int? ?? 0,
     );
   }
   
-  static CardCategory _parseCategory(String value) {
-    switch (value.toLowerCase()) {
-      case 'spicy': return CardCategory.spicy;
-      case 'edgy': return CardCategory.edgy;
-      default: return CardCategory.vanilla;
+  /// Get trend emoji based on rank change
+  String get trendEmoji {
+    if (rankChange > 5) return '🔥';  // Hot
+    if (rankChange > 0) return '📈';  // Rising
+    if (rankChange < -5) return '📉'; // Falling fast
+    if (rankChange < 0) return '⬇️';  // Declining
+    return '➡️';                       // Stable
+  }
+  
+  /// Get heat emoji
+  String get heatEmoji {
+    switch (heatLevel) {
+      case 1: return '🌸';
+      case 2: return '💜';
+      case 3: return '🌶️';
+      case 4: return '🔥';
+      case 5: return '💀';
+      default: return '💜';
     }
   }
 }
@@ -127,6 +130,12 @@ class PopPlayer {
   final String? avatarUrl;
   final Color avatarColor;
   final bool isHost;
+  int score;
+  int correctGuesses;
+  int closeGuesses;
+  int totalGuesses;
+  int streak;
+  int bestStreak;
   bool isLockedIn;
   
   PopPlayer({
@@ -136,6 +145,12 @@ class PopPlayer {
     this.avatarUrl,
     required this.avatarColor,
     this.isHost = false,
+    this.score = 0,
+    this.correctGuesses = 0,
+    this.closeGuesses = 0,
+    this.totalGuesses = 0,
+    this.streak = 0,
+    this.bestStreak = 0,
     this.isLockedIn = false,
   });
   
@@ -147,6 +162,11 @@ class PopPlayer {
       avatarUrl: json['avatar_url'] as String?,
       avatarColor: _parseColor(json['avatar_color'] as String?),
       isHost: json['is_host'] as bool? ?? false,
+      score: json['score'] as int? ?? 0,
+      correctGuesses: json['correct_guesses'] as int? ?? 0,
+      totalGuesses: json['total_guesses'] as int? ?? 0,
+      streak: json['streak'] as int? ?? 0,
+      bestStreak: json['best_streak'] as int? ?? 0,
       isLockedIn: json['is_locked_in'] as bool? ?? false,
     );
   }
@@ -155,64 +175,44 @@ class PopPlayer {
     if (hex == null) return const Color(0xFF4A9EFF);
     return Color(int.parse(hex.replaceFirst('#', '0xFF')));
   }
+  
+  /// Accuracy percentage
+  double get accuracy => totalGuesses > 0 ? correctGuesses / totalGuesses * 100 : 0;
 }
 
-class CardRanking {
-  final String cardId;
-  int position; // 0 = Craving (top), 4 = Limit (bottom)
+class RoundResult {
+  final List<PopCard> correctOrder;  // Cards in correct popularity order
+  final List<PopCard> playerOrder;   // Player's guessed order
+  final int roundScore;
+  final int correctCount;
+  final int closeCount;
+  final List<CardResult> cardResults;
   
-  CardRanking({
-    required this.cardId,
-    required this.position,
+  const RoundResult({
+    required this.correctOrder,
+    required this.playerOrder,
+    required this.roundScore,
+    required this.correctCount,
+    required this.closeCount,
+    required this.cardResults,
   });
-  
-  RankZone get zone {
-    if (position <= 1) return RankZone.craving;
-    if (position >= 3) return RankZone.limit;
-    return RankZone.open;
-  }
 }
 
 class CardResult {
   final PopCard card;
-  final bool isGoldenMatch;  // All players ranked in top 2
-  final bool isFrictionPoint; // Delta >= 3 between players
-  final int maxDelta;
-  final Map<String, int> playerRankings; // playerId -> position
+  final int playerPosition;  // Where player ranked it (1-5)
+  final int actualPosition;  // Where it actually is (1-5)
+  final int pointsEarned;
+  final bool isExact;
+  final bool isClose;
   
   const CardResult({
     required this.card,
-    required this.isGoldenMatch,
-    required this.isFrictionPoint,
-    required this.maxDelta,
-    required this.playerRankings,
-  });
-  
-  factory CardResult.fromJson(Map<String, dynamic> json, PopCard card) {
-    final rankings = (json['rankings_json'] as Map<String, dynamic>?) ?? {};
-    return CardResult(
-      card: card,
-      isGoldenMatch: json['is_golden_match'] as bool? ?? false,
-      isFrictionPoint: json['is_friction_point'] as bool? ?? false,
-      maxDelta: json['max_delta'] as int? ?? 0,
-      playerRankings: rankings.map((k, v) => MapEntry(k, v as int)),
-    );
-  }
-}
-
-class CompatibilityResult {
-  final int matchPercent;
-  final int goldenMatches;
-  final int frictionPoints;
-  final String sweetSpot;
-  final String differOn;
-  
-  const CompatibilityResult({
-    required this.matchPercent,
-    required this.goldenMatches,
-    required this.frictionPoints,
-    required this.sweetSpot,
-    required this.differOn,
+    required this.playerPosition,
+    required this.actualPosition,
+    required this.pointsEarned,
+    required this.isExact,
+    required this.isClose,
   });
 }
 
@@ -225,28 +225,30 @@ class PathOfPleasureState {
   final String? sessionId;
   final String? roomCode;
   final List<PopPlayer> players;
-  final String? currentPlayerId; // This device's player ID
+  final String? currentPlayerId;
   final bool isHost;
+  
+  // Game settings
+  final HeatLevel heatLevel;
+  final int cardsPerRound;
+  final int totalRounds;
   
   // Round data
   final int currentRound;
-  final int totalRounds;
-  final List<PopCard> currentCards;
-  final List<CardRanking> myRankings; // This player's rankings
-  
-  // Results
-  final List<CardResult> roundResults;
-  final CompatibilityResult? finalResult;
+  final List<PopCard> roundCards;        // Cards to rank this round (shuffled)
+  final List<PopCard> playerRanking;     // Player's current ranking
+  final RoundResult? lastRoundResult;
+  final List<RoundResult> allResults;
   
   // Timing
-  final DateTime? phaseStartedAt;
-  final DateTime? discussionEndsAt;
-  final int discussionSecondsRemaining;
+  final int timeRemaining;
+  final int maxTime;
   
   // UI State
   final bool isLoading;
   final String? error;
   final bool isDemoMode;
+  final int revealIndex;  // For animating reveal
   
   const PathOfPleasureState({
     this.phase = GamePhase.idle,
@@ -255,18 +257,20 @@ class PathOfPleasureState {
     this.players = const [],
     this.currentPlayerId,
     this.isHost = false,
-    this.currentRound = 1,
+    this.heatLevel = HeatLevel.spicy,
+    this.cardsPerRound = 5,
     this.totalRounds = 3,
-    this.currentCards = const [],
-    this.myRankings = const [],
-    this.roundResults = const [],
-    this.finalResult,
-    this.phaseStartedAt,
-    this.discussionEndsAt,
-    this.discussionSecondsRemaining = 30,
+    this.currentRound = 1,
+    this.roundCards = const [],
+    this.playerRanking = const [],
+    this.lastRoundResult,
+    this.allResults = const [],
+    this.timeRemaining = 60,
+    this.maxTime = 60,
     this.isLoading = false,
     this.error,
     this.isDemoMode = false,
+    this.revealIndex = -1,
   });
   
   PopPlayer? get me => currentPlayerId == null 
@@ -277,13 +281,13 @@ class PathOfPleasureState {
   
   int get lockedCount => players.where((p) => p.isLockedIn).length;
   
-  CardCategory get currentCategory {
-    switch (currentRound) {
-      case 1: return CardCategory.vanilla;
-      case 2: return CardCategory.spicy;
-      case 3: return CardCategory.edgy;
-      default: return CardCategory.vanilla;
-    }
+  int get myTotalScore => me?.score ?? 0;
+  
+  /// Get sorted leaderboard
+  List<PopPlayer> get leaderboard {
+    final sorted = [...players];
+    sorted.sort((a, b) => b.score.compareTo(a.score));
+    return sorted;
   }
   
   PathOfPleasureState copyWith({
@@ -293,18 +297,20 @@ class PathOfPleasureState {
     List<PopPlayer>? players,
     String? currentPlayerId,
     bool? isHost,
-    int? currentRound,
+    HeatLevel? heatLevel,
+    int? cardsPerRound,
     int? totalRounds,
-    List<PopCard>? currentCards,
-    List<CardRanking>? myRankings,
-    List<CardResult>? roundResults,
-    CompatibilityResult? finalResult,
-    DateTime? phaseStartedAt,
-    DateTime? discussionEndsAt,
-    int? discussionSecondsRemaining,
+    int? currentRound,
+    List<PopCard>? roundCards,
+    List<PopCard>? playerRanking,
+    RoundResult? lastRoundResult,
+    List<RoundResult>? allResults,
+    int? timeRemaining,
+    int? maxTime,
     bool? isLoading,
     String? error,
     bool? isDemoMode,
+    int? revealIndex,
   }) {
     return PathOfPleasureState(
       phase: phase ?? this.phase,
@@ -313,18 +319,20 @@ class PathOfPleasureState {
       players: players ?? this.players,
       currentPlayerId: currentPlayerId ?? this.currentPlayerId,
       isHost: isHost ?? this.isHost,
-      currentRound: currentRound ?? this.currentRound,
+      heatLevel: heatLevel ?? this.heatLevel,
+      cardsPerRound: cardsPerRound ?? this.cardsPerRound,
       totalRounds: totalRounds ?? this.totalRounds,
-      currentCards: currentCards ?? this.currentCards,
-      myRankings: myRankings ?? this.myRankings,
-      roundResults: roundResults ?? this.roundResults,
-      finalResult: finalResult ?? this.finalResult,
-      phaseStartedAt: phaseStartedAt ?? this.phaseStartedAt,
-      discussionEndsAt: discussionEndsAt ?? this.discussionEndsAt,
-      discussionSecondsRemaining: discussionSecondsRemaining ?? this.discussionSecondsRemaining,
+      currentRound: currentRound ?? this.currentRound,
+      roundCards: roundCards ?? this.roundCards,
+      playerRanking: playerRanking ?? this.playerRanking,
+      lastRoundResult: lastRoundResult ?? this.lastRoundResult,
+      allResults: allResults ?? this.allResults,
+      timeRemaining: timeRemaining ?? this.timeRemaining,
+      maxTime: maxTime ?? this.maxTime,
       isLoading: isLoading ?? this.isLoading,
       error: error,
       isDemoMode: isDemoMode ?? this.isDemoMode,
+      revealIndex: revealIndex ?? this.revealIndex,
     );
   }
 }
@@ -334,7 +342,8 @@ class PathOfPleasureState {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
-  Timer? _discussionTimer;
+  Timer? _roundTimer;
+  Timer? _revealTimer;
   bool _disposed = false;
   
   PathOfPleasureNotifier() : super(const PathOfPleasureState());
@@ -342,20 +351,21 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   @override
   void dispose() {
     _disposed = true;
-    _discussionTimer?.cancel();
+    _roundTimer?.cancel();
+    _revealTimer?.cancel();
     super.dispose();
   }
   
   // Player colors for avatars
   static const _playerColors = [
+    Color(0xFFFFD700), // Gold
     Color(0xFF4A9EFF), // Blue
     Color(0xFFDC143C), // Crimson
-    Color(0xFF9B59B6), // Purple
     Color(0xFF2ECC71), // Emerald
-    Color(0xFFF39C12), // Gold
+    Color(0xFF9B59B6), // Purple
+    Color(0xFFF39C12), // Orange
     Color(0xFF1ABC9C), // Teal
     Color(0xFFE74C3C), // Red
-    Color(0xFF3498DB), // Sky Blue
   ];
   
   // ═════════════════════════════════════════════════════════════════════════
@@ -367,23 +377,17 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      // Generate room code
       final roomCode = _generateRoomCode();
       final hostId = 'host_${DateTime.now().millisecondsSinceEpoch}';
       final playerId = 'player_${DateTime.now().millisecondsSinceEpoch}';
       
-      // Create host player
       final hostPlayer = PopPlayer(
         id: playerId,
         oduserId: hostId,
         displayName: hostName,
         avatarColor: _playerColors[0],
         isHost: true,
-        isLockedIn: false,
       );
-      
-      // In real app, create session in Supabase here
-      // For demo, we use local state
       
       state = state.copyWith(
         phase: GamePhase.lobby,
@@ -405,9 +409,6 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      // In real app, fetch session from Supabase by room code
-      // For demo, simulate joining
-      
       await Future.delayed(const Duration(milliseconds: 500));
       
       final playerId = 'player_${DateTime.now().millisecondsSinceEpoch}';
@@ -418,8 +419,6 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         oduserId: 'user_$playerId',
         displayName: playerName,
         avatarColor: _playerColors[existingPlayers.length % _playerColors.length],
-        isHost: false,
-        isLockedIn: false,
       );
       
       existingPlayers.add(newPlayer);
@@ -438,7 +437,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     }
   }
   
-  /// Add local player (for Pass & Play mode)
+  /// Add local player (for pass & play mode)
   void addLocalPlayer(String name) {
     if (name.trim().isEmpty || state.players.length >= 8) return;
     
@@ -448,8 +447,6 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       oduserId: 'local_$playerId',
       displayName: name.trim(),
       avatarColor: _playerColors[state.players.length % _playerColors.length],
-      isHost: false,
-      isLockedIn: false,
     );
     
     state = state.copyWith(players: [...state.players, newPlayer]);
@@ -457,11 +454,16 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   
   void removePlayer(int index) {
     if (index < 0 || index >= state.players.length) return;
-    if (state.players[index].isHost) return; // Can't remove host
+    if (state.players[index].isHost) return;
     
     final players = [...state.players];
     players.removeAt(index);
     state = state.copyWith(players: players);
+  }
+  
+  /// Set heat level
+  void setHeatLevel(HeatLevel level) {
+    state = state.copyWith(heatLevel: level);
   }
   
   String _generateRoomCode() {
@@ -476,271 +478,286 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   // GAME FLOW
   // ═════════════════════════════════════════════════════════════════════════
   
-  /// Host starts the game - deals cards for round 1
-  Future<void> dealCards() async {
-    if (!state.isHost || state.players.length < 2) return;
+  /// Start the game - deal first round
+  Future<void> startGame() async {
+    if (!state.isHost || state.players.isEmpty) return;
     
     state = state.copyWith(isLoading: true);
     
     try {
-      // Get cards for current round
-      final cards = _getDemoCards(state.currentCategory);
+      // Get shuffled cards for this round
+      final cards = _getShuffledCards();
       
-      // Initialize rankings with random positions
-      final rankings = cards.asMap().entries.map((e) => 
-        CardRanking(cardId: e.value.id, position: e.key)
-      ).toList();
-      
-      // Reset all players to not locked in
+      // Reset player states
       final players = state.players.map((p) {
         p.isLockedIn = false;
+        p.score = 0;
+        p.correctGuesses = 0;
+        p.totalGuesses = 0;
+        p.streak = 0;
         return p;
       }).toList();
       
       state = state.copyWith(
-        phase: GamePhase.sorting,
-        currentCards: cards,
-        myRankings: rankings,
+        phase: GamePhase.ranking,
+        roundCards: cards,
+        playerRanking: [...cards], // Start with shuffled order
+        currentRound: 1,
         players: players,
-        phaseStartedAt: DateTime.now(),
+        allResults: [],
+        timeRemaining: state.maxTime,
         isLoading: false,
       );
+      
+      _startRoundTimer();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
-  }
-  
-  /// Update card ranking during sorting
-  void updateRanking(String cardId, int newPosition) {
-    final rankings = [...state.myRankings];
-    final cardIndex = rankings.indexWhere((r) => r.cardId == cardId);
-    
-    if (cardIndex == -1) return;
-    
-    // Swap positions
-    final currentPosition = rankings[cardIndex].position;
-    final swapIndex = rankings.indexWhere((r) => r.position == newPosition);
-    
-    if (swapIndex != -1) {
-      rankings[swapIndex].position = currentPosition;
-    }
-    rankings[cardIndex].position = newPosition;
-    
-    state = state.copyWith(myRankings: rankings);
   }
   
   /// Reorder cards via drag and drop
   void reorderCards(int oldIndex, int newIndex) {
     if (oldIndex < newIndex) newIndex -= 1;
     
-    final rankings = [...state.myRankings];
-    rankings.sort((a, b) => a.position.compareTo(b.position));
+    final ranking = [...state.playerRanking];
+    final item = ranking.removeAt(oldIndex);
+    ranking.insert(newIndex, item);
     
-    final item = rankings.removeAt(oldIndex);
-    rankings.insert(newIndex, item);
-    
-    // Update positions
-    for (int i = 0; i < rankings.length; i++) {
-      rankings[i].position = i;
-    }
-    
-    state = state.copyWith(myRankings: rankings);
+    state = state.copyWith(playerRanking: ranking);
   }
   
-  /// Player locks in their rankings
+  /// Move a card to a specific position
+  void moveCard(int fromIndex, int toIndex) {
+    if (fromIndex == toIndex) return;
+    
+    final ranking = [...state.playerRanking];
+    final item = ranking.removeAt(fromIndex);
+    ranking.insert(toIndex, item);
+    
+    state = state.copyWith(playerRanking: ranking);
+  }
+  
+  /// Lock in rankings and calculate score
   void lockIn() {
+    _roundTimer?.cancel();
+    
+    // Calculate score
+    final result = _calculateRoundScore();
+    
+    // Update player
     final players = state.players.map((p) {
       if (p.id == state.currentPlayerId) {
         p.isLockedIn = true;
+        p.score += result.roundScore;
+        p.correctGuesses += result.correctCount;
+        p.closeGuesses += result.closeCount;
+        p.totalGuesses += state.cardsPerRound;
+        
+        // Update streak
+        if (result.correctCount >= 3) {
+          p.streak++;
+          if (p.streak > p.bestStreak) p.bestStreak = p.streak;
+        } else {
+          p.streak = 0;
+        }
       }
       return p;
     }).toList();
     
-    state = state.copyWith(players: players);
-    
-    // In demo mode, simulate other players locking in
-    if (state.isDemoMode && state.players.length > 1) {
-      _simulateOtherPlayersLockIn();
-    }
-    
-    // Check if all locked
-    if (state.allPlayersLocked) {
-      _revealResults();
-    }
-  }
-  
-  void _simulateOtherPlayersLockIn() {
-    Future.delayed(const Duration(seconds: 2), () {
-      if (_disposed) return;
-      
-      final players = state.players.map((p) {
-        p.isLockedIn = true;
-        return p;
-      }).toList();
-      
-      state = state.copyWith(players: players);
-      
-      if (state.allPlayersLocked) {
-        _revealResults();
-      }
-    });
-  }
-  
-  void _revealResults() {
-    // Calculate results for each card
-    final results = _calculateRoundResults();
-    
     state = state.copyWith(
+      players: players,
+      lastRoundResult: result,
+      allResults: [...state.allResults, result],
       phase: GamePhase.reveal,
-      roundResults: [...state.roundResults, ...results],
+      revealIndex: -1,
     );
     
-    // After a brief reveal, start discussion timer
-    Future.delayed(const Duration(seconds: 3), () {
-      if (_disposed) return;
-      _startDiscussionPhase();
-    });
+    // Start reveal animation
+    _animateReveal();
   }
   
-  List<CardResult> _calculateRoundResults() {
-    final results = <CardResult>[];
+  void _animateReveal() {
+    int index = -1;
+    _revealTimer?.cancel();
     
-    for (final card in state.currentCards) {
-      final ranking = state.myRankings.firstWhere(
-        (r) => r.cardId == card.id,
-        orElse: () => CardRanking(cardId: card.id, position: 2),
-      );
-      
-      // In demo mode, generate random rankings for other players
-      final playerRankings = <String, int>{};
-      for (final player in state.players) {
-        if (player.id == state.currentPlayerId) {
-          playerRankings[player.id] = ranking.position;
-        } else {
-          // Simulate other player's ranking
-          playerRankings[player.id] = Random().nextInt(5);
-        }
-      }
-      
-      // Calculate matches/friction
-      final positions = playerRankings.values.toList();
-      final maxDelta = positions.length > 1 
-          ? positions.reduce((a, b) => a > b ? a : b) - positions.reduce((a, b) => a < b ? a : b)
-          : 0;
-      
-      final allInTop2 = positions.every((p) => p <= 1);
-      final hasFriction = maxDelta >= 3;
-      
-      results.add(CardResult(
-        card: card,
-        isGoldenMatch: allInTop2,
-        isFrictionPoint: hasFriction,
-        maxDelta: maxDelta,
-        playerRankings: playerRankings,
-      ));
-    }
-    
-    return results;
-  }
-  
-  void _startDiscussionPhase() {
-    final endsAt = DateTime.now().add(const Duration(seconds: 30));
-    
-    state = state.copyWith(
-      phase: GamePhase.discussion,
-      discussionEndsAt: endsAt,
-      discussionSecondsRemaining: 30,
-    );
-    
-    _discussionTimer?.cancel();
-    _discussionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _revealTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
       if (_disposed) {
         timer.cancel();
         return;
       }
       
-      final remaining = state.discussionSecondsRemaining - 1;
-      
-      if (remaining <= 0) {
+      index++;
+      if (index >= state.cardsPerRound) {
         timer.cancel();
-        _endDiscussion();
+        // Show round score after reveal
+        Future.delayed(const Duration(seconds: 1), () {
+          if (_disposed) return;
+          _showRoundScore();
+        });
       } else {
-        state = state.copyWith(discussionSecondsRemaining: remaining);
+        state = state.copyWith(revealIndex: index);
       }
     });
   }
   
-  /// Skip discussion early (host only)
-  void skipDiscussion() {
-    if (!state.isHost) return;
-    _discussionTimer?.cancel();
-    _endDiscussion();
+  void _showRoundScore() {
+    state = state.copyWith(phase: GamePhase.roundScore);
+    
+    // Auto-advance after a few seconds
+    Future.delayed(const Duration(seconds: 4), () {
+      if (_disposed) return;
+      
+      if (state.currentRound >= state.totalRounds) {
+        // End game
+        state = state.copyWith(phase: GamePhase.leaderboard);
+      } else {
+        // Next round
+        _startNextRound();
+      }
+    });
   }
   
-  void _endDiscussion() {
+  void skipToNextRound() {
     if (state.currentRound >= state.totalRounds) {
-      _endGame();
+      state = state.copyWith(phase: GamePhase.leaderboard);
     } else {
       _startNextRound();
     }
   }
   
   void _startNextRound() {
-    // Reset for next round
     final nextRound = state.currentRound + 1;
+    final cards = _getShuffledCards();
+    
     final players = state.players.map((p) {
       p.isLockedIn = false;
       return p;
     }).toList();
     
-    final cards = _getDemoCards(
-      nextRound == 2 ? CardCategory.spicy : CardCategory.edgy
-    );
-    
-    final rankings = cards.asMap().entries.map((e) => 
-      CardRanking(cardId: e.value.id, position: e.key)
-    ).toList();
-    
     state = state.copyWith(
-      phase: GamePhase.sorting,
+      phase: GamePhase.ranking,
       currentRound: nextRound,
-      currentCards: cards,
-      myRankings: rankings,
+      roundCards: cards,
+      playerRanking: [...cards],
       players: players,
-      phaseStartedAt: DateTime.now(),
+      timeRemaining: state.maxTime,
+      revealIndex: -1,
+    );
+    
+    _startRoundTimer();
+  }
+  
+  void _startRoundTimer() {
+    _roundTimer?.cancel();
+    _roundTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_disposed) {
+        timer.cancel();
+        return;
+      }
+      
+      final remaining = state.timeRemaining - 1;
+      
+      if (remaining <= 0) {
+        timer.cancel();
+        lockIn(); // Auto-submit when time runs out
+      } else {
+        state = state.copyWith(timeRemaining: remaining);
+      }
+    });
+  }
+  
+  RoundResult _calculateRoundScore() {
+    // Sort round cards by their actual global rank (lower = more popular)
+    final correctOrder = [...state.roundCards];
+    correctOrder.sort((a, b) => a.globalRank.compareTo(b.globalRank));
+    
+    final cardResults = <CardResult>[];
+    int totalScore = 0;
+    int correctCount = 0;
+    int closeCount = 0;
+    
+    for (int i = 0; i < state.playerRanking.length; i++) {
+      final playerCard = state.playerRanking[i];
+      final playerPos = i + 1;
+      
+      // Find where this card actually belongs
+      final actualPos = correctOrder.indexWhere((c) => c.id == playerCard.id) + 1;
+      
+      int points = 0;
+      bool isExact = false;
+      bool isClose = false;
+      
+      if (playerPos == actualPos) {
+        // Exact match!
+        points = 100;
+        isExact = true;
+        correctCount++;
+      } else if ((playerPos - actualPos).abs() == 1) {
+        // One off
+        points = 50;
+        isClose = true;
+        closeCount++;
+      } else if ((playerPos - actualPos).abs() == 2) {
+        // Two off
+        points = 25;
+      }
+      
+      totalScore += points;
+      
+      cardResults.add(CardResult(
+        card: playerCard,
+        playerPosition: playerPos,
+        actualPosition: actualPos,
+        pointsEarned: points,
+        isExact: isExact,
+        isClose: isClose,
+      ));
+    }
+    
+    // Bonus for perfect round
+    if (correctCount == state.cardsPerRound) {
+      totalScore += 200;
+    }
+    
+    return RoundResult(
+      correctOrder: correctOrder,
+      playerOrder: [...state.playerRanking],
+      roundScore: totalScore,
+      correctCount: correctCount,
+      closeCount: closeCount,
+      cardResults: cardResults,
     );
   }
   
-  void _endGame() {
-    // Calculate final compatibility
-    final allResults = state.roundResults;
-    final goldenMatches = allResults.where((r) => r.isGoldenMatch).length;
-    final frictionPoints = allResults.where((r) => r.isFrictionPoint).length;
-    final total = allResults.length;
+  /// Get shuffled cards for a round (demo mode)
+  List<PopCard> _getShuffledCards() {
+    // Filter by heat level and shuffle
+    final eligible = _demoCards
+        .where((c) => c.heatLevel <= state.heatLevel.maxHeat)
+        .toList();
     
-    final matchPercent = total > 0 
-        ? ((total - frictionPoints) / total * 100).round()
-        : 0;
+    eligible.shuffle();
     
-    final finalResult = CompatibilityResult(
-      matchPercent: matchPercent,
-      goldenMatches: goldenMatches,
-      frictionPoints: frictionPoints,
-      sweetSpot: 'Intimacy & Touch',
-      differOn: 'Public Risk',
-    );
-    
-    state = state.copyWith(
-      phase: GamePhase.finished,
-      finalResult: finalResult,
-    );
+    return eligible.take(state.cardsPerRound).toList();
   }
   
-  /// Play again with same players
-  void playAgain() {
-    _discussionTimer?.cancel();
+  /// Reset game
+  void reset() {
+    _roundTimer?.cancel();
+    _revealTimer?.cancel();
+    state = const PathOfPleasureState();
+  }
+  
+  /// Back to lobby
+  void backToLobby() {
+    _roundTimer?.cancel();
+    _revealTimer?.cancel();
     
     final players = state.players.map((p) {
+      p.score = 0;
+      p.correctGuesses = 0;
+      p.totalGuesses = 0;
+      p.streak = 0;
       p.isLockedIn = false;
       return p;
     }).toList();
@@ -748,56 +765,11 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     state = state.copyWith(
       phase: GamePhase.lobby,
       currentRound: 1,
-      currentCards: [],
-      myRankings: [],
-      roundResults: [],
-      finalResult: null,
+      roundCards: [],
+      playerRanking: [],
+      allResults: [],
       players: players,
     );
-  }
-  
-  /// Exit to main menu
-  void exitGame() {
-    _discussionTimer?.cancel();
-    state = const PathOfPleasureState();
-  }
-  
-  // ═════════════════════════════════════════════════════════════════════════
-  // DEMO MODE CARDS
-  // ═════════════════════════════════════════════════════════════════════════
-  
-  List<PopCard> _getDemoCards(CardCategory category) {
-    final random = Random();
-    final id = () => 'card_${random.nextInt(99999)}';
-    
-    switch (category) {
-      case CardCategory.vanilla:
-        return [
-          PopCard(id: id(), text: 'Morning sex before getting out of bed', category: category, subcategory: 'intimacy'),
-          PopCard(id: id(), text: 'Cuddling on the couch watching movies', category: category, subcategory: 'intimacy'),
-          PopCard(id: id(), text: 'Long, slow kisses', category: category, subcategory: 'intimacy'),
-          PopCard(id: id(), text: 'Holding hands in public', category: category, subcategory: 'public'),
-          PopCard(id: id(), text: 'Showering together', category: category, subcategory: 'intimacy'),
-        ];
-      
-      case CardCategory.spicy:
-        return [
-          PopCard(id: id(), text: 'Blindfolds during intimacy', category: category, subcategory: 'sensory', heatLevel: 2),
-          PopCard(id: id(), text: 'Dirty talk', category: category, subcategory: 'verbal', heatLevel: 2),
-          PopCard(id: id(), text: 'Almost getting caught', category: category, subcategory: 'risk', heatLevel: 3),
-          PopCard(id: id(), text: 'Giving commands in the bedroom', category: category, subcategory: 'power', heatLevel: 2),
-          PopCard(id: id(), text: 'Leaving marks that others might see', category: category, subcategory: 'marking', heatLevel: 3),
-        ];
-      
-      case CardCategory.edgy:
-        return [
-          PopCard(id: id(), text: 'Full roleplay with costumes', category: category, subcategory: 'roleplay', heatLevel: 3),
-          PopCard(id: id(), text: 'Dominant/submissive dynamics', category: category, subcategory: 'power', heatLevel: 4),
-          PopCard(id: id(), text: 'Using toys together', category: category, subcategory: 'toys', heatLevel: 3),
-          PopCard(id: id(), text: 'Anal play (any level)', category: category, subcategory: 'anal', heatLevel: 4),
-          PopCard(id: id(), text: 'Semi-public spaces (car, balcony)', category: category, subcategory: 'risk', heatLevel: 4),
-        ];
-    }
   }
 }
 
@@ -805,6 +777,58 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
 // PROVIDER
 // ═══════════════════════════════════════════════════════════════════════════
 
-final pathOfPleasureProvider = StateNotifierProvider<PathOfPleasureNotifier, PathOfPleasureState>((ref) {
-  return PathOfPleasureNotifier();
-});
+final pathOfPleasureProvider = StateNotifierProvider<PathOfPleasureNotifier, PathOfPleasureState>(
+  (ref) => PathOfPleasureNotifier(),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEMO DATA - Cards with pre-set popularity rankings
+// ═══════════════════════════════════════════════════════════════════════════
+
+const List<PopCard> _demoCards = [
+  // Vanilla - Most Popular (low globalRank = high popularity)
+  PopCard(id: 'v1', text: 'Forehead kisses', category: 'vanilla', heatLevel: 1, globalRank: 3, popularityScore: 94.5, rankChange: 2),
+  PopCard(id: 'v2', text: 'Holding hands while walking', category: 'vanilla', heatLevel: 1, globalRank: 5, popularityScore: 92.0, rankChange: 0),
+  PopCard(id: 'v3', text: 'Falling asleep on their chest', category: 'vanilla', heatLevel: 1, globalRank: 6, popularityScore: 91.0, rankChange: 1),
+  PopCard(id: 'v4', text: 'Hugging from behind', category: 'vanilla', heatLevel: 1, globalRank: 8, popularityScore: 89.0, rankChange: -2),
+  PopCard(id: 'v5', text: 'Long, slow kisses', category: 'vanilla', heatLevel: 1, globalRank: 4, popularityScore: 93.0, rankChange: 3),
+  PopCard(id: 'v6', text: 'Morning cuddles', category: 'vanilla', heatLevel: 1, globalRank: 2, popularityScore: 96.0, rankChange: 0),
+  PopCard(id: 'v7', text: 'Slow dancing together', category: 'vanilla', heatLevel: 1, globalRank: 18, popularityScore: 78.0, rankChange: -1),
+  PopCard(id: 'v8', text: 'Cooking together', category: 'vanilla', heatLevel: 1, globalRank: 12, popularityScore: 84.0, rankChange: 0),
+  PopCard(id: 'v9', text: 'Stargazing', category: 'vanilla', heatLevel: 1, globalRank: 28, popularityScore: 68.0, rankChange: -3),
+  PopCard(id: 'v10', text: 'Bubble bath together', category: 'vanilla', heatLevel: 2, globalRank: 22, popularityScore: 74.0, rankChange: 1),
+  
+  // Spicy - Medium popularity
+  PopCard(id: 's1', text: 'Neck kisses that linger', category: 'spicy', heatLevel: 2, globalRank: 7, popularityScore: 90.0, rankChange: 5),
+  PopCard(id: 's2', text: 'Being pinned against a wall', category: 'spicy', heatLevel: 3, globalRank: 15, popularityScore: 81.0, rankChange: 3),
+  PopCard(id: 's3', text: 'Morning sex', category: 'spicy', heatLevel: 3, globalRank: 9, popularityScore: 88.0, rankChange: 0),
+  PopCard(id: 's4', text: 'Hair pulling', category: 'spicy', heatLevel: 3, globalRank: 25, popularityScore: 71.0, rankChange: -2),
+  PopCard(id: 's5', text: 'Receiving nudes', category: 'spicy', heatLevel: 3, globalRank: 32, popularityScore: 64.0, rankChange: 1),
+  PopCard(id: 's6', text: 'Sending nudes', category: 'spicy', heatLevel: 3, globalRank: 35, popularityScore: 61.0, rankChange: -1),
+  PopCard(id: 's7', text: 'Light spanking', category: 'spicy', heatLevel: 3, globalRank: 38, popularityScore: 58.0, rankChange: 2),
+  PopCard(id: 's8', text: 'Blindfolded', category: 'spicy', heatLevel: 3, globalRank: 42, popularityScore: 54.0, rankChange: 0),
+  PopCard(id: 's9', text: 'Dirty talk', category: 'spicy', heatLevel: 3, globalRank: 30, popularityScore: 66.0, rankChange: 4),
+  PopCard(id: 's10', text: 'Strip tease', category: 'spicy', heatLevel: 3, globalRank: 45, popularityScore: 51.0, rankChange: -3),
+  
+  // Hot - Mixed popularity
+  PopCard(id: 'h1', text: 'Oral (receiving)', category: 'edgy', heatLevel: 4, globalRank: 10, popularityScore: 87.0, rankChange: 2),
+  PopCard(id: 'h2', text: 'Oral (giving)', category: 'edgy', heatLevel: 4, globalRank: 14, popularityScore: 82.0, rankChange: 0),
+  PopCard(id: 'h3', text: 'Using vibrators together', category: 'edgy', heatLevel: 4, globalRank: 26, popularityScore: 70.0, rankChange: 1),
+  PopCard(id: 'h4', text: '69 position', category: 'edgy', heatLevel: 4, globalRank: 48, popularityScore: 48.0, rankChange: -2),
+  PopCard(id: 'h5', text: 'Sex in the shower', category: 'edgy', heatLevel: 4, globalRank: 16, popularityScore: 80.0, rankChange: 3),
+  PopCard(id: 'h6', text: 'Rough sex', category: 'edgy', heatLevel: 4, globalRank: 33, popularityScore: 63.0, rankChange: 2),
+  PopCard(id: 'h7', text: 'Role play', category: 'edgy', heatLevel: 4, globalRank: 40, popularityScore: 56.0, rankChange: -1),
+  PopCard(id: 'h8', text: 'Tied up', category: 'edgy', heatLevel: 4, globalRank: 50, popularityScore: 46.0, rankChange: 0),
+  
+  // Explicit - Lower popularity (more niche)
+  PopCard(id: 'e1', text: 'Light choking', category: 'edgy', heatLevel: 5, globalRank: 55, popularityScore: 41.0, rankChange: 4),
+  PopCard(id: 'e2', text: 'Anal play (fingers)', category: 'edgy', heatLevel: 5, globalRank: 58, popularityScore: 38.0, rankChange: -1),
+  PopCard(id: 'e3', text: 'Anal sex', category: 'edgy', heatLevel: 5, globalRank: 65, popularityScore: 31.0, rankChange: 0),
+  PopCard(id: 'e4', text: 'Threesome fantasy', category: 'edgy', heatLevel: 5, globalRank: 52, popularityScore: 44.0, rankChange: 2),
+  PopCard(id: 'e5', text: 'Actual threesome', category: 'edgy', heatLevel: 5, globalRank: 78, popularityScore: 18.0, rankChange: -3),
+  PopCard(id: 'e6', text: 'Sex in public', category: 'edgy', heatLevel: 5, globalRank: 72, popularityScore: 24.0, rankChange: 1),
+  PopCard(id: 'e7', text: 'Recording for private', category: 'edgy', heatLevel: 5, globalRank: 68, popularityScore: 28.0, rankChange: 0),
+  PopCard(id: 'e8', text: 'Using plugs', category: 'edgy', heatLevel: 5, globalRank: 62, popularityScore: 34.0, rankChange: 2),
+  PopCard(id: 'e9', text: 'Double penetration fantasy', category: 'edgy', heatLevel: 5, globalRank: 85, popularityScore: 11.0, rankChange: -2),
+  PopCard(id: 'e10', text: 'Exhibitionism', category: 'edgy', heatLevel: 5, globalRank: 75, popularityScore: 21.0, rankChange: 1),
+];
