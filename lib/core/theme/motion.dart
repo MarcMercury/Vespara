@@ -443,3 +443,14 @@ class TileHeroWrapper extends StatelessWidget {
     );
   }
 }
+
+/// Compatibility alias for legacy code using Motion
+class Motion {
+  Motion._();
+  
+  static Duration get micro => VesparaMotion.micro;
+  static Duration get fast => VesparaMotion.fast;
+  static Duration get standard => VesparaMotion.standard;
+  static Duration get emphasized => VesparaMotion.emphasized;
+  static Duration get slow => VesparaMotion.slow;
+}
