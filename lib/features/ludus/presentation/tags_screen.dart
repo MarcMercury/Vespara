@@ -9,6 +9,7 @@ import '../../../core/providers/app_providers.dart';
 import '../widgets/consent_meter.dart';
 import '../widgets/game_card_widget.dart';
 import 'down_to_clown_screen.dart';
+import 'ice_breakers_screen.dart';
 
 /// The TAGS Screen - Trusted Adult Games System
 /// A consent-forward interactive game engine with luxury tarot card aesthetics
@@ -397,6 +398,12 @@ class _TagsScreenState extends ConsumerState<TagsScreen>
     
     // Navigate to specific game screen based on category
     switch (game) {
+      case GameCategory.icebreakers:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const IceBreakersScreen()),
+        );
+        return;
       case GameCategory.downToClown:
         Navigator.push(
           context,
