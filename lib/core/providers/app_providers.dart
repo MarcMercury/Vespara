@@ -31,22 +31,29 @@ final currentUserProvider = Provider<User?>((ref) {
 /// User profile provider - fetches real profile from Supabase
 final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final user = ref.watch(currentUserProvider);
+  print('[userProfileProvider] Current user: ${user?.id ?? "null"}');
+  
   if (user == null) {
     // Not logged in - use mock data for demo
     final isDemoMode = ref.watch(demoModeProvider);
+    print('[userProfileProvider] No user, demo mode: $isDemoMode');
     return isDemoMode ? MockDataProvider.currentUserProfile : null;
   }
   
   try {
+    print('[userProfileProvider] Fetching profile for user: ${user.id}');
     final response = await _supabase
         .from('profiles')
         .select()
         .eq('id', user.id)
         .single();
+    print('[userProfileProvider] Got response: ${response.keys.toList()}');
+    print('[userProfileProvider] display_name: ${response['display_name']}');
+    print('[userProfileProvider] city: ${response['city']}, state: ${response['state']}');
     return UserProfile.fromJson(response);
   } catch (e) {
     // Log error but don't fall back to mock data silently
-    print('Error fetching profile: $e');
+    print('[userProfileProvider] Error fetching profile: $e');
     return null;
   }
 });

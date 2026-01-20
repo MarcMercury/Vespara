@@ -792,17 +792,25 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       
       await Supabase.instance.client.from('profiles').upsert(profileData);
       
+      print('[Onboarding] Profile saved successfully');
+      
       // Refresh session to trigger navigation
       if (mounted) {
         await Supabase.instance.client.auth.refreshSession();
-      }
-    } catch (e) {
-      debugPrint('Onboarding complete error: $e');
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome to Vespara! ✨'),
             backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[Onboarding] Error saving profile: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving profile: $e'),
+            backgroundColor: VesparaColors.error,
           ),
         );
       }
