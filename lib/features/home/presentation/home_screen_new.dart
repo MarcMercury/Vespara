@@ -13,7 +13,7 @@ import '../../discover/presentation/discover_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
 import '../../wire/presentation/wire_screen_new.dart';
 import '../../planner/presentation/planner_screen.dart';
-import '../../group/presentation/group_screen.dart';
+import '../../events/presentation/events_home_screen.dart';
 import '../../shredder/presentation/shredder_screen_new.dart';
 import '../../ludus/presentation/tags_screen_new.dart';
 
@@ -103,7 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     NestScreen(),        // 2: Nest - CRM Roster
     WireScreen(),        // 3: Wire - Chat
     PlannerScreen(),     // 4: Planner - Calendar
-    GroupScreen(),       // 5: Group - Events
+    EventsHomeScreen(),  // 5: Group - Partiful-Style Events
     ShredderScreen(),    // 6: Shredder - AI Cleanup
     TagScreen(),         // 7: TAG - Games
   ];

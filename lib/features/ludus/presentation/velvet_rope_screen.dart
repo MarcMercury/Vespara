@@ -226,7 +226,38 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
             ),
           ),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
+          
+          // How to Play button
+          GestureDetector(
+            onTap: _showHowToPlay,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.help_outline, color: VelvetColors.lavender, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'How to Play',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: VelvetColors.lavender,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 24),
           
           // Heat Level Selection
           _buildHeatSelector(state),
@@ -1204,6 +1235,169 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
         ),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.white54)),
       ],
+    );
+  }
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOW TO PLAY MODAL
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  void _showHowToPlay() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VelvetColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [VelvetColors.truthBlue, VelvetColors.dareCrimson],
+                ).createShader(bounds),
+                child: const Text(
+                  'HOW TO PLAY',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Velvet Rope',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white54,
+                ),
+              ),
+              const SizedBox(height: 28),
+              
+              // Game Setup
+              _buildRuleSection('🎭', 'SETUP', [
+                'Add 2-8 players to join the game',
+                'Choose your heat level (PG to X-rated)',
+                'Each player gets assigned a unique color',
+              ]),
+              const SizedBox(height: 20),
+              
+              // Spin Mechanics
+              _buildRuleSection('🎡', 'THE SPIN', [
+                'Tap "SPIN" to spin the wheel',
+                'The wheel selects a random player',
+                'Selected player must choose Truth or Dare',
+              ]),
+              const SizedBox(height: 20),
+              
+              // Truth vs Dare
+              _buildRuleSection('🔮', 'TRUTH (Blue)', [
+                'Answer a question honestly',
+                'Questions match your heat level',
+                'Skipping costs 1 point',
+              ]),
+              const SizedBox(height: 20),
+              
+              _buildRuleSection('🔥', 'DARE (Red)', [
+                'Complete a physical or social challenge',
+                'Dares match your heat level',
+                'Completing earns bonus points',
+              ]),
+              const SizedBox(height: 20),
+              
+              // Heat Levels
+              _buildRuleSection('🌡️', 'HEAT LEVELS', [
+                '🟢 PG - Fun & flirty, keep it clean',
+                '🟡 PG-13 - Suggestive, getting warmer',
+                '🔴 R - Adult content, things get spicy',
+                '⚫ X - Explicit, no limits',
+              ]),
+              const SizedBox(height: 20),
+              
+              // Scoring
+              _buildRuleSection('🏆', 'SCORING', [
+                'Complete prompts to earn points',
+                'Track truths and dares completed',
+                'Final results show everyone\'s stats',
+              ]),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildRuleSection(String emoji, String title, List<String> rules) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VelvetColors.background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...rules.map((rule) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('•', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    rule,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )).toList(),
+        ],
+      ),
     );
   }
 }
