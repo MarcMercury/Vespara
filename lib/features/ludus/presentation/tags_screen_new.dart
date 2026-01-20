@@ -312,6 +312,8 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return Icons.touch_app;
       case GameCategory.kamaSutra:
         return Icons.favorite;
+      case GameCategory.downToClown:
+        return Icons.sentiment_very_satisfied;
     }
   }
 
