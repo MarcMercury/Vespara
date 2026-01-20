@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -366,7 +365,7 @@ class PermissionService {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Geolocator.openAppSettings();
+              if (!kIsWeb) Geolocator.openAppSettings();
             },
             child: const Text('Open Settings'),
           ),
@@ -410,11 +409,13 @@ class PermissionService {
   
   /// Open app settings
   Future<bool> openAppSettings() async {
+    if (kIsWeb) return false;
     return await Geolocator.openAppSettings();
   }
   
   /// Open location settings
   Future<bool> openLocationSettings() async {
+    if (kIsWeb) return false;
     return await Geolocator.openLocationSettings();
   }
 }
