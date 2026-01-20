@@ -60,66 +60,51 @@ extension ConsentLevelExtension on ConsentLevel {
 
 /// TAGS Game Category
 enum GameCategory {
-  truthOrDare,
-  pathOfPleasure,
-  theOtherRoom,
-  coinTossBoard,
-  icebreakers,
-  sensoryPlay,
-  kamaSutra,
   downToClown, // Heads Up-style guessing game
+  icebreakers, // Ice Breakers conversation starters
+  velvetRope, // Velvet Rope - Truth or Dare evolved
+  pathOfPleasure, // Comparative ranking game
   laneOfLust, // Timeline/Shit Happens style game with desire index
   dramaSutra, // Kama Sutra meets Improv Comedy
+  flashFreeze, // Flash & Freeze - Red Light Green Light adult edition
 }
 
 extension GameCategoryExtension on GameCategory {
   String get displayName {
     switch (this) {
-      case GameCategory.truthOrDare:
-        return 'Pleasure Deck';
-      case GameCategory.pathOfPleasure:
-        return 'Path of Pleasure';
-      case GameCategory.theOtherRoom:
-        return 'The Other Room';
-      case GameCategory.coinTossBoard:
-        return 'Coin Toss Board';
-      case GameCategory.icebreakers:
-        return 'Icebreakers';
-      case GameCategory.sensoryPlay:
-        return 'Sensory Play';
-      case GameCategory.kamaSutra:
-        return 'Kama Sutra';
       case GameCategory.downToClown:
         return 'Down to Clown';
+      case GameCategory.icebreakers:
+        return 'Ice Breakers';
+      case GameCategory.velvetRope:
+        return 'Velvet Rope';
+      case GameCategory.pathOfPleasure:
+        return 'Path of Pleasure';
       case GameCategory.laneOfLust:
         return 'Lane of Lust';
       case GameCategory.dramaSutra:
         return 'Drama-Sutra';
+      case GameCategory.flashFreeze:
+        return 'Flash & Freeze';
     }
   }
   
   String get description {
     switch (this) {
-      case GameCategory.truthOrDare:
-        return 'Modular card deck scaling from flirty to explicit.';
-      case GameCategory.pathOfPleasure:
-        return 'Comparative ranking game of desires.';
-      case GameCategory.theOtherRoom:
-        return '2 players leave for a secret act; group guesses.';
-      case GameCategory.coinTossBoard:
-        return 'Physical board mechanics digitized.';
-      case GameCategory.icebreakers:
-        return 'Light conversation starters for new connections.';
-      case GameCategory.sensoryPlay:
-        return 'Guided sensory exploration with a partner.';
-      case GameCategory.kamaSutra:
-        return 'Ancient wisdom for modern intimacy.';
       case GameCategory.downToClown:
         return 'Heads Up-style guessing game with kink vocab.';
+      case GameCategory.icebreakers:
+        return 'Light conversation starters for new connections.';
+      case GameCategory.velvetRope:
+        return 'Truth or Dare evolved. Consent-tiered card deck.';
+      case GameCategory.pathOfPleasure:
+        return 'Comparative ranking game of desires.';
       case GameCategory.laneOfLust:
         return 'Timeline-style game ranking desires by intensity.';
       case GameCategory.dramaSutra:
         return 'Kama Sutra positions with dramatic scenarios.';
+      case GameCategory.flashFreeze:
+        return 'Red Light, Green Light evolved. Exposure requires endurance.';
     }
   }
   
@@ -128,15 +113,12 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.icebreakers:
       case GameCategory.downToClown:
         return ConsentLevel.green;
-      case GameCategory.truthOrDare:
+      case GameCategory.velvetRope:
       case GameCategory.pathOfPleasure:
-      case GameCategory.coinTossBoard:
       case GameCategory.laneOfLust:
         return ConsentLevel.green; // Can scale to any level
-      case GameCategory.theOtherRoom:
-      case GameCategory.sensoryPlay:
+      case GameCategory.flashFreeze:
         return ConsentLevel.yellow;
-      case GameCategory.kamaSutra:
       case GameCategory.dramaSutra:
         return ConsentLevel.red;
     }
@@ -144,35 +126,27 @@ extension GameCategoryExtension on GameCategory {
   
   int get minPlayers {
     switch (this) {
-      case GameCategory.icebreakers:
-      case GameCategory.sensoryPlay:
-      case GameCategory.kamaSutra:
-        return 2;
-      case GameCategory.truthOrDare:
-      case GameCategory.pathOfPleasure:
-      case GameCategory.coinTossBoard:
       case GameCategory.downToClown:
+      case GameCategory.icebreakers:
+      case GameCategory.velvetRope:
+      case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
       case GameCategory.dramaSutra:
         return 2;
-      case GameCategory.theOtherRoom:
-        return 4;
+      case GameCategory.flashFreeze:
+        return 3; // Need at least 1 Signal + 2 players
     }
   }
   
   int get maxPlayers {
     switch (this) {
-      case GameCategory.sensoryPlay:
-      case GameCategory.kamaSutra:
-        return 2;
-      case GameCategory.icebreakers:
-      case GameCategory.truthOrDare:
-      case GameCategory.pathOfPleasure:
-      case GameCategory.theOtherRoom:
-      case GameCategory.coinTossBoard:
       case GameCategory.downToClown:
+      case GameCategory.icebreakers:
+      case GameCategory.velvetRope:
+      case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
       case GameCategory.dramaSutra:
+      case GameCategory.flashFreeze:
         return 8;
     }
   }

@@ -10,6 +10,7 @@ import 'down_to_clown_screen.dart';
 import 'path_of_pleasure_screen.dart';
 import 'lane_of_lust_screen.dart';
 import 'drama_sutra_screen.dart';
+import 'flash_freeze_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TAG - Module 8 (Adult Games)
@@ -304,26 +305,20 @@ class _TagScreenState extends ConsumerState<TagScreen> {
 
   IconData _getCategoryIcon(GameCategory category) {
     switch (category) {
+      case GameCategory.downToClown:
+        return Icons.sentiment_very_satisfied;
       case GameCategory.icebreakers:
         return Icons.ac_unit;
-      case GameCategory.truthOrDare:
+      case GameCategory.velvetRope:
         return Icons.style;
       case GameCategory.pathOfPleasure:
         return Icons.route;
-      case GameCategory.theOtherRoom:
-        return Icons.meeting_room;
-      case GameCategory.coinTossBoard:
-        return Icons.casino;
-      case GameCategory.sensoryPlay:
-        return Icons.touch_app;
-      case GameCategory.kamaSutra:
-        return Icons.favorite;
-      case GameCategory.downToClown:
-        return Icons.sentiment_very_satisfied;
       case GameCategory.laneOfLust:
         return Icons.linear_scale;
       case GameCategory.dramaSutra:
         return Icons.theaters;
+      case GameCategory.flashFreeze:
+        return Icons.flash_on;
     }
   }
 
@@ -556,22 +551,22 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   void _startGame(TagsGame game) {
     // Navigate to the appropriate game screen based on category
     switch (game.category) {
+      case GameCategory.downToClown:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DownToClownScreen()),
+        );
+        break;
       case GameCategory.icebreakers:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const IceBreakersScreen()),
         );
         break;
-      case GameCategory.truthOrDare:
+      case GameCategory.velvetRope:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),
-        );
-        break;
-      case GameCategory.downToClown:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const DownToClownScreen()),
         );
         break;
       case GameCategory.pathOfPleasure:
@@ -592,15 +587,12 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           MaterialPageRoute(builder: (_) => const DramaSutraScreen()),
         );
         break;
-      default:
-        // Other games coming soon
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${game.title} coming soon...'),
-            backgroundColor: VesparaColors.tagsYellow,
-            behavior: SnackBarBehavior.floating,
-          ),
+      case GameCategory.flashFreeze:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const FlashFreezeScreen()),
         );
+        break;
     }
   }
 }
