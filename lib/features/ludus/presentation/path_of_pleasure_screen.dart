@@ -171,7 +171,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   icon: Icons.add_circle_outline,
                   onTap: () {
                     Haptics.light();
-                    ref.read(pathOfPleasureProvider.notifier).createSession('Player');
+                    ref.read(pathOfPleasureProvider.notifier).hostGame('Player');
                   },
                 ),
                 const SizedBox(height: 16),
@@ -218,7 +218,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       const Icon(Icons.tag, color: Colors.white70),
                       const SizedBox(width: 12),
                       Text(
-                        state.sessionCode,
+                        state.roomCode ?? '',
                         style: AppTheme.headlineMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -229,7 +229,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       IconButton(
                         icon: const Icon(Icons.copy, color: Colors.white70),
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(text: state.sessionCode));
+                          Clipboard.setData(ClipboardData(text: state.roomCode ?? ''));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Code copied!')),
                           );
@@ -277,16 +277,16 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         child: Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: Colors.pink.shade400,
+                              backgroundColor: player.avatarColor,
                               child: Text(
-                                player.name[0].toUpperCase(),
+                                player.displayName[0].toUpperCase(),
                                 style: const TextStyle(color: Colors.white),
                               ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
-                                player.name,
+                                player.displayName,
                                 style: AppTheme.bodyLarge.copyWith(color: Colors.white),
                               ),
                             ),
@@ -408,7 +408,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   // RANKING SCREEN - Drag to rank by predicted popularity
   // ============================================================
   Widget _buildRankingScreen(PathOfPleasureState state) {
-    final timeLeft = state.roundTimeRemaining;
+    final timeLeft = state.timeRemaining;
     final isLowTime = timeLeft <= 10;
     
     return Column(
@@ -486,11 +486,11 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
         Expanded(
           child: ReorderableListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemCount: state.currentRoundCards.length,
+            itemCount: state.playerRanking.length,
             onReorder: (oldIndex, newIndex) {
               Haptics.light();
               ref.read(pathOfPleasureProvider.notifier)
-                  .reorderCard(oldIndex, newIndex);
+                  .reorderCards(oldIndex, newIndex);
             },
             proxyDecorator: (child, index, animation) {
               return AnimatedBuilder(
@@ -507,7 +507,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
               );
             },
             itemBuilder: (context, index) {
-              final card = state.currentRoundCards[index];
+              final card = state.playerRanking[index];
               return _buildRankableCard(
                 key: ValueKey(card.id),
                 card: card,
@@ -521,15 +521,15 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
         Padding(
           padding: const EdgeInsets.all(24),
           child: _buildPrimaryButton(
-            label: state.hasSubmitted ? 'Submitted!' : 'Lock In Rankings',
-            icon: state.hasSubmitted ? Icons.check : Icons.lock,
-            onTap: state.hasSubmitted
+            label: (state.me?.isLockedIn ?? false) ? 'Submitted!' : 'Lock In Rankings',
+            icon: (state.me?.isLockedIn ?? false) ? Icons.check : Icons.lock,
+            onTap: (state.me?.isLockedIn ?? false)
                 ? null
                 : () {
                     Haptics.heavy();
-                    ref.read(pathOfPleasureProvider.notifier).submitRanking();
+                    ref.read(pathOfPleasureProvider.notifier).lockIn();
                   },
-            disabled: state.hasSubmitted,
+            disabled: state.me?.isLockedIn ?? false,
           ),
         ),
       ],
@@ -601,7 +601,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       style: AppTheme.bodyLarge.copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: 4),
-                    _buildHeatBadge(card.heatLevel),
+                    _buildHeatBadge(HeatLevel.values[(card.heatLevel - 1).clamp(0, 2)]),
                   ],
                 ),
               ),
@@ -646,11 +646,11 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemCount: state.currentRoundCards.length,
+            itemCount: state.roundCards.length,
             itemBuilder: (context, index) {
-              final card = state.currentRoundCards[index];
+              final card = state.roundCards[index];
               // Sort by actual global rank for reveal
-              final sortedCards = List<PopCard>.from(state.currentRoundCards)
+              final sortedCards = List<PopCard>.from(state.roundCards)
                 ..sort((a, b) => a.globalRank.compareTo(b.globalRank));
               final actualRank = sortedCards.indexOf(card) + 1;
               final playerRank = index + 1;
@@ -682,7 +682,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             icon: Icons.arrow_forward,
             onTap: () {
               Haptics.medium();
-              ref.read(pathOfPleasureProvider.notifier).showRoundScore();
+              // Auto-transitions handled by provider
             },
           ),
         ),
@@ -757,7 +757,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      _buildHeatBadge(card.heatLevel),
+                      _buildHeatBadge(HeatLevel.values[(card.heatLevel - 1).clamp(0, 2)]),
                       const Spacer(),
                       // Trend indicator
                       if (card.rankChange != 0)
@@ -849,7 +849,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 // Score display with animation
                 TweenAnimationBuilder<double>(
                   duration: const Duration(milliseconds: 1000),
-                  tween: Tween(begin: 0, end: roundResult.totalScore.toDouble()),
+                  tween: Tween(begin: 0, end: roundResult.roundScore.toDouble()),
                   curve: Curves.easeOutCubic,
                   builder: (context, value, child) {
                     return Column(
@@ -903,7 +903,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         Icons.radio_button_unchecked,
                         Colors.yellow,
                       ),
-                      if (roundResult.perfectRound) ...[
+                      if (roundResult.correctCount == state.cardsPerRound) ...[
                         const Divider(color: Colors.white24, height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -936,11 +936,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   icon: Icons.arrow_forward,
                   onTap: () {
                     Haptics.medium();
-                    if (state.currentRound >= state.totalRounds) {
-                      ref.read(pathOfPleasureProvider.notifier).showLeaderboard();
-                    } else {
-                      ref.read(pathOfPleasureProvider.notifier).nextRound();
-                    }
+                    ref.read(pathOfPleasureProvider.notifier).skipToNextRound();
                   },
                 ),
               ],
@@ -1073,25 +1069,25 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      player.name,
+                                      player.displayName,
                                       style: AppTheme.titleMedium.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    if (player.perfectRounds > 0)
+                                    if (player.bestStreak > 0)
                                       Row(
                                         children: [
                                           const Icon(
-                                            Icons.star,
+                                            Icons.local_fire_department,
                                             size: 14,
-                                            color: Colors.amber,
+                                            color: Colors.orange,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            '${player.perfectRounds} perfect round${player.perfectRounds > 1 ? 's' : ''}',
+                                            '${player.bestStreak} streak',
                                             style: AppTheme.labelSmall.copyWith(
-                                              color: Colors.amber,
+                                              color: Colors.orange,
                                             ),
                                           ),
                                         ],
@@ -1126,7 +1122,8 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         label: 'Exit',
                         icon: Icons.exit_to_app,
                         onTap: () {
-                          ref.read(pathOfPleasureProvider.notifier).leaveSession();
+                          ref.read(pathOfPleasureProvider.notifier).reset();
+                          context.pop();
                         },
                       ),
                     ),
@@ -1137,7 +1134,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         icon: Icons.refresh,
                         onTap: () {
                           Haptics.medium();
-                          ref.read(pathOfPleasureProvider.notifier).playAgain();
+                          ref.read(pathOfPleasureProvider.notifier).backToLobby();
                         },
                       ),
                     ),
@@ -1170,7 +1167,8 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () {
-                ref.read(pathOfPleasureProvider.notifier).leaveSession();
+                ref.read(pathOfPleasureProvider.notifier).reset();
+                context.pop();
               },
             )
           else
@@ -1412,10 +1410,10 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     onPressed: () {
                       final code = codeController.text.trim().toUpperCase();
                       final name = nameController.text.trim();
-                      if (code.length == 6 && name.isNotEmpty) {
+                      if (code.length >= 4 && name.isNotEmpty) {
                         Navigator.pop(context);
                         ref.read(pathOfPleasureProvider.notifier)
-                            .joinSession(code, name);
+                            .joinGame(code, name);
                       }
                     },
                     style: ElevatedButton.styleFrom(

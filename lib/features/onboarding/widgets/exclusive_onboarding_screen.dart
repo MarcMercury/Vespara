@@ -359,15 +359,12 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   // ═══════════════════════════════════════════════════════════════════════════
   
   Future<void> _pickPhoto({bool isAvatar = false}) async {
-    final source = await _permissionService.showImageSourcePicker(context);
-    if (source == null) return;
-    
-    XFile? pickedFile;
-    if (source == ImageSource.camera) {
-      pickedFile = await _permissionService.pickImageFromCamera();
-    } else {
-      pickedFile = await _permissionService.pickImageFromGallery();
-    }
+    final pickedFile = await _permissionService.showImageSourcePicker(
+      context: context,
+      imageQuality: 85,
+      maxWidth: 1200,
+      maxHeight: 1200,
+    );
     
     if (pickedFile == null) return;
     
