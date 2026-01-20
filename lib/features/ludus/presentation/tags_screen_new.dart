@@ -9,6 +9,7 @@ import 'velvet_rope_screen.dart';
 import 'down_to_clown_screen.dart';
 import 'path_of_pleasure_screen.dart';
 import 'lane_of_lust_screen.dart';
+import 'drama_sutra_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TAG - Module 8 (Adult Games)
@@ -321,6 +322,8 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return Icons.sentiment_very_satisfied;
       case GameCategory.laneOfLust:
         return Icons.linear_scale;
+      case GameCategory.dramaSutra:
+        return Icons.theaters;
     }
   }
 
@@ -581,6 +584,12 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const LaneOfLustScreen()),
+        );
+        break;
+      case GameCategory.dramaSutra:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DramaSutraScreen()),
         );
         break;
       default:

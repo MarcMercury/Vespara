@@ -536,6 +536,15 @@ class MockDataProvider {
       participantIds: [],
       createdAt: DateTime.now(),
     ),
+    TagsGame(
+      id: 'game-9',
+      title: 'Drama-Sutra',
+      description: 'Kama Sutra meets improv comedy. Strike the pose, sell the drama!',
+      category: GameCategory.dramaSutra,
+      currentConsentLevel: ConsentLevel.red,
+      participantIds: [],
+      createdAt: DateTime.now(),
+    ),
   ];
   
   // ═══════════════════════════════════════════════════════════════════════════

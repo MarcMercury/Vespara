@@ -67,8 +67,9 @@ enum GameCategory {
   icebreakers,
   sensoryPlay,
   kamaSutra,
-  downToClown, // NEW: Heads Up-style guessing game
-  laneOfLust, // NEW: Timeline/Shit Happens style game with desire index
+  downToClown, // Heads Up-style guessing game
+  laneOfLust, // Timeline/Shit Happens style game with desire index
+  dramaSutra, // Kama Sutra meets Improv Comedy
 }
 
 extension GameCategoryExtension on GameCategory {
@@ -92,6 +93,8 @@ extension GameCategoryExtension on GameCategory {
         return 'Down to Clown';
       case GameCategory.laneOfLust:
         return 'Lane of Lust';
+      case GameCategory.dramaSutra:
+        return 'Drama-Sutra';
     }
   }
   
@@ -115,6 +118,8 @@ extension GameCategoryExtension on GameCategory {
         return 'Heads Up-style guessing game with kink vocab.';
       case GameCategory.laneOfLust:
         return 'Timeline-style game ranking desires by intensity.';
+      case GameCategory.dramaSutra:
+        return 'Kama Sutra positions with dramatic scenarios.';
     }
   }
   
@@ -132,6 +137,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.sensoryPlay:
         return ConsentLevel.yellow;
       case GameCategory.kamaSutra:
+      case GameCategory.dramaSutra:
         return ConsentLevel.red;
     }
   }
@@ -147,6 +153,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.coinTossBoard:
       case GameCategory.downToClown:
       case GameCategory.laneOfLust:
+      case GameCategory.dramaSutra:
         return 2;
       case GameCategory.theOtherRoom:
         return 4;
@@ -165,6 +172,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.coinTossBoard:
       case GameCategory.downToClown:
       case GameCategory.laneOfLust:
+      case GameCategory.dramaSutra:
         return 8;
     }
   }
