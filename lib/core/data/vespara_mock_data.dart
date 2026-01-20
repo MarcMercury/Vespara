@@ -527,6 +527,15 @@ class MockDataProvider {
       participantIds: [],
       createdAt: DateTime.now(),
     ),
+    TagsGame(
+      id: 'game-8',
+      title: 'Lane of Lust',
+      description: 'Timeline-style game where you rank desires by intensity. First to 10 cards wins!',
+      category: GameCategory.laneOfLust,
+      currentConsentLevel: ConsentLevel.yellow,
+      participantIds: [],
+      createdAt: DateTime.now(),
+    ),
   ];
   
   // ═══════════════════════════════════════════════════════════════════════════
