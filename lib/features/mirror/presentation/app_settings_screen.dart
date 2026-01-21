@@ -97,7 +97,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   _buildPermissionsTab(),
                   _buildNotificationsTab(),
                   _buildDiscoveryTab(),
-                  _buildExperienceTab(),
+                  _buildIntegrationsTab(),
                   _buildAITab(),
                 ],
               ),
@@ -182,7 +182,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           Tab(icon: Icon(Icons.security, size: 18), text: 'Access'),
           Tab(icon: Icon(Icons.notifications, size: 18), text: 'Alerts'),
           Tab(icon: Icon(Icons.explore, size: 18), text: 'Discovery'),
-          Tab(icon: Icon(Icons.favorite, size: 18), text: 'Desires'),
+          Tab(icon: Icon(Icons.extension, size: 18), text: 'Integrations'),
           Tab(icon: Icon(Icons.auto_awesome, size: 18), text: 'AI'),
         ],
       ),
@@ -806,145 +806,172 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // EXPERIENCE/DESIRES TAB
+  // INTEGRATIONS TAB
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildExperienceTab() {
+  Widget _buildIntegrationsTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VesparaSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionHeader(
-            'Your Desires',
-            'Tell us what you\'re looking for',
-            Icons.favorite_rounded,
+            'Integrations',
+            'Connect your favorite apps and services',
+            Icons.extension_rounded,
           ),
           const SizedBox(height: VesparaSpacing.lg),
           
-          // Experience Style
-          _buildSelectionCard(
-            title: 'Experience Style',
-            subtitle: 'How do you like your encounters?',
-            options: [
-              _SelectionOption(
-                value: 'spontaneous',
-                label: 'Spontaneous',
-                icon: Icons.flash_on_rounded,
-                description: 'Go with the flow',
-              ),
-              _SelectionOption(
-                value: 'curated',
-                label: 'Curated',
-                icon: Icons.auto_awesome_rounded,
-                description: 'Thoughtfully planned',
-              ),
-              _SelectionOption(
-                value: 'adventurous',
-                label: 'Adventurous',
-                icon: Icons.explore_rounded,
-                description: 'Push boundaries',
-              ),
-            ],
-            selectedValue: _experienceStyle,
-            onChanged: (v) => setState(() => _experienceStyle = v),
-          ),
-          
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Vibes
-          _buildChipsSection(
-            title: 'Your Vibe',
-            subtitle: 'What energy are you bringing?',
-            icon: Icons.music_note_rounded,
-            options: ['Intimate', 'Adventurous', 'Romantic', 'Playful', 'Mysterious', 'Bold', 'Sensual', 'Wild', 'Sophisticated', 'Casual'],
-            selectedValues: _selectedVibes,
-            onChanged: (values) => setState(() => _selectedVibes = values),
-          ),
-          
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Desires
-          _buildChipsSection(
-            title: 'Desires & Interests',
-            subtitle: 'What excites you? (Private)',
-            icon: Icons.local_fire_department_rounded,
-            options: ['Dating', 'Casual', 'Long-term', 'Friends first', 'Exploration', 'Kink-friendly', 'Travel buddy', 'Networking', 'Open relationship', 'Polyamory'],
-            selectedValues: _selectedDesires,
-            onChanged: (values) => setState(() => _selectedDesires = values),
-            isPrivate: true,
-          ),
-          
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Pace
+          // Coming Soon Banner
           Container(
-            padding: const EdgeInsets.all(VesparaSpacing.md),
+            padding: const EdgeInsets.all(VesparaSpacing.lg),
             decoration: BoxDecoration(
-              color: VesparaColors.surface,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  VesparaColors.glow.withOpacity(0.1),
+                  VesparaColors.secondary.withOpacity(0.1),
+                ],
+              ),
               borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
+              border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Icon(Icons.rocket_launch, size: 48, color: VesparaColors.glow),
+                const SizedBox(height: VesparaSpacing.md),
                 Text(
-                  'Your Pace',
+                  'Integrations Coming Soon',
                   style: TextStyle(
-                    color: VesparaColors.primary,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    color: VesparaColors.primary,
                   ),
                 ),
+                const SizedBox(height: VesparaSpacing.sm),
                 Text(
-                  'How fast do you like things to move?',
-                  style: TextStyle(color: VesparaColors.secondary, fontSize: 12),
-                ),
-                const SizedBox(height: VesparaSpacing.md),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildPaceOption('slow', '🐢', 'Slow'),
-                    _buildPaceOption('medium', '🦊', 'Medium'),
-                    _buildPaceOption('fast', '🚀', 'Fast'),
-                  ],
+                  'We\'re building powerful integrations to enhance your Vespara experience.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: VesparaColors.secondary,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
+          ),
+          
+          const SizedBox(height: VesparaSpacing.lg),
+          
+          // Planned Integrations
+          Text(
+            'PLANNED INTEGRATIONS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(height: VesparaSpacing.md),
+          
+          _buildIntegrationItem(
+            icon: Icons.calendar_month,
+            title: 'Calendar Sync',
+            subtitle: 'Sync your schedule for automatic availability',
+            color: Colors.blue,
+          ),
+          _buildIntegrationItem(
+            icon: Icons.music_note,
+            title: 'Spotify',
+            subtitle: 'Share your music taste on your profile',
+            color: Colors.green,
+          ),
+          _buildIntegrationItem(
+            icon: Icons.camera_alt,
+            title: 'Instagram',
+            subtitle: 'Import photos from your Instagram',
+            color: Colors.purple,
+          ),
+          _buildIntegrationItem(
+            icon: Icons.favorite,
+            title: 'Health & Wellness',
+            subtitle: 'Connect fitness and wellness apps',
+            color: Colors.red,
+          ),
+          _buildIntegrationItem(
+            icon: Icons.location_on,
+            title: 'Location Services',
+            subtitle: 'Enhanced location-based features',
+            color: Colors.orange,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPaceOption(String value, String emoji, String label) {
-    final isSelected = _pacePreference == value;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        setState(() => _pacePreference = value);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? VesparaColors.glow.withValues(alpha: 0.2) : VesparaColors.background,
-          borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
-          border: Border.all(
-            color: isSelected ? VesparaColors.glow : VesparaColors.border,
+  Widget _buildIntegrationItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: VesparaSpacing.md),
+      padding: const EdgeInsets.all(VesparaSpacing.md),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 24)),
-            const SizedBox(height: 4),
-            Text(
-              label,
+          const SizedBox(width: VesparaSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'SOON',
               style: TextStyle(
-                color: isSelected ? VesparaColors.glow : VesparaColors.primary,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
+                color: VesparaColors.glow,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
