@@ -1216,6 +1216,12 @@ class _BuildExperienceTabState extends ConsumerState<_BuildExperienceTab> {
   final Set<String> _selectedDesires = {};
   bool _isSaving = false;
   
+  // Discovery preferences
+  double _maxDistance = 25.0;
+  RangeValues _ageRange = const RangeValues(21, 45);
+  bool _showVerifiedOnly = false;
+  bool _showActiveRecently = true;
+  
   // 20+ VIBE OPTIONS
   static const List<Map<String, dynamic>> _vibeOptions = [
     {'id': 'night_owl', 'emoji': '🌙', 'label': 'Night Owl'},
@@ -1416,6 +1422,10 @@ class _BuildExperienceTabState extends ConsumerState<_BuildExperienceTab> {
                   : _selectedDesires.add(id);
             }),
           ),
+          const SizedBox(height: VesparaSpacing.xl),
+          
+          // Discovery Preferences Section
+          _buildDiscoverySection(context),
           const SizedBox(height: VesparaSpacing.xl),
           
           // Save Button
@@ -1864,6 +1874,170 @@ class _BuildExperienceTabState extends ConsumerState<_BuildExperienceTab> {
     return suggestions.take(5).toList();
   }
   
+  Widget _buildDiscoverySection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.explore, color: VesparaColors.glow, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DISCOVERY PREFERENCES',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  'Who do you want to meet?',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: VesparaSpacing.md),
+        
+        // Max Distance Slider
+        Container(
+          padding: const EdgeInsets.all(VesparaSpacing.md),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.near_me, color: VesparaColors.glow, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Maximum Distance', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${_maxDistance.round()} mi',
+                      style: TextStyle(
+                        color: VesparaColors.glow,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Slider(
+                value: _maxDistance,
+                min: 1,
+                max: 100,
+                activeColor: VesparaColors.glow,
+                inactiveColor: VesparaColors.border,
+                onChanged: (v) => setState(() => _maxDistance = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VesparaSpacing.md),
+        
+        // Age Range Slider
+        Container(
+          padding: const EdgeInsets.all(VesparaSpacing.md),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.cake, color: VesparaColors.glow, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Age Range', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${_ageRange.start.round()} - ${_ageRange.end.round()}',
+                      style: TextStyle(
+                        color: VesparaColors.glow,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              RangeSlider(
+                values: _ageRange,
+                min: 18,
+                max: 65,
+                activeColor: VesparaColors.glow,
+                inactiveColor: VesparaColors.border,
+                onChanged: (v) => setState(() => _ageRange = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VesparaSpacing.md),
+        
+        // Filters
+        Container(
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              SwitchListTile(
+                title: Text('Verified Only', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Only show verified profiles', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                secondary: Icon(Icons.verified, color: VesparaColors.glow),
+                value: _showVerifiedOnly,
+                onChanged: (v) => setState(() => _showVerifiedOnly = v),
+                activeColor: VesparaColors.glow,
+              ),
+              Divider(height: 1, color: VesparaColors.border),
+              SwitchListTile(
+                title: Text('Recently Active', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('Prioritize people active in the last 24 hours', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                secondary: Icon(Icons.access_time, color: VesparaColors.glow),
+                value: _showActiveRecently,
+                onChanged: (v) => setState(() => _showActiveRecently = v),
+                activeColor: VesparaColors.glow,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
   Widget _buildSaveButton(BuildContext context) {
     final totalSelected = _selectedVibes.length + _selectedInterests.length + _selectedDesires.length;
     
@@ -1917,13 +2091,19 @@ class _SettingsTabState extends ConsumerState<_SettingsTab>
     with SingleTickerProviderStateMixin {
   late TabController _settingsTabController;
   
-  // Settings state
+  // Access settings
   bool _locationEnabled = false;
   bool _notificationsEnabled = true;
+  bool _cameraEnabled = false;
+  bool _photosEnabled = false;
+  
+  // Account settings
+  bool _profileVisible = true;
+  bool _accountPaused = false;
+  
+  // AI settings
   bool _aiSuggestionsEnabled = true;
   bool _aiMatchInsights = true;
-  double _maxDistance = 25.0;
-  RangeValues _ageRange = const RangeValues(21, 45);
   
   @override
   void initState() {
@@ -1948,7 +2128,7 @@ class _SettingsTabState extends ConsumerState<_SettingsTab>
             controller: _settingsTabController,
             children: [
               _buildAccessTab(),
-              _buildDiscoveryTab(),
+              _buildAccountTab(),
               _buildAITab(),
               _buildIntegrationsTab(),
             ],
@@ -1981,7 +2161,7 @@ class _SettingsTabState extends ConsumerState<_SettingsTab>
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         tabs: const [
           Tab(text: 'ACCESS'),
-          Tab(text: 'DISCOVERY'),
+          Tab(text: 'ACCOUNT'),
           Tab(text: 'AI'),
           Tab(text: 'INTEGRATIONS'),
         ],
@@ -1995,42 +2175,237 @@ class _SettingsTabState extends ConsumerState<_SettingsTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader('Permissions', Icons.security),
+          _buildSectionHeader('App Permissions', Icons.security),
           const SizedBox(height: VesparaSpacing.md),
-          _buildToggleTile(
+          _buildPermissionCard(
             icon: Icons.location_on,
             title: 'Location',
-            subtitle: 'Enable nearby matches and Tonight Mode',
-            value: _locationEnabled,
-            onChanged: (v) => setState(() => _locationEnabled = v),
+            subtitle: 'Find nearby matches, events, and enable Tonight Mode',
+            isEnabled: _locationEnabled,
+            onToggle: (v) => setState(() => _locationEnabled = v),
+            features: ['Nearby matches', 'Local events', 'Tonight Mode', 'Distance filtering'],
           ),
-          _buildToggleTile(
-            icon: Icons.notifications,
+          const SizedBox(height: VesparaSpacing.sm),
+          _buildPermissionCard(
+            icon: Icons.notifications_active,
             title: 'Notifications',
-            subtitle: 'Get match and message alerts',
-            value: _notificationsEnabled,
-            onChanged: (v) => setState(() => _notificationsEnabled = v),
+            subtitle: 'Stay updated on matches, messages, and experiences',
+            isEnabled: _notificationsEnabled,
+            onToggle: (v) => setState(() => _notificationsEnabled = v),
+            features: ['Match alerts', 'Message notifications', 'Experience reminders', 'AI nudges'],
+          ),
+          const SizedBox(height: VesparaSpacing.sm),
+          _buildPermissionCard(
+            icon: Icons.camera_alt,
+            title: 'Camera',
+            subtitle: 'Take photos for your profile and verify your identity',
+            isEnabled: _cameraEnabled,
+            onToggle: (v) => setState(() => _cameraEnabled = v),
+            features: ['Profile photos', 'Verification', 'In-app capture'],
+          ),
+          const SizedBox(height: VesparaSpacing.sm),
+          _buildPermissionCard(
+            icon: Icons.photo_library,
+            title: 'Photo Library',
+            subtitle: 'Access your photos for profile and experience media',
+            isEnabled: _photosEnabled,
+            onToggle: (v) => setState(() => _photosEnabled = v),
+            features: ['Profile gallery', 'Experience photos', 'Chat media'],
           ),
           const SizedBox(height: VesparaSpacing.lg),
-          _buildSectionHeader('Account', Icons.person),
+          _buildPrivacyNote(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPermissionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isEnabled,
+    required ValueChanged<bool> onToggle,
+    required List<String> features,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isEnabled ? VesparaColors.glow.withOpacity(0.3) : VesparaColors.border,
+        ),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isEnabled 
+                    ? VesparaColors.glow.withOpacity(0.2)
+                    : VesparaColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isEnabled ? VesparaColors.glow : VesparaColors.secondary,
+              ),
+            ),
+            title: Text(
+              title,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              subtitle,
+              style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+            ),
+            trailing: Switch(
+              value: isEnabled,
+              onChanged: onToggle,
+              activeColor: VesparaColors.glow,
+            ),
+          ),
+          if (!isEnabled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: features.map((feature) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_outline, size: 12, color: VesparaColors.secondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        feature,
+                        style: TextStyle(color: VesparaColors.secondary, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                )).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPrivacyNote() {
+    return Container(
+      padding: const EdgeInsets.all(VesparaSpacing.md),
+      decoration: BoxDecoration(
+        color: VesparaColors.glow.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.shield_outlined, color: VesparaColors.glow),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Privacy Matters',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'We only access what you allow. Location is never shared without consent.',
+                  style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAccountTab() {
+    final user = Supabase.instance.client.auth.currentUser;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(VesparaSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('Account Details', Icons.person),
           const SizedBox(height: VesparaSpacing.md),
-          _buildActionTile(
+          
+          // Email
+          _buildInfoTile(
             icon: Icons.email,
-            title: 'Email Settings',
-            subtitle: 'Manage email preferences',
+            title: 'Email',
+            value: user?.email ?? 'Not set',
+          ),
+          
+          // Phone
+          _buildInfoTile(
+            icon: Icons.phone,
+            title: 'Phone',
+            value: user?.phone ?? 'Not set',
+          ),
+          
+          const SizedBox(height: VesparaSpacing.lg),
+          _buildSectionHeader('Privacy', Icons.lock),
+          const SizedBox(height: VesparaSpacing.md),
+          
+          _buildToggleTile(
+            icon: Icons.visibility,
+            title: 'Profile Visible',
+            subtitle: 'Others can see your profile',
+            value: _profileVisible,
+            onChanged: (v) => setState(() => _profileVisible = v),
+          ),
+          
+          _buildToggleTile(
+            icon: Icons.pause_circle,
+            title: 'Pause Account',
+            subtitle: 'Temporarily hide from discovery',
+            value: _accountPaused,
+            onChanged: (v) => setState(() => _accountPaused = v),
+          ),
+          
+          _buildActionTile(
+            icon: Icons.block,
+            title: 'Blocked Users',
+            subtitle: 'Manage your block list',
             onTap: () {},
           ),
+          
           _buildActionTile(
-            icon: Icons.lock,
-            title: 'Privacy',
-            subtitle: 'Control who can see your profile',
+            icon: Icons.download,
+            title: 'Download My Data',
+            subtitle: 'Request a copy of your data',
             onTap: () {},
           ),
+          
+          const SizedBox(height: VesparaSpacing.lg),
+          _buildSectionHeader('Danger Zone', Icons.warning),
+          const SizedBox(height: VesparaSpacing.md),
+          
           _buildActionTile(
-            icon: Icons.delete_outline,
+            icon: Icons.logout,
+            title: 'Log Out',
+            subtitle: 'Sign out of your account',
+            onTap: () async {
+              await Supabase.instance.client.auth.signOut();
+            },
+            isDestructive: true,
+          ),
+          
+          _buildActionTile(
+            icon: Icons.delete_forever,
             title: 'Delete Account',
-            subtitle: 'Permanently delete your data',
-            onTap: () {},
+            subtitle: 'Permanently delete your account and data',
+            onTap: () => _showDeleteConfirmation(context),
             isDestructive: true,
           ),
         ],
@@ -2038,79 +2413,66 @@ class _SettingsTabState extends ConsumerState<_SettingsTab>
     );
   }
   
-  Widget _buildDiscoveryTab() {
-    return SingleChildScrollView(
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        title: Text('Delete Account?', style: TextStyle(color: VesparaColors.error)),
+        content: Text(
+          'This action cannot be undone. All your data will be permanently deleted.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Implement account deletion
+            },
+            child: Text('Delete', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: VesparaSpacing.sm),
       padding: const EdgeInsets.all(VesparaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
         children: [
-          _buildSectionHeader('Discovery Preferences', Icons.explore),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          // Max Distance
           Container(
-            padding: const EdgeInsets.all(VesparaSpacing.md),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              color: VesparaColors.glow.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: VesparaColors.glow, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.near_me, color: VesparaColors.glow, size: 20),
-                    const SizedBox(width: 8),
-                    Text('Max Distance', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const Spacer(),
-                    Text('${_maxDistance.round()} mi', 
-                      style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                Slider(
-                  value: _maxDistance,
-                  min: 1,
-                  max: 100,
-                  activeColor: VesparaColors.glow,
-                  inactiveColor: VesparaColors.border,
-                  onChanged: (v) => setState(() => _maxDistance = v),
-                ),
+                Text(title, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                Text(value, style: TextStyle(fontWeight: FontWeight.w600)),
               ],
             ),
           ),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          // Age Range
-          Container(
-            padding: const EdgeInsets.all(VesparaSpacing.md),
-            decoration: BoxDecoration(
-              color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.cake, color: VesparaColors.glow, size: 20),
-                    const SizedBox(width: 8),
-                    Text('Age Range', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const Spacer(),
-                    Text('${_ageRange.start.round()} - ${_ageRange.end.round()}',
-                      style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                RangeSlider(
-                  values: _ageRange,
-                  min: 18,
-                  max: 65,
-                  activeColor: VesparaColors.glow,
-                  inactiveColor: VesparaColors.border,
-                  onChanged: (v) => setState(() => _ageRange = v),
-                ),
-              ],
-            ),
-          ),
+          Icon(Icons.chevron_right, color: VesparaColors.secondary),
         ],
       ),
     );
