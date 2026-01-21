@@ -180,67 +180,90 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Icon
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: categoryColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _getCategoryIcon(game.category),
-                      color: categoryColor,
-                      size: 24,
-                    ),
+                  // Icon + Title row
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: categoryColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          _getCategoryIcon(game.category),
+                          color: categoryColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          game.title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
                   
-                  // Title
-                  Text(
-                    game.title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 10),
                   
-                  // Description
-                  Text(
-                    game.description ?? game.category.description,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: VesparaColors.secondary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  // Rating badges row
+                  Row(
+                    children: [
+                      // Velocity
+                      _buildRatingBadge(
+                        '🏎️',
+                        game.category.velocityLabel,
+                        const Color(0xFFFF6B6B),
+                      ),
+                      const SizedBox(width: 6),
+                      // Heat
+                      _buildRatingBadge(
+                        '🔥',
+                        game.category.heatRating,
+                        const Color(0xFFFF9500),
+                      ),
+                      const SizedBox(width: 6),
+                      // Duration
+                      _buildRatingBadge(
+                        '⏱️',
+                        game.category.durationLabel == 'Full Session' ? 'Full' : game.category.durationLabel,
+                        const Color(0xFF5AC8FA),
+                      ),
+                    ],
                   ),
                   
                   const Spacer(),
                   
-                  // Meta info
-                  Row(
-                    children: [
-                      Icon(VesparaIcons.group, size: 12, color: VesparaColors.secondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${game.category.minPlayers}-${game.category.maxPlayers}',
-                        style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        game.currentConsentLevel.emoji,
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
+                  // Heat rating badge at bottom
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(VesparaIcons.group, size: 10, color: categoryColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${game.category.minPlayers}-${game.category.maxPlayers}',
+                          style: TextStyle(fontSize: 10, color: categoryColor, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -268,6 +291,31 @@ class _TagScreenState extends ConsumerState<TagScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRatingBadge(String emoji, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 10)),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

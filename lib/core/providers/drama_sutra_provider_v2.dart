@@ -596,63 +596,6 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
       imageUrl: 'assets/images/drama_sutra/zombie.png',
       difficulty: 2, intensity: PositionIntensity.acrobatic,
     ),
-    
-    // CLASSIC COUPLE POSITIONS (11)
-    DramaPosition(
-      id: 'c1', name: 'Spoons',
-      description: 'Side by side comfort.',
-      difficulty: 1, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'c2', name: 'Face to Face',
-      description: 'Eye contact connection.',
-      difficulty: 1, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'c3', name: 'The Lotus',
-      description: 'Seated embrace.',
-      difficulty: 2, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'c4', name: 'The Bridge',
-      description: 'Arched for pleasure.',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'c5', name: 'The Throne',
-      description: 'Royal seated pleasure.',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'c6', name: 'Standing Ovation',
-      description: 'On your feet passion.',
-      difficulty: 3, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'c7', name: 'The Cradle',
-      description: 'Held in loving arms.',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'c8', name: 'The Arch',
-      description: 'Bend back in ecstasy.',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'c9', name: 'Lazy Sunday',
-      description: 'Relaxed sideways love.',
-      difficulty: 1, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'c10', name: 'The Wheelbarrow',
-      description: 'Garden of delights.',
-      difficulty: 5, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'c11', name: 'Cowgirl',
-      description: 'Ride into the sunset.',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
   ];
 }
 

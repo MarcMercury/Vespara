@@ -150,6 +150,78 @@ extension GameCategoryExtension on GameCategory {
         return 8;
     }
   }
+  
+  /// Velocity Meter (0-100 mph) - "How fast might this get you going?"
+  int get velocityMph {
+    switch (this) {
+      case GameCategory.icebreakers:
+        return 0;   // Innocent fun — safe for brunch
+      case GameCategory.downToClown:
+        return 40;  // Flirty tension and teasing
+      case GameCategory.velvetRope:
+        return 70;  // Expect sparks — possibly skin
+      case GameCategory.pathOfPleasure:
+        return 40;  // Flirty tension and teasing
+      case GameCategory.laneOfLust:
+        return 70;  // Expect sparks — possibly skin
+      case GameCategory.flashFreeze:
+        return 100; // Full throttle. Buckle up.
+      case GameCategory.dramaSutra:
+        return 100; // Full throttle. Buckle up.
+    }
+  }
+  
+  String get velocityLabel {
+    if (velocityMph == 0) return '0 mph';
+    if (velocityMph <= 40) return '40 mph';
+    if (velocityMph <= 70) return '70 mph';
+    return '100 mph';
+  }
+  
+  /// Heat Rating (PG-XXX) - "What kind of action might you see?"
+  String get heatRating {
+    switch (this) {
+      case GameCategory.icebreakers:
+        return 'PG';     // Playful, suggestive, mostly teasing
+      case GameCategory.downToClown:
+        return 'PG-13';  // Light touching, kissing, bold flirting
+      case GameCategory.velvetRope:
+        return 'R';      // Risqué, passionate, hands-on
+      case GameCategory.pathOfPleasure:
+        return 'PG-13';  // Light touching, kissing, bold flirting
+      case GameCategory.laneOfLust:
+        return 'R';      // Risqué, passionate, hands-on
+      case GameCategory.flashFreeze:
+        return 'X';      // Explicit, adventurous, clothing unlikely
+      case GameCategory.dramaSutra:
+        return 'XXX';    // Uninhibited, wild, gloriously unfiltered
+    }
+  }
+  
+  /// Duration - "How long will you be playing?"
+  String get durationLabel {
+    switch (this) {
+      case GameCategory.icebreakers:
+      case GameCategory.downToClown:
+      case GameCategory.flashFreeze:
+        return 'Quickie';    // 5-15 min
+      case GameCategory.velvetRope:
+      case GameCategory.pathOfPleasure:
+      case GameCategory.laneOfLust:
+        return 'Foreplay';   // 20-45 min
+      case GameCategory.dramaSutra:
+        return 'Full Session'; // 60+ min
+    }
+  }
+  
+  String get durationTime {
+    switch (durationLabel) {
+      case 'Quickie': return '5-15 min';
+      case 'Foreplay': return '20-45 min';
+      case 'Full Session': return '60+ min';
+      default: return '';
+    }
+  }
 }
 
 /// TAGS Game Model
