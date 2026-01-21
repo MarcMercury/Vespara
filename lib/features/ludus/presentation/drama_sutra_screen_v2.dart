@@ -240,24 +240,24 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
                 ),
                 const Spacer(),
                 if (state.currentRound > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: DramaColors.gold.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Round ${state.currentRound}/${state.maxRounds}',
-                    style: const TextStyle(
-                      color: DramaColors.gold,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: DramaColors.gold.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Round ${state.currentRound}/${state.maxRounds}',
+                      style: const TextStyle(
+                        color: DramaColors.gold,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              const Spacer(),
-              const SizedBox(width: 48),
-            ],
-          ),
+                const Spacer(),
+                const SizedBox(width: 48),
+              ],
+            ),
           
           const SizedBox(height: 24),
           
