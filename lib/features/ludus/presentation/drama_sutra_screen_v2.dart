@@ -258,218 +258,219 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
                 const SizedBox(width: 48),
               ],
             ),
-          
-          const SizedBox(height: 24),
-          
-          // Title
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [DramaColors.crimson, DramaColors.gold],
-            ).createShader(bounds),
-            child: const Text(
-              'DRAMA SUTRA',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4,
-                color: Colors.white,
+            
+            const SizedBox(height: 24),
+            
+            // Title
+            ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [DramaColors.crimson, DramaColors.gold],
+              ).createShader(bounds),
+              child: const Text(
+                'DRAMA SUTRA',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 4,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          const Text(
-            'Strike a Pose!',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.white70,
-              fontStyle: FontStyle.italic,
+            
+            const SizedBox(height: 12),
+            
+            const Text(
+              'Strike a Pose!',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.white70,
+                fontStyle: FontStyle.italic,
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Director indicator
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: DramaColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: DramaColors.gold.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  '🎬 DIRECTOR',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: DramaColors.gold,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
+            
+            const SizedBox(height: 32),
+            
+            // Director indicator
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: DramaColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: DramaColors.gold.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    '🎬 DIRECTOR',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: DramaColors.gold,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Player ${state.directorNumber}',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                  const SizedBox(height: 8),
+                  Text(
+                    'Player ${state.directorNumber}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Pass the phone to this player',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white54,
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Pass the phone to this player',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white54,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Player count selector
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: DramaColors.surface.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Players:',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(width: 16),
-                ...List.generate(7, (i) {
-                  final count = i + 2; // 2-8 players
-                  final isSelected = state.playerCount == count;
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      ref.read(dramaSutraV2Provider.notifier).setPlayerCount(count);
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: isSelected 
-                            ? DramaColors.gold 
-                            : Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$count',
-                          style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.white70,
-                            fontWeight: FontWeight.w700,
+            
+            const SizedBox(height: 24),
+            
+            // Player count selector
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: DramaColors.surface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Players:',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(width: 16),
+                  ...List.generate(7, (i) {
+                    final count = i + 2; // 2-8 players
+                    final isSelected = state.playerCount == count;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        ref.read(dramaSutraV2Provider.notifier).setPlayerCount(count);
+                      },
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected 
+                              ? DramaColors.gold 
+                              : Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$count',
+                            style: TextStyle(
+                              color: isSelected ? Colors.black : Colors.white70,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Rules reminder
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: DramaColors.crimson.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: DramaColors.crimson.withOpacity(0.3)),
+              ),
+              child: const Column(
+                children: [
+                  Text(
+                    '📜 RULES',
+                    style: TextStyle(
+                      color: DramaColors.crimson,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
                     ),
-                  );
-                }),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Rules reminder
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: DramaColors.crimson.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: DramaColors.crimson.withOpacity(0.3)),
-            ),
-            child: const Column(
-              children: [
-                Text(
-                  '📜 RULES',
-                  style: TextStyle(
-                    color: DramaColors.crimson,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '• Describe the pose WITHOUT saying the name\n'
-                  '• NO body parts (arm, leg, etc.)\n'
-                  '• NO touching or demonstrating\n'
-                  '• Point camera at players when time runs out!',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.5,
+                  SizedBox(height: 8),
+                  Text(
+                    '• Describe the pose WITHOUT saying the name\n'
+                    '• NO body parts (arm, leg, etc.)\n'
+                    '• NO touching or demonstrating\n'
+                    '• Point camera at players when time runs out!',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // ACTION button
-          GestureDetector(
-            onTap: _onActionPressed,
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        DramaColors.crimson,
-                        DramaColors.crimson.withOpacity(0.8),
+            
+            const SizedBox(height: 24),
+            
+            // ACTION button
+            GestureDetector(
+              onTap: _onActionPressed,
+              child: AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          DramaColors.crimson,
+                          DramaColors.crimson.withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: DramaColors.crimson.withOpacity(
+                            0.4 + _pulseController.value * 0.3,
+                          ),
+                          blurRadius: 20 + _pulseController.value * 10,
+                          spreadRadius: 2,
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: DramaColors.crimson.withOpacity(
-                          0.4 + _pulseController.value * 0.3,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '🎬',
+                          style: TextStyle(fontSize: 24),
                         ),
-                        blurRadius: 20 + _pulseController.value * 10,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '🎬',
-                        style: TextStyle(fontSize: 24),
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'ACTION!',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 4,
+                        SizedBox(width: 12),
+                        Text(
+                          'ACTION!',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 4,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
