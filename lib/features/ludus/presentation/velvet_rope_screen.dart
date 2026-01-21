@@ -8,7 +8,7 @@ import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/velvet_rope_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// VELVET ROPE - The Spicy Share or Dare
+/// SHARE OR DARE - Spin the Wheel, Pick Your Poison
 /// "Celestial Luxury" - Deep Obsidian, Ethereal Blue, Burning Crimson
 /// TAG Engine Signature Game
 /// ════════════════════════════════════════════════════════════════════════════
@@ -189,7 +189,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 animation: _glowController,
                 builder: (context, child) {
                   return Text(
-                    '🎭 VELVET ROPE',
+                    '� SHARE OR DARE',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -219,7 +219,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
           const SizedBox(height: 16),
           
           const Text(
-            'The Spicy Share or Dare',
+            'Spin the Wheel, Pick Your Poison',
             style: TextStyle(
               fontSize: 16,
               fontStyle: FontStyle.italic,
@@ -326,7 +326,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Text(
-                          'ENTER THE VELVET ROPE',
+                          'START GAME',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,

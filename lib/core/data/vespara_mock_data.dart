@@ -485,8 +485,8 @@ class MockDataProvider {
     ),
     TagsGame(
       id: 'game-3',
-      title: 'Velvet Rope',
-      description: 'Truth or Dare evolved. Consent-tiered card deck scaling from flirty to explicit.',
+      title: 'Share or Dare',
+      description: 'Spin the wheel, pick your poison. Share a secret or prove your courage with a dare.',
       category: GameCategory.velvetRope,
       currentConsentLevel: ConsentLevel.yellow,
       participantIds: [],

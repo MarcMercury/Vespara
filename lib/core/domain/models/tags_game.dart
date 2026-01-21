@@ -77,7 +77,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.icebreakers:
         return 'Ice Breakers';
       case GameCategory.velvetRope:
-        return 'Velvet Rope';
+        return 'Share or Dare';
       case GameCategory.pathOfPleasure:
         return 'Path of Pleasure';
       case GameCategory.laneOfLust:
@@ -92,17 +92,17 @@ extension GameCategoryExtension on GameCategory {
   String get description {
     switch (this) {
       case GameCategory.downToClown:
-        return 'Heads Up-style guessing game with kink vocab.';
+        return 'Heads Up-style guessing game with spicy vocab.';
       case GameCategory.icebreakers:
         return 'Light conversation starters for new connections.';
       case GameCategory.velvetRope:
-        return 'Truth or Dare evolved. Consent-tiered card deck.';
+        return 'Spin the wheel, share a secret or prove your courage.';
       case GameCategory.pathOfPleasure:
-        return 'Comparative ranking game of desires.';
+        return 'Family Feud-style ranking game of desires.';
       case GameCategory.laneOfLust:
         return 'Timeline-style game ranking desires by intensity.';
       case GameCategory.dramaSutra:
-        return 'Kama Sutra positions with dramatic scenarios.';
+        return 'Strike a pose! Director describes, group performs.';
       case GameCategory.flashFreeze:
         return 'Red Light, Green Light evolved. Exposure requires endurance.';
     }

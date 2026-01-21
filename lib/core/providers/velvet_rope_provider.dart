@@ -5,7 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/ludus_repository.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// VELVET ROPE - The Spicy Share or Dare
+/// SHARE OR DARE - Spin the Wheel, Pick Your Poison
 /// Provider & State Management
 /// ════════════════════════════════════════════════════════════════════════════
 
@@ -329,7 +329,11 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
     int newIndex;
     
     if (type == CardType.share) {
-      if (state.shareDeck.isEmpty) return;
+      // If deck empty, try to reload demo cards first
+      if (state.shareDeck.isEmpty) {
+        _loadDemoCards();
+        if (state.shareDeck.isEmpty) return;
+      }
       newIndex = state.shareIndex % state.shareDeck.length;
       card = state.shareDeck[newIndex];
       state = state.copyWith(
@@ -339,7 +343,11 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
         phase: VelvetPhase.revealing,
       );
     } else {
-      if (state.dareDeck.isEmpty) return;
+      // If deck empty, try to reload demo cards first
+      if (state.dareDeck.isEmpty) {
+        _loadDemoCards();
+        if (state.dareDeck.isEmpty) return;
+      }
       newIndex = state.dareIndex % state.dareDeck.length;
       card = state.dareDeck[newIndex];
       state = state.copyWith(

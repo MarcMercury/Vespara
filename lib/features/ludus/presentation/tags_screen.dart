@@ -307,19 +307,19 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   IconData _getCategoryIcon(GameCategory category) {
     switch (category) {
       case GameCategory.downToClown:
-        return Icons.sentiment_very_satisfied_rounded;
+        return Icons.sentiment_very_satisfied_rounded; // 🤡 Clown/guessing
       case GameCategory.icebreakers:
-        return Icons.ac_unit_rounded;
+        return Icons.ac_unit_rounded; // ❄️ Ice
       case GameCategory.velvetRope:
-        return Icons.style_rounded;
+        return Icons.theater_comedy_rounded; // 🎭 Share or Dare
       case GameCategory.pathOfPleasure:
-        return Icons.route_rounded;
+        return Icons.leaderboard_rounded; // 📊 Ranking game
       case GameCategory.laneOfLust:
-        return Icons.linear_scale_rounded;
+        return Icons.whatshot_rounded; // 🔥 Desire intensity
       case GameCategory.dramaSutra:
-        return Icons.theaters_rounded;
+        return Icons.accessibility_new_rounded; // 🧘 Poses
       case GameCategory.flashFreeze:
-        return Icons.flash_on_rounded;
+        return Icons.flash_on_rounded; // ⚡ Flash
     }
   }
 
