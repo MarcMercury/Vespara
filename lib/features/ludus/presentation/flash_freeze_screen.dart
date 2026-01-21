@@ -335,7 +335,6 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
           description: 'Put one item back on.',
           note: '',
         ),
-        ),
       ],
     );
   }

@@ -239,7 +239,7 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
                   icon: const Icon(VesparaIcons.back, color: Colors.white70),
                 ),
                 const Spacer(),
-              if (state.currentRound > 0)
+                if (state.currentRound > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
