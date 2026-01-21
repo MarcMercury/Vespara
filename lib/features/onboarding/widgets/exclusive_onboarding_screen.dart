@@ -87,6 +87,20 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   String? _discretionLevel;
   int _travelRadius = 25;
   final Set<String> _partyAvailability = {};
+  double _bandwidth = 0.5; // 0 = Lurking, 1 = Ravenous
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FORM DATA - The Vibe (Dynamics & Heat)
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  String? _heatLevel;
+  final Set<String> _hardLimits = {};
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FORM DATA - The Dossier
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  final _hookController = TextEditingController(); // 140 char hook
   
   // ═══════════════════════════════════════════════════════════════════════════
   // FORM DATA - Traits & Preferences
@@ -250,6 +264,18 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       '💪 Rough',
       '🌸 Gentle & Sensual',
       '🎲 Spontaneous',
+      '👁️ Voyeur',
+      '🎪 Exhibitionist',
+      '🍦 Vanilla',
+      '⛓️ Bondage',
+      '🎨 Sensation Play',
+      '🧊 Temperature Play',
+      '👢 Boot/Foot Worship',
+      '🩹 Impact Play',
+      '🎀 Service Oriented',
+      '👅 Oral Focused',
+      '🌊 Edging',
+      '🫦 Tantric',
     ],
     '🌶️ Turn Ons': [
       '💋 Kissing',
@@ -258,6 +284,14 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       '👁️ Eye Contact',
       '🔊 Being Vocal',
       '💆 Massage',
+      '🍑 Toys',
+      '📸 Photos/Videos (Private)',
+      '🪢 Being Tied',
+      '👄 Teasing',
+      '💦 Squirting',
+      '🌙 Aftercare',
+      '🎭 Costumes',
+      '📍 Public Risk',
     ],
     '🛏️ Experience': [
       '🌱 Curious Beginner',
@@ -268,19 +302,47 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     ],
   };
   
+  // Heat level options (how spicy)
+  static const List<Map<String, dynamic>> _heatLevelOptions = [
+    {'id': 'mild', 'label': 'Mild', 'emoji': '🌸', 'desc': 'Romance & connection first', 'color': 0xFF4CAF50},
+    {'id': 'medium', 'label': 'Medium', 'emoji': '🌶️', 'desc': 'Open to experimentation', 'color': 0xFFFFC107},
+    {'id': 'hot', 'label': 'Hot', 'emoji': '🔥', 'desc': 'Kink friendly', 'color': 0xFFFF9800},
+    {'id': 'nuclear', 'label': 'Nuclear', 'emoji': '☢️', 'desc': 'Anything goes', 'color': 0xFFF44336},
+  ];
+  
+  // Hard limits
+  static const List<Map<String, String>> _hardLimitOptions = [
+    {'id': 'no_smokers', 'label': 'No Smokers'},
+    {'id': 'no_drugs', 'label': 'No Drug Use'},
+    {'id': 'no_pain', 'label': 'No Pain Play'},
+    {'id': 'no_blood', 'label': 'No Blood'},
+    {'id': 'no_humiliation', 'label': 'No Humiliation'},
+    {'id': 'no_anal', 'label': 'No Anal'},
+    {'id': 'no_choking', 'label': 'No Breath Play'},
+    {'id': 'no_marking', 'label': 'No Marks/Bruises'},
+    {'id': 'no_filming', 'label': 'No Photos/Videos'},
+    {'id': 'no_couples', 'label': 'No Couples'},
+    {'id': 'no_groups', 'label': 'No Groups'},
+    {'id': 'protection_required', 'label': 'Protection Required'},
+    {'id': 'no_bareback', 'label': 'No Bareback'},
+    {'id': 'no_fluids', 'label': 'No Fluid Exchange'},
+    {'id': 'no_public', 'label': 'Nothing Public'},
+    {'id': 'no_strangers', 'label': 'Must Know First'},
+    {'id': 'sober_only', 'label': 'Sober Only'},
+  ];
+  
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP DEFINITIONS
+  // STEP DEFINITIONS - THE INTERVIEW
   // ═══════════════════════════════════════════════════════════════════════════
   
   static const List<Map<String, String>> _steps = [
-    {'title': 'AGE VERIFICATION', 'subtitle': 'Confirm you\'re 21+'},
-    {'title': 'WHO YOU ARE', 'subtitle': 'The basics'},
-    {'title': 'YOUR PHOTOS', 'subtitle': 'Show your best self'},
-    {'title': 'RELATIONSHIP STATUS', 'subtitle': 'Your current situation'},
-    {'title': 'WHAT YOU\'RE SEEKING', 'subtitle': 'What brings you here'},
-    {'title': 'AVAILABILITY', 'subtitle': 'When & where'},
-    {'title': 'YOUR VIBE', 'subtitle': 'What makes you, you'},
-    {'title': 'YOUR STORY', 'subtitle': 'AI-crafted from your selections'},
+    {'title': 'CLEARANCE', 'subtitle': 'Age verification'},
+    {'title': 'THE BASICS', 'subtitle': 'Name, identity, location'},
+    {'title': 'LOGISTICS', 'subtitle': 'Status, availability, hosting'},
+    {'title': 'THE SEARCH', 'subtitle': 'What you\'re looking for'},
+    {'title': 'THE VIBE', 'subtitle': 'Your dynamic & heat level'},
+    {'title': 'THE DOSSIER', 'subtitle': 'Photos & your hook'},
+    {'title': 'AI PROFILE', 'subtitle': 'Let AI craft your story'},
   ];
   
   @override
@@ -288,6 +350,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     _pageController.dispose();
     _displayNameController.dispose();
     _bioController.dispose();
+    _hookController.dispose();
     super.dispose();
   }
   
@@ -297,22 +360,23 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   
   bool _canProceed() {
     switch (_currentStep) {
-      case 0: // Age verification
+      case 0: // CLEARANCE - Age verification
         return _birthDate != null && _ageConfirmed && _isOver21();
-      case 1: // Basic info
+      case 1: // THE BASICS - Name, identity, location
         return _displayNameController.text.trim().isNotEmpty &&
-               _selectedGenders.isNotEmpty;
-      case 2: // Photos
-        return true; // Photos optional but encouraged
-      case 3: // Relationship status
-        return _relationshipStatus.isNotEmpty;
-      case 4: // Seeking
+               _selectedGenders.isNotEmpty &&
+               _selectedOrientations.isNotEmpty;
+      case 2: // LOGISTICS - Status, availability, hosting
+        return _relationshipStatus.isNotEmpty &&
+               _availability.isNotEmpty &&
+               _hostingStatus != null;
+      case 3: // THE SEARCH - What you're looking for
         return _seeking.isNotEmpty;
-      case 5: // Availability
-        return _availability.isNotEmpty && _hostingStatus != null;
-      case 6: // Traits
-        return _selectedTraits.length >= 5;
-      case 7: // Bio
+      case 4: // THE VIBE - Dynamics & heat level
+        return _selectedTraits.length >= 3 && _heatLevel != null;
+      case 5: // THE DOSSIER - Photos & hook
+        return true; // Optional but encouraged
+      case 6: // AI PROFILE - Bio generation
         return true;
       default:
         return false;
@@ -337,8 +401,8 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       );
       setState(() => _currentStep++);
       
-      // Auto-generate bio when entering bio step
-      if (_currentStep == 7 && _bioController.text.isEmpty) {
+      // Auto-generate bio when entering AI Profile step
+      if (_currentStep == 6 && _bioController.text.isEmpty) {
         _generateAIBio();
       }
     } else {
@@ -747,6 +811,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
         'bio': _bioController.text.trim().isEmpty 
             ? 'New to Vespara ✨' 
             : _bioController.text.trim(),
+        'hook': _hookController.text.trim(),
         'birth_date': _birthDate?.toIso8601String().split('T').first,
         'age_verified': true,
         'age_verified_at': DateTime.now().toIso8601String(),
@@ -771,16 +836,19 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
         'seeking': _seeking.toList(),
         'partner_involvement': _partnerInvolvement,
         
-        // Availability
+        // Availability & Logistics
         'availability_general': _availability.toList(),
         'scheduling_style': _schedulingStyle,
         'hosting_status': _hostingStatus,
         'discretion_level': _discretionLevel,
         'travel_radius': _travelRadius,
         'party_availability': _partyAvailability.toList(),
+        'bandwidth': _bandwidth,
         
-        // Traits
+        // Vibe & Heat
         'looking_for': _selectedTraits.toList(),
+        'heat_level': _heatLevel,
+        'hard_limits': _hardLimits.toList(),
         
         // Onboarding status
         'onboarding_complete': true,
@@ -847,14 +915,13 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildAgeVerificationStep(),
-                  _buildBasicInfoStep(),
-                  _buildPhotosStep(),
-                  _buildRelationshipStep(),
-                  _buildSeekingStep(),
-                  _buildAvailabilityStep(),
-                  _buildTraitsStep(),
-                  _buildBioStep(),
+                  _buildClearanceStep(),      // 0: Age verification
+                  _buildBasicsStep(),          // 1: Name, identity, location
+                  _buildLogisticsStep(),       // 2: Status, availability, hosting
+                  _buildSearchStep(),          // 3: What you're looking for
+                  _buildVibeStep(),            // 4: Dynamics & heat level
+                  _buildDossierStep(),         // 5: Photos & hook
+                  _buildAIProfileStep(),       // 6: AI-generated bio
                 ],
               ),
             ),
@@ -970,10 +1037,10 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 0: AGE VERIFICATION
+  // STEP 0: CLEARANCE (Age Verification)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildAgeVerificationStep() {
+  Widget _buildClearanceStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1166,10 +1233,10 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 1: BASIC INFO
+  // STEP 1: THE BASICS (Name, Identity, Location)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildBasicInfoStep() {
+  Widget _buildBasicsStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1348,10 +1415,10 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 2: PHOTOS
+  // STEP 5: THE DOSSIER (Photos & Hook)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildPhotosStep() {
+  Widget _buildDossierStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1498,6 +1565,58 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
             },
           ),
           
+          const SizedBox(height: 40),
+          
+          // THE HOOK - 140 character teaser
+          Text(
+            '✨ The Hook',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '140 characters to make them swipe right. Make it count!',
+            style: TextStyle(
+              fontSize: 12,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: VesparaColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: VesparaColors.border),
+            ),
+            child: TextField(
+              controller: _hookController,
+              maxLength: 140,
+              maxLines: 2,
+              style: TextStyle(
+                color: VesparaColors.primary,
+                fontSize: 16,
+              ),
+              decoration: InputDecoration(
+                hintText: 'e.g., "Adventurous spirit seeking midnight conversations and morning coffee dates..."',
+                hintStyle: TextStyle(
+                  color: VesparaColors.secondary.withOpacity(0.6),
+                  fontSize: 14,
+                ),
+                contentPadding: const EdgeInsets.all(16),
+                border: InputBorder.none,
+                counterStyle: TextStyle(
+                  color: _hookController.text.length > 120 
+                      ? VesparaColors.tagsRed 
+                      : VesparaColors.secondary,
+                ),
+              ),
+              onChanged: (value) => setState(() {}),
+            ),
+          ),
+          
           const SizedBox(height: 100),
         ],
       ),
@@ -1531,10 +1650,10 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 3: RELATIONSHIP STATUS
+  // STEP 2: LOGISTICS (Status, Availability, Hosting)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildRelationshipStep() {
+  Widget _buildLogisticsStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1542,6 +1661,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
         children: [
           const SizedBox(height: 20),
           
+          // RELATIONSHIP STATUS
           Text(
             'Current relationship situation',
             style: TextStyle(
@@ -1552,13 +1672,13 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
           ),
           const SizedBox(height: 8),
           Text(
-            'Select all that apply to your current situation',
+            'Select all that apply',
             style: TextStyle(
               fontSize: 12,
               color: VesparaColors.secondary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           ..._relationshipOptions.map((option) {
             final isSelected = _relationshipStatus.contains(option['id']);
@@ -1582,7 +1702,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
             );
           }),
           
-          // Partner involvement (if applicable)
+          // PARTNER INVOLVEMENT (if applicable)
           if (_relationshipStatus.any((s) => 
               s.contains('partnered') || 
               s.contains('married') || 
@@ -1597,15 +1717,6 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'How does your partner participate?',
-              style: TextStyle(
-                fontSize: 12,
-                color: VesparaColors.secondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -1622,6 +1733,164 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
             ),
           ],
           
+          const SizedBox(height: 32),
+          
+          // AVAILABILITY
+          Text(
+            'When are you typically free to connect?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Select all that apply',
+            style: TextStyle(
+              fontSize: 12,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _availabilityOptions.map((option) {
+              final isSelected = _availability.contains(option['id']);
+              return _buildSelectableChip(
+                label: '${option['emoji']} ${option['label']}',
+                isSelected: isSelected,
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _availability.remove(option['id']);
+                    } else {
+                      _availability.add(option['id'] as String);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // HOSTING
+          Text(
+            'What is your hosting situation?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _hostingOptions.map((option) {
+              final isSelected = _hostingStatus == option['id'];
+              return _buildSelectableChip(
+                label: '${option['emoji']} ${option['label']}',
+                isSelected: isSelected,
+                onTap: () {
+                  setState(() => _hostingStatus = option['id'] as String);
+                },
+              );
+            }).toList(),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // TRAVEL RADIUS
+          Text(
+            'How far are you willing to go?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                '$_travelRadius miles',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.glow,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _travelRadius <= 10 ? 'Local only' : 
+                _travelRadius <= 25 ? 'My area' :
+                _travelRadius <= 50 ? 'Regional' : 'Will travel',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: _travelRadius.toDouble(),
+            min: 5,
+            max: 100,
+            divisions: 19,
+            activeColor: VesparaColors.glow,
+            inactiveColor: VesparaColors.surface,
+            onChanged: (value) {
+              setState(() => _travelRadius = value.round());
+            },
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // BANDWIDTH SLIDER
+          Text(
+            'How much energy do you have for this right now?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('🐢 Just Lurking', style: TextStyle(fontSize: 11, color: VesparaColors.secondary)),
+              Text('🔥 Ravenous', style: TextStyle(fontSize: 11, color: VesparaColors.secondary)),
+            ],
+          ),
+          Slider(
+            value: _bandwidth,
+            min: 0,
+            max: 1,
+            activeColor: _bandwidth < 0.3 ? VesparaColors.tagsGreen :
+                        _bandwidth < 0.6 ? VesparaColors.tagsYellow :
+                        _bandwidth < 0.8 ? Colors.orange : VesparaColors.tagsRed,
+            inactiveColor: VesparaColors.surface,
+            onChanged: (value) {
+              setState(() => _bandwidth = value);
+            },
+          ),
+          Center(
+            child: Text(
+              _bandwidth < 0.2 ? 'Taking it slow, just browsing' :
+              _bandwidth < 0.4 ? 'Open to the right opportunity' :
+              _bandwidth < 0.6 ? 'Actively looking' :
+              _bandwidth < 0.8 ? 'Ready to meet' : 'Available and eager! 🔥',
+              style: TextStyle(
+                color: VesparaColors.glow,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          
           const SizedBox(height: 100),
         ],
       ),
@@ -1629,10 +1898,10 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 4: SEEKING
+  // STEP 3: THE SEARCH (What You're Looking For)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildSeekingStep() {
+  Widget _buildSearchStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1687,217 +1956,180 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 5: AVAILABILITY
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STEP 4: THE VIBE (Dynamics & Heat Level)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildAvailabilityStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20),
-          
-          // When
-          Text(
-            'When are you typically available?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _availabilityOptions.map((option) {
-              final isSelected = _availability.contains(option['id']);
-              return _buildSelectableChip(
-                label: '${option['emoji']} ${option['label']}',
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _availability.remove(option['id']);
-                    } else {
-                      _availability.add(option['id'] as String);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Scheduling
-          Text(
-            'How much notice do you need?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ..._schedulingOptions.map((option) {
-            final isSelected = _schedulingStyle == option['id'];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _buildOptionCard(
-                label: option['label']!,
-                desc: option['desc']!,
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() => _schedulingStyle = option['id']);
-                },
-              ),
-            );
-          }),
-          
-          const SizedBox(height: 32),
-          
-          // Hosting
-          Text(
-            'Hosting situation',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _hostingOptions.map((option) {
-              final isSelected = _hostingStatus == option['id'];
-              return _buildSelectableChip(
-                label: '${option['emoji']} ${option['label']}',
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() => _hostingStatus = option['id'] as String);
-                },
-              );
-            }).toList(),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Discretion
-          Text(
-            'Discretion level',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ..._discretionOptions.map((option) {
-            final isSelected = _discretionLevel == option['id'];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _buildOptionCard(
-                emoji: option['emoji'] as String,
-                label: option['label'] as String,
-                desc: option['desc'] as String,
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() => _discretionLevel = option['id'] as String);
-                },
-              ),
-            );
-          }),
-          
-          const SizedBox(height: 32),
-          
-          // Travel radius
-          Text(
-            'How far will you travel?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '$_travelRadius miles',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.glow,
-            ),
-          ),
-          Slider(
-            value: _travelRadius.toDouble(),
-            min: 5,
-            max: 100,
-            divisions: 19,
-            activeColor: VesparaColors.glow,
-            inactiveColor: VesparaColors.surface,
-            onChanged: (value) {
-              setState(() => _travelRadius = value.round());
-            },
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Party availability
-          Text(
-            'Interested in events/parties?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _partyOptions.map((option) {
-              final isSelected = _partyAvailability.contains(option['id']);
-              return _buildSelectableChip(
-                label: '${option['emoji']} ${option['label']}',
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() {
-                    if (option['id'] == 'none') {
-                      _partyAvailability.clear();
-                      _partyAvailability.add('none');
-                    } else {
-                      _partyAvailability.remove('none');
-                      if (isSelected) {
-                        _partyAvailability.remove(option['id']);
-                      } else {
-                        _partyAvailability.add(option['id'] as String);
-                      }
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          
-          const SizedBox(height: 100),
-        ],
-      ),
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 6: TRAITS
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildTraitsStep() {
+  Widget _buildVibeStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 8),
+          
+          // HEAT LEVEL SECTION
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '🔥 Your Heat Level',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              'How spicy are you looking to get?',
+              style: TextStyle(
+                fontSize: 12,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          ..._heatLevelOptions.map((option) {
+            final isSelected = _heatLevel == option['id'];
+            final Color cardColor = option['id'] == 'mild' ? Colors.pink.shade100 :
+                                   option['id'] == 'medium' ? Colors.orange.shade200 :
+                                   option['id'] == 'hot' ? Colors.red.shade300 :
+                                   Colors.purple.shade400;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: GestureDetector(
+                onTap: () => setState(() => _heatLevel = option['id'] as String),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? cardColor.withOpacity(0.3) : VesparaColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? cardColor : VesparaColors.border,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(option['emoji'] as String, style: const TextStyle(fontSize: 28)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              option['label'] as String,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected ? cardColor : VesparaColors.primary,
+                              ),
+                            ),
+                            Text(
+                              option['desc'] as String,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: VesparaColors.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        Icon(Icons.check_circle, color: cardColor),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          
+          const SizedBox(height: 32),
+          
+          // HARD LIMITS SECTION
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '🚫 Hard Limits',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              'Non-negotiables. Select any that apply.',
+              style: TextStyle(
+                fontSize: 12,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _hardLimitOptions.map((option) {
+                final isSelected = _hardLimits.contains(option['id']);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _hardLimits.remove(option['id']);
+                      } else {
+                        _hardLimits.add(option['id'] as String);
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? VesparaColors.tagsRed.withOpacity(0.2) : VesparaColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? VesparaColors.tagsRed : VesparaColors.border,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      '${option['emoji']} ${option['label']}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isSelected ? VesparaColors.tagsRed : VesparaColors.primary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // TRAITS SECTION
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '✨ Your Vibe Traits',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           
           // Progress
@@ -1991,10 +2223,10 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 7: BIO
+  // STEP 6: AI PROFILE (Bio Generation)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildBioStep() {
+  Widget _buildAIProfileStep() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
