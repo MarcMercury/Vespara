@@ -8,6 +8,7 @@ import '../../../core/providers/match_state_provider.dart';
 import '../../wire/presentation/wire_screen.dart';
 import '../../planner/presentation/planner_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
+import 'groups_section.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
@@ -79,9 +80,22 @@ class _NestScreenState extends ConsumerState<NestScreen>
         child: Column(
           children: [
             _buildHeader(),
-            _buildStats(),
-            _buildTabBar(),
-            Expanded(child: _buildTabBarView()),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const GroupsSection(),
+                    const SizedBox(height: 16),
+                    _buildStats(),
+                    _buildTabBar(),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: _buildTabBarView(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

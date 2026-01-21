@@ -181,6 +181,13 @@ class ChatConversation extends Equatable {
   final DateTime? staleSince;
   final bool isTyping;
   
+  /// Group chat fields
+  final bool isGroupChat;
+  final String? groupId;
+  final String? groupName;
+  final String? groupAvatar;
+  final int? memberCount;
+  
   const ChatConversation({
     required this.id,
     required this.matchId,
@@ -195,15 +202,21 @@ class ChatConversation extends Equatable {
     this.isStale = false,
     this.staleSince,
     this.isTyping = false,
+    this.isGroupChat = false,
+    this.groupId,
+    this.groupName,
+    this.groupAvatar,
+    this.memberCount,
   });
   
   factory ChatConversation.fromJson(Map<String, dynamic> json) {
+    final isGroup = json['conversation_type'] == 'group' || json['is_group_chat'] == true;
     return ChatConversation(
       id: json['id'] as String,
       matchId: json['match_link_id'] as String? ?? json['match_id'] as String? ?? '',
       otherUserId: json['other_user_id'] as String? ?? '',
-      otherUserName: json['other_user_name'] as String?,
-      otherUserAvatar: json['other_user_avatar'] as String?,
+      otherUserName: isGroup ? null : json['other_user_name'] as String?,
+      otherUserAvatar: isGroup ? null : json['other_user_avatar'] as String?,
       lastMessage: json['last_message'] as String?,
       lastMessageAt: json['last_message_at'] != null 
           ? DateTime.parse(json['last_message_at']) 
@@ -216,7 +229,24 @@ class ChatConversation extends Equatable {
           ? DateTime.parse(json['stale_since']) 
           : null,
       isTyping: json['typing_indicator'] != null,
+      isGroupChat: isGroup,
+      groupId: json['group_id'] as String?,
+      groupName: json['group_name'] as String?,
+      groupAvatar: json['group_avatar'] as String?,
+      memberCount: json['member_count'] as int?,
     );
+  }
+  
+  /// Display name for the conversation
+  String get displayName {
+    if (isGroupChat) return groupName ?? 'Group Chat';
+    return otherUserName ?? 'Unknown';
+  }
+  
+  /// Display avatar for the conversation
+  String? get displayAvatar {
+    if (isGroupChat) return groupAvatar;
+    return otherUserAvatar;
   }
   
   /// Days since last message
@@ -233,5 +263,5 @@ class ChatConversation extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, matchId, lastMessageAt, unreadCount];
+  List<Object?> get props => [id, matchId, lastMessageAt, unreadCount, isGroupChat];
 }

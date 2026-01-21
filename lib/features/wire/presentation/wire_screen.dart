@@ -127,6 +127,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
 
   Widget _buildConversationTile(ChatConversation conversation) {
     final isStale = conversation.isStale;
+    final isGroup = conversation.isGroupChat;
     
     return GestureDetector(
       onTap: () => setState(() => _selectedConversationId = conversation.id),
@@ -139,7 +140,9 @@ class _WireScreenState extends ConsumerState<WireScreen> {
           border: Border.all(
             color: isStale 
                 ? VesparaColors.warning.withOpacity(0.3) 
-                : VesparaColors.glow.withOpacity(0.1),
+                : isGroup 
+                    ? VesparaColors.glow.withOpacity(0.3)
+                    : VesparaColors.glow.withOpacity(0.1),
           ),
         ),
         child: Row(
@@ -151,18 +154,21 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
+                    shape: isGroup ? BoxShape.rectangle : BoxShape.circle,
+                    borderRadius: isGroup ? BorderRadius.circular(16) : null,
                     color: VesparaColors.glow.withOpacity(0.2),
                   ),
                   child: Center(
-                    child: Text(
-                      conversation.otherUserName?[0].toUpperCase() ?? '?',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.primary,
-                      ),
-                    ),
+                    child: isGroup
+                        ? Icon(Icons.group, size: 26, color: VesparaColors.glow)
+                        : Text(
+                            conversation.displayName[0].toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
                   ),
                 ),
                 if (conversation.unreadCount > 0)
@@ -200,14 +206,41 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        conversation.otherUserName ?? 'Unknown',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: conversation.unreadCount > 0 
-                              ? FontWeight.w700 
-                              : FontWeight.w500,
-                          color: VesparaColors.primary,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (isGroup) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: VesparaColors.glow.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'CIRCLE',
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                    color: VesparaColors.glow,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            Expanded(
+                              child: Text(
+                                conversation.displayName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: conversation.unreadCount > 0 
+                                      ? FontWeight.w700 
+                                      : FontWeight.w500,
+                                  color: VesparaColors.primary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       Text(
@@ -222,6 +255,15 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      if (isGroup && conversation.memberCount != null) ...[
+                        Text(
+                          '${conversation.memberCount} • ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: VesparaColors.secondary,
+                          ),
+                        ),
+                      ],
                       if (isStale) ...[
                         Icon(
                           Icons.hourglass_empty,
@@ -245,7 +287,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                       ),
                     ],
                   ),
-                  if (isStale) ...[
+                  if (isStale && !isGroup) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -741,6 +783,8 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
   }
 
   Widget _buildChatHeader() {
+    final isGroup = widget.conversation.isGroupChat;
+    
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -759,18 +803,21 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              shape: isGroup ? BoxShape.rectangle : BoxShape.circle,
+              borderRadius: isGroup ? BorderRadius.circular(14) : null,
               color: VesparaColors.glow.withOpacity(0.2),
             ),
             child: Center(
-              child: Text(
-                widget.conversation.otherUserName?[0].toUpperCase() ?? '?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.primary,
-                ),
-              ),
+              child: isGroup
+                  ? Icon(Icons.group, size: 22, color: VesparaColors.glow)
+                  : Text(
+                      widget.conversation.displayName[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -778,16 +825,43 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.conversation.otherUserName ?? 'Unknown',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary,
-                  ),
+                Row(
+                  children: [
+                    if (isGroup) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.glow.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'CIRCLE',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                            color: VesparaColors.glow,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Text(
+                        widget.conversation.displayName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
-                  widget.conversation.isTyping ? 'Typing...' : 'Active recently',
+                  isGroup 
+                      ? '${widget.conversation.memberCount ?? 0} members'
+                      : widget.conversation.isTyping ? 'Typing...' : 'Active recently',
                   style: TextStyle(
                     fontSize: 12,
                     color: widget.conversation.isTyping 
@@ -798,10 +872,11 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => _showVideoCallDialog(),
-            icon: const Icon(Icons.videocam_outlined, color: VesparaColors.secondary),
-          ),
+          if (!isGroup)
+            IconButton(
+              onPressed: () => _showVideoCallDialog(),
+              icon: const Icon(Icons.videocam_outlined, color: VesparaColors.secondary),
+            ),
           IconButton(
             onPressed: () => _showChatOptionsMenu(),
             icon: const Icon(Icons.more_vert, color: VesparaColors.secondary),
