@@ -20,11 +20,32 @@ class UserProfile extends Equatable {
   final int? age;
   final String? occupation;
   final String? location;
+  final String? city;
+  final String? state;
+  final String? zipCode;
   final List<String> photos;
   final List<String> relationshipTypes;
   final List<String> loveLanguages;
   final List<String> kinks;
   final List<String> boundaries;
+  
+  // Identity fields (from onboarding)
+  final String? pronouns;
+  final List<String> gender;
+  final List<String> orientation;
+  final List<String> relationshipStatus;
+  final List<String> seeking;
+  final List<String> lookingFor;
+  final List<String> availabilityGeneral;
+  final String? hostingStatus;
+  final String? discretionLevel;
+  final String? schedulingStyle;
+  final String? partnerInvolvement;
+  
+  // Build Experience fields (vibe/interests/desires)
+  final List<String> vibeTags;
+  final List<String> interestTags;
+  final List<String> desireTags;
   
   const UserProfile({
     required this.id,
@@ -43,11 +64,28 @@ class UserProfile extends Equatable {
     this.age,
     this.occupation,
     this.location,
+    this.city,
+    this.state,
+    this.zipCode,
     this.photos = const [],
     this.relationshipTypes = const [],
     this.loveLanguages = const [],
     this.kinks = const [],
     this.boundaries = const [],
+    this.pronouns,
+    this.gender = const [],
+    this.orientation = const [],
+    this.relationshipStatus = const [],
+    this.seeking = const [],
+    this.lookingFor = const [],
+    this.availabilityGeneral = const [],
+    this.hostingStatus,
+    this.discretionLevel,
+    this.schedulingStyle,
+    this.partnerInvolvement,
+    this.vibeTags = const [],
+    this.interestTags = const [],
+    this.desireTags = const [],
   });
   
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -61,11 +99,28 @@ class UserProfile extends Equatable {
       age: json['age'] as int?,
       occupation: json['occupation'] as String?,
       location: json['location'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      zipCode: json['zip_code'] as String?,
       photos: List<String>.from(json['photos'] ?? []),
       relationshipTypes: List<String>.from(json['relationship_types'] ?? []),
       loveLanguages: List<String>.from(json['love_languages'] ?? []),
       kinks: List<String>.from(json['kinks'] ?? []),
       boundaries: List<String>.from(json['boundaries'] ?? []),
+      pronouns: json['pronouns'] as String?,
+      gender: List<String>.from(json['gender'] ?? []),
+      orientation: List<String>.from(json['orientation'] ?? []),
+      relationshipStatus: List<String>.from(json['relationship_status'] ?? []),
+      seeking: List<String>.from(json['seeking'] ?? []),
+      lookingFor: List<String>.from(json['looking_for'] ?? []),
+      availabilityGeneral: List<String>.from(json['availability_general'] ?? []),
+      hostingStatus: json['hosting_status'] as String?,
+      discretionLevel: json['discretion_level'] as String?,
+      schedulingStyle: json['scheduling_style'] as String?,
+      partnerInvolvement: json['partner_involvement'] as String?,
+      vibeTags: List<String>.from(json['vibe_tags'] ?? []),
+      interestTags: List<String>.from(json['interest_tags'] ?? []),
+      desireTags: List<String>.from(json['desire_tags'] ?? []),
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
