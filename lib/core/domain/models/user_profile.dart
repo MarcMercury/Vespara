@@ -47,6 +47,14 @@ class UserProfile extends Equatable {
   final List<String> interestTags;
   final List<String> desireTags;
   
+  // THE INTERVIEW fields (heat, limits, logistics)
+  final String? hook;  // 140-char profile teaser
+  final String? heatLevel;  // mild, medium, hot, nuclear
+  final List<String> hardLimits;  // non-negotiable boundaries
+  final double bandwidth;  // 0-1 availability/energy level
+  final int travelRadius;  // miles willing to travel
+  final List<String> partyAvailability;  // event/party preferences
+  
   const UserProfile({
     required this.id,
     required this.email,
@@ -86,6 +94,12 @@ class UserProfile extends Equatable {
     this.vibeTags = const [],
     this.interestTags = const [],
     this.desireTags = const [],
+    this.hook,
+    this.heatLevel,
+    this.hardLimits = const [],
+    this.bandwidth = 0.5,
+    this.travelRadius = 25,
+    this.partyAvailability = const [],
   });
   
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -115,6 +129,12 @@ class UserProfile extends Equatable {
       lookingFor: List<String>.from(json['looking_for'] ?? []),
       availabilityGeneral: List<String>.from(json['availability_general'] ?? []),
       hostingStatus: json['hosting_status'] as String?,
+      hook: json['hook'] as String?,
+      heatLevel: json['heat_level'] as String?,
+      hardLimits: List<String>.from(json['hard_limits'] ?? []),
+      bandwidth: (json['bandwidth'] as num?)?.toDouble() ?? 0.5,
+      travelRadius: json['travel_radius'] as int? ?? 25,
+      partyAvailability: List<String>.from(json['party_availability'] ?? []),
       discretionLevel: json['discretion_level'] as String?,
       schedulingStyle: json['scheduling_style'] as String?,
       partnerInvolvement: json['partner_involvement'] as String?,

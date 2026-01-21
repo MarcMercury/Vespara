@@ -1,19 +1,20 @@
 # VESPARA
 ## The Social Operating System
 
-**Status:** Pre-Alpha | **Codename:** The Hub | **Est:** 2026
+**Status:** Pre-Alpha | **Codename:** The Hub | **Est:** 2026 | **Last Updated:** January 2026
 
 ---
 
 ## 🌑 The Vision
 
-**Vespara is not a dating app.** It is a **Relationship Management System (RMS)** combined with a **Consent-Forward Game Engine**.
+**Vespara is not a dating app.** It is a **Relationship Management System (RMS)** combined with a **Consent-Forward Game Engine** for sex-positive, kink-aware adults (21+).
 
 We solve "Match Burnout" by replacing the slot-machine mechanics of modern dating with an intelligent, intentional operating system.
 
 - **Intentionality:** We calculate ROI on social time.
 - **The "Bento" Grid:** The entire OS lives on a single, 8-Tile dashboard.
 - **TAGS Integration:** A built-in "Ludus" engine for trusted, rated adult gameplay.
+- **The Interview:** A comprehensive 7-step onboarding experience that captures who you really are.
 
 ---
 
@@ -25,7 +26,7 @@ The application is structured around a **Bento Grid of 8 Modules.**
 
 | MIRROR | DISCOVER |
 |--------|----------|
-| **Profile & Analytics.** View your profile, brutal AI feedback, and connection stats. | **Swipe Marketplace.** Card-based discovery with swipe gestures. |
+| **Profile & Analytics.** 4-tab experience: Truth (AI feedback), Profile (view/edit), Build (vibe/interests), Settings (account/access/AI). | **Swipe Marketplace.** Card-based discovery with swipe gestures. |
 
 | NEST | WIRE |
 |------|------|
@@ -43,9 +44,52 @@ The application is structured around a **Bento Grid of 8 Modules.**
 
 ---
 
+## 🎭 THE INTERVIEW: Onboarding Experience
+
+New users go through a comprehensive 7-step "Interview" that captures their complete profile:
+
+### The 7 Phases
+
+| Phase | Name | What's Captured |
+|-------|------|-----------------|
+| 1 | **CLEARANCE** | Age verification (21+ required) |
+| 2 | **THE BASICS** | Name, pronouns, gender, orientation, location |
+| 3 | **LOGISTICS** | Relationship status, availability, hosting, travel radius, bandwidth |
+| 4 | **THE SEARCH** | What they're looking for (friends, dates, play partners, etc.) |
+| 5 | **THE VIBE** | Heat level, hard limits, personality traits |
+| 6 | **THE DOSSIER** | Photos + 140-character "Hook" teaser |
+| 7 | **AI PROFILE** | AI-generated bio based on all selections |
+
+### Heat Levels
+
+| Level | Emoji | Description |
+|-------|-------|-------------|
+| **Mild** | 🌸 | Romance & connection first |
+| **Medium** | 🔥 | Balanced heat |
+| **Hot** | 🌶️ | Bring the spice |
+| **Nuclear** | ☢️ | Anything goes |
+
+### Hard Limits
+
+Users can specify non-negotiable boundaries including: protection requirements, STI testing, no pain/blood, no filming, must verify identity, and more.
+
+---
+
 ## 🎮 TAGS: Trusted Adult Games Protocol
 
 Located in **Tile 6 (The Ludus)**, TAGS is a proprietary game engine designed for consent-forward interaction.
+
+### The 7 Games
+
+| Game | Description |
+|------|-------------|
+| **Down to Clown** | Ice-breaking party game |
+| **Ice Breakers** | Get-to-know-you questions |
+| **Share or Dare** | Truth or dare with consent levels |
+| **Path of Pleasure** | Family Feud-style intimacy game |
+| **Lane of Lust** | Progressive intimacy challenges |
+| **Drama Sutra** | Position-based card game |
+| **Flash & Freeze** | Timed photo challenges |
 
 ### The Consent Meter
 
@@ -145,7 +189,7 @@ lib/
 │   ├── shredder/        # Ghost Protocol
 │   └── ludus/           # TAG games (7 games)
 supabase/
-├── migrations/          # 17+ SQL migrations
+├── migrations/          # 30 SQL migrations
 └── functions/           # 7 Edge Functions
 ```
 
@@ -192,11 +236,13 @@ flutter run
 
 ## 🗄️ Database Setup (Already Complete ✅)
 
-### Tables Created (15 Total)
+### Tables Created (20+ Total)
 
 | Table | Purpose |
 |-------|---------|
-| `profiles` | User profiles with vouch count |
+| `profiles` | Comprehensive user profiles with Interview data |
+| `groups` | Vespara Circles/Groups for communities |
+| `group_members` | Group membership with roles |
 | `roster_matches` | CRM entries with pipeline stages |
 | `conversations` | Messaging threads with momentum |
 | `messages` | Individual messages |
@@ -211,6 +257,18 @@ flutter run
 | `user_settings` | Preferences |
 | `blocked_users` | Block list |
 | `tonight_locations` | Location check-ins |
+| `ai_user_insights` | AI-generated user analysis |
+| `ai_nudges` | Intelligent suggestions |
+| `tag_achievements` | Game achievement tracking |
+
+### Profile Fields (Enhanced)
+
+The profiles table now includes:
+- **Identity:** gender[], orientation[], pronouns
+- **Logistics:** relationship_status[], availability, hosting_status, travel_radius, bandwidth
+- **Vibe:** heat_level, hard_limits[], looking_for[]
+- **Experience:** interest_tags[], desire_tags[], vibe_tags[]
+- **Profile:** hook (140-char), bio, photos[]
 
 ### Edge Functions (Deployed ✅)
 
@@ -221,6 +279,45 @@ flutter run
 | `resuscitator` | Stale conversation revival | `/functions/v1/resuscitator` |
 | `vouch-chain` | Verification link management | `/functions/v1/vouch-chain` |
 | `tonight-mode` | Location features | `/functions/v1/tonight-mode` |
+
+---
+
+## 📋 Recent Updates (January 2026)
+
+### THE INTERVIEW Overhaul
+- Complete 7-step onboarding flow with explicit sex-positive options
+- Heat levels (Mild → Nuclear) for matching preferences
+- Hard limits selection (17 non-negotiable boundaries)
+- Bandwidth slider ("Just Lurking" → "Ravenous")
+- 140-character "Hook" profile teaser
+- AI-generated bio based on all selections
+
+### Mirror Screen Enhanced
+- 4-tab layout: TRUTH | PROFILE | BUILD | SETTINGS
+- Settings moved from header button to dedicated tab
+- Account management (email, phone, pause, delete)
+- Access controls (Camera, Photos permissions)
+- Discovery sliders in Build tab
+- AI integrations tab
+
+### Groups/Circles Feature
+- Create and manage community groups
+- Role-based permissions (Owner, Admin, Moderator, Member)
+- Group chat integration with Wire
+- Privacy controls (Public, Private, Secret)
+
+### TAG Games
+- 7 branded games with consent levels
+- Enhanced card systems
+- Achievement tracking
+- Unified analytics
+
+### Database Enhancements
+- 30 migrations with comprehensive schema
+- Profile experience tags (interests, desires)
+- Vibe fields (heat_level, hard_limits, bandwidth)
+- Groups and membership tables
+- AI insights and nudges
 
 ---
 

@@ -28,6 +28,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _cityController;
   late TextEditingController _stateController;
   late TextEditingController _zipCodeController;
+  late TextEditingController _hookController;
   
   String? _selectedPronouns;
   List<String> _selectedGender = [];
@@ -40,6 +41,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _selectedDiscretionLevel;
   String? _selectedSchedulingStyle;
   String? _selectedPartnerInvolvement;
+  String? _selectedHeatLevel;
+  List<String> _selectedHardLimits = [];
+  double _bandwidth = 0.5;
+  int _travelRadius = 25;
+  List<String> _selectedPartyAvailability = [];
   
   bool _isSaving = false;
   
@@ -95,6 +101,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     'Solo only', 'Partner sometimes joins', 'Partner always joins',
     'Looking for couples', 'Depends on the situation'
   ];
+  
+  static const List<String> _heatLevelOptions = [
+    'mild', 'medium', 'hot', 'nuclear'
+  ];
+  
+  static const Map<String, String> _heatLevelLabels = {
+    'mild': '🌸 Mild - Romance first',
+    'medium': '🔥 Medium - Balanced heat',
+    'hot': '🌶️ Hot - Bring the spice',
+    'nuclear': '☢️ Nuclear - Anything goes',
+  };
+  
+  static const List<String> _hardLimitOptions = [
+    'no_smokers', 'no_drugs', 'no_pain', 'no_blood', 'no_humiliation',
+    'no_anal', 'no_choking', 'protection_required', 'no_bareback',
+    'no_age_gaps', 'no_couples', 'no_singles', 'no_public', 'no_filming',
+    'must_verify', 'no_strangers', 'sti_tested_only'
+  ];
+  
+  static const List<String> _partyAvailabilityOptions = [
+    'House parties', 'Club events', 'Private events', 'Lifestyle events',
+    'Not interested in events'
+  ];
 
   @override
   void initState() {
@@ -106,6 +135,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _cityController = TextEditingController(text: widget.profile.city ?? '');
     _stateController = TextEditingController(text: widget.profile.state ?? '');
     _zipCodeController = TextEditingController(text: widget.profile.zipCode ?? '');
+    _hookController = TextEditingController(text: widget.profile.hook ?? '');
     
     _selectedPronouns = widget.profile.pronouns;
     _selectedGender = List.from(widget.profile.gender);
@@ -118,6 +148,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _selectedDiscretionLevel = widget.profile.discretionLevel;
     _selectedSchedulingStyle = widget.profile.schedulingStyle;
     _selectedPartnerInvolvement = widget.profile.partnerInvolvement;
+    _selectedHeatLevel = widget.profile.heatLevel;
+    _selectedHardLimits = List.from(widget.profile.hardLimits);
+    _bandwidth = widget.profile.bandwidth;
+    _travelRadius = widget.profile.travelRadius;
+    _selectedPartyAvailability = List.from(widget.profile.partyAvailability);
   }
 
   @override
@@ -129,6 +164,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _cityController.dispose();
     _stateController.dispose();
     _zipCodeController.dispose();
+    _hookController.dispose();
     super.dispose();
   }
 
@@ -151,6 +187,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'city': _cityController.text.trim(),
         'state': _stateController.text.trim(),
         'zip_code': _zipCodeController.text.trim(),
+        'hook': _hookController.text.trim(),
         'pronouns': _selectedPronouns,
         'gender': _selectedGender,
         'orientation': _selectedOrientation,
@@ -162,6 +199,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'discretion_level': _selectedDiscretionLevel,
         'scheduling_style': _selectedSchedulingStyle,
         'partner_involvement': _selectedPartnerInvolvement,
+        'heat_level': _selectedHeatLevel,
+        'hard_limits': _selectedHardLimits,
+        'bandwidth': _bandwidth,
+        'travel_radius': _travelRadius,
+        'party_availability': _selectedPartyAvailability,
         'updated_at': DateTime.now().toIso8601String(),
       };
       

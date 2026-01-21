@@ -34,6 +34,9 @@ class DiscoverableProfile extends Equatable {
   // Kinks & boundaries (for adult features)
   final List<String> kinks;
   final List<String> boundaries;
+  final String? heatLevel;
+  final List<String> hardLimits;
+  final String? hook;
   
   // Match quality
   final double compatibilityScore;
@@ -69,6 +72,9 @@ class DiscoverableProfile extends Equatable {
     this.prompts = const [],
     this.kinks = const [],
     this.boundaries = const [],
+    this.heatLevel,
+    this.hardLimits = const [],
+    this.hook,
     this.compatibilityScore = 0.5,
     this.isStrictMatch = true,
     this.isWildcard = false,
@@ -111,6 +117,9 @@ class DiscoverableProfile extends Equatable {
           .toList() ?? [],
       kinks: List<String>.from(json['kinks'] ?? []),
       boundaries: List<String>.from(json['boundaries'] ?? []),
+      heatLevel: json['heat_level'] as String?,
+      hardLimits: List<String>.from(json['hard_limits'] ?? []),
+      hook: json['hook'] as String?,
       compatibilityScore: (json['compatibility_score'] as num?)?.toDouble() ?? 0.5,
       isStrictMatch: json['is_strict_match'] as bool? ?? true,
       isWildcard: json['is_wildcard'] as bool? ?? false,
