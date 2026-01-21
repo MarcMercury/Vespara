@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/vespara_icons.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../../../core/providers/dtc_game_provider.dart';
 import '../widgets/tag_rating_display.dart';
@@ -211,7 +212,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
             alignment: Alignment.topLeft,
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, color: Colors.white70),
+              icon: const Icon(VesparaIcons.back, color: Colors.white70),
             ),
           ),
           
@@ -293,7 +294,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.emoji_events, color: Colors.amber, size: 18),
+                        const Icon(VesparaIcons.trophy, color: Colors.amber, size: 18),
                         const SizedBox(width: 8),
                         Text(
                           'High Score: ${gameState.userStats!.highScore}',
@@ -324,7 +325,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.play_circle_outline, color: Colors.orange, size: 16),
+                        Icon(VesparaIcons.play, color: Colors.orange, size: 16),
                         SizedBox(width: 8),
                         Text(
                           'Demo Mode • 100 Prompts',
@@ -589,7 +590,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                           ),
                           if (isSelected)
                             Icon(
-                              Icons.check_circle,
+                              VesparaIcons.confirm,
                               color: _getHeatColor(filter),
                             ),
                         ],
@@ -760,7 +761,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.touch_app, color: Colors.orange),
+                  const Icon(Icons.touch_app_rounded, color: Colors.orange),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(

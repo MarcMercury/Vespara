@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/vespara_icons.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/tags_game.dart';
 import 'ice_breakers_screen.dart';
@@ -9,7 +10,7 @@ import 'velvet_rope_screen.dart';
 import 'down_to_clown_screen.dart';
 import 'path_of_pleasure_screen.dart';
 import 'lane_of_lust_screen.dart';
-import 'drama_sutra_screen.dart';
+import 'drama_sutra_screen_v2.dart';
 import 'flash_freeze_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -59,7 +60,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+            icon: const Icon(VesparaIcons.back, color: VesparaColors.primary),
           ),
           Column(
             children: [
@@ -83,7 +84,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           ),
           IconButton(
             onPressed: () => _showRandomGame(),
-            icon: const Icon(Icons.casino, color: VesparaColors.tagsYellow),
+            icon: const Icon(VesparaIcons.random, color: VesparaColors.tagsYellow),
           ),
         ],
       ),
@@ -98,7 +99,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
-          _buildCategoryChip(null, 'All', Icons.apps, VesparaColors.glow),
+          _buildCategoryChip(null, 'All', VesparaIcons.games, VesparaColors.glow),
           ...GameCategory.values.map((cat) => _buildCategoryChip(
             cat,
             cat.displayName,
@@ -228,7 +229,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                   // Meta info
                   Row(
                     children: [
-                      Icon(Icons.people, size: 12, color: VesparaColors.secondary),
+                      Icon(VesparaIcons.group, size: 12, color: VesparaColors.secondary),
                       const SizedBox(width: 4),
                       Text(
                         '${game.category.minPlayers}-${game.category.maxPlayers}',
@@ -277,7 +278,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.games,
+            VesparaIcons.games,
             size: 80,
             color: VesparaColors.tagsYellow.withOpacity(0.3),
           ),
@@ -306,19 +307,19 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   IconData _getCategoryIcon(GameCategory category) {
     switch (category) {
       case GameCategory.downToClown:
-        return Icons.sentiment_very_satisfied;
+        return Icons.sentiment_very_satisfied_rounded;
       case GameCategory.icebreakers:
-        return Icons.ac_unit;
+        return Icons.ac_unit_rounded;
       case GameCategory.velvetRope:
-        return Icons.style;
+        return Icons.style_rounded;
       case GameCategory.pathOfPleasure:
-        return Icons.route;
+        return Icons.route_rounded;
       case GameCategory.laneOfLust:
-        return Icons.linear_scale;
+        return Icons.linear_scale_rounded;
       case GameCategory.dramaSutra:
-        return Icons.theaters;
+        return Icons.theaters_rounded;
       case GameCategory.flashFreeze:
-        return Icons.flash_on;
+        return Icons.flash_on_rounded;
     }
   }
 
@@ -455,7 +456,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                       child: _buildInfoCard(
                         'Players',
                         '${game.category.minPlayers}-${game.category.maxPlayers}',
-                        Icons.people,
+                        VesparaIcons.group,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -463,7 +464,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                       child: _buildInfoCard(
                         'Level',
                         game.currentConsentLevel.displayName,
-                        Icons.thermostat,
+                        VesparaIcons.fire,
                       ),
                     ),
                   ],
@@ -490,7 +491,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.play_arrow),
+                        Icon(VesparaIcons.play),
                         const SizedBox(width: 8),
                         Text(
                           'Start Game',
@@ -584,7 +585,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       case GameCategory.dramaSutra:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const DramaSutraScreen()),
+          MaterialPageRoute(builder: (_) => const DramaSutraScreenV2()),
         );
         break;
       case GameCategory.flashFreeze:

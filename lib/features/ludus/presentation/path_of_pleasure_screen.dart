@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:math' as math;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/motion.dart';
+import '../../../core/theme/vespara_icons.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/providers/path_of_pleasure_provider.dart';
 
@@ -118,7 +119,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     ],
                   ),
                   child: const Icon(
-                    Icons.whatshot,
+                    VesparaIcons.fire,
                     size: 60,
                     color: Colors.white,
                   ),
@@ -157,7 +158,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 // How to Play button
                 TextButton.icon(
                   onPressed: () => _showHowToPlay(context),
-                  icon: const Icon(Icons.help_outline, color: Colors.white70),
+                  icon: const Icon(VesparaIcons.help, color: Colors.white70),
                   label: Text(
                     'How to Play',
                     style: AppTheme.labelLarge.copyWith(color: Colors.white70),
@@ -168,7 +169,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 // Host Game button
                 _buildPrimaryButton(
                   label: 'Host Game',
-                  icon: Icons.add_circle_outline,
+                  icon: VesparaIcons.add,
                   onTap: () {
                     Haptics.light();
                     ref.read(pathOfPleasureProvider.notifier).hostGame('Player');
@@ -179,7 +180,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 // Join Game button
                 _buildSecondaryButton(
                   label: 'Join Game',
-                  icon: Icons.login,
+                  icon: VesparaIcons.forward,
                   onTap: () => _showJoinDialog(context),
                 ),
               ],
@@ -215,7 +216,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.tag, color: Colors.white70),
+                      const Icon(Icons.tag_rounded, color: Colors.white70),
                       const SizedBox(width: 12),
                       Text(
                         state.roomCode ?? '',
@@ -227,7 +228,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       ),
                       const SizedBox(width: 12),
                       IconButton(
-                        icon: const Icon(Icons.copy, color: Colors.white70),
+                        icon: const Icon(VesparaIcons.copy, color: Colors.white70),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: state.roomCode ?? ''));
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -319,7 +320,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 if (isHost && state.players.length >= 2)
                   _buildPrimaryButton(
                     label: 'Start Game',
-                    icon: Icons.play_arrow,
+                    icon: VesparaIcons.play,
                     onTap: () {
                       Haptics.medium();
                       ref.read(pathOfPleasureProvider.notifier).startGame();
@@ -469,7 +470,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           ),
           child: Row(
             children: [
-              const Icon(Icons.trending_up, color: Colors.purple),
+              const Icon(VesparaIcons.trending, color: Colors.purple),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -522,7 +523,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           padding: const EdgeInsets.all(24),
           child: _buildPrimaryButton(
             label: (state.me?.isLockedIn ?? false) ? 'Submitted!' : 'Lock In Rankings',
-            icon: (state.me?.isLockedIn ?? false) ? Icons.check : Icons.lock,
+            icon: (state.me?.isLockedIn ?? false) ? VesparaIcons.check : VesparaIcons.lock,
             onTap: (state.me?.isLockedIn ?? false)
                 ? null
                 : () {
@@ -608,7 +609,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
               
               // Drag handle
               const Icon(
-                Icons.drag_handle,
+                Icons.drag_handle_rounded,
                 color: Colors.white38,
               ),
             ],
@@ -679,7 +680,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           padding: const EdgeInsets.all(24),
           child: _buildPrimaryButton(
             label: 'See Your Score',
-            icon: Icons.arrow_forward,
+            icon: VesparaIcons.forward,
             onTap: () {
               Haptics.medium();
               // Auto-transitions handled by provider
@@ -765,8 +766,8 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                           children: [
                             Icon(
                               card.rankChange > 0
-                                  ? Icons.trending_up
-                                  : Icons.trending_down,
+                                  ? Icons.trending_up_rounded
+                                  : Icons.trending_down_rounded,
                               size: 16,
                               color: card.rankChange > 0
                                   ? Colors.green
@@ -801,10 +802,10 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 const SizedBox(height: 4),
                 Icon(
                   isCorrect
-                      ? Icons.check_circle
+                      ? VesparaIcons.confirm
                       : difference == 1
-                          ? Icons.remove_circle
-                          : Icons.cancel,
+                          ? Icons.remove_circle_rounded
+                          : VesparaIcons.close,
                   color: isCorrect
                       ? Colors.green
                       : difference == 1
@@ -886,21 +887,21 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       _buildScoreRow(
                         'Exact matches',
                         roundResult.cardResults.where((r) => r.pointsEarned == 100).length,
-                        Icons.check_circle,
+                        VesparaIcons.confirm,
                         Colors.green,
                       ),
                       const SizedBox(height: 12),
                       _buildScoreRow(
                         'Off by 1',
                         roundResult.cardResults.where((r) => r.pointsEarned == 50).length,
-                        Icons.remove_circle,
+                        Icons.remove_circle_rounded,
                         Colors.orange,
                       ),
                       const SizedBox(height: 12),
                       _buildScoreRow(
                         'Off by 2',
                         roundResult.cardResults.where((r) => r.pointsEarned == 25).length,
-                        Icons.radio_button_unchecked,
+                        Icons.radio_button_unchecked_rounded,
                         Colors.yellow,
                       ),
                       if (roundResult.correctCount == state.cardsPerRound) ...[
@@ -908,7 +909,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.star, color: Colors.amber),
+                            const Icon(VesparaIcons.achievement, color: Colors.amber),
                             const SizedBox(width: 8),
                             Text(
                               'PERFECT ROUND! +200 Bonus',
@@ -918,7 +919,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.star, color: Colors.amber),
+                            const Icon(VesparaIcons.achievement, color: Colors.amber),
                           ],
                         ),
                       ],
@@ -933,7 +934,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   label: state.currentRound >= state.totalRounds
                       ? 'See Final Results'
                       : 'Next Round',
-                  icon: Icons.arrow_forward,
+                  icon: VesparaIcons.forward,
                   onTap: () {
                     Haptics.medium();
                     ref.read(pathOfPleasureProvider.notifier).skipToNextRound();
@@ -1044,7 +1045,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                                 child: Center(
                                   child: index < 3
                                       ? Icon(
-                                          Icons.emoji_events,
+                                          VesparaIcons.trophy,
                                           color: index == 0
                                               ? Colors.amber
                                               : index == 1
@@ -1079,7 +1080,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                                       Row(
                                         children: [
                                           const Icon(
-                                            Icons.local_fire_department,
+                                            VesparaIcons.fire,
                                             size: 14,
                                             color: Colors.orange,
                                           ),
@@ -1120,7 +1121,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     Expanded(
                       child: _buildSecondaryButton(
                         label: 'Exit',
-                        icon: Icons.exit_to_app,
+                        icon: VesparaIcons.leave,
                         onTap: () {
                           ref.read(pathOfPleasureProvider.notifier).reset();
                           context.pop();
@@ -1131,7 +1132,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     Expanded(
                       child: _buildPrimaryButton(
                         label: 'Play Again',
-                        icon: Icons.refresh,
+                        icon: VesparaIcons.restart,
                         onTap: () {
                           Haptics.medium();
                           ref.read(pathOfPleasureProvider.notifier).backToLobby();
@@ -1165,7 +1166,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
         children: [
           if (showBack)
             IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: const Icon(VesparaIcons.back, color: Colors.white),
               onPressed: () {
                 ref.read(pathOfPleasureProvider.notifier).reset();
                 context.pop();
@@ -1173,12 +1174,12 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             )
           else
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
+              icon: const Icon(VesparaIcons.close, color: Colors.white),
               onPressed: () => context.pop(),
             ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.white70),
+            icon: const Icon(VesparaIcons.help, color: Colors.white70),
             onPressed: () => _showHowToPlay(context),
           ),
         ],
@@ -1211,7 +1212,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           // Score
           Row(
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 20),
+              const Icon(VesparaIcons.achievement, color: Colors.amber, size: 20),
               const SizedBox(width: 4),
               Text(
                 '${state.players.firstWhere((p) => p.id == state.currentPlayerId, orElse: () => state.players.first).score}',
@@ -1479,7 +1480,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.whatshot, color: Colors.white, size: 28),
+                              child: const Icon(VesparaIcons.fire, color: Colors.white, size: 28),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -1508,7 +1509,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         
                         // The Concept
                         _buildHowToSection(
-                          icon: Icons.lightbulb_outline,
+                          icon: VesparaIcons.suggestionOutline,
                           title: 'The Concept',
                           content: 'Think Family Feud, but spicy! Each round, you\'ll see '
                               'a set of intimate scenarios and rank them from MOST to LEAST '
@@ -1518,7 +1519,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         
                         // How to Score
                         _buildHowToSection(
-                          icon: Icons.emoji_events,
+                          icon: VesparaIcons.trophy,
                           title: 'Scoring',
                           content: '',
                           child: Column(
@@ -1533,7 +1534,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         
                         // Heat Levels
                         _buildHowToSection(
-                          icon: Icons.whatshot,
+                          icon: VesparaIcons.fire,
                           title: 'Heat Levels',
                           content: '',
                           child: Column(
@@ -1562,7 +1563,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         
                         // Dynamic Rankings
                         _buildHowToSection(
-                          icon: Icons.trending_up,
+                          icon: VesparaIcons.trending,
                           title: 'Living Rankings',
                           content: 'Card popularity isn\'t static! As more players vote, '
                               'rankings shift. You\'ll see trending indicators showing '
@@ -1572,7 +1573,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         
                         // Tips
                         _buildHowToSection(
-                          icon: Icons.tips_and_updates,
+                          icon: VesparaIcons.suggestion,
                           title: 'Pro Tips',
                           content: '• Don\'t just rank by YOUR preference - think about '
                               'what MOST people would enjoy!\n'
@@ -1724,11 +1725,11 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   IconData _getHeatLevelIcon(HeatLevel level) {
     switch (level) {
       case HeatLevel.mild:
-        return Icons.favorite;
+        return VesparaIcons.like;
       case HeatLevel.spicy:
-        return Icons.local_fire_department;
+        return VesparaIcons.fire;
       case HeatLevel.sizzle:
-        return Icons.whatshot;
+        return VesparaIcons.fire;
     }
   }
 

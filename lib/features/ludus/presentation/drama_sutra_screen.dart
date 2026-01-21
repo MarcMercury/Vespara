@@ -6,6 +6,7 @@ import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/drama_sutra_provider.dart';
+import '../../../core/widgets/drama_sutra_card.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DRAMA-SUTRA - "Pose with Purpose"
@@ -122,7 +123,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             alignment: Alignment.centerLeft,
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, color: Colors.white70),
+              icon: Icon(VesparaIcons.back, color: Colors.white70),
             ),
           ),
           
@@ -226,7 +227,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.movie_creation, color: Colors.white, size: 24),
+                  Icon(VesparaIcons.videoCall, color: Colors.white, size: 24),
                   SizedBox(width: 12),
                   Text(
                     'DIRECTOR\'S CHAIR',
@@ -290,7 +291,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                 filled: true,
                 fillColor: DramaColors.background,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                prefixIcon: const Icon(Icons.person, color: DramaColors.gold),
+                prefixIcon: Icon(VesparaIcons.person, color: DramaColors.gold),
               ),
               autofocus: true,
             ),
@@ -396,7 +397,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             children: [
               IconButton(
                 onPressed: () => ref.read(dramaSutraProvider.notifier).exitGame(),
-                icon: const Icon(Icons.close, color: Colors.white54),
+                icon: Icon(VesparaIcons.close, color: Colors.white54),
               ),
               const Spacer(),
               const Text('CASTING CALL', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 2, color: Colors.white70)),
@@ -502,7 +503,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.videocam, color: Colors.white),
+                      Icon(VesparaIcons.videoCall, color: Colors.white),
                       SizedBox(width: 8),
                       Text('START PRODUCTION', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1)),
                     ],
@@ -559,7 +560,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
               return ListTile(
                 leading: Text(List.generate(5, (j) => j < level ? '★' : '☆').join(), style: const TextStyle(color: DramaColors.gold, fontSize: 16)),
                 title: Text(labels[i], style: const TextStyle(color: Colors.white)),
-                trailing: state.maxDifficulty == level ? const Icon(Icons.check, color: DramaColors.gold) : null,
+                trailing: state.maxDifficulty == level ? Icon(VesparaIcons.check, color: DramaColors.gold) : null,
                 onTap: () {
                   ref.read(dramaSutraProvider.notifier).setMaxDifficulty(level);
                   Navigator.pop(context);
@@ -639,7 +640,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
           if (!player.isHost && state.isHost)
             IconButton(
               onPressed: () => ref.read(dramaSutraProvider.notifier).removePlayer(index),
-              icon: const Icon(Icons.close, color: Colors.white38, size: 18),
+              icon: Icon(VesparaIcons.close, color: Colors.white38, size: 18),
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
             ),
@@ -662,7 +663,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_add, color: Colors.white38, size: 20),
+            Icon(VesparaIcons.addMember, color: Colors.white38, size: 20),
             SizedBox(width: 8),
             Text('Add Actor', style: TextStyle(color: Colors.white38)),
           ],
@@ -821,7 +822,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                       ),
                       child: const Column(
                         children: [
-                          Icon(Icons.tips_and_updates, color: DramaColors.gold, size: 28),
+                          Icon(VesparaIcons.suggestion, color: DramaColors.gold, size: 28),
                           SizedBox(height: 8),
                           Text('DIRECTOR\'S NOTES', style: TextStyle(color: DramaColors.gold, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1)),
                           SizedBox(height: 8),
@@ -884,7 +885,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.play_circle_filled, color: Colors.white, size: 28),
+                          Icon(VesparaIcons.play, color: Colors.white, size: 28),
                           SizedBox(width: 10),
                           Text('ACTION!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 4)),
                         ],
@@ -900,104 +901,19 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
   }
   
   Widget _buildPositionCard(DramaPosition position, bool isRevealed, bool isJudge) {
-    return GestureDetector(
-      onTap: isJudge ? () {
-        HapticFeedback.lightImpact();
-        ref.read(dramaSutraProvider.notifier).toggleImageReveal();
-      } : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: DramaColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: position.difficultyColor.withOpacity(0.5), width: 2),
-        ),
-        child: Column(
-          children: [
-            // Position Image Area (with blur)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-              child: Stack(
-                children: [
-                  Container(
-                    height: 180,
-                    width: double.infinity,
-                    color: DramaColors.background,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(position.intensity.emoji, style: const TextStyle(fontSize: 60)),
-                          const SizedBox(height: 8),
-                          if (position.description != null && isRevealed)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                position.description!,
-                                style: const TextStyle(color: Colors.white54, fontSize: 12),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Blur overlay
-                  if (!isRevealed)
-                    Positioned.fill(
-                      child: ClipRRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            color: DramaColors.background.withOpacity(0.7),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.visibility_off, color: Colors.white38, size: 40),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    isJudge ? 'TAP TO REVEAL' : 'HIDDEN',
-                                    style: const TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 2),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            // Position Info
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      position.name,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: position.difficultyColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      position.difficultyStars,
-                      style: TextStyle(color: position.difficultyColor, fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    // Use the standardized DramaSutraCard widget with actual position images
+    return Center(
+      child: DramaSutraCard(
+        position: position,
+        width: MediaQuery.of(context).size.width - 48,
+        height: 380,
+        showDetails: isRevealed,
+        isBlurred: !isRevealed,
+        canReveal: isJudge,
+        onTap: isJudge ? () {
+          HapticFeedback.lightImpact();
+          ref.read(dramaSutraProvider.notifier).toggleImageReveal();
+        } : null,
       ),
     );
   }
@@ -1091,7 +1007,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.timer, color: isLow ? DramaColors.action : Colors.white54),
+                Icon(VesparaIcons.timer, color: isLow ? DramaColors.action : Colors.white54),
                 const SizedBox(width: 8),
                 Text(
                   '${state.timerRemaining}',
@@ -1209,7 +1125,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.stop_circle, color: Colors.white, size: 28),
+                      Icon(VesparaIcons.stop, color: Colors.white, size: 28),
                       SizedBox(width: 10),
                       Text('CUT!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 4)),
                     ],
@@ -1302,7 +1218,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.gavel, color: Colors.black87),
+                    Icon(Icons.balance_rounded, color: Colors.black87),
                     SizedBox(width: 8),
                     Text('SUBMIT VERDICT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87)),
                   ],
@@ -1490,7 +1406,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(state.currentRound >= state.maxRounds ? Icons.emoji_events : Icons.arrow_forward, color: Colors.white),
+                  Icon(state.currentRound >= state.maxRounds ? VesparaIcons.trophy : VesparaIcons.forward, color: Colors.white),
                   const SizedBox(width: 8),
                   Text(
                     state.currentRound >= state.maxRounds ? 'FINAL RESULTS' : 'NEXT SCENE',

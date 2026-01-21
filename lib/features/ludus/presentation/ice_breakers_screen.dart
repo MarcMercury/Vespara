@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/ice_breakers_provider.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
@@ -151,7 +152,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white70),
+                  icon: const Icon(VesparaIcons.back, color: Colors.white70),
                 ),
                 const Spacer(),
                 // Demo mode badge
@@ -165,7 +166,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.play_circle_outline, color: Colors.orange, size: 16),
+                        Icon(VesparaIcons.play, color: Colors.orange, size: 16),
                         SizedBox(width: 6),
                         Text('Demo', style: TextStyle(color: Colors.orange, fontSize: 12)),
                       ],
@@ -398,7 +399,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 onPressed: () {
                   ref.read(iceBreakersProvider.notifier).reset();
                 },
-                icon: const Icon(Icons.arrow_back, color: Colors.white70),
+                icon: Icon(VesparaIcons.back, color: Colors.white70),
               ),
               const Spacer(),
               const Text(
@@ -613,7 +614,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
               HapticFeedback.lightImpact();
               ref.read(iceBreakersProvider.notifier).removePlayer(index);
             },
-            icon: const Icon(Icons.close, color: Colors.white38, size: 20),
+            icon: Icon(VesparaIcons.close, color: Colors.white38, size: 20),
           ),
         ],
       ),
@@ -637,7 +638,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
               color: Colors.white.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_add, color: Colors.white38, size: 18),
+            child: Icon(VesparaIcons.addMember, color: Colors.white38, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -669,7 +670,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 _playerNameFocus.requestFocus();
               }
             },
-            icon: const Icon(Icons.add_circle, color: IceColors.primary),
+            icon: Icon(VesparaIcons.add, color: IceColors.primary),
           ),
         ],
       ),
@@ -881,7 +882,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.swipe_left, color: IceColors.skip.withOpacity(0.7)),
+                      Icon(VesparaIcons.skip, color: IceColors.skip.withOpacity(0.7)),
                       const SizedBox(width: 8),
                       Text('Skip', style: TextStyle(color: IceColors.skip.withOpacity(0.7))),
                     ],
@@ -890,7 +891,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                     children: [
                       Text('Done', style: TextStyle(color: IceColors.success.withOpacity(0.7))),
                       const SizedBox(width: 8),
-                      Icon(Icons.swipe_right, color: IceColors.success.withOpacity(0.7)),
+                      Icon(VesparaIcons.like, color: IceColors.success.withOpacity(0.7)),
                     ],
                   ),
                 ],
@@ -1037,7 +1038,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                   child: Row(
                     children: [
                       Icon(
-                        Icons.timer,
+                        VesparaIcons.timer,
                         size: 16,
                         color: state.timerSecondsRemaining <= 5 ? IceColors.timerWarning : IceColors.primary,
                       ),

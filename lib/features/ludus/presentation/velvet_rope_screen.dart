@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/velvet_rope_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -181,7 +182,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
             children: [
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back, color: Colors.white70),
+                icon: Icon(VesparaIcons.back, color: Colors.white70),
               ),
               const Spacer(),
               AnimatedBuilder(
@@ -242,7 +243,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.help_outline, color: VelvetColors.lavender, size: 18),
+                  Icon(VesparaIcons.help, color: VelvetColors.lavender, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     'How to Play',
@@ -467,7 +468,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               HapticFeedback.lightImpact();
               ref.read(velvetRopeProvider.notifier).removePlayer(index);
             },
-            icon: const Icon(Icons.close, color: Colors.white38, size: 20),
+            icon: Icon(VesparaIcons.close, color: Colors.white38, size: 20),
           ),
         ],
       ),
@@ -491,7 +492,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               color: Colors.white.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_add, color: Colors.white38, size: 18),
+            child: Icon(VesparaIcons.addMember, color: Colors.white38, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -520,7 +521,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 _nameController.clear();
               }
             },
-            icon: Icon(Icons.add_circle, color: VelvetColors.shareBlue),
+            icon: Icon(VesparaIcons.add, color: VelvetColors.shareBlue),
           ),
         ],
       ),
@@ -546,7 +547,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                   onPressed: () {
                     ref.read(velvetRopeProvider.notifier).endGame();
                   },
-                  icon: const Icon(Icons.stop_circle_outlined, color: Colors.white54),
+                  icon: Icon(VesparaIcons.stop, color: Colors.white54),
                 ),
                 Text(
                   'Spin: ${state.totalSpins + 1}',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'flash_freeze_game_screen.dart';
+import '../../../core/theme/vespara_icons.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// FLASH & FREEZE - "Exposure requires endurance"
@@ -133,7 +134,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white70),
+            icon: Icon(VesparaIcons.back, color: Colors.white70),
           ),
           const Spacer(),
           const Text(

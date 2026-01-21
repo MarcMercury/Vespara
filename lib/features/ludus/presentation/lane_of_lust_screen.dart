@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/lane_of_lust_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -130,7 +131,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
             alignment: Alignment.centerLeft,
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, color: Colors.white70),
+              icon: const Icon(VesparaIcons.back, color: Colors.white70),
             ),
           ),
           
@@ -198,7 +199,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.emoji_events, color: LaneColors.gold, size: 20),
+                Icon(VesparaIcons.trophy, color: LaneColors.gold, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'First to 10 Cards Wins!',
@@ -232,7 +233,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_circle, color: Colors.white, size: 24),
+                  Icon(VesparaIcons.add, color: Colors.white, size: 24),
                   SizedBox(width: 12),
                   Text(
                     'START GAME',
@@ -294,7 +295,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                 filled: true,
                 fillColor: LaneColors.background,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                prefixIcon: const Icon(Icons.person, color: LaneColors.crimson),
+                prefixIcon: const Icon(VesparaIcons.person, color: LaneColors.crimson),
               ),
               autofocus: true,
             ),
@@ -404,7 +405,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
             children: [
               IconButton(
                 onPressed: () => ref.read(laneOfLustProvider.notifier).exitGame(),
-                icon: const Icon(Icons.close, color: Colors.white54),
+                icon: const Icon(VesparaIcons.close, color: Colors.white54),
               ),
               const Spacer(),
               const Text('WAITING ROOM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 2, color: Colors.white70)),
@@ -491,7 +492,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.play_arrow, color: Colors.white),
+                      Icon(VesparaIcons.play, color: Colors.white),
                       SizedBox(width: 8),
                       Text('DEAL THE CARDS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 2)),
                     ],
@@ -539,7 +540,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           if (!player.isHost)
             IconButton(
               onPressed: () => ref.read(laneOfLustProvider.notifier).removePlayer(index),
-              icon: const Icon(Icons.close, color: Colors.white38, size: 20),
+              icon: const Icon(VesparaIcons.close, color: Colors.white38, size: 20),
             ),
         ],
       ),
@@ -560,7 +561,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_add, color: Colors.white38),
+            Icon(VesparaIcons.addMember, color: Colors.white38),
             SizedBox(width: 8),
             Text('Add Player', style: TextStyle(color: Colors.white38)),
           ],
@@ -806,7 +807,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      result.success ? Icons.check_circle : Icons.cancel,
+                      result.success ? VesparaIcons.confirm : VesparaIcons.close,
                       color: Colors.white,
                       size: 20,
                     ),
@@ -847,7 +848,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     HapticFeedback.lightImpact();
                     ref.read(laneOfLustProvider.notifier).skipSteal();
                   },
-                  icon: const Icon(Icons.skip_next, size: 18),
+                  icon: const Icon(VesparaIcons.forward, size: 18),
                   label: const Text('Pass'),
                   style: TextButton.styleFrom(foregroundColor: Colors.white54),
                 ),
@@ -1059,7 +1060,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           ),
           child: isHovered
               ? const Center(
-                  child: Icon(Icons.add, color: LaneColors.success, size: 32),
+                  child: Icon(VesparaIcons.add, color: LaneColors.success, size: 32),
                 )
               : null,
         );

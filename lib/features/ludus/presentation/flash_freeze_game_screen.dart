@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 
+import '../../../core/theme/vespara_icons.dart';
+
 /// ════════════════════════════════════════════════════════════════════════════
 /// FLASH & FREEZE - GAMEPLAY MODE
 /// The phone becomes the Signal Controller with automatic photo capture
@@ -199,7 +201,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.camera_alt_outlined, color: Colors.white),
+            Icon(VesparaIcons.camera, color: Colors.white),
             SizedBox(width: 8),
             Expanded(
               child: Text('Camera access needed for freeze photos. Game will continue without photo capture.'),
@@ -390,7 +392,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: FlashColors.green),
+                const Icon(VesparaIcons.confirm, color: FlashColors.green),
                 const SizedBox(width: 8),
                 Text('Photo saved! 📸'),
               ],
@@ -426,7 +428,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: FlashColors.green),
+              const Icon(VesparaIcons.confirm, color: FlashColors.green),
               const SizedBox(width: 8),
               Text('All ${_captures.length} photos saved! 📸'),
             ],
@@ -602,7 +604,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
             ),
             child: const Row(
               children: [
-                Icon(Icons.camera_front, color: FlashColors.red, size: 24),
+                Icon(VesparaIcons.camera, color: FlashColors.red, size: 24),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -809,7 +811,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.camera_alt,
+                                  VesparaIcons.camera,
                                   size: 16,
                                   color: _getContrastColor(),
                                 ),
@@ -1006,7 +1008,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
               children: [
                 IconButton(
                   onPressed: () => setState(() => _phase = GamePhase.ended),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white70),
+                  icon: const Icon(VesparaIcons.back, color: Colors.white70),
                 ),
                 const Expanded(
                   child: Text(
@@ -1022,7 +1024,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                 ),
                 IconButton(
                   onPressed: _saveAllPhotos,
-                  icon: const Icon(Icons.download, color: FlashColors.green),
+                  icon: const Icon(VesparaIcons.download, color: FlashColors.green),
                   tooltip: 'Save All',
                 ),
               ],
@@ -1080,7 +1082,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.download, color: Colors.black),
+                          Icon(VesparaIcons.download, color: Colors.black),
                           SizedBox(width: 8),
                           Text(
                             'SAVE ALL',
@@ -1183,7 +1185,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            Icons.download,
+                            VesparaIcons.download,
                             size: 16,
                             color: Colors.black,
                           ),
@@ -1253,7 +1255,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.download, color: Colors.black),
+                        Icon(VesparaIcons.download, color: Colors.black),
                         SizedBox(width: 8),
                         Text(
                           'Save',
@@ -1357,7 +1359,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.photo_library, color: Colors.white),
+                    const Icon(VesparaIcons.gallery, color: Colors.white),
                     const SizedBox(width: 10),
                     Text(
                       'VIEW ${_captures.length} FREEZE PHOTOS',
@@ -1466,7 +1468,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       children: [
         IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: Colors.white70),
+          icon: const Icon(VesparaIcons.back, color: Colors.white70),
         ),
         const Spacer(),
         ShaderMask(

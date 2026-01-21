@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
-import '../../providers/drama_sutra_provider.dart';
+import '../providers/drama_sutra_provider_v2.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DRAMA SUTRA POSITION CARD
@@ -13,6 +13,8 @@ class DramaSutraCard extends StatelessWidget {
   final double width;
   final double height;
   final bool showDetails;
+  final bool isBlurred;
+  final bool canReveal;
   final VoidCallback? onTap;
 
   const DramaSutraCard({
@@ -21,6 +23,8 @@ class DramaSutraCard extends StatelessWidget {
     this.width = 280,
     this.height = 400,
     this.showDetails = true,
+    this.isBlurred = false,
+    this.canReveal = false,
     this.onTap,
   });
 
@@ -169,13 +173,54 @@ class DramaSutraCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: position.imageUrl != null && position.imageUrl!.isNotEmpty
-            ? Image.asset(
-                position.imageUrl!,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-              )
-            : _buildPlaceholder(),
+        child: Stack(
+          children: [
+            // Actual image
+            position.imageUrl != null && position.imageUrl!.isNotEmpty
+                ? Image.asset(
+                    position.imageUrl!,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                  )
+                : _buildPlaceholder(),
+            
+            // Blur overlay when hidden
+            if (isBlurred)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                    child: Container(
+                      color: cardBackground.withOpacity(0.7),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              canReveal ? Icons.touch_app_rounded : Icons.visibility_off_rounded,
+                              color: goldAccent.withOpacity(0.6),
+                              size: 48,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              canReveal ? 'TAP TO REVEAL' : 'HIDDEN',
+                              style: TextStyle(
+                                color: goldAccent.withOpacity(0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
