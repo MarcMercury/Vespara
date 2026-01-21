@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,21 +22,32 @@ Future<void> main() async {
   );
   
   // On web, if we're returning from OAuth callback, wait for session to be established
-  // BEFORE running the app to prevent network request interruption
+  // BEFORE running the app to prevent showing login screen again
   if (kIsWeb) {
     final uri = Uri.base;
-    if (uri.hasFragment || uri.queryParameters.containsKey('code')) {
+    final hasOAuthCallback = uri.hasFragment || 
+                             uri.queryParameters.containsKey('code') ||
+                             uri.queryParameters.containsKey('access_token') ||
+                             uri.queryParameters.containsKey('refresh_token');
+    
+    if (hasOAuthCallback) {
       debugPrint('Vespara Main: OAuth callback detected, waiting for session...');
+      
       // Wait for Supabase to complete the PKCE code exchange
-      // This must happen BEFORE runApp to prevent network interruption
-      for (int i = 0; i < 30; i++) {
+      // Increase timeout and check more frequently
+      Session? session;
+      for (int i = 0; i < 50; i++) {  // 10 seconds max wait
         await Future.delayed(const Duration(milliseconds: 200));
-        final session = Supabase.instance.client.auth.currentSession;
+        session = Supabase.instance.client.auth.currentSession;
         if (session != null) {
           debugPrint('Vespara Main: Session established after ${(i + 1) * 200}ms');
           break;
         }
-        debugPrint('Vespara Main: Waiting for session... attempt ${i + 1}/30');
+        debugPrint('Vespara Main: Waiting for session... attempt ${i + 1}/50');
+      }
+      
+      if (session == null) {
+        debugPrint('Vespara Main: WARNING - Session not established after 10s');
       }
     }
   }
@@ -69,11 +82,18 @@ class _AuthGateState extends State<AuthGate> {
   Session? _session;
   String? _error;
   bool? _hasCompletedOnboarding;
+  late final StreamSubscription<AuthState> _authSubscription;
   
   @override
   void initState() {
     super.initState();
     _initAuth();
+  }
+  
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
   }
   
   Future<void> _initAuth() async {
@@ -88,17 +108,23 @@ class _AuthGateState extends State<AuthGate> {
       }
       
       // Listen for auth changes (sign in, sign out, token refresh)
-      Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
         
         if (mounted) {
+          // Only update if session actually changed
+          final sessionChanged = (_session == null) != (data.session == null);
+          
           setState(() {
             _session = data.session;
             _isLoading = false;
           });
+          
           // Check onboarding status when session changes
-          if (data.session != null) {
+          if (data.session != null && sessionChanged) {
             _checkOnboardingStatus(data.session!.user.id);
+          } else if (data.session == null) {
+            _hasCompletedOnboarding = null;
           }
         }
       });
