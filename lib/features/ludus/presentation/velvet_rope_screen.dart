@@ -6,6 +6,8 @@ import 'dart:math';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/velvet_rope_provider.dart';
+import '../../../core/domain/models/tag_rating.dart';
+import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// SHARE OR DARE - Spin the Wheel, Pick Your Poison
@@ -226,6 +228,11 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               color: Colors.white54,
             ),
           ),
+          
+          const SizedBox(height: 16),
+          
+          // TAG Rating
+          const TagRatingDisplay(rating: TagRating.shareOrDare),
           
           const SizedBox(height: 20),
           

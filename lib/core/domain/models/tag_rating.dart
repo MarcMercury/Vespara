@@ -86,10 +86,52 @@ class TagRating extends Equatable {
     required this.duration,
   });
   
-  /// Down to Clown game rating
+  /// Down to Clown game rating - 40 mph / PG-13 / Quickie
   static const downToClown = TagRating(
     velocity: VelocityRating.flirty,
     heat: HeatRating.pg13,
+    duration: DurationRating.quickie,
+  );
+  
+  /// Ice Breakers game rating - 0 mph / PG / Quickie
+  static const iceBreakers = TagRating(
+    velocity: VelocityRating.innocent,
+    heat: HeatRating.pg,
+    duration: DurationRating.quickie,
+  );
+  
+  /// Share or Dare game rating - 70 mph / R / Foreplay
+  static const shareOrDare = TagRating(
+    velocity: VelocityRating.sparks,
+    heat: HeatRating.r,
+    duration: DurationRating.foreplay,
+  );
+  
+  /// Path of Pleasure game rating - 40 mph / PG-13 / Foreplay
+  static const pathOfPleasure = TagRating(
+    velocity: VelocityRating.flirty,
+    heat: HeatRating.pg13,
+    duration: DurationRating.foreplay,
+  );
+  
+  /// Lane of Lust game rating - 70 mph / R / Foreplay
+  static const laneOfLust = TagRating(
+    velocity: VelocityRating.sparks,
+    heat: HeatRating.r,
+    duration: DurationRating.foreplay,
+  );
+  
+  /// Drama-Sutra game rating - 100 mph / XXX / Full Session
+  static const dramaSutra = TagRating(
+    velocity: VelocityRating.fullThrottle,
+    heat: HeatRating.xxx,
+    duration: DurationRating.fullSession,
+  );
+  
+  /// Flash & Freeze game rating - 70 mph / X / Quickie
+  static const flashFreeze = TagRating(
+    velocity: VelocityRating.sparks,
+    heat: HeatRating.x,
     duration: DurationRating.quickie,
   );
   

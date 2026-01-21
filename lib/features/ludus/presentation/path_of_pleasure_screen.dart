@@ -8,6 +8,8 @@ import '../../../core/theme/motion.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../../../core/utils/haptics.dart';
 import '../../../core/providers/path_of_pleasure_provider.dart';
+import '../../../core/domain/models/tag_rating.dart';
+import '../widgets/tag_rating_display.dart';
 
 /// Path of Pleasure - Family Feud Style
 /// Predict what's popular! Rank cards by global popularity and score points.
@@ -152,6 +154,11 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   ),
                   textAlign: TextAlign.center,
                 ),
+                
+                const SizedBox(height: 24),
+                
+                // TAG Rating
+                const TagRatingDisplay(rating: TagRating.pathOfPleasure),
                 
                 const Spacer(),
                 

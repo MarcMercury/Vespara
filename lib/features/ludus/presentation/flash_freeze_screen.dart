@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'flash_freeze_game_screen.dart';
 import '../../../core/theme/vespara_icons.dart';
+import '../../../core/domain/models/tag_rating.dart';
+import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// FLASH & FREEZE - "Exposure requires endurance"
@@ -242,6 +244,11 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
             letterSpacing: 1,
           ),
         ),
+        
+        const SizedBox(height: 20),
+        
+        // TAG Rating
+        const TagRatingDisplay(rating: TagRating.flashFreeze),
         
         const SizedBox(height: 20),
         

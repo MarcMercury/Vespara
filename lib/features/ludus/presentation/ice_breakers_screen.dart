@@ -234,13 +234,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
           const SizedBox(height: 32),
           
           // TAG Rating
-          const TagRatingDisplay(
-            rating: TagRating(
-              velocity: VelocityRating.flirty,
-              heat: HeatRating.pg13,
-              duration: DurationRating.quickie,
-            ),
-          ),
+          const TagRatingDisplay(rating: TagRating.iceBreakers),
           
           const Spacer(),
           

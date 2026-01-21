@@ -6,6 +6,8 @@ import 'dart:math';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/lane_of_lust_provider.dart';
+import '../../../core/domain/models/tag_rating.dart';
+import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// LANE OF LUST - Timeline Style Desire Game
@@ -208,6 +210,11 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
               ],
             ),
           ),
+          
+          const SizedBox(height: 24),
+          
+          // TAG Rating
+          const TagRatingDisplay(rating: TagRating.laneOfLust),
           
           const Spacer(),
           

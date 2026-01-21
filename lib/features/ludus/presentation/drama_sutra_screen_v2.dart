@@ -9,6 +9,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/drama_sutra_provider_v2.dart';
 import '../../../core/widgets/drama_sutra_card.dart';
+import '../../../core/domain/models/tag_rating.dart';
+import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DRAMA-SUTRA v2 - SIMPLIFIED
@@ -287,6 +289,11 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
                 fontStyle: FontStyle.italic,
               ),
             ),
+            
+            const SizedBox(height: 20),
+            
+            // TAG Rating
+            const TagRatingDisplay(rating: TagRating.dramaSutra),
             
             const SizedBox(height: 32),
             
