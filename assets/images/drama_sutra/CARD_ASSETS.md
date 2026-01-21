@@ -1,10 +1,58 @@
 # 🎭 Drama Sutra Card Assets
 
-Position card images for the Drama Sutra game.
+Position card images for the Drama Sutra game - "Pose with Purpose" 💃🔥
 
 ---
 
-## ✅ UPLOADED GROUP POSITIONS (12 Cards)
+## 📊 Position Summary
+
+| Category | Count | With Images | Status |
+|----------|-------|-------------|--------|
+| Bingo Card Positions | 26 | ✅ 26 | Complete! |
+| Group Positions | 12 | ✅ 12 | Complete! |
+| Classic Couples | 11 | ❌ 0 | Need artwork |
+| **TOTAL** | **49** | **38** | **78% Complete** |
+
+---
+
+## ✅ BINGO CARD POSITIONS (26 Cards with Images!)
+
+Extracted from Sex Position Bingo PDF - beautiful silhouette illustrations:
+
+| File | Position Name | Difficulty | Intensity |
+|------|---------------|------------|-----------|
+| `acrobat.png` | **Acrobat** | ★★★★★ | 🤸 Acrobatic |
+| `ballerina.png` | **Ballerina** | ★★★☆☆ | 💕 Romantic |
+| `best-seat-in-the-house.png` | **Best Seat in the House** | ★★☆☆☆ | 💕 Romantic |
+| `body-surfing.png` | **Body Surfing** | ★★★☆☆ | 🌙 Intimate |
+| `celebration.png` | **Celebration** | ★★☆☆☆ | 💕 Romantic |
+| `deep-throat.png` | **Deep Throat** | ★★★☆☆ | 🌙 Intimate |
+| `doggy.png` | **Doggy** | ★☆☆☆☆ | 💕 Romantic |
+| `front-row-seat.png` | **Front Row Seat** | ★★☆☆☆ | 🌙 Intimate |
+| `hammock.png` | **Hammock** | ★★☆☆☆ | 💕 Romantic |
+| `head-over-heels.png` | **Head over Heels** | ★★★★☆ | 🤸 Acrobatic |
+| `helicopter.png` | **Helicopter** | ★★★★★ | 🤸 Acrobatic |
+| `missionary.png` | **Missionary** | ★☆☆☆☆ | 💕 Romantic |
+| `octopus.png` | **Octopus** | ★★★☆☆ | 🌙 Intimate |
+| `power-pump.png` | **Power Pump** | ★★★☆☆ | 🤸 Acrobatic |
+| `pretzel.png` | **Pretzel** | ★★★★☆ | 🌙 Intimate |
+| `pump-and-grind.png` | **Pump & Grind** | ★★☆☆☆ | 💕 Romantic |
+| `reverse-cowgirl.png` | **Reverse Cowgirl** | ★★☆☆☆ | 🤸 Acrobatic |
+| `sixty-nine.png` | **Sixty Nine** | ★★☆☆☆ | 🌙 Intimate |
+| `superman.png` | **Superman** | ★★★★☆ | 🤸 Acrobatic |
+| `table-delight.png` | **Table Delight** | ★★☆☆☆ | 💕 Romantic |
+| `threesome.png` | **Threesome** | ★★★☆☆ | 🌙 Intimate |
+| `treasure-hunt.png` | **Treasure Hunt** | ★★☆☆☆ | 💕 Romantic |
+| `tree-hugger.png` | **Tree Hugger** | ★★★☆☆ | 💕 Romantic |
+| `wall-hug.png` | **Wall Hug** | ★★★☆☆ | 🤸 Acrobatic |
+| `web-of-desire.png` | **Web of Desire** | ★★★★☆ | 🌙 Intimate |
+| `zombie.png` | **Zombie** | ★★☆☆☆ | 💕 Romantic |
+
+---
+
+## ✅ GROUP POSITIONS (12 Cards with Images!)
+
+Uploaded by user - creative group arrangements:
 
 | File | Position Name | Difficulty | Intensity |
 |------|---------------|------------|-----------|
@@ -23,7 +71,9 @@ Position card images for the Drama Sutra game.
 
 ---
 
-## 📋 CLASSIC COUPLES POSITIONS (15 Cards - Need Images)
+## 📋 CLASSIC COUPLES POSITIONS (11 Cards - Need Images)
+
+Legacy positions waiting for custom artwork:
 
 | ID | Position Name | Difficulty | Intensity |
 |----|---------------|------------|-----------|
@@ -31,50 +81,39 @@ Position card images for the Drama Sutra game.
 | p2 | **The Lotus** | ★☆☆☆☆ | 🌙 Intimate |
 | p3 | **The Lazy Dog** | ★☆☆☆☆ | 💕 Romantic |
 | p4 | **The Cowgirl** | ★★☆☆☆ | 💕 Romantic |
-| p5 | **The Reverse Cowgirl** | ★★☆☆☆ | 🤸 Acrobatic |
-| p6 | **The Throne** | ★★☆☆☆ | 💕 Romantic |
-| p7 | **The Standing Ovation** | ★★★☆☆ | 🤸 Acrobatic |
-| p8 | **The Wheelbarrow** | ★★★☆☆ | 🤸 Acrobatic |
-| p9 | **The Pretzel** | ★★★☆☆ | 🌙 Intimate |
-| p10 | **The Spider** | ★★★☆☆ | 🤸 Acrobatic |
-| p11 | **The Splitting Bamboo** | ★★★★☆ | 🤸 Acrobatic |
-| p12 | **The Suspended Congress** | ★★★★☆ | 🤸 Acrobatic |
-| p13 | **The Glowing Firefly** | ★★★★☆ | 🌙 Intimate |
-| p14 | **The Propeller** | ★★★★☆ | 🤸 Acrobatic |
-| p15 | **The Acrobat** | ★★★★★ | 🤸 Acrobatic |
+| p5 | **The Standing Ovation** | ★★★☆☆ | 🤸 Acrobatic |
+| p6 | **The Wheelbarrow** | ★★★☆☆ | 🤸 Acrobatic |
+| p7 | **The Spider** | ★★★☆☆ | 🤸 Acrobatic |
+| p8 | **The Splitting Bamboo** | ★★★★☆ | 🤸 Acrobatic |
+| p9 | **The Suspended Congress** | ★★★★☆ | 🤸 Acrobatic |
+| p10 | **The Glowing Firefly** | ★★★★☆ | 🌙 Intimate |
+| p11 | **The Propeller** | ★★★★☆ | 🤸 Acrobatic |
 
 ---
 
 ## 🎨 Image Specifications
 
 ### Dimensions
+- **Current:** 819x1200 or 1200x819 (from PDF extraction)
 - **Recommended:** 400 x 600 px (2:3 portrait ratio)
-- **Minimum:** 300 x 450 px
 - **Maximum:** 800 x 1200 px (for retina displays)
 
 ### Format
+- **Current:** PNG (all cards)
 - **Preferred:** PNG with transparency
 - **Alternative:** WEBP, JPG
 
 ### Style Guidelines
-- **Aesthetic:** Artistic silhouettes or tasteful illustrations (no explicit imagery)
-- **Background:** Transparent or dark gradient (#1A0A1F to #2D1B35)
+- **Aesthetic:** Artistic silhouettes (current style from bingo cards)
+- **Background:** Transparent or dark gradient
 - **Color Accents:** Gold (#FFD700), Crimson (#DC143C)
-- **Style Reference:** Think Kama Sutra art meets theater/cinema aesthetic
-
-### Examples of Acceptable Styles
-1. ✅ Elegant silhouette outlines (like dance pose illustrations)
-2. ✅ Abstract geometric representations
-3. ✅ Vintage Kama Sutra-inspired line art
-4. ✅ Minimalist iconic symbols
-5. ❌ Explicit/pornographic imagery
-6. ❌ Photographic content
+- **Style Reference:** Elegant silhouette outlines
 
 ---
 
-## 📐 Difficulty Indicators (Built into Card UI)
+## 📐 Difficulty Indicators
 
-The app will overlay difficulty stars automatically:
+The app overlays difficulty stars automatically:
 - ★☆☆☆☆ = Easy (Green)
 - ★★★☆☆ = Medium (Orange)  
 - ★★★★★ = Hard (Red)
@@ -83,88 +122,30 @@ The app will overlay difficulty stars automatically:
 
 ## 🏷️ Intensity Categories
 
-Images should visually reflect the intensity:
 - **💕 Romantic** - Soft, flowing, connected poses
 - **🤸 Acrobatic** - Dynamic, athletic, complex poses
 - **🌙 Intimate** - Close, intertwined, sensual poses
 
 ---
 
-## ⚡ After Uploading
+## 📂 Card Display Component
 
-1. Add images to this folder
-2. Update `pubspec.yaml` to include the assets:
-   ```yaml
-   flutter:
-     assets:
-       - assets/images/drama_sutra/
-   ```
-3. Update the position data in `drama_sutra_provider.dart`:
-   ```dart
-   DramaPosition(
-     id: 'p1',
-     name: 'The Spoons',
-     description: 'Partners lie on their sides, curved like nested spoons.',
-     imageUrl: 'assets/images/drama_sutra/p1_spoons.png', // Add this
-     difficulty: 1,
-     intensity: PositionIntensity.romantic,
-   ),
-   ```
+Cards are rendered using `DramaSutraCard` widget:
+```
+lib/core/widgets/drama_sutra_card.dart
+```
+
+Features:
+- Blur/reveal toggle for game mechanics
+- Difficulty stars display
+- Position name overlay
+- Gold/crimson themed borders
+- Corner flourishes
 
 ---
 
-## 🖼️ Placeholder
+## ⚡ After Uploading New Cards
 
-If no image is provided, the app displays:
-- Position name in large theatrical font
-- Difficulty stars
-- Intensity emoji (💕/🤸/🌙)
-- Gradient background
-
----
-
-## 📋 Full Position List (15 Cards)
-
-### Easy (★-★★)
-| ID | Name | Intensity | Description |
-|----|------|-----------|-------------|
-| p1 | The Spoons | 💕 Romantic | Partners lie on their sides, curved like nested spoons |
-| p2 | The Lotus | 🌙 Intimate | Partner A sits cross-legged while Partner B sits in their lap |
-| p3 | The Lazy Dog | 💕 Romantic | Partner A on hands and knees, Partner B behind |
-| p4 | The Cowgirl | 💕 Romantic | Partner A lies back while Partner B straddles and faces them |
-| p5 | The Reverse Cowgirl | 🤸 Acrobatic | Like Cowgirl, but Partner B faces away |
-| p6 | The Throne | 💕 Romantic | Partner A sits in a chair while Partner B sits in their lap |
-
-### Medium (★★★)
-| ID | Name | Intensity | Description |
-|----|------|-----------|-------------|
-| p7 | The Standing Ovation | 🤸 Acrobatic | Partner A stands while Partner B wraps legs around their waist |
-| p8 | The Wheelbarrow | 🤸 Acrobatic | Partner A on hands, Partner B holds their legs up from behind |
-| p9 | The Pretzel | 🌙 Intimate | Partners intertwine limbs in a complex seated twist |
-| p10 | The Spider | 🤸 Acrobatic | Both lean back on hands, legs interlocked, bodies forming an X |
-
-### Hard (★★★★-★★★★★)
-| ID | Name | Intensity | Description |
-|----|------|-----------|-------------|
-| p11 | The Splitting Bamboo | 🤸 Acrobatic | Partner A lies back, one leg raised to Partner B's shoulder |
-| p12 | The Suspended Congress | 🤸 Acrobatic | Partner A against a wall, both legs wrapped around standing Partner B |
-| p13 | The Glowing Firefly | 🌙 Intimate | Partner A lies back with hips elevated, Partner B kneels between |
-| p14 | The Propeller | 🤸 Acrobatic | Partner B rotates 180 degrees while connected |
-| p15 | The Acrobat | 🤸 Acrobatic | Partner A does a shoulder stand while Partner B supports from above |
-
----
-
-## 💡 Art Resources
-
-Consider commissioning from:
-- Fiverr (search "Kama Sutra illustration" or "intimate pose art")
-- Etsy digital artists
-- DeviantArt commissions
-- AI art tools (Midjourney, DALL-E) with appropriate styling prompts
-
-**Prompt example for AI art:**
-> "Elegant silhouette illustration of two figures in [POSE NAME], artistic Kama Sutra style, tasteful and non-explicit, dark purple gradient background, gold accent lines, theatrical poster aesthetic, 2:3 portrait ratio"
-
----
-
-*Last updated: January 2026*
+1. Add images to this folder using kebab-case naming
+2. Update `drama_sutra_provider.dart` with new positions
+3. Run `flutter pub get` to refresh assets
