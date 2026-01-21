@@ -494,171 +494,184 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
   Widget _buildSetupScreen() {
     return Container(
       key: const ValueKey('setup'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          _buildHeader(),
-          const Spacer(),
-          
-          // Game icon
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              return Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      FlashColors.green.withOpacity(0.3),
-                      FlashColors.electric.withOpacity(0.1),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: FlashColors.green.withOpacity(0.2 + _pulseController.value * 0.2),
-                      blurRadius: 40 + _pulseController.value * 20,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text('⚡', style: TextStyle(fontSize: 60)),
-                ),
-              );
-            },
-          ),
-          
-          const SizedBox(height: 32),
-          
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [FlashColors.green, FlashColors.electric],
-            ).createShader(bounds),
-            child: const Text(
-              'FLASH & FREEZE',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          const Text(
-            'Signal Controller Mode',
-            style: TextStyle(
-              fontSize: 16,
-              color: FlashColors.electric,
-            ),
-          ),
-          
-          const SizedBox(height: 40),
-          
-          // Duration selector
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: FlashColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'GAME DURATION',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white54,
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      child: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
                   children: [
-                    _buildDurationOption(2),
-                    const SizedBox(width: 12),
-                    _buildDurationOption(3),
-                    const SizedBox(width: 12),
-                    _buildDurationOption(4),
+                    const SizedBox(height: 24),
+                    
+                    // Game icon
+                    AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                FlashColors.green.withOpacity(0.3),
+                                FlashColors.electric.withOpacity(0.1),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlashColors.green.withOpacity(0.2 + _pulseController.value * 0.2),
+                                blurRadius: 40 + _pulseController.value * 20,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Text('⚡', style: TextStyle(fontSize: 60)),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [FlashColors.green, FlashColors.electric],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'FLASH & FREEZE',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    const Text(
+                      'Signal Controller Mode',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: FlashColors.electric,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 40),
+                    
+                    // Duration selector
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: FlashColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'GAME DURATION',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white54,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildDurationOption(2),
+                              const SizedBox(width: 12),
+                              _buildDurationOption(3),
+                              const SizedBox(width: 12),
+                              _buildDurationOption(4),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Camera permission note
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: FlashColors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: FlashColors.red.withOpacity(0.3)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(VesparaIcons.camera, color: FlashColors.red, size: 24),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Camera will capture freeze moments automatically during RED lights!',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Start button
+                    GestureDetector(
+                      onTap: _startGame,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [FlashColors.green, FlashColors.electric],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: FlashColors.green.withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('⚡', style: TextStyle(fontSize: 24)),
+                            SizedBox(width: 10),
+                            Text(
+                              'START GAME',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
                   ],
                 ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Camera permission note
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: FlashColors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: FlashColors.red.withOpacity(0.3)),
-            ),
-            child: const Row(
-              children: [
-                Icon(VesparaIcons.camera, color: FlashColors.red, size: 24),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Camera will capture freeze moments automatically during RED lights!',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Start button
-          GestureDetector(
-            onTap: _startGame,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [FlashColors.green, FlashColors.electric],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: FlashColors.green.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('⚡', style: TextStyle(fontSize: 24)),
-                  SizedBox(width: 10),
-                  Text(
-                    'START GAME',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

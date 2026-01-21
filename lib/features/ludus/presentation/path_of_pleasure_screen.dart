@@ -93,11 +93,13 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
       children: [
         _buildHeader(),
         Expanded(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 32),
+                
                 // Game logo/icon
                 Container(
                   width: 120,
@@ -160,7 +162,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 // TAG Rating
                 const TagRatingDisplay(rating: TagRating.pathOfPleasure),
                 
-                const Spacer(),
+                const SizedBox(height: 32),
                 
                 // How to Play button
                 TextButton.icon(

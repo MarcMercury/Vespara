@@ -86,6 +86,11 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     _accelerometerSubscription?.cancel();
     _flashController.dispose();
     _pulseController.dispose();
+    // Restore portrait orientation on exit
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
   
@@ -205,243 +210,238 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   Widget _buildHomeScreen(DtcGameState gameState) {
     return Container(
       key: const ValueKey('home'),
-      child: Column(
-        children: [
-          // Back button
-          Align(
-            alignment: Alignment.topLeft,
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(VesparaIcons.back, color: Colors.white70),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Back button
+            Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(VesparaIcons.back, color: Colors.white70),
+              ),
             ),
-          ),
-          
-          const Spacer(),
-          
-          // Logo/Title
-          Container(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              children: [
-                // Clown emoji with animated glow
-                AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, child) {
-                    return Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: VesparaColors.glow.withOpacity(
-                              0.3 + (_pulseController.value * 0.3),
-                            ),
-                            blurRadius: 40 + (_pulseController.value * 20),
-                            spreadRadius: 10,
+            
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    // Clown emoji with animated glow
+                    AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: VesparaColors.glow.withOpacity(
+                                  0.3 + (_pulseController.value * 0.3),
+                                ),
+                                blurRadius: 40 + (_pulseController.value * 20),
+                                spreadRadius: 10,
+                              ),
+                            ],
                           ),
+                          child: const Text('🤡', style: TextStyle(fontSize: 80)),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Title
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [
+                          VesparaColors.glow,
+                          Colors.pinkAccent,
+                          VesparaColors.glow,
                         ],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'DOWN TO CLOWN',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 4,
+                          color: Colors.white,
+                        ),
                       ),
-                      child: const Text('🤡', style: TextStyle(fontSize: 80)),
-                    );
-                  },
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Title
-                ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    colors: [
-                      VesparaColors.glow,
-                      Colors.pinkAccent,
-                      VesparaColors.glow,
-                    ],
-                  ).createShader(bounds),
-                  child: const Text(
-                    'DOWN TO CLOWN',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 4,
-                      color: Colors.white,
                     ),
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Tagline
-                const Text(
-                  '"If you know, you know. If you don\'t—tilt."',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.white60,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Stats badge (if has games)
-                if (gameState.userStats != null && gameState.userStats!.totalGamesPlayed > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Tagline
+                    const Text(
+                      '"If you know, you know. If you don\'t—tilt."',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.white60,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(VesparaIcons.trophy, color: Colors.amber, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'High Score: ${gameState.userStats!.highScore}',
-                          style: const TextStyle(
-                            color: Colors.amber,
-                            fontWeight: FontWeight.w600,
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Stats badge (if has games)
+                    if (gameState.userStats != null && gameState.userStats!.totalGamesPlayed > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(VesparaIcons.trophy, color: Colors.amber, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'High Score: ${gameState.userStats!.highScore}',
+                              style: const TextStyle(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              '${gameState.userStats!.totalGamesPlayed} games',
+                              style: const TextStyle(color: Colors.white54),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Demo mode indicator
+                    if (gameState.isDemoMode)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(VesparaIcons.play, color: Colors.orange, size: 16),
+                            SizedBox(width: 8),
+                            Text(
+                              'Demo Mode • 100 Prompts',
+                              style: TextStyle(color: Colors.orange, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // TAG Rating Display
+                    const TagRatingDisplay(rating: TagRating.downToClown),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Buttons
+                    // Get Naughty button -> now goes to heat select
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.heavyImpact();
+                        setState(() => _gameState = DownToClownState.heatSelect);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [VesparaColors.glow, Colors.pinkAccent],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VesparaColors.glow.withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'GET NAUGHTY 😈',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 2,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Text(
-                          '${gameState.userStats!.totalGamesPlayed} games',
-                          style: const TextStyle(color: Colors.white54),
-                        ),
-                      ],
-                    ),
-                  ),
-                
-                const SizedBox(height: 24),
-                
-                // Demo mode indicator
-                if (gameState.isDemoMode)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(VesparaIcons.play, color: Colors.orange, size: 16),
-                        SizedBox(width: 8),
-                        Text(
-                          'Demo Mode • 100 Prompts',
-                          style: TextStyle(color: Colors.orange, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                
-                const SizedBox(height: 16),
-                
-                // TAG Rating Display
-                const TagRatingDisplay(rating: TagRating.downToClown),
-              ],
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Buttons
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Get Naughty button -> now goes to heat select
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.heavyImpact();
-                    setState(() => _gameState = DownToClownState.heatSelect);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [VesparaColors.glow, Colors.pinkAccent],
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: VesparaColors.glow.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
                     ),
-                    child: const Center(
-                      child: Text(
-                        'GET NAUGHTY 😈',
+                    
+                    const SizedBox(height: 16),
+                    
+                    // How It Works button
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _showHowItWorks();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'How It Works',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // TAG Rating info
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          isScrollControlled: true,
+                          builder: (_) => const TagRatingInfoSheet(),
+                        );
+                      },
+                      child: const Text(
+                        'About TAG Ratings →',
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 2,
+                          fontSize: 14,
+                          color: Colors.white38,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
-                  ),
+                    
+                    const SizedBox(height: 32),
+                  ],
                 ),
-                
-                const SizedBox(height: 16),
-                
-                // How It Works button
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _showHowItWorks();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'How It Works',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // TAG Rating info
-                GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (_) => const TagRatingInfoSheet(),
-                    );
-                  },
-                  child: const Text(
-                    'About TAG Ratings →',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white38,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 24),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -920,6 +920,12 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     _calibratedPitch = null;
     _inputLocked = false;
     
+    // Force landscape orientation for gameplay
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    
     setState(() => _gameState = DownToClownState.playing);
     
     // Start timer
@@ -943,23 +949,27 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     _accelerometerSubscription = accelerometerEvents.listen((event) {
       if (_gameState != DownToClownState.playing || _inputLocked) return;
       
-      // Calculate pitch (forward/backward tilt)
-      final pitch = atan2(event.y, sqrt(event.x * event.x + event.z * event.z)) * 180 / pi;
+      // In landscape mode, we use X axis for forward/backward tilt
+      // (phone is held horizontally with screen facing away from player)
+      // X axis: positive = tilted right, negative = tilted left
+      // In landscape-left, tilting "forward" (pass) uses positive X
+      // Tilting "backward" (correct) uses negative X
+      final tiltValue = event.x;
       
       // Calibrate on first reading
-      _calibratedPitch ??= pitch;
+      _calibratedPitch ??= tiltValue;
       
-      // Relative pitch from calibrated position
-      final relativePitch = pitch - _calibratedPitch!;
+      // Relative tilt from calibrated position
+      final relativeTilt = tiltValue - _calibratedPitch!;
       
-      // Thresholds
-      const tiltThreshold = 35.0; // degrees
+      // Thresholds (in m/s², gravity is ~9.8)
+      const tiltThreshold = 5.0;
       
-      if (relativePitch > tiltThreshold) {
-        // Tilted UP = Pass
+      if (relativeTilt > tiltThreshold) {
+        // Tilted "forward" (top of phone tips away) = Pass
         _registerPass();
-      } else if (relativePitch < -tiltThreshold) {
-        // Tilted DOWN = Correct
+      } else if (relativeTilt < -tiltThreshold) {
+        // Tilted "backward" (top of phone tips toward) = Correct
         _registerCorrect();
       }
     });
@@ -1013,6 +1023,12 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     _gameTimer?.cancel();
     _accelerometerSubscription?.cancel();
     HapticFeedback.heavyImpact();
+    
+    // Restore portrait orientation
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     
     // Save game session to database
     await ref.read(dtcGameProvider.notifier).endGame();

@@ -143,61 +143,68 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
   Widget _buildDiscoveryPhase(IceBreakersState state) {
     return Container(
       key: const ValueKey('discovery'),
-      child: Column(
-        children: [
-          // Header with back button
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(VesparaIcons.back, color: Colors.white70),
-                ),
-                const Spacer(),
-                // Demo mode badge
-                if (state.isDemoMode)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(VesparaIcons.play, color: Colors.orange, size: 16),
-                        SizedBox(width: 6),
-                        Text('Demo', style: TextStyle(color: Colors.orange, fontSize: 12)),
-                      ],
-                    ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header with back button
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(VesparaIcons.back, color: Colors.white70),
                   ),
-              ],
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Ice emoji with glow
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              return Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: IceColors.primary.withOpacity(0.3 + (_glowController.value * 0.3)),
-                      blurRadius: 50 + (_glowController.value * 30),
-                      spreadRadius: 15,
+                  const Spacer(),
+                  // Demo mode badge
+                  if (state.isDemoMode)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(VesparaIcons.play, color: Colors.orange, size: 16),
+                          SizedBox(width: 6),
+                          Text('Demo', style: TextStyle(color: Colors.orange, fontSize: 12)),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-                child: const Text('🧊', style: TextStyle(fontSize: 80)),
-              );
-            },
-          ),
+                ],
+              ),
+            ),
+            
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    
+                    // Ice emoji with glow
+                    AnimatedBuilder(
+                      animation: _glowController,
+                      builder: (context, child) {
+                        return Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: IceColors.primary.withOpacity(0.3 + (_glowController.value * 0.3)),
+                                blurRadius: 50 + (_glowController.value * 30),
+                                spreadRadius: 15,
+                              ),
+                            ],
+                          ),
+                          child: const Text('🧊', style: TextStyle(fontSize: 80)),
+                        );
+                      },
+                    ),
           
           const SizedBox(height: 32),
           
@@ -236,83 +243,81 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
           // TAG Rating
           const TagRatingDisplay(rating: TagRating.iceBreakers),
           
-          const Spacer(),
+          const SizedBox(height: 32),
           
           // Play button
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.heavyImpact();
-                    ref.read(iceBreakersProvider.notifier).enterLobby();
-                  },
-                  child: AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              IceColors.primary,
-                              IceColors.primary.withOpacity(0.7 + (_pulseController.value * 0.3)),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: IceColors.primary.withOpacity(0.4),
-                              blurRadius: 20 + (_pulseController.value * 10),
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'BREAK THE ICE 🧊',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // How it works
-                GestureDetector(
-                  onTap: _showHowItWorks,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white24),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.heavyImpact();
+              ref.read(iceBreakersProvider.notifier).enterLobby();
+            },
+            child: AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        IceColors.primary,
+                        IceColors.primary.withOpacity(0.7 + (_pulseController.value * 0.3)),
+                      ],
                     ),
-                    child: const Center(
-                      child: Text(
-                        'How It Works',
-                        style: TextStyle(fontSize: 16, color: Colors.white70),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: IceColors.primary.withOpacity(0.4),
+                        blurRadius: 20 + (_pulseController.value * 10),
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'BREAK THE ICE 🧊',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                        letterSpacing: 2,
                       ),
                     ),
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
           
-          const SizedBox(height: 24),
-        ],
+          const SizedBox(height: 16),
+          
+          // How it works
+          GestureDetector(
+            onTap: _showHowItWorks,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: const Center(
+                child: Text(
+                  'How It Works',
+                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

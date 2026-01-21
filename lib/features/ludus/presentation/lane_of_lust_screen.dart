@@ -126,45 +126,53 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
   Widget _buildEntryScreen(LaneOfLustState state) {
     return Container(
       key: const ValueKey('entry'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(VesparaIcons.back, color: Colors.white70),
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Logo
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              return Container(
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      LaneColors.crimson.withOpacity(0.3),
-                      Colors.transparent,
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: LaneColors.crimson.withOpacity(0.2 + _glowController.value * 0.2),
-                      blurRadius: 40 + _glowController.value * 20,
-                      spreadRadius: 10,
-                    ),
-                  ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(VesparaIcons.back, color: Colors.white70),
                 ),
-                child: const Text('🛣️', style: TextStyle(fontSize: 80)),
-              );
-            },
-          ),
+              ),
+            ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    
+                    // Logo
+                    AnimatedBuilder(
+                      animation: _glowController,
+                      builder: (context, child) {
+                        return Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                LaneColors.crimson.withOpacity(0.3),
+                                Colors.transparent,
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: LaneColors.crimson.withOpacity(0.2 + _glowController.value * 0.2),
+                                blurRadius: 40 + _glowController.value * 20,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: const Text('🛣️', style: TextStyle(fontSize: 80)),
+                        );
+                      },
+                    ),
           
           const SizedBox(height: 24),
           
@@ -216,7 +224,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           // TAG Rating
           const TagRatingDisplay(rating: TagRating.laneOfLust),
           
-          const Spacer(),
+          const SizedBox(height: 32),
           
           // Host Button
           GestureDetector(
@@ -266,8 +274,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
             ),
           ),
           
-          const SizedBox(height: 24),
-        ],
+          const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
