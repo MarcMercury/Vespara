@@ -128,7 +128,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
   late AnimationController _flashController;
   
   // Game settings
-  int _gameDurationMinutes = 5;
+  int _gameDurationMinutes = 3;
   DateTime? _gameStartTime;
   int _totalRounds = 0;
   
@@ -581,11 +581,11 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    _buildDurationOption(2),
+                    const SizedBox(width: 12),
                     _buildDurationOption(3),
                     const SizedBox(width: 12),
-                    _buildDurationOption(5),
-                    const SizedBox(width: 12),
-                    _buildDurationOption(10),
+                    _buildDurationOption(4),
                   ],
                 ),
               ],

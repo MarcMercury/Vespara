@@ -256,16 +256,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
           child: const Column(
             children: [
               Text(
-                '🎮 THE PREMISE',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white54,
-                  letterSpacing: 2,
-                ),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'The playground classic, evolved. This is a game of nerves, balance, and the specific kind of regret that comes from standing on one leg while trying to take off a sock.',
+                'Red Light, Green Light... but make it spicy.',
                 style: TextStyle(
                   fontSize: 15,
                   color: Colors.white70,
@@ -273,14 +264,13 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 8),
               Text(
-                'Your phone becomes The Signal.\nWatch it flash colors while trying to strip without getting caught!\n\n📸 Bonus: The camera captures freeze moments!',
+                '📸 Camera captures freeze moments!',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.white54,
                   fontStyle: FontStyle.italic,
-                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -315,11 +305,11 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
         // GREEN LIGHT
         _buildSignalCard(
           emoji: '🟢',
-          title: 'GREEN LIGHT',
-          subtitle: '"FLASH"',
+          title: 'GREEN',
+          subtitle: 'FLASH',
           color: FlashColors.green,
-          description: 'Shed a layer. Any item. Any method. Speed is your friend... until it isn\'t.',
-          note: 'The goal is to get to zero layers first, but remember: momentum is a dangerous thing.',
+          description: 'Remove a layer.',
+          note: '',
         ),
         
         const SizedBox(height: 12),
@@ -327,11 +317,11 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
         // RED LIGHT
         _buildSignalCard(
           emoji: '🔴',
-          title: 'RED LIGHT',
-          subtitle: '"FREEZE"',
+          title: 'RED',
+          subtitle: 'FREEZE',
           color: FlashColors.red,
-          description: 'Stop instantly. Absolute stillness is required.',
-          note: 'Did the light turn Red while you were mid-zipper? Are you hopping on one foot with your pants around your ankles? That is your life now. Hold the pose. If you wobble, twitch, or giggle, you are eliminated.',
+          description: 'Stop instantly. Don\'t move.',
+          note: '',
         ),
         
         const SizedBox(height: 12),
@@ -339,11 +329,12 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
         // REVERSE
         _buildSignalCard(
           emoji: '↩️',
-          title: 'REVERSE',
-          subtitle: '"COVER"',
+          title: 'YELLOW',
+          subtitle: 'COVER',
           color: FlashColors.yellow,
-          description: 'The panic button. The ultimate curveball.',
-          note: 'When Reverse is called, you must frantically put one item back on before the light turns Red again. Note: If you threw your shirt across the room during the Green Light, you better go fetch it.',
+          description: 'Put one item back on.',
+          note: '',
+        ),
         ),
       ],
     );
@@ -439,9 +430,9 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
               Text('❌', style: TextStyle(fontSize: 24)),
               SizedBox(width: 8),
               Text(
-                'ELIMINATION',
+                'YOU\'RE OUT IF YOU...',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: FlashColors.red,
                   letterSpacing: 2,
@@ -450,62 +441,32 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
             ],
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           
-          _buildEliminationRule(
-            '💀',
-            'You Move',
-            'The Signal is the Judge. If they see a twitch during Red Light, you\'re done.',
-          ),
-          
-          const SizedBox(height: 12),
-          
-          _buildEliminationRule(
-            '🫠',
-            'You Fall',
-            'Gravity is not an excuse.',
-          ),
-          
-          const SizedBox(height: 12),
-          
-          _buildEliminationRule(
-            '😱',
-            'You Fail to Reverse',
-            'If the light turns Red and you haven\'t re-added a layer, you are disqualified.',
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildEliminationItem('💀', 'Move'),
+              _buildEliminationItem('🫠', 'Fall'),
+              _buildEliminationItem('😱', 'Fail to Cover'),
+            ],
           ),
         ],
       ),
     );
   }
   
-  Widget _buildEliminationRule(String emoji, String title, String description) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEliminationItem(String emoji, String label) {
+    return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 24)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.white60,
-                  height: 1.3,
-                ),
-              ),
-            ],
+        Text(emoji, style: const TextStyle(fontSize: 28)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.white70,
           ),
         ),
       ],
@@ -765,12 +726,12 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
                     Text('⚡', style: TextStyle(fontSize: 24)),
                     SizedBox(width: 10),
                     Text(
-                      'BECOME THE SIGNAL',
+                      'START',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Colors.black,
-                        letterSpacing: 2,
+                        letterSpacing: 3,
                       ),
                     ),
                   ],
