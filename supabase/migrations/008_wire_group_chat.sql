@@ -39,7 +39,7 @@ ALTER TABLE public.conversations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.conversation_participants (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     -- Role and permissions
@@ -100,7 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_participants_user ON public.conversation_particip
 
 -- Ensure base messages table exists
 CREATE TABLE IF NOT EXISTS public.messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     content TEXT,
@@ -206,7 +206,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_pinned ON public.messages(conversation_i
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.message_receipts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     status TEXT NOT NULL CHECK (status IN ('delivered', 'read')),
@@ -233,7 +233,7 @@ CREATE INDEX IF NOT EXISTS idx_receipts_user ON public.message_receipts(user_id)
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.message_attachments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
     attachment_type TEXT NOT NULL CHECK (
         attachment_type IN ('image', 'video', 'audio', 'voice', 'file', 'gif', 'sticker')
@@ -276,7 +276,7 @@ CREATE INDEX IF NOT EXISTS idx_attachments_message ON public.message_attachments
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.typing_indicators (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     started_at TIMESTAMPTZ DEFAULT NOW(),
@@ -306,7 +306,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.starred_messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
     starred_at TIMESTAMPTZ DEFAULT NOW(),
@@ -326,7 +326,7 @@ CREATE INDEX IF NOT EXISTS idx_starred_user ON public.starred_messages(user_id, 
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.conversation_media (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     message_id UUID NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
     sender_id UUID NOT NULL REFERENCES public.profiles(id),
@@ -355,7 +355,7 @@ CREATE INDEX IF NOT EXISTS idx_convo_media ON public.conversation_media(conversa
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.link_previews (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     url TEXT NOT NULL UNIQUE,
     title TEXT,
     description TEXT,
@@ -373,7 +373,7 @@ CREATE INDEX IF NOT EXISTS idx_link_previews_url ON public.link_previews(url);
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.group_invite_links (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     invite_code TEXT NOT NULL UNIQUE,
     created_by UUID NOT NULL REFERENCES public.profiles(id),

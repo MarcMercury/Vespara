@@ -1,11 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/vespara_event.dart';
+import '../../../core/providers/events_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// EVENT DETAIL SCREEN - Full Event View with RSVP
@@ -701,7 +700,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         // RSVP summary chips
         Row(
           children: [
-            _buildGuestChip('� ${going.length} Going', VesparaColors.success),
+            _buildGuestChip('👍 ${going.length} Going', VesparaColors.success),
             const SizedBox(width: 8),
             _buildGuestChip('🤔 ${maybe.length} Maybe', VesparaColors.tagsYellow),
             const SizedBox(width: 8),
@@ -867,10 +866,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   Widget _buildRsvpActions() {
     return Row(
       children: [
-        // Going button - enthusiastic
+        // Going button
         Expanded(
           child: _buildRsvpButton(
-            '🙌',
+            '👍',
             'Going',
             VesparaColors.success,
             _myRsvpStatus == 'going',
@@ -878,7 +877,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        // Maybe button - contemplative
+        // Maybe button
         Expanded(
           child: _buildRsvpButton(
             '🤔',
@@ -889,10 +888,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        // Can't go button - graceful decline
+        // Can't go button
         Expanded(
           child: _buildRsvpButton(
-            '🥀',
+            '😢',
             "Can't Go",
             VesparaColors.error,
             _myRsvpStatus == 'cant_go',
@@ -1175,7 +1174,25 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   void _updateRsvp(String status) async {
     HapticFeedback.heavyImpact();
     
-    // Update the event's RSVPs
+    // Persist to database via provider
+    final success = await ref.read(eventsProvider.notifier).respondToInvite(
+      eventId: _event.id,
+      status: status,
+    );
+    
+    if (!success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to update RSVP. Please try again.'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Update the event's RSVPs locally for immediate UI feedback
     final updatedRsvps = _event.rsvps.map((r) {
       if (r.userId == _currentUserId) {
         return EventRsvp(
@@ -1193,11 +1210,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     }).toList();
     
     // If user wasn't in the list, add them
-    String? rsvpId;
     if (!updatedRsvps.any((r) => r.userId == _currentUserId)) {
-      rsvpId = 'rsvp-${DateTime.now().millisecondsSinceEpoch}';
       updatedRsvps.add(EventRsvp(
-        id: rsvpId,
+        id: 'rsvp-${DateTime.now().millisecondsSinceEpoch}',
         eventId: _event.id,
         userId: _currentUserId,
         userName: 'You',
@@ -1207,29 +1222,9 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       ));
     }
     
-    // Update local state (optimistic update)
     setState(() {
       _event = _event.copyWith(rsvps: updatedRsvps);
     });
-    
-    // Persist RSVP to database
-    try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      
-      if (userId != null && userId.isNotEmpty) {
-        // Try to upsert the RSVP
-        await supabase.from('event_rsvps').upsert({
-          'event_id': _event.id,
-          'user_id': userId,
-          'status': status,
-          'responded_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'event_id,user_id');
-      }
-    } catch (e) {
-      debugPrint('Error saving RSVP: $e');
-      // Keep optimistic update even if database fails
-    }
     
     String message;
     switch (status) {
@@ -1246,11 +1241,13 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         message = 'RSVP updated';
     }
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: VesparaColors.success,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
   }
 }

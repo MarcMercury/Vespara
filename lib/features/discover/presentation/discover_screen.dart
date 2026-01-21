@@ -329,8 +329,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildMatchTypeToggle() {
-    final metIrlAsync = ref.watch(metAtEventsProvider);
-    final metIrlCount = metIrlAsync.valueOrNull?.length ?? 0;
+    final metIrlCount = ref.watch(metAtEventsProvider).length;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -897,25 +896,25 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Pass button - sleek X
+          // Pass button
           _buildActionButton(
-            icon: Icons.close_rounded,
+            icon: Icons.close,
             color: VesparaColors.error,
             size: 60,
             onTap: () => _onSwipe(SwipeDirection.left),
           ),
           
-          // Super Like button - cosmic star
+          // Super Like button
           _buildActionButton(
-            icon: Icons.auto_awesome_rounded,
+            icon: Icons.star,
             color: VesparaColors.tagsYellow,
             size: 48,
             onTap: () => _onSwipe(SwipeDirection.superLike),
           ),
           
-          // Like button - passionate heart
+          // Like button
           _buildActionButton(
-            icon: Icons.favorite_rounded,
+            icon: Icons.favorite,
             color: VesparaColors.success,
             size: 60,
             onTap: () => _onSwipe(SwipeDirection.right),
@@ -1039,22 +1038,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildMetIrlContent() {
-    final metIrlAsync = ref.watch(metAtEventsProvider);
+    final metIrlAttendees = ref.watch(metAtEventsProvider);
     final connectionState = ref.watch(connectionStateProvider);
     
-    return metIrlAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => _buildMetIrlEmptyState(),
-      data: (metIrlAttendees) {
-        if (metIrlAttendees.isEmpty) {
-          return _buildMetIrlEmptyState();
-        }
-        return _buildMetIrlList(metIrlAttendees, connectionState);
-      },
-    );
-  }
-  
-  Widget _buildMetIrlList(List<EventAttendee> metIrlAttendees, VesparaConnectionState connectionState) {
+    if (metIrlAttendees.isEmpty) {
+      return _buildMetIrlEmptyState();
+    }
 
     return Column(
       children: [

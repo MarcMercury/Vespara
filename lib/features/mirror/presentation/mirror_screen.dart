@@ -1,20 +1,17 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
-import '../../../core/domain/models/user_profile.dart';
-import '../../../core/domain/models/analytics.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/providers/app_providers.dart';
-import '../widgets/qr_connect_modal.dart';
-import 'edit_profile_screen.dart';
+import '../../../core/domain/models/analytics.dart';
+import 'app_settings_screen.dart';
 
-/// ════════════════════════════════════════════════════════════════════════════
-/// THE MIRROR - Module 1
-/// Profile management, brutal honest AI feedback, settings, analytics
-/// "Look at yourself. No, really look."
-/// ════════════════════════════════════════════════════════════════════════════
-
+/// The Mirror Screen - Analytics Dashboard
+/// Ghost Rate, Flake Rate, Swipe Ratio, Response Rate with brutal truth insights
 class MirrorScreen extends ConsumerStatefulWidget {
   const MirrorScreen({super.key});
 
@@ -22,590 +19,814 @@ class MirrorScreen extends ConsumerStatefulWidget {
   ConsumerState<MirrorScreen> createState() => _MirrorScreenState();
 }
 
-class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  
-  // Settings state
-  final Map<String, bool> _toggleSettings = {
-    'New Matches': true,
-    'Messages': true,
-    'Date Reminders': true,
-    'AI Insights': false,
-    'Show Online Status': true,
-    'Read Receipts': false,
-    'Profile Visible': true,
-  };
-  
-  UserAnalytics? _cachedAnalytics;
+class _MirrorScreenState extends ConsumerState<MirrorScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
   
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    // Analytics will be loaded via provider
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+    _animationController.forward();
   }
   
-  UserAnalytics get _analytics {
-    return _cachedAnalytics ?? MockDataProvider.analytics;
-  }
-  
-  void _navigateToEditProfile(UserProfile profile) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => EditProfileScreen(profile: profile),
-      ),
-    ).then((updated) {
-      // Refresh profile if changes were made
-      if (updated == true) {
-        ref.invalidate(userProfileProvider);
-      }
-    });
-  }
-
   @override
   void dispose() {
-    _tabController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Load analytics from provider
-    final analyticsAsync = ref.watch(userAnalyticsProvider);
-    _cachedAnalytics = analyticsAsync.valueOrNull;
+    final analytics = ref.watch(userAnalyticsProvider);
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildTabBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildProfileTab(),
-                  _buildBrutalTruthTab(),
-                  _buildSettingsTab(),
-                ],
-              ),
-            ),
-          ],
+        child: analytics.when(
+          data: (data) => data != null 
+            ? _buildContent(context, data)
+            : _buildEmptyState(context),
+          loading: () => _buildLoadingState(context),
+          error: (e, stack) => _buildErrorState(context, e),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
-          ),
-          Column(
-            children: [
-              Text(
-                'THE MIRROR',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 4,
-                  color: VesparaColors.primary,
-                ),
-              ),
-              Text(
-                'Face yourself',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VesparaColors.secondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            onPressed: () => showQrConnectModal(context),
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [VesparaColors.glow, VesparaColors.primary],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          color: VesparaColors.glow,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: VesparaColors.background,
-        unselectedLabelColor: VesparaColors.secondary,
-        labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        dividerHeight: 0,
-        tabs: [
-          Tab(text: 'Profile'),
-          Tab(text: 'Brutal Truth'),
-          Tab(text: 'Settings'),
-        ],
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════════════════════
-  // PROFILE TAB
-  // ════════════════════════════════════════════════════════════════════════════
-
-  Widget _buildProfileTab() {
-    final profileAsync = ref.watch(userProfileProvider);
-    
-    return profileAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, color: VesparaColors.error, size: 48),
-            const SizedBox(height: 16),
-            Text('Failed to load profile', style: TextStyle(color: VesparaColors.secondary)),
-            TextButton(
-              onPressed: () => ref.invalidate(userProfileProvider),
-              child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
-            ),
-          ],
-        ),
-      ),
-      data: (profile) => profile != null 
-          ? _buildProfileContent(profile)
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.person_off_outlined, color: VesparaColors.secondary, size: 48),
-                  const SizedBox(height: 16),
-                  Text('No profile found', style: TextStyle(color: VesparaColors.secondary)),
-                  TextButton(
-                    onPressed: () => ref.invalidate(userProfileProvider),
-                    child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
-                  ),
-                ],
-              ),
-            ),
     );
   }
   
-  Widget _buildProfileContent(UserProfile profile) {
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+  Widget _buildLoadingState(BuildContext context) {
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Profile photo
-          Center(
-            child: Stack(
+          const CircularProgressIndicator(
+            color: VesparaColors.primary,
+          ),
+          const SizedBox(height: VesparaSpacing.md),
+          Text(
+            'Loading your analytics...',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.analytics_outlined,
+            color: VesparaColors.secondary,
+            size: 64,
+          ),
+          const SizedBox(height: VesparaSpacing.md),
+          Text(
+            'No analytics data yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: VesparaSpacing.sm),
+          Text(
+            'Start swiping to see your stats',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: VesparaSpacing.lg),
+          ElevatedButton(
+            onPressed: () => context.go('/home'),
+            child: const Text('Go Home'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildErrorState(BuildContext context, Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(VesparaSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: VesparaColors.error,
+              size: 48,
+            ),
+            const SizedBox(height: VesparaSpacing.md),
+            Text(
+              'Unable to load analytics',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: VesparaSpacing.sm),
+            Text(
+              'Please try again later',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: VesparaSpacing.lg),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [VesparaColors.glow, VesparaColors.glow.withOpacity(0.5)],
-                    ),
-                    border: Border.all(color: VesparaColors.glow, width: 3),
-                  ),
-                  child: Center(
-                    child: Text(
-                      profile.displayName[0].toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.background,
-                      ),
-                    ),
-                  ),
+                OutlinedButton(
+                  onPressed: () => context.go('/home'),
+                  child: const Text('Go Home'),
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: VesparaColors.surface,
-                      border: Border.all(color: VesparaColors.glow),
-                    ),
-                    child: Icon(Icons.edit, size: 16, color: VesparaColors.glow),
-                  ),
+                const SizedBox(width: VesparaSpacing.md),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(userAnalyticsProvider),
+                  child: const Text('Retry'),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              profile.displayName,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: VesparaColors.primary,
-              ),
-            ),
-          ),
-          Center(
-            child: Text(
-              profile.headline ?? 'Add a headline...',
-              style: TextStyle(
-                fontSize: 14,
-                color: VesparaColors.secondary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Quick stats
-          _buildQuickStats(),
-          
-          const SizedBox(height: 24),
-          
-          // Profile sections
-          _buildProfileSection('About Me', profile.bio ?? 'No bio yet', Icons.person_outline),
-          _buildProfileSection('Location', profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Not set', Icons.location_on_outlined),
-          _buildProfileSection('Pronouns', profile.pronouns ?? 'Not set', Icons.person_pin_outlined),
-          _buildProfileSection('Gender', profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Not set', Icons.face_outlined),
-          _buildProfileSection('Orientation', profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Not set', Icons.favorite_border),
-          _buildProfileSection('Relationship Status', profile.relationshipStatus.isNotEmpty ? profile.relationshipStatus.join(', ') : 'Not set', Icons.people_outline),
-          _buildProfileSection('Seeking', profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Not set', Icons.search),
-          _buildProfileSection('Looking For', profile.lookingFor.isNotEmpty ? profile.lookingFor.join(', ') : 'Not set', Icons.favorite_outline),
-          _buildProfileSection('Kinks & Interests', profile.kinks.isNotEmpty ? profile.kinks.join(', ') : 'Not set', Icons.whatshot_outlined),
-          _buildProfileSection('Boundaries', profile.boundaries.isNotEmpty ? profile.boundaries.join(', ') : 'Not set', Icons.shield_outlined),
-          _buildProfileSection('Love Languages', profile.loveLanguages.isNotEmpty ? profile.loveLanguages.join(', ') : 'Not set', Icons.language),
-          _buildProfileSection('Availability', profile.availabilityGeneral.isNotEmpty ? profile.availabilityGeneral.join(', ') : 'Not set', Icons.schedule_outlined),
-          _buildProfileSection('Hosting Status', profile.hostingStatus ?? 'Not set', Icons.home_outlined),
-          _buildProfileSection('Discretion Level', profile.discretionLevel ?? 'Not set', Icons.visibility_outlined),
-          
-          const SizedBox(height: 24),
-          
-          // Edit profile button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _navigateToEditProfile(profile),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VesparaColors.glow,
-                foregroundColor: VesparaColors.background,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStats() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            VesparaColors.glow.withOpacity(0.15),
-            VesparaColors.surface,
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatColumn(_analytics.totalMatches.toString(), 'Matches'),
-          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildStatColumn('${(_analytics.responseRate * 100).toInt()}%', 'Response'),
-          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildStatColumn(_analytics.activeDays.toString(), 'Days Active'),
+    );
+  }
+  
+  Widget _buildContent(BuildContext context, UserAnalytics analytics) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: CustomScrollView(
+        slivers: [
+          // Header
+          SliverToBoxAdapter(child: _buildHeader(context)),
+          
+          // Overview card
+          SliverToBoxAdapter(child: _buildOverviewCard(context, analytics)),
+          
+          // Main metrics grid
+          SliverToBoxAdapter(child: _buildMetricsGrid(context, analytics)),
+          
+          // Trend chart
+          SliverToBoxAdapter(child: _buildTrendChart(context, analytics)),
+          
+          // Brutal truth section
+          SliverToBoxAdapter(child: _buildBrutalTruth(context, analytics)),
+          
+          // Activity breakdown
+          SliverToBoxAdapter(child: _buildActivityBreakdown(context, analytics)),
+          
+          // Bottom padding
+          const SliverToBoxAdapter(
+            child: SizedBox(height: VesparaSpacing.xl),
+          ),
         ],
       ),
     );
   }
-
-  Widget _buildStatColumn(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: VesparaColors.glow,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: VesparaColors.secondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileSection(String title, String content, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
+  
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(VesparaSpacing.md),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: VesparaColors.glow, size: 20),
-          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () {
+              VesparaHaptics.lightTap();
+              context.go('/home');
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: VesparaColors.border),
+              ),
+              child: const Icon(
+                Icons.arrow_back,
+                color: VesparaColors.primary,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: VesparaSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.secondary,
+                  'THE MIRROR',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    letterSpacing: 3,
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
-                  content.isNotEmpty ? content : 'Not set',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: VesparaColors.primary,
-                  ),
+                  'Face your data',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: VesparaColors.secondary, size: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.analytics_outlined,
+              color: VesparaColors.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: VesparaSpacing.sm),
+          GestureDetector(
+            onTap: () {
+              VesparaHaptics.lightTap();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AppSettingsScreen(),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: VesparaColors.border),
+              ),
+              child: const Icon(
+                Icons.settings_outlined,
+                color: VesparaColors.primary,
+                size: 24,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-
-  // ════════════════════════════════════════════════════════════════════════════
-  // BRUTAL TRUTH TAB - AI Feedback
-  // ════════════════════════════════════════════════════════════════════════════
-
-  Widget _buildBrutalTruthTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildBrutalHeader(),
-          const SizedBox(height: 24),
-          _buildPersonalitySummary(),
-          const SizedBox(height: 20),
-          _buildDatingStyle(),
-          const SizedBox(height: 20),
-          _buildBehaviorMetrics(),
-          const SizedBox(height: 20),
-          _buildImprovementTips(),
-          const SizedBox(height: 20),
-          _buildRedFlags(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBrutalHeader() {
+  
+  Widget _buildOverviewCard(BuildContext context, UserAnalytics analytics) {
+    final overallScore = _calculateOverallScore(analytics);
+    final scoreColor = _getScoreColor(overallScore);
+    
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(VesparaSpacing.md),
+      padding: const EdgeInsets.all(VesparaSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            VesparaColors.error.withOpacity(0.3),
             VesparaColors.surface,
+            scoreColor.withOpacity(0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.tile),
+        border: Border.all(
+          color: scoreColor.withOpacity(0.3),
+        ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(Icons.psychology, size: 48, color: VesparaColors.error),
-          const SizedBox(height: 12),
-          Text(
-            'The Brutal Truth',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: VesparaColors.primary,
+          // Score circle
+          SizedBox(
+            width: 100,
+            height: 100,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Background ring
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: CircularProgressIndicator(
+                    value: 1.0,
+                    strokeWidth: 8,
+                    backgroundColor: VesparaColors.background,
+                    valueColor: AlwaysStoppedAnimation(
+                      VesparaColors.inactive.withOpacity(0.3),
+                    ),
+                  ),
+                ),
+                // Progress ring
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: overallScore / 100),
+                    duration: const Duration(milliseconds: 1200),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return CircularProgressIndicator(
+                        value: value,
+                        strokeWidth: 8,
+                        backgroundColor: Colors.transparent,
+                        valueColor: AlwaysStoppedAnimation(scoreColor),
+                      );
+                    },
+                  ),
+                ),
+                // Score text
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: overallScore),
+                      duration: const Duration(milliseconds: 1200),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Text(
+                          value.toStringAsFixed(0),
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: scoreColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      },
+                    ),
+                    Text(
+                      'SCORE',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'AI analysis of your dating behavior. No sugarcoating. No excuses.',
-            style: TextStyle(
-              fontSize: 13,
-              color: VesparaColors.secondary,
+          const SizedBox(width: VesparaSpacing.lg),
+          
+          // Score breakdown
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getScoreLabel(overallScore),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: scoreColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getScoreDescription(overallScore),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: VesparaSpacing.md),
+                Row(
+                  children: [
+                    _buildMiniStat(
+                      context,
+                      '${analytics.totalMatches}',
+                      'Total',
+                    ),
+                    const SizedBox(width: VesparaSpacing.md),
+                    _buildMiniStat(
+                      context,
+                      '${analytics.activeConversations}',
+                      'Active',
+                    ),
+                    const SizedBox(width: VesparaSpacing.md),
+                    _buildMiniStat(
+                      context,
+                      '${analytics.datesScheduled}',
+                      'Dates',
+                    ),
+                  ],
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-
-  Widget _buildPersonalitySummary() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
+  
+  Widget _buildMiniStat(BuildContext context, String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildMetricsGrid(BuildContext context, UserAnalytics analytics) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: VesparaSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'AI Personality Summary',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.glow,
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  icon: Icons.visibility_off,
+                  label: 'GHOST RATE',
+                  value: analytics.ghostRate,
+                  description: 'Conversations that faded',
+                  isNegative: true,
+                ),
+              ),
+              const SizedBox(width: VesparaSpacing.sm),
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  icon: Icons.event_busy,
+                  label: 'FLAKE RATE',
+                  value: analytics.flakeRate,
+                  description: 'Plans that fell through',
+                  isNegative: true,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: VesparaSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  icon: Icons.swap_horiz,
+                  label: 'SWIPE RATIO',
+                  value: analytics.swipeRatio,
+                  description: 'Right vs left swipes',
+                  isNegative: false,
+                ),
+              ),
+              const SizedBox(width: VesparaSpacing.sm),
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  icon: Icons.reply,
+                  label: 'RESPONSE RATE',
+                  value: analytics.responseRate,
+                  description: 'Messages answered',
+                  isNegative: false,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildMetricCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required double value,
+    required String description,
+    required bool isNegative,
+  }) {
+    // For negative metrics, lower is better
+    final color = isNegative
+        ? (value < 20 ? VesparaColors.tagsGreen : 
+           (value < 50 ? VesparaColors.tagsYellow : VesparaColors.tagsRed))
+        : (value > 70 ? VesparaColors.tagsGreen : 
+           (value > 40 ? VesparaColors.tagsYellow : VesparaColors.tagsRed));
+    
+    return Container(
+      padding: const EdgeInsets.all(VesparaSpacing.md),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
+        border: Border.all(color: VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              Text(
+                '${value.toStringAsFixed(0)}%',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: VesparaSpacing.sm),
           Text(
-            _analytics.aiPersonalitySummary ?? 
-            'You\'re charming on the surface but tend to lose interest after the chase. You match with many but commit to few. Your texting game is strong early but fades fast. You like attention more than connection.',
-            style: TextStyle(
-              fontSize: 14,
-              color: VesparaColors.primary,
-              height: 1.5,
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: VesparaSpacing.sm),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: value / 100,
+              backgroundColor: VesparaColors.background,
+              valueColor: AlwaysStoppedAnimation(color),
+              minHeight: 4,
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildDatingStyle() {
+  
+  Widget _buildTrendChart(BuildContext context, UserAnalytics analytics) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(VesparaSpacing.md),
+      padding: const EdgeInsets.all(VesparaSpacing.lg),
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.tile),
+        border: Border.all(color: VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ACTIVITY TREND',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  letterSpacing: 2,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Last 7 days',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: VesparaSpacing.lg),
+          
+          // Simple chart visualization
+          SizedBox(
+            height: 120,
+            child: CustomPaint(
+              size: const Size(double.infinity, 120),
+              painter: _TrendChartPainter(
+                data: analytics.weeklyActivity,
+                color: VesparaColors.glow,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: VesparaSpacing.md),
+          
+          // Day labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                .map((day) => Text(
+                      day,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 10,
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBrutalTruth(BuildContext context, UserAnalytics analytics) {
+    final insights = _generateInsights(analytics);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: VesparaSpacing.md),
+      padding: const EdgeInsets.all(VesparaSpacing.lg),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.tile),
+        border: Border.all(
+          color: VesparaColors.tagsYellow.withOpacity(0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.heart_broken, color: VesparaColors.tagsYellow, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Your Dating Style',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: VesparaColors.tagsYellow.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.psychology,
                   color: VesparaColors.tagsYellow,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: VesparaSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'BRUTAL TRUTH',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        letterSpacing: 2,
+                        color: VesparaColors.tagsYellow,
+                      ),
+                    ),
+                    Text(
+                      'Honest insights from your data',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            _analytics.aiDatingStyle ?? '"The Collector"',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'You enjoy the validation of matching more than the work of connecting. You keep options open even when you find someone good. Classic commitment-phobe behavior disguised as "keeping things casual".',
-            style: TextStyle(
-              fontSize: 13,
-              color: VesparaColors.secondary,
-              height: 1.4,
-            ),
-          ),
+          const SizedBox(height: VesparaSpacing.lg),
+          
+          ...insights.map((insight) => _buildInsightItem(context, insight)),
         ],
       ),
     );
   }
-
-  Widget _buildBehaviorMetrics() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Behavior Metrics',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildMetricRow('Ghost Rate', _analytics.ghostRate, VesparaColors.error),
-          _buildMetricRow('Flake Rate', _analytics.flakeRate, VesparaColors.warning),
-          _buildMetricRow('Response Rate', _analytics.responseRate, VesparaColors.success),
-          _buildMetricRow('Match Rate', _analytics.matchRate, VesparaColors.glow),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricRow(String label, double value, Color color) {
-    final percentage = (value * 100).toInt();
-    final isGood = label == 'Response Rate' || label == 'Match Rate' ? value > 0.5 : value < 0.3;
+  
+  Widget _buildInsightItem(BuildContext context, Map<String, dynamic> insight) {
+    final IconData icon = insight['icon'] as IconData;
+    final String text = insight['text'] as String;
+    final Color color = insight['color'] as Color;
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: VesparaSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 14),
+          ),
+          const SizedBox(width: VesparaSpacing.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildActivityBreakdown(BuildContext context, UserAnalytics analytics) {
+    return Container(
+      margin: const EdgeInsets.all(VesparaSpacing.md),
+      padding: const EdgeInsets.all(VesparaSpacing.lg),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.tile),
+        border: Border.all(color: VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ACTIVITY BREAKDOWN',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: VesparaSpacing.lg),
+          
+          _buildActivityRow(
+            context,
+            label: 'Messages Sent',
+            value: analytics.messagesSent,
+            total: analytics.messagesSent + analytics.messagesReceived,
+            color: VesparaColors.glow,
+          ),
+          _buildActivityRow(
+            context,
+            label: 'Messages Received',
+            value: analytics.messagesReceived,
+            total: analytics.messagesSent + analytics.messagesReceived,
+            color: VesparaColors.secondary,
+          ),
+          
+          const Divider(color: VesparaColors.border, height: 32),
+          
+          _buildActivityRow(
+            context,
+            label: 'First Messages Sent',
+            value: analytics.firstMessagesSent,
+            total: analytics.totalMatches,
+            color: VesparaColors.tagsGreen,
+          ),
+          _buildActivityRow(
+            context,
+            label: 'Conversations Started',
+            value: analytics.conversationsStarted,
+            total: analytics.totalMatches,
+            color: VesparaColors.tagsYellow,
+          ),
+          
+          const Divider(color: VesparaColors.border, height: 32),
+          
+          // Peak activity time
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Peak Activity',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  Text(
+                    'When you\'re most active',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  analytics.peakActivityTime,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: VesparaColors.glow,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildActivityRow(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required int total,
+    required Color color,
+  }) {
+    final percentage = total > 0 ? (value / total) : 0.0;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: VesparaSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -614,773 +835,214 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: VesparaColors.secondary,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               Text(
-                '$percentage%',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                '$value',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                   color: color,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Stack(
-            children: [
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: VesparaColors.background,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              FractionallySizedBox(
-                widthFactor: value,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ],
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: percentage,
+              backgroundColor: VesparaColors.background,
+              valueColor: AlwaysStoppedAnimation(color),
+              minHeight: 6,
+            ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildImprovementTips() {
-    final tips = _analytics.aiImprovementTips ?? [
-      'Stop swiping right on everyone - be selective',
-      'Actually follow through on date plans instead of flaking',
-      'Reply within 24 hours or don\'t reply at all',
-      'Be honest about what you want instead of stringing people along',
-    ];
+  
+  // Helper methods
+  double _calculateOverallScore(UserAnalytics analytics) {
+    // Weight different metrics
+    final responseWeight = analytics.responseRate * 0.3;
+    final ghostPenalty = (100 - analytics.ghostRate) * 0.25;
+    final flakePenalty = (100 - analytics.flakeRate) * 0.25;
+    final activityBonus = math.min(analytics.swipeRatio * 0.2, 20);
     
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.lightbulb_outline, color: VesparaColors.success, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'How to Not Suck',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.success,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...tips.map((tip) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.check_circle, size: 16, color: VesparaColors.success),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    tip,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: VesparaColors.primary,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )),
+    return (responseWeight + ghostPenalty + flakePenalty + activityBonus)
+        .clamp(0, 100);
+  }
+  
+  Color _getScoreColor(double score) {
+    if (score >= 75) return VesparaColors.tagsGreen;
+    if (score >= 50) return VesparaColors.tagsYellow;
+    return VesparaColors.tagsRed;
+  }
+  
+  String _getScoreLabel(double score) {
+    if (score >= 85) return 'Excellent';
+    if (score >= 70) return 'Strong';
+    if (score >= 50) return 'Average';
+    if (score >= 30) return 'Needs Work';
+    return 'Critical';
+  }
+  
+  String _getScoreDescription(double score) {
+    if (score >= 85) return 'You\'re crushing it. Keep the momentum.';
+    if (score >= 70) return 'Solid performance with room to grow.';
+    if (score >= 50) return 'Middle of the pack. Time to step up.';
+    if (score >= 30) return 'Your metrics need serious attention.';
+    return 'Major changes needed. Let\'s fix this.';
+  }
+  
+  List<Map<String, dynamic>> _generateInsights(UserAnalytics analytics) {
+    final insights = <Map<String, dynamic>>[];
+    
+    // Ghost rate insight
+    if (analytics.ghostRate > 50) {
+      insights.add({
+        'icon': Icons.visibility_off,
+        'text': 'You\'re ghosting over half your matches. Either engage meaningfully or clean up your roster.',
+        'color': VesparaColors.tagsRed,
+      });
+    } else if (analytics.ghostRate > 25) {
+      insights.add({
+        'icon': Icons.visibility_off,
+        'text': 'Your ghost rate is creeping up. Consider using The Shredder for graceful exits.',
+        'color': VesparaColors.tagsYellow,
+      });
+    }
+    
+    // Response rate insight
+    if (analytics.responseRate < 40) {
+      insights.add({
+        'icon': Icons.reply,
+        'text': 'Your response rate is low. Try the Conversation Resuscitator in The Wire.',
+        'color': VesparaColors.tagsRed,
+      });
+    } else if (analytics.responseRate > 80) {
+      insights.add({
+        'icon': Icons.reply,
+        'text': 'Excellent response rate! You\'re keeping conversations alive.',
+        'color': VesparaColors.tagsGreen,
+      });
+    }
+    
+    // Flake rate insight
+    if (analytics.flakeRate > 40) {
+      insights.add({
+        'icon': Icons.event_busy,
+        'text': 'Too many plans falling through. Only confirm dates you\'ll actually keep.',
+        'color': VesparaColors.tagsRed,
+      });
+    }
+    
+    // First message insight
+    if (analytics.firstMessagesSent < analytics.totalMatches * 0.3) {
+      insights.add({
+        'icon': Icons.send,
+        'text': 'You\'re waiting for others to message first. Take initiative.',
+        'color': VesparaColors.tagsYellow,
+      });
+    }
+    
+    // Add a positive if nothing else
+    if (insights.isEmpty) {
+      insights.add({
+        'icon': Icons.star,
+        'text': 'Your metrics look healthy. Keep doing what you\'re doing.',
+        'color': VesparaColors.tagsGreen,
+      });
+    }
+    
+    return insights;
+  }
+}
+
+/// Custom painter for the trend chart
+class _TrendChartPainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+  
+  _TrendChartPainter({
+    required this.data,
+    required this.color,
+  });
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+    
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withOpacity(0.3),
+          color.withOpacity(0.0),
         ],
-      ),
-    );
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    
+    final maxValue = data.reduce(math.max);
+    final minValue = data.reduce(math.min);
+    final range = maxValue - minValue;
+    
+    final path = Path();
+    final fillPath = Path();
+    
+    final stepX = size.width / (data.length - 1);
+    
+    for (var i = 0; i < data.length; i++) {
+      final x = i * stepX;
+      final normalizedValue = range > 0 
+          ? (data[i] - minValue) / range 
+          : 0.5;
+      final y = size.height - (normalizedValue * size.height * 0.8) - (size.height * 0.1);
+      
+      if (i == 0) {
+        path.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+    
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+    
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, paint);
+    
+    // Draw points
+    final pointPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    
+    for (var i = 0; i < data.length; i++) {
+      final x = i * stepX;
+      final normalizedValue = range > 0 
+          ? (data[i] - minValue) / range 
+          : 0.5;
+      final y = size.height - (normalizedValue * size.height * 0.8) - (size.height * 0.1);
+      
+      canvas.drawCircle(Offset(x, y), 4, pointPaint);
+      canvas.drawCircle(
+        Offset(x, y), 
+        2, 
+        Paint()..color = VesparaColors.surface,
+      );
+    }
   }
-
-  Widget _buildRedFlags() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.error.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.flag, color: VesparaColors.error, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Red Flags We\'ve Noticed',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.error,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildRedFlagItem('You ghosted 3 people this month'),
-          _buildRedFlagItem('Average conversation dies after 12 messages'),
-          _buildRedFlagItem('You only swipe on people 5+ years younger'),
-          _buildRedFlagItem('Last 4 dates were cancelled by you'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRedFlagItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.warning_amber, size: 14, color: VesparaColors.error),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12,
-                color: VesparaColors.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════════════════════
-  // SETTINGS TAB
-  // ════════════════════════════════════════════════════════════════════════════
-
-  Widget _buildSettingsTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildSettingsSection('Discovery Preferences', [
-          _buildSettingTile('Age Range', '21-45', Icons.cake_outlined, () => _showAgeRangeDialog()),
-          _buildSettingTile('Distance', 'Within 25 miles', Icons.location_on_outlined, () => _showDistanceDialog()),
-          _buildSettingTile('Show Me', 'Everyone', Icons.people_outline, () => _showGenderPreferenceDialog()),
-          _buildSettingTile('Relationship Types', '3 selected', Icons.favorite_outline, () => _showRelationshipTypesDialog()),
-        ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Notifications', [
-          _buildSettingToggle('New Matches'),
-          _buildSettingToggle('Messages'),
-          _buildSettingToggle('Date Reminders'),
-          _buildSettingToggle('AI Insights'),
-        ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Privacy', [
-          _buildSettingToggle('Show Online Status'),
-          _buildSettingToggle('Read Receipts'),
-          _buildSettingToggle('Profile Visible'),
-        ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Calendar Sync', [
-          _buildSettingTile('Google Calendar', 'Connected', Icons.calendar_today, () => _showCalendarSyncDialog('Google')),
-          _buildSettingTile('Apple Calendar', 'Not Connected', Icons.event, () => _showCalendarSyncDialog('Apple')),
-        ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Account', [
-          _buildSettingTile('Subscription', 'Vespara Plus', Icons.star_outline, () => _showSubscriptionDialog()),
-          _buildSettingTile('Email', 'demo@vespara.app', Icons.email_outlined, () => _showEditEmailDialog()),
-          _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined, () => _showEditPhoneDialog()),
-        ]),
-        const SizedBox(height: 24),
-        _buildDangerZone(),
-      ],
-    );
-  }
-
-  void _showAgeRangeDialog() {
-    RangeValues range = const RangeValues(21, 45);
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Age Range', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              const SizedBox(height: 24),
-              Text('${range.start.toInt()} - ${range.end.toInt()} years',
-                  style: TextStyle(fontSize: 24, color: VesparaColors.glow)),
-              RangeSlider(
-                values: range,
-                min: 18,
-                max: 65,
-                divisions: 47,
-                activeColor: VesparaColors.glow,
-                inactiveColor: VesparaColors.glow.withOpacity(0.2),
-                onChanged: (v) => setModalState(() => range = v),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VesparaColors.glow,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Age range updated to ${range.start.toInt()}-${range.end.toInt()}')),
-                    );
-                  },
-                  child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDistanceDialog() {
-    double distance = 25;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Maximum Distance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              const SizedBox(height: 24),
-              Text('${distance.toInt()} miles', style: TextStyle(fontSize: 24, color: VesparaColors.glow)),
-              Slider(
-                value: distance,
-                min: 1,
-                max: 100,
-                divisions: 99,
-                activeColor: VesparaColors.glow,
-                inactiveColor: VesparaColors.glow.withOpacity(0.2),
-                onChanged: (v) => setModalState(() => distance = v),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VesparaColors.glow,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Distance updated to ${distance.toInt()} miles')),
-                    );
-                  },
-                  child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showGenderPreferenceDialog() {
-    String selected = 'Everyone';
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Show Me', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              const SizedBox(height: 24),
-              ...['Women', 'Men', 'Everyone'].map((option) => RadioListTile<String>(
-                title: Text(option, style: TextStyle(color: VesparaColors.primary)),
-                value: option,
-                groupValue: selected,
-                activeColor: VesparaColors.glow,
-                onChanged: (v) {
-                  setModalState(() => selected = v!);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Preference updated to $v')),
-                  );
-                },
-              )),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showRelationshipTypesDialog() {
-    final types = ['Long-term', 'Casual', 'Open', 'Friendship', 'Unsure'];
-    final selected = {'Long-term', 'Casual', 'Friendship'};
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Relationship Types', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              const SizedBox(height: 24),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: types.map((type) => FilterChip(
-                  label: Text(type),
-                  selected: selected.contains(type),
-                  onSelected: (v) {
-                    setModalState(() {
-                      v ? selected.add(type) : selected.remove(type);
-                    });
-                  },
-                  selectedColor: VesparaColors.glow.withOpacity(0.3),
-                  checkmarkColor: VesparaColors.glow,
-                  backgroundColor: VesparaColors.background,
-                  labelStyle: TextStyle(color: selected.contains(type) ? VesparaColors.glow : VesparaColors.primary),
-                )).toList(),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VesparaColors.glow,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${selected.length} relationship types selected')),
-                    );
-                  },
-                  child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showCalendarSyncDialog(String provider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('$provider Calendar', style: TextStyle(color: VesparaColors.primary)),
-        content: Text(
-          provider == 'Google' 
-            ? 'Your Google Calendar is connected. Disconnect?' 
-            : 'Connect your Apple Calendar to sync dates automatically.',
-          style: TextStyle(color: VesparaColors.secondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(provider == 'Google' ? 'Disconnected from Google Calendar' : 'Connecting to Apple Calendar...')),
-              );
-            },
-            child: Text(provider == 'Google' ? 'Disconnect' : 'Connect', style: TextStyle(color: VesparaColors.glow)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSubscriptionDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: VesparaColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.star, size: 48, color: VesparaColors.glow),
-            const SizedBox(height: 16),
-            Text('Vespara Plus', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: VesparaColors.glow)),
-            const SizedBox(height: 8),
-            Text('You\'re on the Plus plan!', style: TextStyle(color: VesparaColors.secondary)),
-            const SizedBox(height: 24),
-            _buildSubscriptionFeature('Unlimited swipes'),
-            _buildSubscriptionFeature('See who likes you'),
-            _buildSubscriptionFeature('AI dating coach'),
-            _buildSubscriptionFeature('Priority matching'),
-            const SizedBox(height: 24),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening subscription management...')),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: VesparaColors.glow),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text('Manage Subscription', style: TextStyle(color: VesparaColors.glow)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubscriptionFeature(String feature) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: VesparaColors.success, size: 20),
-          const SizedBox(width: 12),
-          Text(feature, style: TextStyle(color: VesparaColors.primary)),
-        ],
-      ),
-    );
-  }
-
-  void _showEditEmailDialog() {
-    final controller = TextEditingController(text: 'demo@vespara.app');
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Update Email', style: TextStyle(color: VesparaColors.primary)),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            prefixIcon: Icon(Icons.email, color: VesparaColors.glow),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          style: TextStyle(color: VesparaColors.primary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Verification email sent to ${controller.text}')),
-              );
-            },
-            child: Text('Save', style: TextStyle(color: VesparaColors.glow)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEditPhoneDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Update Phone', style: TextStyle(color: VesparaColors.primary)),
-        content: TextField(
-          keyboardType: TextInputType.phone,
-          decoration: InputDecoration(
-            hintText: '+1 (555) 000-0000',
-            hintStyle: TextStyle(color: VesparaColors.secondary),
-            prefixIcon: Icon(Icons.phone, color: VesparaColors.glow),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          style: TextStyle(color: VesparaColors.primary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Verification code sent to your phone')),
-              );
-            },
-            child: Text('Save', style: TextStyle(color: VesparaColors.glow)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: VesparaColors.secondary,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingTile(String title, String value, IconData icon, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: VesparaColors.glow, size: 20),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14,
-          color: VesparaColors.primary,
-        ),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              color: VesparaColors.secondary,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(Icons.chevron_right, color: VesparaColors.secondary, size: 18),
-        ],
-      ),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildSettingToggle(String title) {
-    return ListTile(
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14,
-          color: VesparaColors.primary,
-        ),
-      ),
-      trailing: Switch.adaptive(
-        value: _toggleSettings[title] ?? false,
-        onChanged: (v) {
-          setState(() => _toggleSettings[title] = v);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$title ${v ? 'enabled' : 'disabled'}'),
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        },
-        activeColor: VesparaColors.glow,
-      ),
-    );
-  }
-
-  Widget _buildDangerZone() {
-    return Container(
-      decoration: BoxDecoration(
-        color: VesparaColors.error.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Icon(Icons.pause_circle_outline, color: VesparaColors.warning),
-            title: Text('Pause Account', style: TextStyle(color: VesparaColors.primary)),
-            onTap: () => _showPauseAccountDialog(),
-          ),
-          ListTile(
-            leading: Icon(Icons.delete_outline, color: VesparaColors.error),
-            title: Text('Delete Account', style: TextStyle(color: VesparaColors.error)),
-            onTap: () => _showDeleteAccountDialog(),
-          ),
-          ListTile(
-            leading: Icon(Icons.logout, color: VesparaColors.error),
-            title: Text('Log Out', style: TextStyle(color: VesparaColors.error)),
-            onTap: () => _showLogoutDialog(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPauseAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Pause Your Account?', style: TextStyle(color: VesparaColors.primary)),
-        content: Text(
-          'Your profile will be hidden and you won\'t receive new matches. You can unpause anytime.',
-          style: TextStyle(color: VesparaColors.secondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Account paused. Come back when you\'re ready!'),
-                  backgroundColor: VesparaColors.warning,
-                ),
-              );
-            },
-            child: Text('Pause', style: TextStyle(color: VesparaColors.warning)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete Account?', style: TextStyle(color: VesparaColors.error)),
-        content: Text(
-          'This action cannot be undone. All your data, matches, and messages will be permanently deleted.',
-          style: TextStyle(color: VesparaColors.secondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to home
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Account deleted. We\'re sorry to see you go.'),
-                  backgroundColor: VesparaColors.error,
-                ),
-              );
-            },
-            child: Text('Delete Forever', style: TextStyle(color: VesparaColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Log Out?', style: TextStyle(color: VesparaColors.primary)),
-        content: Text(
-          'You\'ll need to sign in again to access your account.',
-          style: TextStyle(color: VesparaColors.secondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to home
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Logged out successfully')),
-              );
-            },
-            child: Text('Log Out', style: TextStyle(color: VesparaColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

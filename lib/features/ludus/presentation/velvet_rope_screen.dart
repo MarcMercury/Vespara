@@ -176,183 +176,188 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   Widget _buildLobby(VelvetRopeState state) {
     return Container(
       key: const ValueKey('lobby'),
-      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           // Header
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(VesparaIcons.back, color: Colors.white70),
-              ),
-              const Spacer(),
-              AnimatedBuilder(
-                animation: _glowController,
-                builder: (context, child) {
-                  return Text(
-                    '� SHARE OR DARE',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 3,
-                      foreground: Paint()
-                        ..shader = LinearGradient(
-                          colors: [
-                            VelvetColors.shareBlue,
-                            VelvetColors.dareCrimson,
-                          ],
-                        ).createShader(const Rect.fromLTWH(0, 0, 200, 30)),
-                      shadows: [
-                        Shadow(
-                          color: VelvetColors.shareBlue.withOpacity(0.3 + _glowController.value * 0.3),
-                          blurRadius: 20,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const Spacer(),
-              const SizedBox(width: 48),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          const Text(
-            'Spin the Wheel, Pick Your Poison',
-            style: TextStyle(
-              fontSize: 16,
-              fontStyle: FontStyle.italic,
-              color: Colors.white54,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // TAG Rating
-          const TagRatingDisplay(rating: TagRating.shareOrDare),
-          
-          const SizedBox(height: 20),
-          
-          // How to Play button
-          GestureDetector(
-            onTap: _showHowToPlay,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(VesparaIcons.help, color: VelvetColors.lavender, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'How to Play',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: VelvetColors.lavender,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Heat Level Selection
-          _buildHeatSelector(state),
-          
-          const SizedBox(height: 24),
-          
-          // Player List
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Row(
               children: [
-                Text(
-                  'PLAYERS (${state.players.length}/8)',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                    color: Colors.white54,
-                  ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(VesparaIcons.back, color: Colors.white70),
                 ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.players.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == state.players.length) {
-                        if (state.players.length >= 8) return const SizedBox();
-                        return _buildAddPlayerRow();
-                      }
-                      return _buildPlayerRow(state.players[index], index);
-                    },
-                  ),
+                const Spacer(),
+                AnimatedBuilder(
+                  animation: _glowController,
+                  builder: (context, child) {
+                    return Text(
+                      '🎭 SHARE OR DARE',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 3,
+                        foreground: Paint()
+                          ..shader = LinearGradient(
+                            colors: [
+                              VelvetColors.shareBlue,
+                              VelvetColors.dareCrimson,
+                            ],
+                          ).createShader(const Rect.fromLTWH(0, 0, 200, 30)),
+                        shadows: [
+                          Shadow(
+                            color: VelvetColors.shareBlue.withOpacity(0.3 + _glowController.value * 0.3),
+                            blurRadius: 20,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
+                const Spacer(),
+                const SizedBox(width: 48),
               ],
             ),
           ),
           
-          // Start Button
-          if (state.players.length >= 2)
-            GestureDetector(
-              onTap: state.isLoading ? null : () {
-                HapticFeedback.heavyImpact();
-                ref.read(velvetRopeProvider.notifier).startGame();
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [VelvetColors.shareBlue, VelvetColors.dareCrimson],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: VelvetColors.dareCrimson.withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      'Spin the Wheel, Pick Your Poison',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.white54,
+                      ),
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: state.isLoading
-                      ? const SizedBox(
-                          width: 24, height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text(
-                          'START GAME',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 2,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // TAG Rating
+                  const TagRatingDisplay(rating: TagRating.shareOrDare),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // How to Play button
+                  GestureDetector(
+                    onTap: _showHowToPlay,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(VesparaIcons.help, color: VelvetColors.lavender, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'How to Play',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: VelvetColors.lavender,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Heat Level Selection
+                  _buildHeatSelector(state),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Player List Title
+                  Text(
+                    'PLAYERS (${state.players.length}/8)',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                      color: Colors.white54,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Player List (non-scrollable, inside the main scroll)
+                  ...List.generate(state.players.length, (index) {
+                    return _buildPlayerRow(state.players[index], index);
+                  }),
+                  if (state.players.length < 8) _buildAddPlayerRow(),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Start Button
+                  if (state.players.length >= 2)
+                    GestureDetector(
+                      onTap: state.isLoading ? null : () {
+                        HapticFeedback.heavyImpact();
+                        ref.read(velvetRopeProvider.notifier).startGame();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [VelvetColors.shareBlue, VelvetColors.dareCrimson],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VelvetColors.dareCrimson.withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                ),
+                        child: Center(
+                          child: state.isLoading
+                              ? const SizedBox(
+                                  width: 24, height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text(
+                                  'START GAME',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  
+                  if (state.players.length < 2)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 16),
+                      child: Text(
+                        'Add at least 2 players to start',
+                        style: TextStyle(color: Colors.white38, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
-          
-          if (state.players.length < 2)
-            const Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Text(
-                'Add at least 2 players to start',
-                style: TextStyle(color: Colors.white38, fontSize: 14),
-              ),
-            ),
+          ),
         ],
       ),
     );

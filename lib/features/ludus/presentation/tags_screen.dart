@@ -275,27 +275,6 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                 ],
               ),
             ),
-            
-            // Category badge
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: categoryColor,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  game.currentConsentLevel.displayName,
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                    color: VesparaColors.background,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

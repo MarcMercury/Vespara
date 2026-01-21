@@ -1178,13 +1178,13 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
               icon: const Icon(VesparaIcons.back, color: Colors.white),
               onPressed: () {
                 ref.read(pathOfPleasureProvider.notifier).reset();
-                context.pop();
+                Navigator.of(context).pop();
               },
             )
           else
             IconButton(
               icon: const Icon(VesparaIcons.close, color: Colors.white),
-              onPressed: () => context.pop(),
+              onPressed: () => Navigator.of(context).pop(),
             ),
           const Spacer(),
           IconButton(

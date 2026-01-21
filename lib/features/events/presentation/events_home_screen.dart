@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/vespara_event.dart';
+import '../../../core/providers/events_provider.dart';
 import '../widgets/event_tile_card.dart';
 import 'event_creation_screen.dart';
 import 'event_detail_screen.dart';
@@ -22,37 +23,31 @@ class EventsHomeScreen extends ConsumerStatefulWidget {
 class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   String _selectedFilter = 'Upcoming';
   final String _userName = 'Marc'; // Would come from auth provider
-  
-  // Mock data - would come from provider
-  late List<VesparaEvent> _allEvents;
-  
-  @override
-  void initState() {
-    super.initState();
-    _allEvents = _getMockEvents();
-  }
+
+  List<VesparaEvent> get _allEvents => ref.watch(allVesparaEventsProvider);
 
   List<VesparaEvent> get _filteredEvents {
     final now = DateTime.now();
+    final events = _allEvents;
     switch (_selectedFilter) {
       case 'Upcoming':
-        return _allEvents.where((e) => e.startTime.isAfter(now) && !e.isDraft).toList();
+        return events.where((e) => e.startTime.isAfter(now) && !e.isDraft).toList();
       case 'Invites':
-        return _allEvents.where((e) => 
+        return events.where((e) => 
           e.rsvps.any((r) => r.userId == 'current-user' && r.status == 'invited')
         ).toList();
       case 'Hosting':
-        return _allEvents.where((e) => e.hostId == 'current-user').toList();
+        return events.where((e) => e.hostId == 'current-user').toList();
       case 'Open invite':
-        return _allEvents.where((e) => e.visibility == EventVisibility.openInvite).toList();
+        return events.where((e) => e.visibility == EventVisibility.openInvite).toList();
       case 'Attended':
-        return _allEvents.where((e) => 
+        return events.where((e) => 
           e.isPast && e.rsvps.any((r) => r.userId == 'current-user' && r.status == 'going')
         ).toList();
       case 'All past events':
-        return _allEvents.where((e) => e.isPast).toList();
+        return events.where((e) => e.isPast).toList();
       default:
-        return _allEvents;
+        return events;
     }
   }
 
@@ -91,7 +86,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
         backgroundColor: VesparaColors.glow,
         icon: Icon(Icons.add, color: VesparaColors.background),
         label: Text(
-          'Create Event',
+          'Create Experience',
           style: TextStyle(
             color: VesparaColors.background,
             fontWeight: FontWeight.w600,
@@ -159,7 +154,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               children: [
                 const TextSpan(text: 'You have '),
                 TextSpan(
-                  text: '$_upcomingCount upcoming events',
+                  text: '$_upcomingCount upcoming experiences',
                   style: TextStyle(
                     color: VesparaColors.primary,
                     fontWeight: FontWeight.w500,
@@ -190,7 +185,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
       ('Hosting', _hostingCount, null),
       ('Open invite', null, null),
       ('Attended', _attendedCount, null),
-      ('All past events', _pastCount, null),
+      ('All past', _pastCount, null),
     ];
 
     return Container(
@@ -397,7 +392,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               ElevatedButton.icon(
                 onPressed: _createEvent,
                 icon: const Icon(Icons.add),
-                label: const Text('Create Event'),
+                label: const Text('Create Experience'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VesparaColors.glow,
                   foregroundColor: VesparaColors.background,
@@ -418,13 +413,19 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
     );
   }
 
-  void _createEvent() {
-    Navigator.push(
+  void _createEvent() async {
+    final result = await Navigator.push<VesparaEvent>(
       context,
       MaterialPageRoute(
         builder: (context) => const EventCreationScreen(),
       ),
     );
+    
+    // If an event was created, refresh the list
+    if (result != null) {
+      // The provider already has the event, just trigger rebuild
+      setState(() {});
+    }
   }
 
   void _openEvent(VesparaEvent event) {
@@ -519,165 +520,6 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
       ),
       onTap: onTap,
     );
-  }
-
-  List<VesparaEvent> _getMockEvents() {
-    final now = DateTime.now();
-    return [
-      VesparaEvent(
-        id: 'event-1',
-        hostId: 'sophia-domina',
-        hostName: 'Sophia Domina',
-        hostAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-        title: 'Decadence Dinner',
-        titleStyle: EventTitleStyle.elegant,
-        description: 'A supper for the sinfully curious. Temple of Domina presents an evening of culinary indulgence.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600',
-        startTime: now.add(const Duration(days: 1, hours: 19)),
-        venueName: 'Temple of Domina',
-        venueAddress: 'Secret Location',
-        visibility: EventVisibility.private,
-        contentRating: 'spicy',
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-1',
-            eventId: 'event-1',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'invited',
-            createdAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 5)),
-      ),
-      VesparaEvent(
-        id: 'event-2',
-        hostId: 'user-2',
-        hostName: 'Alex & Jamie',
-        title: 'Eat&Learn: Ethiopia',
-        description: 'Alternative Book Club meets Ethiopian Restaurant. Discuss literature over authentic cuisine.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600',
-        startTime: now.add(const Duration(days: 3, hours: 19)),
-        venueName: 'Ethiopian Kitchen',
-        venueAddress: '456 Cultural Ave',
-        visibility: EventVisibility.openInvite,
-        contentRating: 'PG',
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-2',
-            eventId: 'event-2',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'going',
-            createdAt: now,
-            respondedAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 7)),
-      ),
-      VesparaEvent(
-        id: 'event-3',
-        hostId: 'user-3',
-        hostName: 'Luna & Co',
-        title: 'Vision Board Making Night \'26',
-        description: 'Dream big! Create your 2026 vision board with friends, wine, and good vibes.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1529543544277-750e01f8e4b6?w=600',
-        startTime: now.add(const Duration(days: 8, hours: 19)),
-        venueName: 'Rooftop Lounge',
-        venueAddress: '789 Dream Street',
-        visibility: EventVisibility.private,
-        contentRating: 'PG',
-        maxSpots: 12,
-        currentAttendees: 8,
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-3',
-            eventId: 'event-3',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'going',
-            createdAt: now,
-            respondedAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 3)),
-      ),
-      VesparaEvent(
-        id: 'event-4',
-        hostId: 'sophia-domina',
-        hostName: 'Sophia Domina',
-        hostAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-        title: 'Sophia Domina\'s Boudoir Soirée',
-        titleStyle: EventTitleStyle.fancy,
-        description: 'An intimate evening of elegance and mystery. Black tie optional, curiosity required.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600',
-        startTime: now.add(const Duration(days: 9, hours: 20, minutes: 30)),
-        venueName: 'The Velvet Room',
-        venueAddress: 'By invitation only',
-        visibility: EventVisibility.private,
-        contentRating: 'explicit',
-        ageRestriction: 21,
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-4',
-            eventId: 'event-4',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'invited',
-            createdAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 2)),
-      ),
-      VesparaEvent(
-        id: 'event-5',
-        hostId: 'current-user',
-        hostName: 'Marc Mercury',
-        title: 'Game Night',
-        description: 'Board games, card games, and good company. BYOB!',
-        coverImageUrl: 'https://images.unsplash.com/photo-1606503153255-59d8b2e4b5cf?w=600',
-        startTime: now.add(const Duration(days: 5, hours: 18)),
-        venueName: 'My Place',
-        venueAddress: '123 Main St',
-        visibility: EventVisibility.private,
-        contentRating: 'PG',
-        maxSpots: 8,
-        currentAttendees: 4,
-        rsvps: [
-          EventRsvp(id: 'r1', eventId: 'event-5', userId: 'u1', userName: 'Alex', status: 'going', createdAt: now),
-          EventRsvp(id: 'r2', eventId: 'event-5', userId: 'u2', userName: 'Jordan', status: 'going', createdAt: now),
-          EventRsvp(id: 'r3', eventId: 'event-5', userId: 'u3', userName: 'Casey', status: 'maybe', createdAt: now),
-          EventRsvp(id: 'r4', eventId: 'event-5', userId: 'u4', userName: 'Morgan', status: 'invited', createdAt: now),
-        ],
-        createdAt: now.subtract(const Duration(days: 1)),
-      ),
-      // Past event
-      VesparaEvent(
-        id: 'event-past-1',
-        hostId: 'user-5',
-        hostName: 'Wine Club',
-        title: 'Holiday Wine Tasting',
-        description: 'Seasonal wines from around the world.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600',
-        startTime: now.subtract(const Duration(days: 14, hours: 18)),
-        venueName: 'Vineyard Lounge',
-        venueAddress: '999 Wine Lane',
-        visibility: EventVisibility.private,
-        contentRating: 'PG',
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-past-1',
-            eventId: 'event-past-1',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'going',
-            createdAt: now.subtract(const Duration(days: 20)),
-            respondedAt: now.subtract(const Duration(days: 20)),
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 30)),
-      ),
-    ];
   }
 }
 

@@ -106,16 +106,11 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
             _buildHeader(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    _buildHeroSection(),
-                    const SizedBox(height: 32),
-                    _buildSignalsSection(),
-                    const SizedBox(height: 32),
-                    _buildEliminationSection(),
-                    const SizedBox(height: 32),
-                    _buildWinSection(),
+                    const SizedBox(height: 24),
+                    _buildSimpleHeroSection(),
                     const SizedBox(height: 32),
                     _buildStartSection(),
                     const SizedBox(height: 40),
@@ -139,21 +134,172 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
             icon: Icon(VesparaIcons.back, color: Colors.white70),
           ),
           const Spacer(),
-          const Text(
-            'THE RULES',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white38,
-              letterSpacing: 4,
-            ),
-          ),
-          const Spacer(),
           const SizedBox(width: 48),
         ],
       ),
     );
   }
   
+  Widget _buildSimpleHeroSection() {
+    return Column(
+      children: [
+        // Animated Signal Light
+        AnimatedBuilder(
+          animation: _glowController,
+          builder: (context, child) {
+            return Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _currentColor.withOpacity(0.2),
+                border: Border.all(color: _currentColor, width: 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: _currentColor.withOpacity(0.3 + _glowController.value * 0.4),
+                    blurRadius: 40 + _glowController.value * 30,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    _currentSignal == 0 ? '⚡' : _currentSignal == 1 ? '🧊' : '↩️',
+                    key: ValueKey(_currentSignal),
+                    style: const TextStyle(fontSize: 50),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // Title
+        ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [FlashColors.electric, FlashColors.green, FlashColors.red],
+          ).createShader(bounds),
+          child: const Text(
+            'FLASH & FREEZE',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 4,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 8),
+        
+        const Text(
+          'Exposure requires endurance.',
+          style: TextStyle(
+            fontSize: 16,
+            fontStyle: FontStyle.italic,
+            color: FlashColors.electric,
+            letterSpacing: 1,
+          ),
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // TAG Rating
+        const TagRatingDisplay(rating: TagRating.flashFreeze),
+        
+        const SizedBox(height: 24),
+        
+        // How to Play button
+        GestureDetector(
+          onTap: _showHowToPlay,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(VesparaIcons.help, color: FlashColors.electric, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'How to Play',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: FlashColors.electric,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  void _showHowToPlay() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: FlashColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white38,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Center(
+                child: Text(
+                  'HOW TO PLAY',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildSignalsSection(),
+              const SizedBox(height: 24),
+              _buildEliminationSection(),
+              const SizedBox(height: 24),
+              _buildWinSection(),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeroSection() {
     return Column(
       children: [

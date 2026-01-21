@@ -54,18 +54,6 @@ dependencies:
   # Image Handling
   image_picker: ^1.1.2
   
-  # Camera
-  camera: ^0.10.5+9
-  
-  # Image Gallery Saver
-  image_gallery_saver: ^2.0.3
-  
-  # File Handling
-  file_picker: ^8.0.0+1
-  
-  # Sensors
-  sensors_plus: ^4.0.2
-  
   # Icons
   cupertino_icons: ^1.0.6
   iconsax: ^0.0.8
@@ -83,5 +71,4 @@ flutter:
   
   assets:
     - assets/images/
-    - assets/images/drama_sutra/
     - assets/icons/

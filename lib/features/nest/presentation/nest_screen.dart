@@ -5,9 +5,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/match.dart';
 import '../../../core/providers/match_state_provider.dart';
-import '../../wire/presentation/wire_screen.dart';
+import '../../wire/presentation/wire_screen_new.dart';
 import '../../planner/presentation/planner_screen.dart';
-import '../../ludus/presentation/tags_screen.dart';
+import '../../ludus/presentation/tags_screen_new.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
@@ -101,7 +101,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
           Column(
             children: [
               Text(
-                'THE NEST',
+                'THE SANCTUM',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,

@@ -16,6 +16,7 @@ class EventsState {
   final List<CalendarEvent> calendarEvents;
   final List<VesparaEvent> hostedEvents;
   final List<VesparaEvent> invitedEvents;
+  final List<VesparaEvent> allEvents;
   final bool isLoading;
   final String? error;
 
@@ -23,6 +24,7 @@ class EventsState {
     this.calendarEvents = const [],
     this.hostedEvents = const [],
     this.invitedEvents = const [],
+    this.allEvents = const [],
     this.isLoading = false,
     this.error,
   });
@@ -50,10 +52,25 @@ class EventsState {
     return calendarEvents.where((e) => e.aiConflictDetected).toList();
   }
 
+  /// Get upcoming VesparaEvents
+  List<VesparaEvent> get upcomingEvents {
+    final now = DateTime.now();
+    return allEvents.where((e) => e.startTime.isAfter(now) && !e.isDraft).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  /// Get past VesparaEvents
+  List<VesparaEvent> get pastEvents {
+    final now = DateTime.now();
+    return allEvents.where((e) => e.startTime.isBefore(now)).toList()
+      ..sort((a, b) => b.startTime.compareTo(a.startTime));
+  }
+
   EventsState copyWith({
     List<CalendarEvent>? calendarEvents,
     List<VesparaEvent>? hostedEvents,
     List<VesparaEvent>? invitedEvents,
+    List<VesparaEvent>? allEvents,
     bool? isLoading,
     String? error,
   }) {
@@ -61,6 +78,7 @@ class EventsState {
       calendarEvents: calendarEvents ?? this.calendarEvents,
       hostedEvents: hostedEvents ?? this.hostedEvents,
       invitedEvents: invitedEvents ?? this.invitedEvents,
+      allEvents: allEvents ?? this.allEvents,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -82,7 +100,525 @@ class EventsNotifier extends StateNotifier<EventsState> {
   }
 
   Future<void> _initialize() async {
-    await loadCalendarEvents();
+    await Future.wait([
+      loadCalendarEvents(),
+      loadAllVesparaEvents(),
+    ]);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // VESPARA EVENTS (Full Event Hosting - group_events table)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Load all Vespara events (hosted + invited)
+  Future<void> loadAllVesparaEvents() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    // In demo mode, use mock data
+    if (_isDemoMode || _currentUserId.isEmpty) {
+      final mockEvents = _getMockVesparaEvents();
+      state = state.copyWith(
+        allEvents: mockEvents,
+        hostedEvents: mockEvents.where((e) => e.hostId == 'current-user').toList(),
+        invitedEvents: mockEvents.where((e) => 
+          e.hostId != 'current-user' && 
+          e.rsvps.any((r) => r.userId == 'current-user')
+        ).toList(),
+        isLoading: false,
+      );
+      return;
+    }
+
+    try {
+      // Load events where user is host
+      final hostedResponse = await _supabase
+          .from('group_events')
+          .select()
+          .eq('host_id', _currentUserId)
+          .order('start_time', ascending: true);
+
+      // Load events where user is invited
+      final invitedResponse = await _supabase
+          .from('event_invites')
+          .select('event_id, status, group_events(*)')
+          .eq('user_id', _currentUserId);
+
+      final hostedEvents = (hostedResponse as List<dynamic>)
+          .map((json) => _vesparaEventFromJson(json as Map<String, dynamic>, isHost: true))
+          .toList();
+
+      final invitedEvents = (invitedResponse as List<dynamic>)
+          .where((json) => json['group_events'] != null)
+          .map((json) {
+            final eventData = json['group_events'] as Map<String, dynamic>;
+            final status = json['status'] as String? ?? 'invited';
+            return _vesparaEventFromJson(eventData, inviteStatus: status);
+          })
+          .toList();
+
+      final allEvents = [...hostedEvents, ...invitedEvents];
+      allEvents.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+      state = state.copyWith(
+        hostedEvents: hostedEvents,
+        invitedEvents: invitedEvents,
+        allEvents: allEvents,
+        isLoading: false,
+      );
+    } catch (e) {
+      debugPrint('Error loading Vespara events: $e');
+      // Fallback to mock data on error
+      final mockEvents = _getMockVesparaEvents();
+      state = state.copyWith(
+        allEvents: mockEvents,
+        hostedEvents: mockEvents.where((e) => e.hostId == 'current-user').toList(),
+        invitedEvents: mockEvents.where((e) => e.hostId != 'current-user').toList(),
+        isLoading: false,
+        error: 'Failed to load events: $e',
+      );
+    }
+  }
+
+  /// Create a new Vespara event (full-featured event)
+  Future<VesparaEvent?> createVesparaEvent(VesparaEvent event) async {
+    debugPrint('Creating event: ${event.title}');
+    
+    // Generate proper ID if needed
+    final eventId = event.id.startsWith('event-') 
+        ? const Uuid().v4() 
+        : event.id;
+    
+    final newEvent = event.copyWith(
+      id: eventId,
+      hostId: _currentUserId.isEmpty ? 'current-user' : _currentUserId,
+    );
+
+    // Add to state optimistically
+    state = state.copyWith(
+      hostedEvents: [...state.hostedEvents, newEvent],
+      allEvents: [...state.allEvents, newEvent],
+    );
+
+    debugPrint('Event added to state. Total hosted: ${state.hostedEvents.length}');
+
+    if (_isDemoMode || _currentUserId.isEmpty) {
+      debugPrint('Demo mode - event saved locally only');
+      return newEvent;
+    }
+
+    try {
+      final response = await _supabase
+          .from('group_events')
+          .insert({
+            'id': eventId,
+            'host_id': _currentUserId,
+            'title': event.title,
+            'description': event.description,
+            'cover_image_url': event.coverImageUrl,
+            'event_type': _mapContentRatingToType(event.contentRating),
+            'venue_name': event.venueName,
+            'venue_address': event.venueAddress,
+            'venue_lat': event.venueLat,
+            'venue_lng': event.venueLng,
+            'is_virtual': event.isVirtual,
+            'virtual_link': event.virtualLink,
+            'start_time': event.startTime.toIso8601String(),
+            'end_time': event.endTime?.toIso8601String(),
+            'max_attendees': event.maxSpots,
+            'is_private': event.visibility == EventVisibility.private,
+            'requires_approval': event.requiresApproval,
+            'age_restriction': event.ageRestriction,
+            'content_rating': event.contentRating,
+            'created_at': event.createdAt.toIso8601String(),
+          })
+          .select()
+          .single();
+
+      debugPrint('Event created in database: ${response['id']}');
+      return newEvent;
+    } catch (e) {
+      debugPrint('Error creating Vespara event: $e');
+      // Keep optimistic update even if DB fails
+      return newEvent;
+    }
+  }
+
+  /// Update an existing Vespara event
+  Future<bool> updateVesparaEvent(VesparaEvent event) async {
+    // Update locally first
+    final updatedHosted = state.hostedEvents.map((e) => 
+      e.id == event.id ? event : e
+    ).toList();
+    
+    final updatedAll = state.allEvents.map((e) => 
+      e.id == event.id ? event : e
+    ).toList();
+
+    state = state.copyWith(
+      hostedEvents: updatedHosted,
+      allEvents: updatedAll,
+    );
+
+    if (_isDemoMode || _currentUserId.isEmpty) {
+      return true;
+    }
+
+    try {
+      await _supabase
+          .from('group_events')
+          .update({
+            'title': event.title,
+            'description': event.description,
+            'cover_image_url': event.coverImageUrl,
+            'venue_name': event.venueName,
+            'venue_address': event.venueAddress,
+            'start_time': event.startTime.toIso8601String(),
+            'end_time': event.endTime?.toIso8601String(),
+            'max_attendees': event.maxSpots,
+            'is_private': event.visibility == EventVisibility.private,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', event.id)
+          .eq('host_id', _currentUserId);
+
+      return true;
+    } catch (e) {
+      debugPrint('Error updating Vespara event: $e');
+      return false;
+    }
+  }
+
+  /// Delete a Vespara event
+  Future<bool> deleteVesparaEvent(String eventId) async {
+    state = state.copyWith(
+      hostedEvents: state.hostedEvents.where((e) => e.id != eventId).toList(),
+      allEvents: state.allEvents.where((e) => e.id != eventId).toList(),
+    );
+
+    if (_isDemoMode || _currentUserId.isEmpty) {
+      return true;
+    }
+
+    try {
+      await _supabase
+          .from('group_events')
+          .delete()
+          .eq('id', eventId)
+          .eq('host_id', _currentUserId);
+
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting Vespara event: $e');
+      return false;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RSVP & INVITATIONS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Send invite to a user for an event
+  Future<bool> sendEventInvite({
+    required String eventId,
+    required String userId,
+  }) async {
+    if (_isDemoMode || _currentUserId.isEmpty) {
+      debugPrint('Demo mode - invite sent (simulated)');
+      return true;
+    }
+
+    try {
+      await _supabase.from('event_invites').insert({
+        'id': const Uuid().v4(),
+        'event_id': eventId,
+        'user_id': userId,
+        'invited_by': _currentUserId,
+        'status': 'pending',
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      return true;
+    } catch (e) {
+      debugPrint('Error sending invite: $e');
+      return false;
+    }
+  }
+
+  /// Respond to an event invitation
+  Future<bool> respondToInvite({
+    required String eventId,
+    required String status, // 'accepted', 'declined', 'maybe'
+    String? message,
+  }) async {
+    // Update local state
+    final updatedInvited = state.invitedEvents.map((e) {
+      if (e.id == eventId) {
+        final updatedRsvps = e.rsvps.map((r) {
+          if (r.userId == _currentUserId || r.userId == 'current-user') {
+            return EventRsvp(
+              id: r.id,
+              eventId: r.eventId,
+              userId: r.userId,
+              userName: r.userName,
+              userAvatarUrl: r.userAvatarUrl,
+              status: status == 'accepted' ? 'going' : status,
+              message: message,
+              createdAt: r.createdAt,
+              respondedAt: DateTime.now(),
+            );
+          }
+          return r;
+        }).toList();
+        return e.copyWith(rsvps: updatedRsvps);
+      }
+      return e;
+    }).toList();
+
+    state = state.copyWith(invitedEvents: updatedInvited);
+
+    if (_isDemoMode || _currentUserId.isEmpty) {
+      return true;
+    }
+
+    try {
+      await _supabase
+          .from('event_invites')
+          .update({
+            'status': status,
+            'response_message': message,
+            'responded_at': DateTime.now().toIso8601String(),
+          })
+          .eq('event_id', eventId)
+          .eq('user_id', _currentUserId);
+
+      return true;
+    } catch (e) {
+      debugPrint('Error responding to invite: $e');
+      return false;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // HELPER METHODS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  String _mapContentRatingToType(String rating) {
+    switch (rating.toLowerCase()) {
+      case 'pg': return 'social';
+      case 'flirty': return 'social';
+      case 'spicy': return 'intimate';
+      case 'explicit': return 'intimate';
+      default: return 'social';
+    }
+  }
+
+  VesparaEvent _vesparaEventFromJson(Map<String, dynamic> json, {
+    bool isHost = false,
+    String? inviteStatus,
+  }) {
+    final rsvps = <EventRsvp>[];
+    if (inviteStatus != null) {
+      rsvps.add(EventRsvp(
+        id: 'rsvp-${json['id']}',
+        eventId: json['id'] as String,
+        userId: _currentUserId.isEmpty ? 'current-user' : _currentUserId,
+        userName: 'You',
+        status: inviteStatus,
+        createdAt: DateTime.now(),
+      ));
+    }
+
+    return VesparaEvent(
+      id: json['id'] as String,
+      hostId: json['host_id'] as String,
+      hostName: isHost ? 'You' : 'Host',
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      coverImageUrl: json['cover_image_url'] as String?,
+      startTime: DateTime.parse(json['start_time'] as String),
+      endTime: json['end_time'] != null 
+          ? DateTime.parse(json['end_time'] as String) 
+          : null,
+      venueName: json['venue_name'] as String?,
+      venueAddress: json['venue_address'] as String?,
+      venueLat: json['venue_lat'] as double?,
+      venueLng: json['venue_lng'] as double?,
+      isVirtual: json['is_virtual'] as bool? ?? false,
+      virtualLink: json['virtual_link'] as String?,
+      maxSpots: json['max_attendees'] as int?,
+      currentAttendees: json['current_attendees'] as int? ?? 0,
+      visibility: (json['is_private'] as bool? ?? true) 
+          ? EventVisibility.private 
+          : EventVisibility.public,
+      requiresApproval: json['requires_approval'] as bool? ?? false,
+      ageRestriction: json['age_restriction'] as int? ?? 18,
+      contentRating: json['content_rating'] as String? ?? 'PG',
+      rsvps: rsvps,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null 
+          ? DateTime.parse(json['updated_at'] as String) 
+          : null,
+    );
+  }
+
+  /// Get mock events for demo mode
+  List<VesparaEvent> _getMockVesparaEvents() {
+    final now = DateTime.now();
+    return [
+      VesparaEvent(
+        id: 'event-mock-1',
+        hostId: 'current-user',
+        hostName: 'Marc Mercury',
+        title: 'Game Night',
+        description: 'Board games, card games, and good company. BYOB!',
+        coverImageUrl: 'https://images.unsplash.com/photo-1606503153255-59d8b2e4b5cf?w=600',
+        startTime: now.add(const Duration(days: 5, hours: 18)),
+        venueName: 'My Place',
+        venueAddress: '123 Main St',
+        visibility: EventVisibility.private,
+        contentRating: 'PG',
+        maxSpots: 8,
+        currentAttendees: 4,
+        rsvps: [
+          EventRsvp(id: 'r1', eventId: 'event-mock-1', userId: 'u1', userName: 'Alex', status: 'going', createdAt: now),
+          EventRsvp(id: 'r2', eventId: 'event-mock-1', userId: 'u2', userName: 'Jordan', status: 'going', createdAt: now),
+          EventRsvp(id: 'r3', eventId: 'event-mock-1', userId: 'u3', userName: 'Casey', status: 'maybe', createdAt: now),
+          EventRsvp(id: 'r4', eventId: 'event-mock-1', userId: 'u4', userName: 'Morgan', status: 'invited', createdAt: now),
+        ],
+        createdAt: now.subtract(const Duration(days: 1)),
+      ),
+      VesparaEvent(
+        id: 'event-mock-2',
+        hostId: 'sophia-domina',
+        hostName: 'Sophia Domina',
+        hostAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+        title: 'Decadence Dinner',
+        titleStyle: EventTitleStyle.elegant,
+        description: 'A supper for the sinfully curious. Temple of Domina presents an evening of culinary indulgence.',
+        coverImageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600',
+        startTime: now.add(const Duration(days: 1, hours: 19)),
+        venueName: 'Temple of Domina',
+        venueAddress: 'Secret Location',
+        visibility: EventVisibility.private,
+        contentRating: 'spicy',
+        rsvps: [
+          EventRsvp(
+            id: 'rsvp-1',
+            eventId: 'event-mock-2',
+            userId: 'current-user',
+            userName: 'Marc',
+            status: 'invited',
+            createdAt: now,
+          ),
+        ],
+        createdAt: now.subtract(const Duration(days: 5)),
+      ),
+      VesparaEvent(
+        id: 'event-mock-3',
+        hostId: 'user-2',
+        hostName: 'Alex & Jamie',
+        title: 'Eat&Learn: Ethiopia',
+        description: 'Alternative Book Club meets Ethiopian Restaurant. Discuss literature over authentic cuisine.',
+        coverImageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600',
+        startTime: now.add(const Duration(days: 3, hours: 19)),
+        venueName: 'Ethiopian Kitchen',
+        venueAddress: '456 Cultural Ave',
+        visibility: EventVisibility.openInvite,
+        contentRating: 'PG',
+        rsvps: [
+          EventRsvp(
+            id: 'rsvp-2',
+            eventId: 'event-mock-3',
+            userId: 'current-user',
+            userName: 'Marc',
+            status: 'going',
+            createdAt: now,
+            respondedAt: now,
+          ),
+        ],
+        createdAt: now.subtract(const Duration(days: 7)),
+      ),
+      VesparaEvent(
+        id: 'event-mock-4',
+        hostId: 'user-3',
+        hostName: 'Luna & Co',
+        title: 'Vision Board Making Night \'26',
+        description: 'Dream big! Create your 2026 vision board with friends, wine, and good vibes.',
+        coverImageUrl: 'https://images.unsplash.com/photo-1529543544277-750e01f8e4b6?w=600',
+        startTime: now.add(const Duration(days: 8, hours: 19)),
+        venueName: 'Rooftop Lounge',
+        venueAddress: '789 Dream Street',
+        visibility: EventVisibility.private,
+        contentRating: 'PG',
+        maxSpots: 12,
+        currentAttendees: 8,
+        rsvps: [
+          EventRsvp(
+            id: 'rsvp-3',
+            eventId: 'event-mock-4',
+            userId: 'current-user',
+            userName: 'Marc',
+            status: 'going',
+            createdAt: now,
+            respondedAt: now,
+          ),
+        ],
+        createdAt: now.subtract(const Duration(days: 3)),
+      ),
+      VesparaEvent(
+        id: 'event-mock-5',
+        hostId: 'sophia-domina',
+        hostName: 'Sophia Domina',
+        hostAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+        title: 'Sophia Domina\'s Boudoir Soirée',
+        titleStyle: EventTitleStyle.fancy,
+        description: 'An intimate evening of elegance and mystery. Black tie optional, curiosity required.',
+        coverImageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600',
+        startTime: now.add(const Duration(days: 9, hours: 20, minutes: 30)),
+        venueName: 'The Velvet Room',
+        venueAddress: 'By invitation only',
+        visibility: EventVisibility.private,
+        contentRating: 'explicit',
+        ageRestriction: 21,
+        rsvps: [
+          EventRsvp(
+            id: 'rsvp-4',
+            eventId: 'event-mock-5',
+            userId: 'current-user',
+            userName: 'Marc',
+            status: 'invited',
+            createdAt: now,
+          ),
+        ],
+        createdAt: now.subtract(const Duration(days: 2)),
+      ),
+      // Past event
+      VesparaEvent(
+        id: 'event-mock-past-1',
+        hostId: 'user-5',
+        hostName: 'Wine Club',
+        title: 'Holiday Wine Tasting',
+        description: 'Seasonal wines from around the world.',
+        coverImageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600',
+        startTime: now.subtract(const Duration(days: 14, hours: 18)),
+        venueName: 'Vineyard Lounge',
+        venueAddress: '999 Wine Lane',
+        visibility: EventVisibility.private,
+        contentRating: 'PG',
+        rsvps: [
+          EventRsvp(
+            id: 'rsvp-past-1',
+            eventId: 'event-mock-past-1',
+            userId: 'current-user',
+            userName: 'Marc',
+            status: 'going',
+            createdAt: now.subtract(const Duration(days: 20)),
+            respondedAt: now.subtract(const Duration(days: 20)),
+          ),
+        ],
+        createdAt: now.subtract(const Duration(days: 30)),
+      ),
+    ];
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -299,84 +835,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // VESPARA EVENTS (Full Event Hosting)
+  // QUICK SCHEDULING
   // ══════════════════════════════════════════════════════════════════════════
-
-  /// Load hosted events
-  Future<void> loadHostedEvents() async {
-    if (_isDemoMode || _currentUserId.isEmpty) {
-      return;
-    }
-
-    try {
-      final response = await _supabase
-          .from('events')
-          .select()
-          .eq('host_id', _currentUserId)
-          .order('event_date', ascending: true);
-
-      // Convert to VesparaEvent format
-      final events = (response as List<dynamic>).map((json) {
-        final map = json as Map<String, dynamic>;
-        return VesparaEvent(
-          id: map['id'] as String,
-          hostId: map['host_id'] as String,
-          hostName: map['host_name'] as String? ?? 'You',
-          title: map['title'] as String,
-          description: map['description'] as String?,
-          startTime: DateTime.parse(map['event_date'] as String),
-          venueName: map['location_name'] as String?,
-          maxSpots: map['max_attendees'] as int?,
-          visibility: (map['is_private'] as bool? ?? true) 
-              ? EventVisibility.private 
-              : EventVisibility.public,
-          createdAt: DateTime.parse(map['created_at'] as String),
-        );
-      }).toList();
-
-      state = state.copyWith(hostedEvents: events);
-    } catch (e) {
-      debugPrint('Error loading hosted events: $e');
-    }
-  }
-
-  /// Create a new Vespara event (full-featured event)
-  Future<VesparaEvent?> createVesparaEvent(VesparaEvent event) async {
-    // Add to state optimistically
-    state = state.copyWith(
-      hostedEvents: [...state.hostedEvents, event],
-    );
-
-    if (_isDemoMode || _currentUserId.isEmpty) {
-      return event;
-    }
-
-    try {
-      final response = await _supabase
-          .from('events')
-          .insert({
-            'id': event.id,
-            'host_id': _currentUserId,
-            'title': event.title,
-            'description': event.description,
-            'event_date': event.startTime.toIso8601String(),
-            'location_name': event.venueName ?? event.venueAddress,
-            'max_attendees': event.maxSpots,
-            'is_private': event.visibility == EventVisibility.private,
-            'status': 'upcoming',
-            'created_at': event.createdAt.toIso8601String(),
-          })
-          .select()
-          .single();
-
-      debugPrint('Event created successfully: ${response['id']}');
-      return event;
-    } catch (e) {
-      debugPrint('Error creating Vespara event: $e');
-      // Keep optimistic update in demo mode
-      return event;
-    }
-  }
 
   /// Quick schedule - create a simple date event
   Future<CalendarEvent?> scheduleQuickDate({
@@ -431,4 +891,29 @@ final conflictEventsProvider = Provider<List<CalendarEvent>>((ref) {
 /// All calendar events
 final calendarEventsProvider = Provider<List<CalendarEvent>>((ref) {
   return ref.watch(eventsProvider).calendarEvents;
+});
+
+/// All VesparaEvents (hosted + invited)
+final allVesparaEventsProvider = Provider<List<VesparaEvent>>((ref) {
+  return ref.watch(eventsProvider).allEvents;
+});
+
+/// Hosted events only
+final hostedEventsProvider = Provider<List<VesparaEvent>>((ref) {
+  return ref.watch(eventsProvider).hostedEvents;
+});
+
+/// Invited events only
+final invitedEventsProvider = Provider<List<VesparaEvent>>((ref) {
+  return ref.watch(eventsProvider).invitedEvents;
+});
+
+/// Upcoming VesparaEvents
+final upcomingVesparaEventsProvider = Provider<List<VesparaEvent>>((ref) {
+  return ref.watch(eventsProvider).upcomingEvents;
+});
+
+/// Past VesparaEvents
+final pastVesparaEventsProvider = Provider<List<VesparaEvent>>((ref) {
+  return ref.watch(eventsProvider).pastEvents;
 });

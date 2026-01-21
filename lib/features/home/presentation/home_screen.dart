@@ -56,7 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Find your next obsession',
     },
     {
-      'name': 'NEST',
+      'name': 'SANCTUM',
       'subtitle': 'Your Conquests 💜',
       'icon': Icons.favorite_rounded,
       'emoji': '💜',
@@ -72,7 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Secrets exchanged',
     },
     {
-      'name': 'PLANNER',
+      'name': 'PLAN',
       'subtitle': 'Rendezvous 🌙',
       'icon': Icons.event_available_rounded,
       'emoji': '🌙',
@@ -80,7 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Schedule encounters',
     },
     {
-      'name': 'GROUP',
+      'name': 'EXPERIENCES',
       'subtitle': 'The Scene 🥂',
       'icon': Icons.local_fire_department_rounded,
       'emoji': '🥂',
@@ -109,10 +109,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const List<Widget> _screens = [
     MirrorScreen(),      // 0: Mirror - Profile/Analytics
     DiscoverScreen(),    // 1: Discover - Swipe Marketplace
-    NestScreen(),        // 2: Nest - CRM Roster
+    NestScreen(),        // 2: Sanctum - CRM Roster
     WireScreen(),        // 3: Wire - Chat
-    PlannerScreen(),     // 4: Planner - Calendar
-    EventsHomeScreen(),  // 5: Group - Partiful-Style Events
+    PlannerScreen(),     // 4: Plan - Calendar
+    EventsHomeScreen(),  // 5: Experiences - Partiful-Style Events
     ShredderScreen(),    // 6: Shredder - AI Cleanup
     TagScreen(),         // 7: TAG - Games
   ];

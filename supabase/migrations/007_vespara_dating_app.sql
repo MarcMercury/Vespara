@@ -3,9 +3,6 @@
 -- Migration 007: Transform into real dating platform
 -- ============================================
 
--- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- ============================================
 -- 1. ENHANCED PROFILES - For Discovery
 -- ============================================
@@ -52,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_profiles_location
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.discovery_cards (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     viewer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     compatibility_score DOUBLE PRECISION DEFAULT 0.5, -- AI-calculated
@@ -85,7 +82,7 @@ CREATE INDEX idx_discovery_pending ON public.discovery_cards(viewer_id, is_swipe
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.swipes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     swiper_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     swiped_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     direction TEXT NOT NULL, -- 'left', 'right', 'super'
@@ -105,7 +102,7 @@ CREATE INDEX idx_swipes_matching ON public.swipes(swiped_id, direction)
 
 -- Matches table - created when both swipe right
 CREATE TABLE IF NOT EXISTS public.matches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_a_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     user_b_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     matched_at TIMESTAMPTZ DEFAULT NOW(),
@@ -159,7 +156,7 @@ ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.calendar_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     match_id UUID REFERENCES public.matches(id) ON DELETE SET NULL,
     -- Event details
@@ -194,7 +191,7 @@ CREATE INDEX idx_calendar_events_time ON public.calendar_events(user_id, start_t
 
 -- Store analyzed conversation topics for conflict detection
 CREATE TABLE IF NOT EXISTS public.conversation_topics (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
     topic TEXT NOT NULL, -- 'restaurant:Italian Place', 'activity:hiking', 'date:Saturday'
     mentioned_at TIMESTAMPTZ NOT NULL,
@@ -211,7 +208,7 @@ CREATE INDEX idx_conversation_topics_date ON public.conversation_topics(mentione
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS public.group_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     host_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     -- Event details
     title TEXT NOT NULL,
@@ -251,7 +248,7 @@ CREATE POLICY "Users can manage own events" ON public.group_events
 
 -- Event invitations
 CREATE TABLE IF NOT EXISTS public.event_invites (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES public.group_events(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     invited_by UUID NOT NULL REFERENCES public.profiles(id),
@@ -299,7 +296,7 @@ ALTER TABLE public.shredder_archive ADD COLUMN IF NOT EXISTS shred_method TEXT D
 
 -- AI shred suggestions (pre-shredder queue)
 CREATE TABLE IF NOT EXISTS public.shred_suggestions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     match_id UUID NOT NULL REFERENCES public.matches(id) ON DELETE CASCADE,
     reason_code TEXT NOT NULL, -- 'no_response', 'low_effort', 'incompatible', 'ghosted'
@@ -324,7 +321,7 @@ CREATE POLICY "Users can manage own suggestions" ON public.shred_suggestions
 
 -- Game categories and types
 CREATE TABLE IF NOT EXISTS public.tag_game_categories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL UNIQUE,
     description TEXT,
     icon TEXT, -- Icon name or emoji
@@ -359,7 +356,7 @@ ALTER TABLE public.tags_games ADD COLUMN IF NOT EXISTS times_played INTEGER DEFA
 
 -- Game ratings/reviews
 CREATE TABLE IF NOT EXISTS public.game_ratings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     game_id UUID NOT NULL REFERENCES public.tags_games(id) ON DELETE CASCADE,
     rating INTEGER CHECK (rating BETWEEN 1 AND 5),
@@ -376,7 +373,7 @@ CREATE TABLE IF NOT EXISTS public.game_ratings (
 
 -- Store AI-analyzed relationship context
 CREATE TABLE IF NOT EXISTS public.relationship_context (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     match_id UUID NOT NULL REFERENCES public.matches(id) ON DELETE CASCADE,
     -- Analyzed data

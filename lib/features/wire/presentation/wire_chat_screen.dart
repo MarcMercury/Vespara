@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -629,7 +628,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
           shape: BoxShape.circle,
         ),
         child: const Icon(
-          Icons.send_rounded,
+          Icons.send,
           color: VesparaColors.background,
           size: 22,
         ),
@@ -656,7 +655,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
           shape: BoxShape.circle,
         ),
         child: Icon(
-          Icons.mic_rounded,
+          Icons.mic,
           color: VesparaColors.background,
           size: 22,
         ),
@@ -725,93 +724,32 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
 
   Future<void> _pickMedia(ImageSource source) async {
     final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: source);
+    final file = await picker.pickImage(source: source);
     
     if (file != null) {
-      try {
-        // Read the file bytes (works on all platforms including web)
-        final bytes = await file.readAsBytes();
-        final filename = file.name;
-        
-        await ref.read(wireProvider.notifier).sendMediaMessageFromBytes(
-          conversationId: widget.conversation.id,
-          fileBytes: bytes,
-          filename: filename,
-          type: MessageType.image,
-          mimeType: file.mimeType,
-          replyToId: _replyingTo?.id,
-        );
-        
-        setState(() => _replyingTo = null);
-      } catch (e) {
-        debugPrint('Error picking media: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to send image: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+      await ref.read(wireProvider.notifier).sendMediaMessage(
+        conversationId: widget.conversation.id,
+        file: File(file.path),
+        type: MessageType.image,
+        replyToId: _replyingTo?.id,
+      );
+      
+      setState(() => _replyingTo = null);
     }
   }
 
   Future<void> _pickDocument() async {
-    final result = await FilePicker.platform.pickFiles(
-      withData: true, // Important for web - loads file bytes
-    );
+    final result = await FilePicker.platform.pickFiles();
     
-    if (result != null && result.files.single.bytes != null) {
-      try {
-        final file = result.files.single;
-        
-        await ref.read(wireProvider.notifier).sendMediaMessageFromBytes(
-          conversationId: widget.conversation.id,
-          fileBytes: file.bytes!,
-          filename: file.name,
-          type: MessageType.file,
-          replyToId: _replyingTo?.id,
-        );
-        
-        setState(() => _replyingTo = null);
-      } catch (e) {
-        debugPrint('Error picking document: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to send document: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } else if (result != null && !kIsWeb && result.files.single.path != null) {
-      // Fallback for mobile when bytes aren't loaded
-      try {
-        final file = File(result.files.single.path!);
-        final bytes = await file.readAsBytes();
-        
-        await ref.read(wireProvider.notifier).sendMediaMessageFromBytes(
-          conversationId: widget.conversation.id,
-          fileBytes: bytes,
-          filename: result.files.single.name,
-          type: MessageType.file,
-          replyToId: _replyingTo?.id,
-        );
-        
-        setState(() => _replyingTo = null);
-      } catch (e) {
-        debugPrint('Error picking document (fallback): $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to send document: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+    if (result != null && result.files.single.path != null) {
+      await ref.read(wireProvider.notifier).sendMediaMessage(
+        conversationId: widget.conversation.id,
+        file: File(result.files.single.path!),
+        type: MessageType.file,
+        replyToId: _replyingTo?.id,
+      );
+      
+      setState(() => _replyingTo = null);
     }
   }
 

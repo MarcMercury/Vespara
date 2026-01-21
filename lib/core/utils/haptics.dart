@@ -220,12 +220,3 @@ class HapticInkWell extends StatelessWidget {
     );
   }
 }
-
-/// Compatibility alias for legacy code using Haptics
-class Haptics {
-  Haptics._();
-  
-  static Future<void> light() => VesparaHaptics.light();
-  static Future<void> medium() => VesparaHaptics.mediumTap();
-  static Future<void> heavy() => VesparaHaptics.heavyTap();
-}
