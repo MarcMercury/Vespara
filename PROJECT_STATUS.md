@@ -2,7 +2,24 @@
 
 > **Build Status: Production Ready (Pre-Alpha)**
 
-Last Updated: January 2026
+Last Updated: January 21, 2026
+
+---
+
+## 🎨 Recent Updates
+
+### Icon & Emoji Overhaul (January 2026)
+- ✅ Created `VesparaIcons` class with 100+ curated Material icons
+- ✅ Created `VesparaEmoji` class with alluring alternatives
+- ✅ Replaced 450+ basic icons with rounded/elegant variants
+- ✅ Updated 200+ emoji instances (👍→🙌, 😊→😏, etc.)
+
+### Drama Sutra Game Cards (January 2026)
+- ✅ **49 total positions** in the game!
+- ✅ 26 Bingo Card positions with silhouette illustrations
+- ✅ 12 Group positions with custom artwork
+- ✅ 11 Classic Couples positions (awaiting artwork)
+- ✅ `DramaSutraCard` widget with blur/reveal mechanics
 
 ---
 
@@ -32,6 +49,8 @@ Vespara uses a **feature-first architecture** with Flutter + Riverpod for state 
 - [x] `lib/core/config/env.dart` - Environment configuration
 - [x] `lib/core/theme/app_theme.dart` - Vespara Night design system
 - [x] `lib/core/theme/motion.dart` - Animation curves & timing
+- [x] `lib/core/theme/vespara_icons.dart` - 100+ curated icons & emojis
+- [x] `lib/core/widgets/drama_sutra_card.dart` - Game card component
 
 ### Feature Screens
 
