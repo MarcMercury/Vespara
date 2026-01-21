@@ -361,7 +361,7 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // POSITION DATA - ALL 49 POSITIONS
+  // POSITION DATA - 38 SEXUAL POSITIONS (12 Group + 26 Bingo)
   // ─────────────────────────────────────────────────────────────────────────
   
   static const List<DramaPosition> _allPositions = [
