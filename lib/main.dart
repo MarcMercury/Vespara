@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/env.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
-import 'features/onboarding/onboarding_screen.dart';
+import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -206,7 +206,7 @@ class _AuthGateState extends State<AuthGate> {
     
     // Logged in but hasn't completed onboarding
     if (_hasCompletedOnboarding == false) {
-      return const OnboardingScreen();
+      return const ExclusiveOnboardingScreen();
     }
     
     // Logged in and onboarding complete - show the full app!
