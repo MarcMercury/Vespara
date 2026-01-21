@@ -33,10 +33,20 @@ class VesparaHaptics {
     await HapticFeedback.mediumImpact();
   }
   
+  /// Alias for mediumTap()
+  static Future<void> medium() async {
+    await mediumTap();
+  }
+  
   /// Heavy Impact - Major actions, critical toggles
   /// Usage: Ghost Protocol activation, Tonight Mode toggle
   static Future<void> heavyTap() async {
     await HapticFeedback.heavyImpact();
+  }
+  
+  /// Alias for heavyTap()
+  static Future<void> heavy() async {
+    await heavyTap();
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
@@ -220,3 +230,6 @@ class HapticInkWell extends StatelessWidget {
     );
   }
 }
+
+/// Alias for backward compatibility with legacy code
+typedef Haptics = VesparaHaptics;

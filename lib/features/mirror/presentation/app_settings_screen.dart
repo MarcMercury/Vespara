@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/permission_service.dart';
@@ -135,7 +136,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           const SizedBox(height: VesparaSpacing.md),
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
-              colors: [VesparaColors.glow, VesparaColors.accent],
+              colors: [VesparaColors.glow, VesparaColors.secondary],
             ).createShader(bounds),
             child: Text(
               'Build Your Experience',
@@ -162,7 +163,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       margin: const EdgeInsets.symmetric(horizontal: VesparaSpacing.md),
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(VesparaRadius.lg),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
       ),
       child: TabBar(
         controller: _tabController,
@@ -170,7 +171,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
         tabAlignment: TabAlignment.start,
         indicator: BoxDecoration(
           color: VesparaColors.glow.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(VesparaRadius.md),
+          borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: VesparaColors.glow,
@@ -266,7 +267,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
     return Container(
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(VesparaRadius.lg),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
         border: Border.all(
           color: isEnabled ? VesparaColors.glow.withValues(alpha: 0.3) : VesparaColors.border,
         ),
@@ -280,7 +281,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 color: isEnabled 
                     ? VesparaColors.glow.withValues(alpha: 0.2)
                     : VesparaColors.background,
-                borderRadius: BorderRadius.circular(VesparaRadius.md),
+                borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
               ),
               child: Icon(
                 icon,
@@ -314,7 +315,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: VesparaColors.background,
-                    borderRadius: BorderRadius.circular(VesparaRadius.sm),
+                    borderRadius: BorderRadius.circular(VesparaBorderRadius.small),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -340,7 +341,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       padding: const EdgeInsets.all(VesparaSpacing.md),
       decoration: BoxDecoration(
         color: VesparaColors.glow.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(VesparaRadius.md),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
         border: Border.all(color: VesparaColors.glow.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -499,7 +500,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
         Container(
           decoration: BoxDecoration(
             color: VesparaColors.surface,
-            borderRadius: BorderRadius.circular(VesparaRadius.lg),
+            borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
           ),
           child: Column(
             children: options.map((option) => SwitchListTile(
@@ -520,7 +521,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       padding: const EdgeInsets.all(VesparaSpacing.md),
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(VesparaRadius.lg),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
         border: Border.all(color: VesparaColors.border),
       ),
       child: Column(
@@ -641,7 +642,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           Container(
             decoration: BoxDecoration(
               color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(VesparaRadius.lg),
+              borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
             ),
             child: Column(
               children: [
@@ -680,7 +681,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       padding: const EdgeInsets.all(VesparaSpacing.md),
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(VesparaRadius.lg),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,7 +702,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: VesparaColors.glow.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(VesparaRadius.sm),
+                  borderRadius: BorderRadius.circular(VesparaBorderRadius.small),
                 ),
                 child: Text(
                   value,
@@ -732,7 +733,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       padding: const EdgeInsets.all(VesparaSpacing.md),
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(VesparaRadius.lg),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -764,7 +765,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     padding: const EdgeInsets.all(VesparaSpacing.sm),
                     decoration: BoxDecoration(
                       color: isSelected ? VesparaColors.glow.withValues(alpha: 0.2) : VesparaColors.background,
-                      borderRadius: BorderRadius.circular(VesparaRadius.md),
+                      borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
                       border: Border.all(
                         color: isSelected ? VesparaColors.glow : VesparaColors.border,
                       ),
@@ -881,7 +882,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
             padding: const EdgeInsets.all(VesparaSpacing.md),
             decoration: BoxDecoration(
               color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(VesparaRadius.lg),
+              borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -926,7 +927,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
           color: isSelected ? VesparaColors.glow.withValues(alpha: 0.2) : VesparaColors.background,
-          borderRadius: BorderRadius.circular(VesparaRadius.md),
+          borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
           border: Border.all(
             color: isSelected ? VesparaColors.glow : VesparaColors.border,
           ),
@@ -961,7 +962,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       padding: const EdgeInsets.all(VesparaSpacing.md),
       decoration: BoxDecoration(
         color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(VesparaRadius.lg),
+        borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1049,10 +1050,10 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               gradient: LinearGradient(
                 colors: [
                   VesparaColors.glow.withValues(alpha: 0.2),
-                  VesparaColors.accent.withValues(alpha: 0.2),
+                  VesparaColors.secondary.withValues(alpha: 0.2),
                 ],
               ),
-              borderRadius: BorderRadius.circular(VesparaRadius.lg),
+              borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
               border: Border.all(color: VesparaColors.glow.withValues(alpha: 0.5)),
             ),
             child: SwitchListTile(
@@ -1081,7 +1082,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
             Container(
               decoration: BoxDecoration(
                 color: VesparaColors.surface,
-                borderRadius: BorderRadius.circular(VesparaRadius.lg),
+                borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
               ),
               child: Column(
                 children: [
@@ -1122,7 +1123,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               padding: const EdgeInsets.all(VesparaSpacing.md),
               decoration: BoxDecoration(
                 color: VesparaColors.surface,
-                borderRadius: BorderRadius.circular(VesparaRadius.lg),
+                borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1169,7 +1170,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
             padding: const EdgeInsets.all(VesparaSpacing.md),
             decoration: BoxDecoration(
               color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(VesparaRadius.lg),
+              borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1243,9 +1244,9 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [VesparaColors.glow, VesparaColors.accent],
+              colors: [VesparaColors.glow, VesparaColors.secondary],
             ),
-            borderRadius: BorderRadius.circular(VesparaRadius.md),
+            borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
           ),
           child: Icon(icon, color: Colors.white),
         ),
@@ -1307,7 +1308,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
 
   Future<void> _requestCameraPermission() async {
     HapticFeedback.mediumImpact();
-    final file = await _permissionService.takeCameraPhoto(context: context);
+    final file = await _permissionService.pickImageFromCamera(context: context);
     setState(() => _cameraEnabled = file != null);
   }
 

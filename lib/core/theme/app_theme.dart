@@ -677,3 +677,92 @@ extension VesparaTextStyles on TextTheme {
     letterSpacing: 0.5,
   );
 }
+
+/// Backward compatibility alias for legacy code using AppTheme
+/// Maps old AppTheme.* references to new Vespara design system
+class AppTheme {
+  AppTheme._();
+  
+  // Colors
+  static const Color backgroundDark = VesparaColors.background;
+  static const Color surfaceDark = VesparaColors.surface;
+  
+  // Text Styles - Static versions for legacy code
+  static TextStyle get displayLarge => GoogleFonts.cinzel(
+    fontSize: 48,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get headlineLarge => GoogleFonts.cinzel(
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get headlineMedium => GoogleFonts.cinzel(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get headlineSmall => GoogleFonts.cinzel(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get titleLarge => GoogleFonts.inter(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get titleMedium => GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get titleSmall => GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get bodyLarge => GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get bodyMedium => GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get bodySmall => GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get labelLarge => GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get labelMedium => GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: VesparaColors.primary,
+  );
+  
+  static TextStyle get labelSmall => GoogleFonts.inter(
+    fontSize: 10,
+    fontWeight: FontWeight.w500,
+    color: VesparaColors.primary,
+  );
+}

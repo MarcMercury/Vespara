@@ -5,9 +5,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/match.dart';
 import '../../../core/providers/match_state_provider.dart';
-import '../../wire/presentation/wire_screen_new.dart';
+import '../../wire/presentation/wire_screen.dart';
 import '../../planner/presentation/planner_screen.dart';
-import '../../ludus/presentation/tags_screen_new.dart';
+import '../../ludus/presentation/tags_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
