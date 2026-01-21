@@ -97,12 +97,12 @@ class GroupsSection extends ConsumerWidget {
                         Icon(Icons.add, color: VesparaColors.background, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          'CREATE',
+                          'Create Circle',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: VesparaColors.background,
-                            letterSpacing: 1,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
@@ -164,77 +164,18 @@ class GroupsSection extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    // Show a simple message instead of a big tile - use Create Circle button in header
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: VesparaColors.glow.withOpacity(0.2),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Text(
+          'No circles yet. Tap Create Circle to start.',
+          style: TextStyle(
+            fontSize: 13,
+            color: VesparaColors.secondary,
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: VesparaColors.glow.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.group_add_outlined,
-              size: 48,
-              color: VesparaColors.glow,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Create Your First Circle',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.primary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Gather your favorite people into private groups with shared chat',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: VesparaColors.secondary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: () => _showCreateGroup(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [VesparaColors.glow, VesparaColors.secondary],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_circle_outline, color: VesparaColors.background),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Create Circle',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.background,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

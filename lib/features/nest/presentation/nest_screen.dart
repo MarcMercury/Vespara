@@ -4,11 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/match.dart';
+import '../../../core/domain/models/group.dart';
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/providers/groups_provider.dart';
 import '../../wire/presentation/wire_screen.dart';
 import '../../planner/presentation/planner_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
 import 'groups_section.dart';
+import 'group_detail_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
@@ -39,7 +42,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _priorities.length, vsync: this);
+    // +1 for Circles tab
+    _tabController = TabController(length: _priorities.length + 1, vsync: this);
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -199,6 +203,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   Widget _buildTabBar() {
+    final groupsState = ref.watch(groupsProvider);
+    
     return Container(
       margin: const EdgeInsets.only(top: 16),
       child: TabBar(
@@ -213,16 +219,44 @@ class _NestScreenState extends ConsumerState<NestScreen>
           fontWeight: FontWeight.w600,
           letterSpacing: 1,
         ),
-        tabs: _priorities.map((p) {
-          final count = _getMatchesForPriority(p).length;
-          return Tab(
+        tabs: [
+          // Priority tabs
+          ..._priorities.map((p) {
+            final count = _getMatchesForPriority(p).length;
+            return Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(p.emoji),
+                  const SizedBox(width: 6),
+                  Text(p.label.toUpperCase()),
+                  if (count > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.glow.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        count.toString(),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+          // Circles tab at the end
+          Tab(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(p.emoji),
+                const Text('⭕'),
                 const SizedBox(width: 6),
-                Text(p.label.toUpperCase()),
-                if (count > 0) ...[
+                const Text('CIRCLES'),
+                if (groupsState.groupCount > 0) ...[
                   const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -231,15 +265,15 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      count.toString(),
+                      groupsState.groupCount.toString(),
                       style: const TextStyle(fontSize: 10),
                     ),
                   ),
                 ],
               ],
             ),
-          );
-        }).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -247,21 +281,331 @@ class _NestScreenState extends ConsumerState<NestScreen>
   Widget _buildTabBarView() {
     return TabBarView(
       controller: _tabController,
-      children: _priorities.map((priority) {
-        final matches = _getMatchesForPriority(priority);
-        
-        if (matches.isEmpty) {
-          return _buildEmptyColumn(priority);
-        }
-        
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: matches.length,
-          itemBuilder: (context, index) {
-            return _buildMatchCard(matches[index]);
-          },
-        );
-      }).toList(),
+      children: [
+        // Priority tabs content
+        ..._priorities.map((priority) {
+          final matches = _getMatchesForPriority(priority);
+          
+          if (matches.isEmpty) {
+            return _buildEmptyColumn(priority);
+          }
+          
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: matches.length,
+            itemBuilder: (context, index) {
+              return _buildMatchCard(matches[index]);
+            },
+          );
+        }),
+        // Circles tab content
+        _buildCirclesTab(),
+      ],
+    );
+  }
+
+  Widget _buildCirclesTab() {
+    final groupsState = ref.watch(groupsProvider);
+    
+    if (groupsState.isLoading) {
+      return const Center(child: CircularProgressIndicator(color: VesparaColors.glow));
+    }
+    
+    if (groupsState.groups.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.group_outlined, size: 48, color: VesparaColors.secondary),
+            const SizedBox(height: 16),
+            Text(
+              'No circles yet',
+              style: TextStyle(fontSize: 16, color: VesparaColors.secondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create a circle to organize your connections',
+              style: TextStyle(fontSize: 13, color: VesparaColors.secondary.withOpacity(0.7)),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: groupsState.groups.length,
+      itemBuilder: (context, index) {
+        return _buildCircleListItem(groupsState.groups[index]);
+      },
+    );
+  }
+
+  Widget _buildCircleListItem(VesparaGroup group) {
+    // Calculate idle members (those who haven't communicated in 7+ days)
+    // For now we'll use a placeholder since we need to track last_message_at per member
+    final idleCount = 0; // TODO: Calculate from message activity
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: group.isCreator 
+              ? VesparaColors.glow.withOpacity(0.3) 
+              : VesparaColors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Avatar
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: group.avatarUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.network(group.avatarUrl!, fit: BoxFit.cover),
+                      )
+                    : Icon(Icons.group, color: VesparaColors.glow, size: 24),
+              ),
+              const SizedBox(width: 12),
+              
+              // Name and stats
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            group.name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        ),
+                        if (group.isCreator)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: VesparaColors.glow.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'OWNER',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: VesparaColors.glow,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        _buildStatChip('${group.memberCount} members', VesparaColors.glow),
+                        const SizedBox(width: 8),
+                        if (idleCount > 0)
+                          _buildStatChip('$idleCount idle', VesparaColors.warning),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Action buttons
+          Row(
+            children: [
+              if (group.isCreator) ...[
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _showInviteWizard(group),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [VesparaColors.glow, VesparaColors.secondary],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.person_add, color: VesparaColors.background, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Invite',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.background,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _confirmDeleteGroup(group),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.error.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.delete_outline, color: VesparaColors.error, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => GroupDetailScreen(groupId: group.id)),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.glow.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.visibility, color: VesparaColors.glow, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            'View Circle',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  void _showInviteWizard(VesparaGroup group) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => GroupDetailScreen(groupId: group.id)),
+    );
+  }
+
+  void _confirmDeleteGroup(VesparaGroup group) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete Circle?',
+          style: TextStyle(color: VesparaColors.primary),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${group.name}"? This will remove all members and cannot be undone.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await ref.read(groupsProvider.notifier).deleteGroup(group.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Circle deleted'),
+                      backgroundColor: VesparaColors.surface,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete circle'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text('Delete', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
     );
   }
 

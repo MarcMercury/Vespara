@@ -403,6 +403,39 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
   }
 
+  /// Delete a group (creator only)
+  Future<bool> deleteGroup(String groupId) async {
+    final group = state.groups.firstWhere(
+      (g) => g.id == groupId,
+      orElse: () => throw Exception('Group not found'),
+    );
+
+    if (!group.isCreator) {
+      state = state.copyWith(error: 'Only the group creator can delete the group');
+      return false;
+    }
+
+    if (_supabase == null) {
+      // Mock delete
+      final newGroups = state.groups.where((g) => g.id != groupId).toList();
+      state = state.copyWith(groups: newGroups);
+      return true;
+    }
+
+    try {
+      await _supabase!.rpc(
+        'delete_vespara_group',
+        params: {'p_group_id': groupId},
+      );
+      
+      await loadGroups();
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
   /// Get members of a group
   Future<List<GroupMember>> getGroupMembers(String groupId) async {
     if (_supabase == null) {
