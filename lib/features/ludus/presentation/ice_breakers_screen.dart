@@ -1264,7 +1264,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
             onTap: () {
               HapticFeedback.heavyImpact();
               ref.read(iceBreakersProvider.notifier).escalateTo('truth_or_dare');
-              // Navigate to Velvet Rope (Truth or Dare)
+              // Navigate to Share or Dare (Truth or Dare evolved)
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),

@@ -561,7 +561,7 @@ class VesparaEmoji {
   static const String mask = '🎭';
   static const String crystal = '🔮';
   
-  /// Velvet Rope specific
+  /// Share or Dare specific
   static const String velvetRope = '🎭';
   static const String dare = '🔥';
   static const String truth = '🔮';

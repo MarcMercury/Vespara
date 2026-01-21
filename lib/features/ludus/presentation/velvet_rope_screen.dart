@@ -1302,7 +1302,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Velvet Rope',
+                'Share or Dare',
                 style: TextStyle(
                   fontSize: 16,
                   fontStyle: FontStyle.italic,

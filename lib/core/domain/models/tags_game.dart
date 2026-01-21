@@ -62,7 +62,7 @@ extension ConsentLevelExtension on ConsentLevel {
 enum GameCategory {
   downToClown, // Heads Up-style guessing game
   icebreakers, // Ice Breakers conversation starters
-  velvetRope, // Velvet Rope - Truth or Dare evolved
+  velvetRope, // Share or Dare - Truth or Dare evolved
   pathOfPleasure, // Comparative ranking game
   laneOfLust, // Timeline/Shit Happens style game with desire index
   dramaSutra, // Kama Sutra meets Improv Comedy

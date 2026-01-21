@@ -461,7 +461,7 @@ class MockDataProvider {
   
   // ═══════════════════════════════════════════════════════════════════════════
   // TAGS GAMES (Module 8: TAG)
-  // Only 7 games: Down to Clown, Ice Breakers, Velvet Rope, Path of Pleasure, Lane of Lust, Drama-Sutra, Flash & Freeze
+  // Only 7 games: Down to Clown, Ice Breakers, Share or Dare, Path of Pleasure, Lane of Lust, Drama-Sutra, Flash & Freeze
   // ═══════════════════════════════════════════════════════════════════════════
   
   static List<TagsGame> get tagsGames => [
