@@ -227,17 +227,18 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
   Widget _buildIdleScreen(DramaSutraState state) {
     return Container(
       key: const ValueKey('idle'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // Header
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(VesparaIcons.back, color: Colors.white70),
-              ),
-              const Spacer(),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Header
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(VesparaIcons.back, color: Colors.white70),
+                ),
+                const Spacer(),
               if (state.currentRound > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -258,7 +259,7 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
             ],
           ),
           
-          const Spacer(),
+          const SizedBox(height: 24),
           
           // Title
           ShaderMask(
@@ -380,7 +381,7 @@ class _DramaSutraScreenV2State extends ConsumerState<DramaSutraScreenV2>
             ),
           ),
           
-          const Spacer(),
+          const SizedBox(height: 24),
           
           // Rules reminder
           Container(

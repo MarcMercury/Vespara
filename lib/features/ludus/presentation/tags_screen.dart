@@ -153,16 +153,24 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       return _buildEmptyState();
     }
     
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: filteredGames.length,
-      itemBuilder: (context, index) => _buildGameCard(filteredGames[index]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive: smaller screens get taller cards
+        final screenWidth = constraints.maxWidth;
+        final aspectRatio = screenWidth < 360 ? 0.75 : 0.85;
+        
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: aspectRatio,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: filteredGames.length,
+          itemBuilder: (context, index) => _buildGameCard(filteredGames[index]),
+        );
+      },
     );
   }
 
@@ -174,38 +182,40 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: VesparaColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
         ),
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Icon + Title row
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           color: categoryColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
                           _getCategoryIcon(game.category),
                           color: categoryColor,
-                          size: 20,
+                          size: 18,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           game.title,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: VesparaColors.primary,
                           ),
@@ -216,26 +226,23 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                     ],
                   ),
                   
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   
-                  // Rating badges row
-                  Row(
+                  // Rating badges - wrap to handle overflow
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
                     children: [
-                      // Velocity
                       _buildRatingBadge(
                         '🏎️',
                         game.category.velocityLabel,
                         const Color(0xFFFF6B6B),
                       ),
-                      const SizedBox(width: 6),
-                      // Heat
                       _buildRatingBadge(
                         '🔥',
                         game.category.heatRating,
                         const Color(0xFFFF9500),
                       ),
-                      const SizedBox(width: 6),
-                      // Duration
                       _buildRatingBadge(
                         '⏱️',
                         game.category.durationLabel == 'Full Session' ? 'Full' : game.category.durationLabel,
@@ -246,21 +253,21 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                   
                   const Spacer(),
                   
-                  // Heat rating badge at bottom
+                  // Player count at bottom
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
                       color: categoryColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(VesparaIcons.group, size: 10, color: categoryColor),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         Text(
                           '${game.category.minPlayers}-${game.category.maxPlayers}',
-                          style: TextStyle(fontSize: 10, color: categoryColor, fontWeight: FontWeight.w600),
+                          style: TextStyle(fontSize: 9, color: categoryColor, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -271,18 +278,18 @@ class _TagScreenState extends ConsumerState<TagScreen> {
             
             // Category badge
             Positioned(
-              top: 8,
-              right: 8,
+              top: 6,
+              right: 6,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                   color: categoryColor,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   game.currentConsentLevel.displayName,
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: 8,
                     fontWeight: FontWeight.w700,
                     color: VesparaColors.background,
                   ),

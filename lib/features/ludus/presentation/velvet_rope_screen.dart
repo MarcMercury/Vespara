@@ -535,147 +535,155 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   Widget _buildSpinning(VelvetRopeState state) {
     return Container(
       key: const ValueKey('spinning'),
-      child: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    ref.read(velvetRopeProvider.notifier).endGame();
-                  },
-                  icon: Icon(VesparaIcons.stop, color: Colors.white54),
-                ),
-                Text(
-                  'Spin: ${state.totalSpins + 1}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Responsive wheel size based on screen
+          final wheelSize = (constraints.maxWidth * 0.8).clamp(200.0, 320.0);
+          final centerSize = wheelSize * 0.25;
           
-          const Spacer(),
-          
-          // The Orbital Wheel
-          GestureDetector(
-            onVerticalDragEnd: _spinVelocity == 0 ? (details) {
-              final velocity = details.primaryVelocity ?? 0;
-              if (velocity.abs() > 100) {
-                _startSpin();
-              }
-            } : null,
-            onHorizontalDragEnd: _spinVelocity == 0 ? (details) {
-              final velocity = details.primaryVelocity ?? 0;
-              if (velocity.abs() > 100) {
-                _startSpin();
-              }
-            } : null,
-            child: SizedBox(
-              width: 320,
-              height: 320,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Outer glow
-                  AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        width: 320,
-                        height: 320,
+          return Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        ref.read(velvetRopeProvider.notifier).endGame();
+                      },
+                      icon: Icon(VesparaIcons.stop, color: Colors.white54),
+                    ),
+                    Text(
+                      'Spin: ${state.totalSpins + 1}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+              
+              const Spacer(),
+              
+              // The Orbital Wheel
+              GestureDetector(
+                onVerticalDragEnd: _spinVelocity == 0 ? (details) {
+                  final velocity = details.primaryVelocity ?? 0;
+                  if (velocity.abs() > 100) {
+                    _startSpin();
+                  }
+                } : null,
+                onHorizontalDragEnd: _spinVelocity == 0 ? (details) {
+                  final velocity = details.primaryVelocity ?? 0;
+                  if (velocity.abs() > 100) {
+                    _startSpin();
+                  }
+                } : null,
+                child: SizedBox(
+                  width: wheelSize,
+                  height: wheelSize,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Outer glow
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, child) {
+                          return Container(
+                            width: wheelSize,
+                            height: wheelSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: VelvetColors.shareBlue.withOpacity(0.2 + _pulseController.value * 0.2),
+                                  blurRadius: 40 + _pulseController.value * 20,
+                                  spreadRadius: 10,
+                                ),
+                                BoxShadow(
+                                  color: VelvetColors.dareCrimson.withOpacity(0.2 + _pulseController.value * 0.2),
+                                  blurRadius: 40 + _pulseController.value * 20,
+                                  spreadRadius: 10,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      
+                      // The wheel
+                      Transform.rotate(
+                        angle: _spinAngle,
+                        child: CustomPaint(
+                          size: Size(wheelSize - 20, wheelSize - 20),
+                          painter: OrbitalWheelPainter(players: state.players),
+                        ),
+                      ),
+                      
+                      // Center decoration
+                      Container(
+                        width: centerSize,
+                        height: centerSize,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              VelvetColors.surface,
+                              VelvetColors.background,
+                            ],
+                          ),
+                          border: Border.all(color: VelvetColors.gold, width: 3),
                           boxShadow: [
                             BoxShadow(
-                              color: VelvetColors.shareBlue.withOpacity(0.2 + _pulseController.value * 0.2),
-                              blurRadius: 40 + _pulseController.value * 20,
-                              spreadRadius: 10,
-                            ),
-                            BoxShadow(
-                              color: VelvetColors.dareCrimson.withOpacity(0.2 + _pulseController.value * 0.2),
-                              blurRadius: 40 + _pulseController.value * 20,
-                              spreadRadius: 10,
+                              color: VelvetColors.gold.withOpacity(0.3),
+                              blurRadius: 15,
                             ),
                           ],
                         ),
-                      );
-                    },
-                  ),
-                  
-                  // The wheel
-                  Transform.rotate(
-                    angle: _spinAngle,
-                    child: CustomPaint(
-                      size: const Size(300, 300),
-                      painter: OrbitalWheelPainter(players: state.players),
-                    ),
-                  ),
-                  
-                  // Center decoration
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          VelvetColors.surface,
-                          VelvetColors.background,
-                        ],
-                      ),
-                      border: Border.all(color: VelvetColors.gold, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: VelvetColors.gold.withOpacity(0.3),
-                          blurRadius: 15,
+                        child: Center(
+                          child: Text('🎭', style: TextStyle(fontSize: centerSize * 0.4)),
                         ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text('🎭', style: TextStyle(fontSize: 32)),
-                    ),
-                  ),
-                  
-                  // Indicator (top)
-                  Positioned(
-                    top: -5,
-                    child: Container(
-                      width: 0,
-                      height: 0,
-                      decoration: const BoxDecoration(),
-                      child: CustomPaint(
-                        size: const Size(30, 25),
-                        painter: IndicatorPainter(),
                       ),
-                    ),
+                      
+                      // Indicator (top)
+                      Positioned(
+                        top: -5,
+                        child: Container(
+                          width: 0,
+                          height: 0,
+                          decoration: const BoxDecoration(),
+                          child: CustomPaint(
+                            size: const Size(30, 25),
+                            painter: IndicatorPainter(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Instructions
-          Text(
-            _spinVelocity > 0 ? 'Spinning...' : 'Swipe to Spin!',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: _spinVelocity > 0 ? VelvetColors.gold : Colors.white54,
-            ),
-          ),
-          
-          const Spacer(),
-        ],
+              
+              const SizedBox(height: 24),
+              
+              // Instructions
+              Text(
+                _spinVelocity > 0 ? 'Spinning...' : 'Swipe to Spin!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: _spinVelocity > 0 ? VelvetColors.gold : Colors.white54,
+                ),
+              ),
+              
+              const Spacer(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -690,158 +698,166 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
     
     return Container(
       key: const ValueKey('selection'),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const Spacer(),
-          
-          // Selected player
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            decoration: BoxDecoration(
-              color: player.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: player.color, width: 2),
-            ),
-            child: Text(
-              player.name,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: player.color,
+      padding: const EdgeInsets.all(20),
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height - 100,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 32),
+              
+              // Selected player
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: player.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: player.color, width: 2),
+                ),
+                child: Text(
+                  player.name,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: player.color,
+                  ),
+                ),
               ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          const Text(
-            'Choose your fate...',
-            style: TextStyle(
-              fontSize: 18,
-              fontStyle: FontStyle.italic,
-              color: Colors.white54,
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // SHARE Button
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.heavyImpact();
-              ref.read(velvetRopeProvider.notifier).selectType(CardType.share);
-            },
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 28),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        VelvetColors.shareBlue.withOpacity(0.8),
-                        VelvetColors.shareBlue.withOpacity(0.6),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: VelvetColors.shareBlue.withOpacity(0.3 + _pulseController.value * 0.3),
-                        blurRadius: 25 + _pulseController.value * 15,
-                        spreadRadius: 5 + _pulseController.value * 5,
-                      ),
-                    ],
-                  ),
-                  child: const Column(
-                    children: [
-                      Text('🔮', style: TextStyle(fontSize: 40)),
-                      SizedBox(height: 8),
-                      Text(
-                        'SHARE',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 4,
+              
+              const SizedBox(height: 12),
+              
+              const Text(
+                'Choose your fate...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white54,
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // SHARE Button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.heavyImpact();
+                  ref.read(velvetRopeProvider.notifier).selectType(CardType.share);
+                },
+                child: AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            VelvetColors.shareBlue.withOpacity(0.8),
+                            VelvetColors.shareBlue.withOpacity(0.6),
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: VelvetColors.shareBlue.withOpacity(0.3 + _pulseController.value * 0.3),
+                            blurRadius: 20 + _pulseController.value * 10,
+                            spreadRadius: 2 + _pulseController.value * 3,
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Reveal something personal',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
+                      child: const Column(
+                        children: [
+                          Text('🔮', style: TextStyle(fontSize: 32)),
+                          SizedBox(height: 6),
+                          Text(
+                            'SHARE',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 3,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Reveal something personal',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // DARE Button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.heavyImpact();
+                  ref.read(velvetRopeProvider.notifier).selectType(CardType.dare);
+                },
+                child: AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            VelvetColors.dareCrimson,
+                            const Color(0xFFFF4500), // Orange-red fire
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: VelvetColors.dareCrimson.withOpacity(0.3 + _pulseController.value * 0.3),
+                            blurRadius: 20 + _pulseController.value * 10,
+                            spreadRadius: 2 + _pulseController.value * 3,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                      child: const Column(
+                        children: [
+                          Text('🔥', style: TextStyle(fontSize: 32)),
+                          SizedBox(height: 6),
+                          Text(
+                            'DARE',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 3,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Prove your courage',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+            ],
           ),
-          
-          const SizedBox(height: 20),
-          
-          // DARE Button
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.heavyImpact();
-              ref.read(velvetRopeProvider.notifier).selectType(CardType.dare);
-            },
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 28),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        VelvetColors.dareCrimson,
-                        const Color(0xFFFF4500), // Orange-red fire
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: VelvetColors.dareCrimson.withOpacity(0.3 + _pulseController.value * 0.3),
-                        blurRadius: 25 + _pulseController.value * 15,
-                        spreadRadius: 5 + _pulseController.value * 5,
-                      ),
-                    ],
-                  ),
-                  child: const Column(
-                    children: [
-                      Text('🔥', style: TextStyle(fontSize: 40)),
-                      SizedBox(height: 8),
-                      Text(
-                        'DARE',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 4,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Prove your courage',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          
-          const Spacer(),
-        ],
+        ),
       ),
     );
   }
