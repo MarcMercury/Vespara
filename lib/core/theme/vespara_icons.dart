@@ -348,6 +348,24 @@ class VesparaIcons {
   
   /// Logout
   static const IconData logout = Icons.logout_rounded;
+  
+  /// Users/People
+  static const IconData users = Icons.people_rounded;
+  
+  /// WiFi/Connection
+  static const IconData wifi = Icons.wifi_rounded;
+  
+  /// Alert/Warning
+  static const IconData alert = Icons.warning_amber_rounded;
+  
+  /// Menu/Drag handle
+  static const IconData menu = Icons.drag_handle_rounded;
+  
+  /// Star
+  static const IconData star = Icons.star_rounded;
+  
+  /// Shield/Protection
+  static const IconData shield = Icons.shield_rounded;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER METHOD - Dynamic icon lookup
