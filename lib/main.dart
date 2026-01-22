@@ -168,16 +168,18 @@ class _AuthGateState extends State<AuthGate> {
         debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
         
         if (mounted) {
-          // Only update if session actually changed
+          // Check if session actually changed OR if it's a token refresh
           final sessionChanged = (_session == null) != (data.session == null);
+          final isTokenRefresh = data.event == AuthChangeEvent.tokenRefreshed;
           
           setState(() {
             _session = data.session;
             _isLoading = false;
           });
           
-          // Check onboarding status when session changes
-          if (data.session != null && sessionChanged) {
+          // Check onboarding status when session changes OR on token refresh
+          // This handles the case when onboarding just completed
+          if (data.session != null && (sessionChanged || isTokenRefresh)) {
             _checkOnboardingStatus(data.session!.user.id);
           } else if (data.session == null) {
             _hasCompletedOnboarding = null;

@@ -518,9 +518,13 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       final name = _displayNameController.text.trim();
       final bio = _buildBioFromSelections(name);
       
-      setState(() {
-        _bioController.text = bio;
-      });
+      if (mounted) {
+        setState(() {
+          _bioController.text = bio;
+        });
+      }
+    } catch (e) {
+      debugPrint('Bio generation error: $e');
     } finally {
       if (mounted) {
         setState(() => _isGeneratingBio = false);
@@ -528,7 +532,14 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     }
   }
   
+  // Random number for bio variation
+  int _bioStyleSeed = DateTime.now().millisecondsSinceEpoch;
+  
   String _buildBioFromSelections(String name) {
+    // Increment seed for variety on each regeneration
+    _bioStyleSeed++;
+    final random = _bioStyleSeed % 100;
+    
     // Gather all the raw data
     final relationshipIds = _relationshipStatus.toList();
     final seekingIds = _seeking.toList();
@@ -553,42 +564,56 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     
     // Location with flair
     final locationPhrase = _city != null && _state != null 
-        ? _getLocationPhrase('$_city, $_state')
+        ? _getLocationPhrase('$_city, $_state', random)
         : '';
     
-    // Build personality snippet
-    final personalityBits = <String>[];
-    if (isWitty) personalityBits.add('fluent in sarcasm');
-    if (isRomantic) personalityBits.add('secretly a romantic');
-    if (isMischievous) personalityBits.add('trouble in the best way');
-    if (isPassionate) personalityBits.add('intensity is my love language');
-    if (isCalm) personalityBits.add('unfairly calm under pressure');
-    if (isHighEnergy) personalityBits.add('powered by an internal espresso machine');
+    // Build personality snippet with shuffling based on random seed
+    final allPersonalityBits = <String>[];
+    if (isWitty) allPersonalityBits.add('fluent in sarcasm');
+    if (isRomantic) allPersonalityBits.add('secretly a romantic');
+    if (isMischievous) allPersonalityBits.add('trouble in the best way');
+    if (isPassionate) allPersonalityBits.add('intensity is my love language');
+    if (isCalm) allPersonalityBits.add('unfairly calm under pressure');
+    if (isHighEnergy) allPersonalityBits.add('powered by an internal espresso machine');
+    if (isNightOwl) allPersonalityBits.add('a creature of the night');
+    if (isEarlyRiser) allPersonalityBits.add('annoyingly awake at sunrise');
+    if (isLifeOfParty) allPersonalityBits.add('the one people remember');
+    if (isHomebody) allPersonalityBits.add('a cozy soul');
+    
+    // Shuffle personality bits for variety
+    final personalityBits = List<String>.from(allPersonalityBits);
+    if (personalityBits.length > 1) {
+      // Simple shuffle using seed
+      final offset = random % personalityBits.length;
+      personalityBits.insert(0, personalityBits.removeAt(offset));
+    }
     
     // Build vibe snippet
     final vibeSnippet = personalityBits.isNotEmpty 
         ? personalityBits.take(2).join(', ')
         : 'still figuring out my brand';
     
-    // Lifestyle context
-    final lifestyleHint = _getLifestyleHint(relationshipIds);
+    // Lifestyle context (pass random for variation)
+    final lifestyleHint = _getLifestyleHint(relationshipIds, random);
     
-    // What they want (natural language)
-    final wantingPhrase = _getWantingPhrase(seekingIds);
+    // What they want (natural language, pass random for variation)
+    final wantingPhrase = _getWantingPhrase(seekingIds, random);
     
-    // Energy/timing style
-    final timingStyle = isSpontaneous 
-        ? 'Spontaneity appreciated.'
+    // Energy/timing style with more options
+    final timingOptions = isSpontaneous 
+        ? ['Spontaneity appreciated.', 'Down for last-minute plans.', 'Text me at 11pm, I might say yes.']
         : _schedulingStyle == 'same_day' 
-            ? 'Same-day plans? Yes please.'
-            : 'I like a little runway.';
+            ? ['Same-day plans? Yes please.', 'I move fast.', 'Today works.']
+            : ['I like a little runway.', 'Let\'s plan ahead.', 'Calendar tetris is my sport.'];
+    final timingStyle = timingOptions[random % timingOptions.length];
     
-    // Discretion (only if relevant)
-    final discretionNote = _discretionLevel == 'very_discreet'
-        ? 'Discretion isn\'t a preference—it\'s non-negotiable.'
+    // Discretion (only if relevant) with variety
+    final discretionOptions = _discretionLevel == 'very_discreet'
+        ? ['Discretion isn\'t a preference—it\'s non-negotiable.', 'Privacy is sacred here.', 'Some things stay between us.']
         : _discretionLevel == 'discreet'
-            ? 'Privacy matters here.'
-            : '';
+            ? ['Privacy matters here.', 'I value discretion.', 'What happens stays private.']
+            : [''];
+    final discretionNote = discretionOptions[random % discretionOptions.length];
     
     // Experience level (tasteful)
     final experienceNote = isBeginner
@@ -606,7 +631,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
                 ? 'Depends on my mood—and yours.'
                 : '';
     
-    // Generate multiple bio styles and pick one
+    // Generate multiple bio styles and pick one randomly for variety
     final bios = <String>[
       // Style 1: Confident & Playful
       _buildStyle1(name, vibeSnippet, lifestyleHint, wantingPhrase, 
@@ -621,15 +646,8 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
                    locationPhrase, timingStyle, powerHint),
     ];
     
-    // Pick based on personality to match tone
-    int styleIndex = 0;
-    if (isWitty || isMischievous) {
-      styleIndex = 0; // Playful style
-    } else if (isCalm || isRomantic) {
-      styleIndex = 1; // Mysterious style
-    } else {
-      styleIndex = 2; // Warm & direct
-    }
+    // Pick semi-randomly based on personality and seed for variety on regeneration
+    int styleIndex = random % 3;
     
     return bios[styleIndex];
   }
@@ -707,44 +725,102 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     return lines.where((l) => l.isNotEmpty || l == '').join('\n').trim();
   }
   
-  String _getLocationPhrase(String location) {
+  String _getLocationPhrase(String location, int random) {
     final phrases = [
       'Based in $location.',
       '$location, for now.',
       'You\'ll find me in $location.',
       'Home base: $location.',
+      'Currently in $location.',
+      '$location calling.',
     ];
-    return phrases[location.length % phrases.length];
+    return phrases[random % phrases.length];
   }
   
-  String _getLifestyleHint(List<String> relationshipIds) {
+  String _getLifestyleHint(List<String> relationshipIds, int random) {
+    // Multiple options per status for variety
     if (relationshipIds.contains('single')) {
-      return 'Happily unattached and keeping my options open.';
+      final options = [
+        'Happily unattached and keeping my options open.',
+        'Single and ready for... well, anything interesting.',
+        'Flying solo and loving the view.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('partnered_open') || 
                relationshipIds.contains('married_open')) {
-      return 'Partnered and playing with permission—enthusiastic permission.';
+      final options = [
+        'Partnered and playing with permission—enthusiastic permission.',
+        'In a loving open relationship. Yes, they know.',
+        'Committed at home, exploring outside.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('poly_solo')) {
-      return 'Solo poly. My heart has room, but no one has the keys.';
+      final options = [
+        'Solo poly. My heart has room, but no one has the keys.',
+        'Polyamorous and independently minded.',
+        'Multiple connections, no primary—by design.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('poly_nested') || 
                relationshipIds.contains('poly_network')) {
-      return 'Part of a happy polycule. More love to go around.';
+      final options = [
+        'Part of a happy polycule. More love to go around.',
+        'Poly with a network of wonderful people.',
+        'Already blessed with partners, always open to more.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('relationship_anarchist')) {
-      return 'I don\'t do labels. Connections happen on their own terms.';
+      final options = [
+        'I don\'t do labels. Connections happen on their own terms.',
+        'Relationship anarchist. Rules are boring.',
+        'No hierarchy, no expectations, just vibes.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('exploring')) {
-      return 'Figuring out what I want—and enjoying the journey.';
+      final options = [
+        'Figuring out what I want—and enjoying the journey.',
+        'Exploring my options and loving it.',
+        'Still writing my story.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('situationship')) {
-      return 'It\'s complicated. And I kind of like it that way.';
+      final options = [
+        'It\'s complicated. And I kind of like it that way.',
+        'Somewhere between something and nothing.',
+        'Currently in undefined territory.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('divorced')) {
-      return 'New chapter, new adventures.';
+      final options = [
+        'New chapter, new adventures.',
+        'Divorced and rediscovering myself.',
+        'Past closed, future wide open.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('dating')) {
-      return 'Dating around, not settling down.';
+      final options = [
+        'Dating around, not settling down.',
+        'Casually dating, no strings attached.',
+        'Playing the field, having fun.',
+      ];
+      return options[random % options.length];
     } else if (relationshipIds.contains('partnered')) {
-      return 'In a relationship, exploring together.';
+      final options = [
+        'In a relationship, exploring together.',
+        'Partnered and curious.',
+        'Together but open-minded.',
+      ];
+      return options[random % options.length];
     }
-    return 'Living life on my own terms.';
+    final defaultOptions = [
+      'Living life on my own terms.',
+      'Making my own rules.',
+      'Here for the experience.',
+    ];
+    return defaultOptions[random % defaultOptions.length];
   }
   
-  String _getWantingPhrase(List<String> seekingIds) {
+  String _getWantingPhrase(List<String> seekingIds, int random) {
     final phrases = <String>[];
     
     if (seekingIds.contains('friends')) {
@@ -781,14 +857,25 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       phrases.add('seeing where things go');
     }
     
+    // Shuffle phrases for variety
+    if (phrases.length > 1) {
+      final offset = random % phrases.length;
+      phrases.insert(0, phrases.removeAt(offset));
+    }
+    
+    // Vary the phrasing structure
+    final starters = ['Here for', 'Looking for', 'Seeking', 'Interested in'];
+    final starter = starters[random % starters.length];
+    
     if (phrases.isEmpty) {
-      return 'Open to what comes my way.';
+      final emptyOptions = ['Open to what comes my way.', 'Here for the adventure.', 'Curious about everything.'];
+      return emptyOptions[random % emptyOptions.length];
     } else if (phrases.length == 1) {
-      return 'Here for ${phrases.first}.';
+      return '$starter ${phrases.first}.';
     } else if (phrases.length == 2) {
-      return 'Looking for ${phrases[0]} and ${phrases[1]}.';
+      return '$starter ${phrases[0]} and ${phrases[1]}.';
     } else {
-      return 'Here for ${phrases.take(2).join(', ')}, and more.';
+      return '$starter ${phrases.take(2).join(', ')}, and more.';
     }
   }
   
