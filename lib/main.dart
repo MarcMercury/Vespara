@@ -198,8 +198,11 @@ class _AuthGateState extends State<AuthGate> {
             _isLoading = false;
           });
           
-          // Check onboarding status when we get a new session
-          if (newSession != null && sessionStateChanged) {
+          // Check onboarding status when:
+          // 1. We get a new session (sign in)
+          // 2. Token is refreshed (this happens after onboarding completes)
+          if (newSession != null && (sessionStateChanged || data.event == AuthChangeEvent.tokenRefreshed)) {
+            debugPrint('Vespara Auth: Re-checking onboarding status after ${data.event}');
             _checkOnboardingStatus(newSession.user.id);
           } else if (newSession == null && sessionStateChanged) {
             _hasCompletedOnboarding = null;
