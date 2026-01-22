@@ -34,7 +34,65 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   @override
   void initState() {
     super.initState();
-    // Games are loaded from database - empty until populated
+    // Populate games - these are core game modes, not mock data
+    _games = [
+      TagsGame(
+        id: 'dtc',
+        title: 'Down to Clown',
+        category: GameCategory.downToClown,
+        description: 'Charades meets guessing game',
+        minPlayers: 4,
+        maxPlayers: 20,
+      ),
+      TagsGame(
+        id: 'icebreakers',
+        title: 'Ice Breakers',
+        category: GameCategory.icebreakers,
+        description: 'Get to know each other with fun prompts',
+        minPlayers: 2,
+        maxPlayers: 10,
+      ),
+      TagsGame(
+        id: 'velvet',
+        title: 'Share or Dare',
+        category: GameCategory.velvetRope,
+        description: 'Truth or dare with a twist',
+        minPlayers: 2,
+        maxPlayers: 8,
+      ),
+      TagsGame(
+        id: 'pop',
+        title: 'Path of Pleasure',
+        category: GameCategory.pathOfPleasure,
+        description: '1v1 ranking battles',
+        minPlayers: 2,
+        maxPlayers: 2,
+      ),
+      TagsGame(
+        id: 'lol',
+        title: 'Lane of Lust',
+        category: GameCategory.laneOfLust,
+        description: 'Explore desires together',
+        minPlayers: 2,
+        maxPlayers: 4,
+      ),
+      TagsGame(
+        id: 'drama',
+        title: 'Drama-Sutra',
+        category: GameCategory.dramaSutra,
+        description: 'Intimate poses and positions',
+        minPlayers: 2,
+        maxPlayers: 2,
+      ),
+      TagsGame(
+        id: 'flash',
+        title: 'Flash Freeze',
+        category: GameCategory.flashFreeze,
+        description: 'Quick-fire decisions',
+        minPlayers: 2,
+        maxPlayers: 6,
+      ),
+    ];
   }
 
   @override

@@ -42,74 +42,39 @@ class GroupsSection extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                'MY CIRCLES',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 2,
-                  color: VesparaColors.glow,
+          // Invitations button with badge (if any)
+          if (state.pendingInvitationCount > 0)
+            _buildInvitationsButton(context, state.pendingInvitationCount)
+          else
+            const SizedBox.shrink(),
+          // Create group button - always shown
+          GestureDetector(
+            onTap: () => _showCreateGroup(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [VesparaColors.glow, VesparaColors.secondary],
                 ),
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${state.groupCount}/$maxGroupsPerUser',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: VesparaColors.glow,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              // Invitations button with badge
-              if (state.pendingInvitationCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _buildInvitationsButton(context, state.pendingInvitationCount),
-                ),
-              // Create group button
-              if (state.canCreateGroup)
-                GestureDetector(
-                  onTap: () => _showCreateGroup(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [VesparaColors.glow, VesparaColors.secondary],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, color: VesparaColors.background, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Create Circle',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: VesparaColors.background,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: VesparaColors.background, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Create Circle',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.background,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -164,20 +129,8 @@ class GroupsSection extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    // Show a simple message instead of a big tile - use Create Circle button in header
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Center(
-        child: Text(
-          'No circles yet. Tap Create Circle to start.',
-          style: TextStyle(
-            fontSize: 13,
-            color: VesparaColors.secondary,
-          ),
-        ),
-      ),
-    );
+    // Empty state - just show nothing, Create Circle button is in the header
+    return const SizedBox.shrink();
   }
 
   Widget _buildGroupsList(BuildContext context, WidgetRef ref, List<VesparaGroup> groups) {

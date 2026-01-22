@@ -152,118 +152,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     }
   }
 
-  // Filter state
-  RangeValues _ageRange = const RangeValues(21, 45);
-  double _maxDistance = 25;
-  Set<String> _selectedRelTypes = {'casual', 'exploring', 'ethicalNonMonogamy'};
-
-  void _showFiltersDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: VesparaColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.secondary,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text('Discovery Filters', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              const SizedBox(height: 24),
-              
-              // Age Range
-              Text('Age Range: ${_ageRange.start.toInt()} - ${_ageRange.end.toInt()}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: VesparaColors.secondary)),
-              RangeSlider(
-                values: _ageRange,
-                min: 18, max: 65,
-                divisions: 47,
-                activeColor: VesparaColors.glow,
-                onChanged: (v) { setModalState(() => _ageRange = v); setState(() => _ageRange = v); },
-              ),
-              
-              // Distance
-              const SizedBox(height: 16),
-              Text('Max Distance: ${_maxDistance.toInt()} miles', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: VesparaColors.secondary)),
-              Slider(
-                value: _maxDistance,
-                min: 1, max: 100,
-                activeColor: VesparaColors.glow,
-                onChanged: (v) { setModalState(() => _maxDistance = v); setState(() => _maxDistance = v); },
-              ),
-              
-              // Relationship Types
-              const SizedBox(height: 16),
-              Text('Looking For', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: VesparaColors.secondary)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8, runSpacing: 8,
-                children: ['casual', 'exploring', 'ethicalNonMonogamy', 'polyamory', 'monogamy'].map((type) {
-                  final selected = _selectedRelTypes.contains(type);
-                  return GestureDetector(
-                    onTap: () {
-                      setModalState(() {
-                        if (selected) { _selectedRelTypes.remove(type); } else { _selectedRelTypes.add(type); }
-                      });
-                      setState(() {});
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: selected ? VesparaColors.glow.withOpacity(0.2) : VesparaColors.background,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: selected ? VesparaColors.glow : VesparaColors.secondary.withOpacity(0.3)),
-                      ),
-                      child: Text(_formatType(type), style: TextStyle(fontSize: 13, color: selected ? VesparaColors.glow : VesparaColors.secondary)),
-                    ),
-                  );
-                }).toList(),
-              ),
-              
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Filters updated!'), backgroundColor: VesparaColors.success));
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: VesparaColors.glow, foregroundColor: VesparaColors.background, padding: const EdgeInsets.symmetric(vertical: 16)),
-                  child: const Text('Apply Filters'),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatType(String type) {
-    switch (type) {
-      case 'casual': return 'Casual';
-      case 'exploring': return 'Exploring';
-      case 'ethicalNonMonogamy': return 'ENM';
-      case 'polyamory': return 'Poly';
-      case 'monogamy': return 'Monogamy';
-      default: return type;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,10 +206,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               ),
             ],
           ),
-          IconButton(
-            onPressed: () => _showFiltersDialog(),
-            icon: const Icon(Icons.tune, color: VesparaColors.secondary),
-          ),
+          const SizedBox(width: 48), // Balance for back button
         ],
       ),
     );

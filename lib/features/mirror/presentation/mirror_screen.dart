@@ -40,7 +40,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     // Analytics will be loaded via provider
   }
   
@@ -84,10 +84,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildBrutalTruthTab(),  // TRUTH
-                  _buildProfileTab(),       // PROFILE
-                  _buildBuildTab(),         // BUILD
-                  _buildSettingsTab(),      // SETTINGS
+                  _buildBrutalTruthTab(),       // TRUTH
+                  _buildBuildProfileTab(),      // BUILD PROFILE (combined)
+                  _buildSettingsTab(),          // SETTINGS
                 ],
               ),
             ),
@@ -166,7 +165,6 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
         dividerHeight: 0,
         tabs: [
           Tab(icon: Icon(Icons.psychology_outlined, size: 16), text: 'TRUTH'),
-          Tab(icon: Icon(Icons.person_outline, size: 16), text: 'PROFILE'),
           Tab(icon: Icon(Icons.auto_awesome, size: 16), text: 'BUILD'),
           Tab(icon: Icon(Icons.settings_outlined, size: 16), text: 'SETTINGS'),
         ],
@@ -175,10 +173,22 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // PROFILE TAB
+  // BUILD PROFILE TAB - Combined Profile + Build (all editable)
   // ════════════════════════════════════════════════════════════════════════════
 
-  Widget _buildProfileTab() {
+  // State for editable fields
+  final TextEditingController _displayNameController = TextEditingController();
+  final TextEditingController _headlineController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+  bool _isGeneratingBio = false;
+  bool _isSaving = false;
+  bool _profileInitialized = false;
+  
+  // Mutable selections for vibes and interests
+  Set<String> _selectedVibes = {};
+  Set<String> _selectedInterests = {};
+
+  Widget _buildBuildProfileTab() {
     final profileAsync = ref.watch(userProfileProvider);
     
     return profileAsync.when(
@@ -197,23 +207,569 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
           ],
         ),
       ),
-      data: (profile) => profile != null 
-          ? _buildProfileContent(profile)
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      data: (profile) {
+        if (profile == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person_off_outlined, color: VesparaColors.secondary, size: 48),
+                const SizedBox(height: 16),
+                Text('No profile found', style: TextStyle(color: VesparaColors.secondary)),
+              ],
+            ),
+          );
+        }
+        
+        // Initialize controllers only once
+        if (!_profileInitialized) {
+          _displayNameController.text = profile.displayName;
+          _headlineController.text = profile.headline ?? '';
+          _bioController.text = profile.bio ?? '';
+          _selectedVibes = Set.from(profile.lookingFor);
+          _selectedInterests = Set.from(profile.interestTags);
+          _profileInitialized = true;
+        }
+        
+        return _buildBuildProfileContent(profile);
+      },
+    );
+  }
+  
+  Widget _buildBuildProfileContent(UserProfile profile) {
+    // All vibe options
+    final allVibes = [
+      {'emoji': '🌙', 'label': 'Night Owl'},
+      {'emoji': '❄️', 'label': 'Early Riser'},
+      {'emoji': '⚡', 'label': 'High Energy'},
+      {'emoji': '🧘', 'label': 'Calm & Centered'},
+      {'emoji': '🎉', 'label': 'Life of the Party'},
+      {'emoji': '🏠', 'label': 'Cozy Homebody'},
+      {'emoji': '👥', 'label': 'Small Groups Only'},
+      {'emoji': '🦋', 'label': 'Social Butterfly'},
+      {'emoji': '😂', 'label': 'Witty & Sarcastic'},
+      {'emoji': '💝', 'label': 'Hopeless Romantic'},
+      {'emoji': '🔥', 'label': 'Passionate'},
+      {'emoji': '😌', 'label': 'Easy Going'},
+      {'emoji': '😈', 'label': 'Mischievous'},
+      {'emoji': '🏔️', 'label': 'Adventurous'},
+      {'emoji': '📚', 'label': 'Intellectual'},
+      {'emoji': '🎨', 'label': 'Creative'},
+      {'emoji': '🚀', 'label': 'Ambitious'},
+      {'emoji': '🎲', 'label': 'Spontaneous'},
+      {'emoji': '🧠', 'label': 'Deep Thinker'},
+      {'emoji': '🦅', 'label': 'Free Spirit'},
+      {'emoji': '👴', 'label': 'Old Soul'},
+      {'emoji': '❤️', 'label': 'Young at Heart'},
+    ];
+    
+    final allInterests = [
+      {'emoji': '✈️', 'label': 'Travel'},
+      {'emoji': '🎵', 'label': 'Music'},
+      {'emoji': '🎬', 'label': 'Movies & TV'},
+      {'emoji': '📚', 'label': 'Reading'},
+      {'emoji': '🎮', 'label': 'Gaming'},
+      {'emoji': '🏋️', 'label': 'Fitness'},
+      {'emoji': '🍳', 'label': 'Cooking'},
+      {'emoji': '🍷', 'label': 'Wine & Spirits'},
+      {'emoji': '🎨', 'label': 'Art'},
+      {'emoji': '📷', 'label': 'Photography'},
+      {'emoji': '🌿', 'label': 'Nature'},
+      {'emoji': '🎭', 'label': 'Theater'},
+      {'emoji': '💃', 'label': 'Dancing'},
+      {'emoji': '🧘', 'label': 'Yoga & Meditation'},
+      {'emoji': '🏖️', 'label': 'Beach Life'},
+      {'emoji': '⛷️', 'label': 'Winter Sports'},
+    ];
+    
+    return Stack(
+      children: [
+        ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          children: [
+            // Profile photo section
+            Center(
+              child: GestureDetector(
+                onTap: () => _showPhotoOptions(),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [VesparaColors.glow, VesparaColors.glow.withOpacity(0.5)],
+                        ),
+                        border: Border.all(color: VesparaColors.glow, width: 3),
+                      ),
+                      child: Center(
+                        child: Text(
+                          profile.displayName.isNotEmpty ? profile.displayName[0].toUpperCase() : '?',
+                          style: TextStyle(fontSize: 40, fontWeight: FontWeight.w600, color: VesparaColors.background),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: VesparaColors.glow,
+                          border: Border.all(color: VesparaColors.background, width: 2),
+                        ),
+                        child: Icon(Icons.camera_alt, size: 14, color: VesparaColors.background),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Display Name
+            _buildEditableField(
+              label: 'DISPLAY NAME',
+              controller: _displayNameController,
+              icon: Icons.person_outline,
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Headline
+            _buildEditableField(
+              label: 'HEADLINE',
+              controller: _headlineController,
+              icon: Icons.short_text,
+              hint: 'A catchy one-liner about you...',
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Bio with AI generation
+            _buildBioSection(),
+            
+            const SizedBox(height: 24),
+            
+            // CHECK ME - AI Suggestions
+            _buildCheckMeSection(),
+            
+            const SizedBox(height: 24),
+            
+            // YOUR VIBE Section
+            _buildEditableVibeSection(
+              title: 'YOUR VIBE',
+              subtitle: 'Tap to toggle • How would you describe your energy?',
+              icon: Icons.mood,
+              allOptions: allVibes,
+              selectedOptions: _selectedVibes,
+              onToggle: (label) {
+                setState(() {
+                  if (_selectedVibes.contains(label)) {
+                    _selectedVibes.remove(label);
+                  } else {
+                    _selectedVibes.add(label);
+                  }
+                });
+              },
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // YOUR INTERESTS Section
+            _buildEditableVibeSection(
+              title: 'YOUR INTERESTS',
+              subtitle: 'Tap to toggle • What lights you up?',
+              icon: Icons.favorite,
+              allOptions: allInterests,
+              selectedOptions: _selectedInterests,
+              onToggle: (label) {
+                setState(() {
+                  if (_selectedInterests.contains(label)) {
+                    _selectedInterests.remove(label);
+                  } else {
+                    _selectedInterests.add(label);
+                  }
+                });
+              },
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Editable Profile Fields
+            _buildTappableProfileField('Location', profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Tap to set', Icons.location_on_outlined),
+            _buildTappableProfileField('Pronouns', profile.pronouns ?? 'Tap to set', Icons.person_pin_outlined),
+            _buildTappableProfileField('Gender', profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Tap to set', Icons.face_outlined),
+            _buildTappableProfileField('Orientation', profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Tap to set', Icons.favorite_border),
+            _buildTappableProfileField('Relationship Status', profile.relationshipStatus.isNotEmpty ? profile.relationshipStatus.join(', ') : 'Tap to set', Icons.people_outline),
+            _buildTappableProfileField('Seeking', profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Tap to set', Icons.search),
+            _buildTappableProfileField('Kinks & Interests', profile.kinks.isNotEmpty ? profile.kinks.join(', ') : 'Tap to set', Icons.whatshot_outlined),
+            _buildTappableProfileField('Boundaries', profile.boundaries.isNotEmpty ? profile.boundaries.join(', ') : 'Tap to set', Icons.shield_outlined),
+            _buildTappableProfileField('Love Languages', profile.loveLanguages.isNotEmpty ? profile.loveLanguages.join(', ') : 'Tap to set', Icons.language),
+            _buildTappableProfileField('Availability', profile.availabilityGeneral.isNotEmpty ? profile.availabilityGeneral.join(', ') : 'Tap to set', Icons.schedule_outlined),
+            _buildTappableProfileField('Hosting Status', profile.hostingStatus ?? 'Tap to set', Icons.home_outlined),
+            _buildTappableProfileField('Discretion Level', profile.discretionLevel ?? 'Tap to set', Icons.visibility_outlined),
+            
+            const SizedBox(height: 32),
+          ],
+        ),
+        
+        // Floating SAVE button
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 16,
+          child: ElevatedButton(
+            onPressed: _isSaving ? null : () => _saveProfile(profile),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VesparaColors.glow,
+              foregroundColor: VesparaColors.background,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: _isSaving
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.save, size: 20),
+                      const SizedBox(width: 8),
+                      Text('SAVE PROFILE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildEditableField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    String? hint,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: VesparaColors.glow, size: 16),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: VesparaColors.secondary, letterSpacing: 1)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          style: TextStyle(color: VesparaColors.primary, fontSize: 16),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+            filled: true,
+            fillColor: VesparaColors.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildBioSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.article_outlined, color: VesparaColors.glow, size: 16),
+                const SizedBox(width: 8),
+                Text('BIO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: VesparaColors.secondary, letterSpacing: 1)),
+              ],
+            ),
+            GestureDetector(
+              onTap: _isGeneratingBio ? null : _generateAiBio,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [VesparaColors.glow, VesparaColors.secondary]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isGeneratingBio)
+                      SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: VesparaColors.background, strokeWidth: 2))
+                    else
+                      Icon(Icons.auto_awesome, size: 14, color: VesparaColors.background),
+                    const SizedBox(width: 6),
+                    Text('AI GENERATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: VesparaColors.background)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _bioController,
+          maxLines: 4,
+          style: TextStyle(color: VesparaColors.primary, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Tell people about yourself...',
+            hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+            filled: true,
+            fillColor: VesparaColors.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow),
+            ),
+            contentPadding: const EdgeInsets.all(16),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildCheckMeSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [VesparaColors.glow.withOpacity(0.15), VesparaColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Icon(Icons.person_off_outlined, color: VesparaColors.secondary, size: 48),
-                  const SizedBox(height: 16),
-                  Text('No profile found', style: TextStyle(color: VesparaColors.secondary)),
-                  TextButton(
-                    onPressed: () => ref.invalidate(userProfileProvider),
-                    child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
+                  Icon(Icons.auto_fix_high, color: VesparaColors.glow, size: 20),
+                  const SizedBox(width: 8),
+                  Text('CHECK ME', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: VesparaColors.primary)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('AI POWERED', style: TextStyle(fontSize: 10, color: VesparaColors.glow, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Based on your selections, you might also enjoy:',
+            style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildSuggestionChip('🏔️', 'Adventurous'),
+              _buildSuggestionChip('🎨', 'Creative'),
+              _buildSuggestionChip('✈️', 'Travel'),
+              _buildSuggestionChip('🎵', 'Music'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEditableVibeSection({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required List<Map<String, String>> allOptions,
+    required Set<String> selectedOptions,
+    required Function(String) onToggle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: VesparaColors.glow, size: 20),
+                const SizedBox(width: 8),
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: VesparaColors.glow)),
+              ],
+            ),
+            Text('${selectedOptions.length} selected', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(subtitle, style: TextStyle(fontSize: 11, color: VesparaColors.secondary)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: allOptions.map((option) {
+            final isSelected = selectedOptions.contains(option['label']);
+            return GestureDetector(
+              onTap: () => onToggle(option['label']!),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? VesparaColors.glow.withOpacity(0.2) : VesparaColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isSelected ? VesparaColors.glow : VesparaColors.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(option['emoji']!, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(width: 6),
+                    Text(
+                      option['label']!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? VesparaColors.glow : VesparaColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildTappableProfileField(String title, String content, IconData icon) {
+    return GestureDetector(
+      onTap: () => _showFieldEditor(title),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: VesparaColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: VesparaColors.glow, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: VesparaColors.secondary)),
+                  const SizedBox(height: 2),
+                  Text(
+                    content,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: content.contains('Tap to') ? VesparaColors.secondary.withOpacity(0.6) : VesparaColors.primary,
+                    ),
                   ),
                 ],
               ),
             ),
+            Icon(Icons.edit, color: VesparaColors.glow.withOpacity(0.5), size: 18),
+          ],
+        ),
+      ),
     );
+  }
+  
+  void _showPhotoOptions() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Photo editing coming soon!'), backgroundColor: VesparaColors.glow),
+    );
+  }
+  
+  void _showFieldEditor(String fieldName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Editing $fieldName coming soon!'), backgroundColor: VesparaColors.glow),
+    );
+  }
+  
+  Future<void> _generateAiBio() async {
+    setState(() => _isGeneratingBio = true);
+    
+    // Simulate AI generation
+    await Future.delayed(const Duration(seconds: 2));
+    
+    final generatedBio = _selectedVibes.isNotEmpty || _selectedInterests.isNotEmpty
+        ? "A ${_selectedVibes.take(2).join(' & ').toLowerCase()} soul who loves ${_selectedInterests.take(3).join(', ').toLowerCase()}. Looking for genuine connections and memorable experiences."
+        : "Living life authentically and seeking genuine connections. Open to exploring new experiences with the right people.";
+    
+    setState(() {
+      _bioController.text = generatedBio;
+      _isGeneratingBio = false;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Bio generated! Feel free to edit it.'), backgroundColor: VesparaColors.success),
+    );
+  }
+  
+  Future<void> _saveProfile(UserProfile profile) async {
+    setState(() => _isSaving = true);
+    
+    try {
+      // TODO: Implement actual save to Supabase
+      await Future.delayed(const Duration(seconds: 1));
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile saved successfully!'), backgroundColor: VesparaColors.success),
+      );
+      
+      ref.invalidate(userProfileProvider);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save profile'), backgroundColor: VesparaColors.error),
+      );
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
+
+  // Keep the old method for backwards compatibility but it's no longer used
+  Widget _buildProfileTab() {
+    return _buildBuildProfileTab();
   }
   
   Widget _buildProfileContent(UserProfile profile) {

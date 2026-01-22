@@ -55,7 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Find your next obsession',
     },
     {
-      'name': 'NEST',
+      'name': 'SANCTUM',
       'subtitle': 'Your Conquests 💜',
       'icon': Icons.favorite_rounded,
       'emoji': '💜',
@@ -108,7 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const List<Widget> _screens = [
     MirrorScreen(),      // 0: Mirror - Profile/Analytics
     DiscoverScreen(),    // 1: Discover - Swipe Marketplace
-    NestScreen(),        // 2: Nest - CRM Roster
+    NestScreen(),        // 2: Sanctum - CRM Roster
     WireHomeScreen(),    // 3: Wire - WhatsApp-Style Chat
     PlannerScreen(),     // 4: Planner - Calendar
     EventsHomeScreen(),  // 5: Group - Partiful-Style Events
@@ -353,7 +353,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Row 1: Mirror + Discover
               _buildModuleRow([0, 1], tileWidth, tileHeight, spacing),
               SizedBox(height: spacing),
-              // Row 2: Nest + Wire
+              // Row 2: Sanctum + Wire
               _buildModuleRow([2, 3], tileWidth, tileHeight, spacing),
               SizedBox(height: spacing),
               // Row 3: Planner + Group
@@ -512,7 +512,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Show notifications for certain modules
     switch (index) {
       case 1: return true;  // Discover - new profiles
-      case 2: return true;  // Nest - new match
+      case 2: return true;  // Sanctum - new match
       case 3: return true;  // Wire - unread messages
       case 6: return true;  // Shredder - suggestions
       default: return false;
