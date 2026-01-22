@@ -10,7 +10,7 @@ import 'velvet_rope_screen.dart';
 import 'down_to_clown_screen.dart';
 import 'path_of_pleasure_screen.dart';
 import 'lane_of_lust_screen.dart';
-import 'drama_sutra_screen_v2.dart';
+import 'drama_sutra_screen.dart';
 import 'flash_freeze_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -273,6 +273,27 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            
+            // Category badge
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: categoryColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  game.currentConsentLevel.displayName,
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: VesparaColors.background,
+                  ),
+                ),
               ),
             ),
           ],
@@ -619,7 +640,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       case GameCategory.dramaSutra:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const DramaSutraScreenV2()),
+          MaterialPageRoute(builder: (_) => const DramaSutraScreen()),
         );
         break;
       case GameCategory.flashFreeze:

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
-import '../providers/drama_sutra_provider_v2.dart';
+import '../providers/drama_sutra_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DRAMA SUTRA POSITION CARD
