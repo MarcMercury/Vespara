@@ -230,9 +230,11 @@ class TagsGame extends Equatable {
   final GameCategory category;
   final String title;
   final String? description;
+  final int minPlayers;
+  final int maxPlayers;
   final ConsentLevel currentConsentLevel;
   final List<String> participantIds;
-  final DateTime createdAt;
+  final DateTime? createdAt;
   final bool isActive;
   final Map<String, dynamic>? gameState;
   
@@ -241,9 +243,11 @@ class TagsGame extends Equatable {
     required this.category,
     required this.title,
     this.description,
-    required this.currentConsentLevel,
-    required this.participantIds,
-    required this.createdAt,
+    this.minPlayers = 2,
+    this.maxPlayers = 10,
+    this.currentConsentLevel = ConsentLevel.green,
+    this.participantIds = const [],
+    this.createdAt,
     this.isActive = true,
     this.gameState,
   });
@@ -257,12 +261,16 @@ class TagsGame extends Equatable {
       ),
       title: json['title'] as String,
       description: json['description'] as String?,
+      minPlayers: json['min_players'] as int? ?? 2,
+      maxPlayers: json['max_players'] as int? ?? 10,
       currentConsentLevel: ConsentLevel.values.firstWhere(
         (e) => e.name == json['consent_level'],
         orElse: () => ConsentLevel.green,
       ),
       participantIds: List<String>.from(json['participant_ids'] ?? []),
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
       isActive: json['is_active'] as bool? ?? true,
       gameState: json['game_state'] as Map<String, dynamic>?,
     );
@@ -274,9 +282,11 @@ class TagsGame extends Equatable {
       'category': category.name,
       'title': title,
       'description': description,
+      'min_players': minPlayers,
+      'max_players': maxPlayers,
       'consent_level': currentConsentLevel.name,
       'participant_ids': participantIds,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'is_active': isActive,
       'game_state': gameState,
     };
@@ -287,6 +297,8 @@ class TagsGame extends Equatable {
     GameCategory? category,
     String? title,
     String? description,
+    int? minPlayers,
+    int? maxPlayers,
     ConsentLevel? currentConsentLevel,
     List<String>? participantIds,
     DateTime? createdAt,
@@ -298,6 +310,8 @@ class TagsGame extends Equatable {
       category: category ?? this.category,
       title: title ?? this.title,
       description: description ?? this.description,
+      minPlayers: minPlayers ?? this.minPlayers,
+      maxPlayers: maxPlayers ?? this.maxPlayers,
       currentConsentLevel: currentConsentLevel ?? this.currentConsentLevel,
       participantIds: participantIds ?? this.participantIds,
       createdAt: createdAt ?? this.createdAt,
@@ -312,6 +326,8 @@ class TagsGame extends Equatable {
     category,
     title,
     description,
+    minPlayers,
+    maxPlayers,
     currentConsentLevel,
     participantIds,
     createdAt,
