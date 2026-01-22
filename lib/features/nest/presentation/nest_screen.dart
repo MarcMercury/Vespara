@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/group.dart';
 import '../../../core/providers/match_state_provider.dart';

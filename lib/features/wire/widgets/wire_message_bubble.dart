@@ -920,8 +920,8 @@ class WireMessageBubble extends ConsumerWidget {
     final colors = [
       VesparaColors.glow,
       VesparaColors.success,
-      VesparaColors.info,
-      VesparaColors.secondary,
+      VesparaColors.tagsBlue,
+      VesparaColors.tagsPurple,
       VesparaColors.tagsYellow,
       VesparaColors.tagsRed,
     ];

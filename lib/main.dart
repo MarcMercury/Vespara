@@ -10,26 +10,8 @@ import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 
-/// Global flag to indicate if we're processing an OAuth callback
-/// This prevents the AuthGate from showing login screen during the callback
-bool _isProcessingOAuthCallback = false;
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // On web, check if we're in an OAuth callback BEFORE initializing Supabase
-  if (kIsWeb) {
-    final uri = Uri.base;
-    // Check for PKCE code parameter (the main one for OAuth callbacks)
-    // Also check fragment for implicit flow fallback
-    _isProcessingOAuthCallback = uri.queryParameters.containsKey('code') ||
-                                  uri.fragment.contains('access_token') ||
-                                  uri.fragment.contains('error');
-    
-    if (_isProcessingOAuthCallback) {
-      debugPrint('Vespara Main: OAuth callback detected, will wait for session...');
-    }
-  }
   
   await Supabase.initialize(
     url: Env.supabaseUrl,
@@ -41,81 +23,36 @@ Future<void> main() async {
   
   // On web, if we're returning from OAuth callback, wait for session to be established
   // BEFORE running the app to prevent showing login screen again
-  if (kIsWeb && _isProcessingOAuthCallback) {
-    debugPrint('Vespara Main: Processing OAuth callback...');
+  if (kIsWeb) {
+    final uri = Uri.base;
+    final hasOAuthCallback = uri.hasFragment || 
+                             uri.queryParameters.containsKey('code') ||
+                             uri.queryParameters.containsKey('access_token') ||
+                             uri.queryParameters.containsKey('refresh_token');
     
-    // Use a completer to wait for the auth state change
-    final completer = Completer<Session?>();
-    StreamSubscription<AuthState>? subscription;
-    
-    // Set a timeout
-    Timer? timeoutTimer = Timer(const Duration(seconds: 15), () {
-      if (!completer.isCompleted) {
-        debugPrint('Vespara Main: OAuth callback timeout after 15s');
-        completer.complete(null);
-      }
-    });
-    
-    // Listen for auth state change
-    subscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      debugPrint('Vespara Main: Auth event: ${data.event}, session: ${data.session != null}');
+    if (hasOAuthCallback) {
+      debugPrint('Vespara Main: OAuth callback detected, waiting for session...');
       
-      if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-        if (!completer.isCompleted) {
-          debugPrint('Vespara Main: Session established via auth listener');
-          completer.complete(data.session);
+      // Wait for Supabase to complete the PKCE code exchange
+      // Increase timeout and check more frequently
+      Session? session;
+      for (int i = 0; i < 50; i++) {  // 10 seconds max wait
+        await Future.delayed(const Duration(milliseconds: 200));
+        session = Supabase.instance.client.auth.currentSession;
+        if (session != null) {
+          debugPrint('Vespara Main: Session established after ${(i + 1) * 200}ms');
+          break;
         }
-      } else if (data.event == AuthChangeEvent.tokenRefreshed && data.session != null) {
-        if (!completer.isCompleted) {
-          debugPrint('Vespara Main: Session refreshed via auth listener');
-          completer.complete(data.session);
-        }
+        debugPrint('Vespara Main: Waiting for session... attempt ${i + 1}/50');
       }
-    });
-    
-    // Also check if session is already available
-    final existingSession = Supabase.instance.client.auth.currentSession;
-    if (existingSession != null && !completer.isCompleted) {
-      debugPrint('Vespara Main: Session already exists');
-      completer.complete(existingSession);
-    }
-    
-    // Wait for session
-    final session = await completer.future;
-    
-    // Cleanup
-    timeoutTimer.cancel();
-    await subscription.cancel();
-    
-    if (session != null) {
-      debugPrint('Vespara Main: OAuth callback complete, session ready');
-      // Clear the URL hash/query params to clean up the URL
-      // This prevents re-processing on refresh
-      if (kIsWeb) {
-        _clearOAuthParamsFromUrl();
+      
+      if (session == null) {
+        debugPrint('Vespara Main: WARNING - Session not established after 10s');
       }
-    } else {
-      debugPrint('Vespara Main: OAuth callback completed without session');
     }
-    
-    // Mark callback processing as complete
-    _isProcessingOAuthCallback = false;
   }
   
   runApp(const ProviderScope(child: VesparaApp()));
-}
-
-/// Clears OAuth parameters from the URL without reloading the page
-void _clearOAuthParamsFromUrl() {
-  // Use dart:html to modify the URL
-  // ignore: avoid_web_libraries_in_flutter
-  try {
-    // We use pushState to update the URL without reloading
-    // This is done via js interop to avoid importing dart:html
-    debugPrint('Vespara Main: Clearing OAuth params from URL');
-  } catch (e) {
-    debugPrint('Vespara Main: Could not clear URL params: $e');
-  }
 }
 
 class VesparaApp extends StatelessWidget {
@@ -145,8 +82,7 @@ class _AuthGateState extends State<AuthGate> {
   Session? _session;
   String? _error;
   bool? _hasCompletedOnboarding;
-  StreamSubscription<AuthState>? _authSubscription;
-  bool _isFirstAuthEvent = true;
+  late final StreamSubscription<AuthState> _authSubscription;
   
   @override
   void initState() {
@@ -156,7 +92,7 @@ class _AuthGateState extends State<AuthGate> {
   
   @override
   void dispose() {
-    _authSubscription?.cancel();
+    _authSubscription.cancel();
     super.dispose();
   }
   
@@ -173,38 +109,21 @@ class _AuthGateState extends State<AuthGate> {
       
       // Listen for auth changes (sign in, sign out, token refresh)
       _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-        debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}, isFirst: $_isFirstAuthEvent');
-        
-        // Skip the initial auth state event if we already have a session
-        // This prevents race conditions during OAuth callback
-        if (_isFirstAuthEvent) {
-          _isFirstAuthEvent = false;
-          // If we already have a session from initialization, don't let initial event override it
-          if (_session != null && data.session == null) {
-            debugPrint('Vespara Auth: Ignoring initial null session event (we have session from init)');
-            return;
-          }
-        }
+        debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
         
         if (mounted) {
-          final previousSession = _session;
-          final newSession = data.session;
-          
-          // Check if session state actually changed (null -> session or session -> null)
-          final sessionStateChanged = (previousSession == null) != (newSession == null);
+          // Only update if session actually changed
+          final sessionChanged = (_session == null) != (data.session == null);
           
           setState(() {
-            _session = newSession;
+            _session = data.session;
             _isLoading = false;
           });
           
-          // Check onboarding status when:
-          // 1. We get a new session (sign in)
-          // 2. Token is refreshed (this happens after onboarding completes)
-          if (newSession != null && (sessionStateChanged || data.event == AuthChangeEvent.tokenRefreshed)) {
-            debugPrint('Vespara Auth: Re-checking onboarding status after ${data.event}');
-            _checkOnboardingStatus(newSession.user.id);
-          } else if (newSession == null && sessionStateChanged) {
+          // Check onboarding status when session changes
+          if (data.session != null && sessionChanged) {
+            _checkOnboardingStatus(data.session!.user.id);
+          } else if (data.session == null) {
             _hasCompletedOnboarding = null;
           }
         }

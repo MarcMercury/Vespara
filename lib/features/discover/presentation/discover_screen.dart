@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/discoverable_profile.dart';
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/connection_state_provider.dart' 
@@ -40,7 +39,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   @override
   void initState() {
     super.initState();
-    _profiles = MockDataProvider.discoverProfiles;
+    _profiles = []; // Will be loaded from database
     
     _cardController = AnimationController(
       vsync: this,

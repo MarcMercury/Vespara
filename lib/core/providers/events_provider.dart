@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 
 import '../domain/models/events.dart';
 import '../domain/models/vespara_event.dart';
-import '../data/vespara_mock_data.dart';
 
 // ============================================================================
 // EVENTS STATE
@@ -92,9 +91,8 @@ class EventsState {
 class EventsNotifier extends StateNotifier<EventsState> {
   final SupabaseClient _supabase;
   final String _currentUserId;
-  final bool _isDemoMode;
 
-  EventsNotifier(this._supabase, this._currentUserId, this._isDemoMode) 
+  EventsNotifier(this._supabase, this._currentUserId) 
       : super(const EventsState()) {
     _initialize();
   }
@@ -114,16 +112,12 @@ class EventsNotifier extends StateNotifier<EventsState> {
   Future<void> loadAllVesparaEvents() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // In demo mode, use mock data
-    if (_isDemoMode || _currentUserId.isEmpty) {
-      final mockEvents = _getMockVesparaEvents();
+    // If no user, return empty
+    if (_currentUserId.isEmpty) {
       state = state.copyWith(
-        allEvents: mockEvents,
-        hostedEvents: mockEvents.where((e) => e.hostId == 'current-user').toList(),
-        invitedEvents: mockEvents.where((e) => 
-          e.hostId != 'current-user' && 
-          e.rsvps.any((r) => r.userId == 'current-user')
-        ).toList(),
+        allEvents: [],
+        hostedEvents: [],
+        invitedEvents: [],
         isLoading: false,
       );
       return;
@@ -167,12 +161,11 @@ class EventsNotifier extends StateNotifier<EventsState> {
       );
     } catch (e) {
       debugPrint('Error loading Vespara events: $e');
-      // Fallback to mock data on error
-      final mockEvents = _getMockVesparaEvents();
+      // Return empty on error - no mock data fallback
       state = state.copyWith(
-        allEvents: mockEvents,
-        hostedEvents: mockEvents.where((e) => e.hostId == 'current-user').toList(),
-        invitedEvents: mockEvents.where((e) => e.hostId != 'current-user').toList(),
+        allEvents: [],
+        hostedEvents: [],
+        invitedEvents: [],
         isLoading: false,
         error: 'Failed to load events: $e',
       );
@@ -201,8 +194,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
     debugPrint('Event added to state. Total hosted: ${state.hostedEvents.length}');
 
-    if (_isDemoMode || _currentUserId.isEmpty) {
-      debugPrint('Demo mode - event saved locally only');
+    if (_currentUserId.isEmpty) {
+      debugPrint('No user - event saved locally only');
       return newEvent;
     }
 
@@ -259,7 +252,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
       allEvents: updatedAll,
     );
 
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    if (_currentUserId.isEmpty) {
       return true;
     }
 
@@ -295,7 +288,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
       allEvents: state.allEvents.where((e) => e.id != eventId).toList(),
     );
 
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    if (_currentUserId.isEmpty) {
       return true;
     }
 
@@ -322,9 +315,9 @@ class EventsNotifier extends StateNotifier<EventsState> {
     required String eventId,
     required String userId,
   }) async {
-    if (_isDemoMode || _currentUserId.isEmpty) {
-      debugPrint('Demo mode - invite sent (simulated)');
-      return true;
+    if (_currentUserId.isEmpty) {
+      debugPrint('No user - cannot send invite');
+      return false;
     }
 
     try {
@@ -376,7 +369,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
     state = state.copyWith(invitedEvents: updatedInvited);
 
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    if (_currentUserId.isEmpty) {
       return true;
     }
 
@@ -461,164 +454,10 @@ class EventsNotifier extends StateNotifier<EventsState> {
     );
   }
 
-  /// Get mock events for demo mode
-  List<VesparaEvent> _getMockVesparaEvents() {
-    final now = DateTime.now();
-    return [
-      VesparaEvent(
-        id: 'event-mock-1',
-        hostId: 'current-user',
-        hostName: 'Marc Mercury',
-        title: 'Game Night',
-        description: 'Board games, card games, and good company. BYOB!',
-        coverImageUrl: 'https://images.unsplash.com/photo-1606503153255-59d8b2e4b5cf?w=600',
-        startTime: now.add(const Duration(days: 5, hours: 18)),
-        venueName: 'My Place',
-        venueAddress: '123 Main St',
-        visibility: EventVisibility.private,
-        contentRating: 'PG',
-        maxSpots: 8,
-        currentAttendees: 4,
-        rsvps: [
-          EventRsvp(id: 'r1', eventId: 'event-mock-1', userId: 'u1', userName: 'Alex', status: 'going', createdAt: now),
-          EventRsvp(id: 'r2', eventId: 'event-mock-1', userId: 'u2', userName: 'Jordan', status: 'going', createdAt: now),
-          EventRsvp(id: 'r3', eventId: 'event-mock-1', userId: 'u3', userName: 'Casey', status: 'maybe', createdAt: now),
-          EventRsvp(id: 'r4', eventId: 'event-mock-1', userId: 'u4', userName: 'Morgan', status: 'invited', createdAt: now),
-        ],
-        createdAt: now.subtract(const Duration(days: 1)),
-      ),
-      VesparaEvent(
-        id: 'event-mock-2',
-        hostId: 'sophia-domina',
-        hostName: 'Sophia Domina',
-        hostAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-        title: 'Decadence Dinner',
-        titleStyle: EventTitleStyle.elegant,
-        description: 'A supper for the sinfully curious. Temple of Domina presents an evening of culinary indulgence.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600',
-        startTime: now.add(const Duration(days: 1, hours: 19)),
-        venueName: 'Temple of Domina',
-        venueAddress: 'Secret Location',
-        visibility: EventVisibility.private,
-        contentRating: 'spicy',
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-1',
-            eventId: 'event-mock-2',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'invited',
-            createdAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 5)),
-      ),
-      VesparaEvent(
-        id: 'event-mock-3',
-        hostId: 'user-2',
-        hostName: 'Alex & Jamie',
-        title: 'Eat&Learn: Ethiopia',
-        description: 'Alternative Book Club meets Ethiopian Restaurant. Discuss literature over authentic cuisine.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600',
-        startTime: now.add(const Duration(days: 3, hours: 19)),
-        venueName: 'Ethiopian Kitchen',
-        venueAddress: '456 Cultural Ave',
-        visibility: EventVisibility.openInvite,
-        contentRating: 'PG',
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-2',
-            eventId: 'event-mock-3',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'going',
-            createdAt: now,
-            respondedAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 7)),
-      ),
-      VesparaEvent(
-        id: 'event-mock-4',
-        hostId: 'user-3',
-        hostName: 'Luna & Co',
-        title: 'Vision Board Making Night \'26',
-        description: 'Dream big! Create your 2026 vision board with friends, wine, and good vibes.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1529543544277-750e01f8e4b6?w=600',
-        startTime: now.add(const Duration(days: 8, hours: 19)),
-        venueName: 'Rooftop Lounge',
-        venueAddress: '789 Dream Street',
-        visibility: EventVisibility.private,
-        contentRating: 'PG',
-        maxSpots: 12,
-        currentAttendees: 8,
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-3',
-            eventId: 'event-mock-4',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'going',
-            createdAt: now,
-            respondedAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 3)),
-      ),
-      VesparaEvent(
-        id: 'event-mock-5',
-        hostId: 'sophia-domina',
-        hostName: 'Sophia Domina',
-        hostAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-        title: 'Sophia Domina\'s Boudoir Soirée',
-        titleStyle: EventTitleStyle.fancy,
-        description: 'An intimate evening of elegance and mystery. Black tie optional, curiosity required.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600',
-        startTime: now.add(const Duration(days: 9, hours: 20, minutes: 30)),
-        venueName: 'The Velvet Room',
-        venueAddress: 'By invitation only',
-        visibility: EventVisibility.private,
-        contentRating: 'explicit',
-        ageRestriction: 21,
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-4',
-            eventId: 'event-mock-5',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'invited',
-            createdAt: now,
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 2)),
-      ),
-      // Past event
-      VesparaEvent(
-        id: 'event-mock-past-1',
-        hostId: 'user-5',
-        hostName: 'Wine Club',
-        title: 'Holiday Wine Tasting',
-        description: 'Seasonal wines from around the world.',
-        coverImageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600',
-        startTime: now.subtract(const Duration(days: 14, hours: 18)),
-        venueName: 'Vineyard Lounge',
-        venueAddress: '999 Wine Lane',
-        visibility: EventVisibility.private,
-        contentRating: 'PG',
-        rsvps: [
-          EventRsvp(
-            id: 'rsvp-past-1',
-            eventId: 'event-mock-past-1',
-            userId: 'current-user',
-            userName: 'Marc',
-            status: 'going',
-            createdAt: now.subtract(const Duration(days: 20)),
-            respondedAt: now.subtract(const Duration(days: 20)),
-          ),
-        ],
-        createdAt: now.subtract(const Duration(days: 30)),
-      ),
-    ];
+  /// Get events - returns empty list, data should come from database
+  List<VesparaEvent> _getVesparaEvents() {
+    // Return empty list - no mock data
+    return [];
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -629,10 +468,10 @@ class EventsNotifier extends StateNotifier<EventsState> {
   Future<void> loadCalendarEvents() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    // In demo mode, use mock data
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    // Return empty if no user
+    if (_currentUserId.isEmpty) {
       state = state.copyWith(
-        calendarEvents: MockDataProvider.calendarEvents,
+        calendarEvents: [],
         isLoading: false,
       );
       return;
@@ -655,9 +494,9 @@ class EventsNotifier extends StateNotifier<EventsState> {
       );
     } catch (e) {
       debugPrint('Error loading calendar events: $e');
-      // Fallback to mock data on error
+      // Return empty on error
       state = state.copyWith(
-        calendarEvents: MockDataProvider.calendarEvents,
+        calendarEvents: [],
         isLoading: false,
         error: 'Failed to load events',
       );
@@ -703,8 +542,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
       calendarEvents: [...state.calendarEvents, newEvent],
     );
 
-    // In demo mode, just keep in memory
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    // If no user, just keep in memory
+    if (_currentUserId.isEmpty) {
       return newEvent;
     }
 
@@ -781,7 +620,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
     state = state.copyWith(calendarEvents: updated);
 
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    if (_currentUserId.isEmpty) {
       return true;
     }
 
@@ -816,7 +655,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
       calendarEvents: state.calendarEvents.where((e) => e.id != eventId).toList(),
     );
 
-    if (_isDemoMode || _currentUserId.isEmpty) {
+    if (_currentUserId.isEmpty) {
       return true;
     }
 
@@ -862,15 +701,11 @@ class EventsNotifier extends StateNotifier<EventsState> {
 // PROVIDERS
 // ============================================================================
 
-/// Demo mode provider - import from app_providers if needed
-final eventsDemoModeProvider = StateProvider<bool>((ref) => true);
-
 /// Main events provider
 final eventsProvider = StateNotifierProvider<EventsNotifier, EventsState>((ref) {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id ?? '';
-  final isDemoMode = ref.watch(eventsDemoModeProvider);
-  return EventsNotifier(supabase, userId, isDemoMode);
+  return EventsNotifier(supabase, userId);
 });
 
 /// Calendar events for a specific date

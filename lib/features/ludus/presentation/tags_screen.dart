@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/tags_game.dart';
 import 'ice_breakers_screen.dart';
 import 'velvet_rope_screen.dart';
@@ -27,13 +26,13 @@ class TagScreen extends ConsumerStatefulWidget {
 }
 
 class _TagScreenState extends ConsumerState<TagScreen> {
-  late List<TagsGame> _games;
+  List<TagsGame> _games = [];
   GameCategory? _selectedCategory;
   
   @override
   void initState() {
     super.initState();
-    _games = MockDataProvider.tagsGames;
+    // Games are loaded from database - empty until populated
   }
 
   @override
@@ -273,27 +272,6 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            
-            // Category badge
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: categoryColor,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  game.currentConsentLevel.displayName,
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                    color: VesparaColors.background,
-                  ),
-                ),
               ),
             ),
           ],

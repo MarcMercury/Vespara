@@ -6,13 +6,9 @@ import '../domain/models/roster_match.dart';
 import '../domain/models/conversation.dart';
 import '../domain/models/analytics.dart';
 import '../domain/models/tags_game.dart';
-import '../data/mock_data_provider.dart';
 
 /// Global Supabase client accessor for providers
 SupabaseClient get _supabase => Supabase.instance.client;
-
-/// Demo mode flag - defaults to false (uses real data when user is logged in)
-final demoModeProvider = StateProvider<bool>((ref) => false);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AUTH PROVIDERS
@@ -34,10 +30,9 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   print('[userProfileProvider] Current user: ${user?.id ?? "null"}');
   
   if (user == null) {
-    // Not logged in - use mock data for demo
-    final isDemoMode = ref.watch(demoModeProvider);
-    print('[userProfileProvider] No user, demo mode: $isDemoMode');
-    return isDemoMode ? MockDataProvider.currentUserProfile : null;
+    // Not logged in - return null
+    print('[userProfileProvider] No user, returning null');
+    return null;
   }
   
   try {
@@ -52,7 +47,7 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
     print('[userProfileProvider] city: ${response['city']}, state: ${response['state']}');
     return UserProfile.fromJson(response);
   } catch (e) {
-    // Log error but don't fall back to mock data silently
+    // Log error and return null
     print('[userProfileProvider] Error fetching profile: $e');
     return null;
   }
@@ -67,10 +62,6 @@ final tonightModeProvider = StateProvider<bool>((ref) => false);
 
 /// Optimization score provider
 final optimizationScoreProvider = FutureProvider<double>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.userAnalytics.optimizationScore;
-  }
   final analytics = await ref.watch(userAnalyticsProvider.future);
   return analytics?.optimizationScore ?? 0.0;
 });
@@ -80,10 +71,8 @@ final nearbyMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
   final isTonightMode = ref.watch(tonightModeProvider);
   if (!isTonightMode) return [];
   
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.nearbyMatches;
-  }
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
   
   try {
     final response = await _supabase
@@ -95,13 +84,29 @@ final nearbyMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
         .map((json) => RosterMatch.fromJson(json))
         .toList();
   } catch (e) {
-    return MockDataProvider.nearbyMatches;
+    print('[nearbyMatchesProvider] Error: $e');
+    return [];
   }
 });
 
-/// Strategic advice for the Strategist
-final strategicAdviceProvider = FutureProvider<String>((ref) async {
-  return MockDataProvider.randomAdvice;
+/// Strategic advice for the Strategist - fetched from database or AI
+final strategicAdviceProvider = FutureProvider<String?>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+  
+  try {
+    // Try to get AI-generated advice from the database
+    final response = await _supabase
+        .from('ai_advice')
+        .select()
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    return response?['advice'] as String?;
+  } catch (e) {
+    return null;
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -110,13 +115,8 @@ final strategicAdviceProvider = FutureProvider<String>((ref) async {
 
 /// Focus batch provider - curated 5 matches using pgvector
 final focusBatchProvider = FutureProvider<List<RosterMatch>>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.focusBatch;
-  }
-  
   final user = ref.watch(currentUserProvider);
-  if (user == null) return MockDataProvider.focusBatch;
+  if (user == null) return [];
   
   try {
     final response = await _supabase
@@ -128,7 +128,8 @@ final focusBatchProvider = FutureProvider<List<RosterMatch>>((ref) async {
         .map((json) => RosterMatch.fromJson(json))
         .toList();
   } catch (e) {
-    return MockDataProvider.focusBatch;
+    print('[focusBatchProvider] Error: $e');
+    return [];
   }
 });
 
@@ -141,13 +142,8 @@ final currentFocusIndexProvider = StateProvider<int>((ref) => 0);
 
 /// All roster matches provider
 final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.rosterMatches;
-  }
-  
   final user = ref.watch(currentUserProvider);
-  if (user == null) return MockDataProvider.rosterMatches;
+  if (user == null) return [];
   
   try {
     final response = await _supabase
@@ -159,13 +155,14 @@ final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
         .map((json) => RosterMatch.fromJson(json))
         .toList();
   } catch (e) {
-    return MockDataProvider.rosterMatches;
+    print('[rosterMatchesProvider] Error: $e');
+    return [];
   }
 });
 
 /// Matches grouped by pipeline stage
 final pipelineMatchesProvider = Provider<Map<PipelineStage, List<RosterMatch>>>((ref) {
-  final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? MockDataProvider.rosterMatches;
+  final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? [];
   
   return {
     PipelineStage.incoming: matches.where((m) => m.stage == PipelineStage.incoming).toList(),
@@ -181,13 +178,8 @@ final pipelineMatchesProvider = Provider<Map<PipelineStage, List<RosterMatch>>>(
 
 /// Conversations sorted by momentum score
 final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.conversations;
-  }
-  
   final user = ref.watch(currentUserProvider);
-  if (user == null) return MockDataProvider.conversations;
+  if (user == null) return [];
   
   try {
     final response = await _supabase
@@ -199,13 +191,14 @@ final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
         .map((json) => Conversation.fromJson(json))
         .toList();
   } catch (e) {
-    return MockDataProvider.conversations;
+    print('[conversationsProvider] Error: $e');
+    return [];
   }
 });
 
 /// Stale conversations that need resuscitation
 final staleConversationsProvider = Provider<List<Conversation>>((ref) {
-  final conversations = ref.watch(conversationsProvider).valueOrNull ?? MockDataProvider.staleConversations;
+  final conversations = ref.watch(conversationsProvider).valueOrNull ?? [];
   return conversations.where((c) => c.isStale).toList();
 });
 
@@ -215,13 +208,13 @@ final staleConversationsProvider = Provider<List<Conversation>>((ref) {
 
 /// Stale matches count for The Shredder
 final staleMatchesCountProvider = Provider<int>((ref) {
-  final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? MockDataProvider.rosterMatches;
+  final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? [];
   return matches.where((m) => m.isStale).length;
 });
 
 /// Stale matches for Ghost Protocol
 final staleMatchesProvider = Provider<List<RosterMatch>>((ref) {
-  final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? MockDataProvider.rosterMatches;
+  final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? [];
   return matches.where((m) => m.isStale).toList();
 });
 
@@ -237,25 +230,44 @@ final tagsConsentLevelProvider = StateProvider<ConsentLevel>((ref) {
   return ConsentLevel.green;
 });
 
-/// Available games based on consent level
+/// Available games based on consent level - now returns all games that meet the consent level
 final availableGamesProvider = Provider<List<GameCategory>>((ref) {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
-  return MockDataProvider.getGamesForConsentLevel(consentLevel);
+  return GameCategory.values.where((game) {
+    return game.minimumConsentLevel.value <= consentLevel.value;
+  }).toList();
 });
 
 /// Filtered games based on consent level (for repository)
 final filteredGamesProvider = FutureProvider<List<GameCategory>>((ref) async {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
-  return MockDataProvider.getGamesForConsentLevel(consentLevel);
+  return GameCategory.values.where((game) {
+    return game.minimumConsentLevel.value <= consentLevel.value;
+  }).toList();
 });
 
 /// Active game session
 final activeGameProvider = StateProvider<TagsGame?>((ref) => null);
 
-/// Game cards for current session (Truth or Dare / Pleasure Deck)
+/// Game cards for current session - fetched from database
 final gameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
-  return MockDataProvider.getCardsForLevel(consentLevel);
+  final user = ref.watch(currentUserProvider);
+  
+  if (user == null) return [];
+  
+  try {
+    final response = await _supabase
+        .from('game_cards')
+        .select()
+        .lte('consent_level', consentLevel.value);
+    return (response as List)
+        .map((json) => GameCard.fromJson(json))
+        .toList();
+  } catch (e) {
+    print('[gameCardsProvider] Error: $e');
+    return [];
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -265,31 +277,39 @@ final gameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
 /// User's trust score and verifications
 final trustScoreProvider = Provider<double>((ref) {
   final profile = ref.watch(userProfileProvider).valueOrNull;
-  return profile?.trustScore ?? MockDataProvider.currentUserProfile.trustScore;
+  return profile?.trustScore ?? 0.0;
 });
 
 /// Vouch chain link generator
-final vouchLinkProvider = FutureProvider<String>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.vouchLink;
-  }
-  
+final vouchLinkProvider = FutureProvider<String?>((ref) async {
   final user = ref.watch(currentUserProvider);
-  if (user == null) return MockDataProvider.vouchLink;
+  if (user == null) return null;
   
   try {
     final response = await _supabase
         .rpc('generate_vouch_link', params: {'user_id': user.id});
-    return response as String? ?? MockDataProvider.vouchLink;
+    return response as String?;
   } catch (e) {
-    return MockDataProvider.vouchLink;
+    print('[vouchLinkProvider] Error: $e');
+    return null;
   }
 });
 
-/// Vouches list
-final vouchesProvider = Provider<List<Map<String, dynamic>>>((ref) {
-  return MockDataProvider.vouches;
+/// Vouches list - fetched from database
+final vouchesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+  
+  try {
+    final response = await _supabase
+        .from('vouches')
+        .select()
+        .eq('vouched_for_id', user.id);
+    return List<Map<String, dynamic>>.from(response);
+  } catch (e) {
+    print('[vouchesProvider] Error: $e');
+    return [];
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -298,13 +318,8 @@ final vouchesProvider = Provider<List<Map<String, dynamic>>>((ref) {
 
 /// User analytics provider
 final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
-  final isDemoMode = ref.watch(demoModeProvider);
-  if (isDemoMode) {
-    return MockDataProvider.userAnalytics;
-  }
-  
   final user = ref.watch(currentUserProvider);
-  if (user == null) return MockDataProvider.userAnalytics;
+  if (user == null) return null;
   
   try {
     final response = await _supabase
@@ -314,12 +329,13 @@ final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
         .maybeSingle();
     
     if (response == null) {
-      // No analytics row exists yet - return defaults instead of error
-      return MockDataProvider.userAnalytics;
+      // No analytics row exists yet - return null
+      return null;
     }
     return UserAnalytics.fromJson(response);
   } catch (e) {
-    return MockDataProvider.userAnalytics;
+    print('[userAnalyticsProvider] Error: $e');
+    return null;
   }
 });
 

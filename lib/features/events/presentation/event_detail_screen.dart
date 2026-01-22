@@ -1111,26 +1111,33 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: 10,
-                itemBuilder: (context, index) {
-                  final names = ['Alex', 'Jordan', 'Casey', 'Morgan', 'Riley', 
-                                'Sam', 'Taylor', 'Jamie', 'Quinn', 'Avery'];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: VesparaColors.glow.withOpacity(0.3),
-                      child: Text(names[index][0]),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 64,
+                      color: VesparaColors.secondary.withOpacity(0.5),
                     ),
-                    title: Text(names[index], style: TextStyle(color: VesparaColors.primary)),
-                    trailing: Checkbox(
-                      value: false,
-                      onChanged: (_) {},
-                      activeColor: VesparaColors.glow,
+                    const SizedBox(height: 16),
+                    Text(
+                      'No connections yet',
+                      style: TextStyle(
+                        color: VesparaColors.secondary,
+                        fontSize: 16,
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 8),
+                    Text(
+                      'Add connections to invite them to events',
+                      style: TextStyle(
+                        color: VesparaColors.secondary.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Padding(

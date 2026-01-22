@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'dart:math';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// PATH OF PLEASURE - FAMILY FEUD EDITION
-/// Provider & State Management
-/// "Survey Says..." - Rank scenarios by predicted popularity
+/// PATH OF PLEASURE - 1v1 COMPETITIVE KINKINESS SORTING GAME
+/// Family Feud Style - Teams compete to sort cards from Vanilla to Hardcore
+/// Features: Pass & Play, Multi-Screen, Dynamic Elo Rankings
 /// ════════════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -14,205 +15,137 @@ import 'dart:math';
 // ═══════════════════════════════════════════════════════════════════════════
 
 enum GamePhase {
-  idle,        // Not in a game
-  lobby,       // Waiting for players
-  ranking,     // Players ranking cards by popularity
-  reveal,      // Showing correct order with animations
-  roundScore,  // Show round scores
-  leaderboard, // Final scores
-  finished,    // Game complete
+  idle,           // Entry screen
+  modeSelect,     // Choose Pass & Play or Multi-Screen
+  lobby,          // Waiting for players / team setup
+  sorting,        // Active player sorting 8 cards
+  scored,         // Show score feedback (X/8 correct)
+  decision,       // PASS or PLAY choice
+  stealing,       // Other team attempting to steal
+  roundResult,    // Show final round result
+  gameOver,       // Victory screen
 }
 
-enum HeatLevel {
-  mild,    // Vanilla only (1-2)
-  spicy,   // Include spicy (1-3)
-  sizzle,  // Everything (1-5)
+enum ConnectionMode {
+  passAndPlay,    // Single device, rotate between teams
+  multiScreen,    // Host/Client with room codes
 }
 
-extension HeatLevelExtension on HeatLevel {
-  String get displayName {
-    switch (this) {
-      case HeatLevel.mild: return '🌸 Mild';
-      case HeatLevel.spicy: return '🌶️ Spicy';
-      case HeatLevel.sizzle: return '🔥 Sizzle';
-    }
-  }
-  
-  String get description {
-    switch (this) {
-      case HeatLevel.mild: return 'Sweet & innocent stuff';
-      case HeatLevel.spicy: return 'Getting warmer...';
-      case HeatLevel.sizzle: return 'No limits. Full send.';
-    }
-  }
-  
-  int get maxHeat {
-    switch (this) {
-      case HeatLevel.mild: return 2;
-      case HeatLevel.spicy: return 4;
-      case HeatLevel.sizzle: return 5;
-    }
-  }
-  
-  Color get color {
-    switch (this) {
-      case HeatLevel.mild: return const Color(0xFFE8B4D8);
-      case HeatLevel.spicy: return const Color(0xFFFF6B35);
-      case HeatLevel.sizzle: return const Color(0xFFDC143C);
-    }
-  }
+enum TeamTurn {
+  teamA,
+  teamB,
+}
+
+enum RoundOutcome {
+  perfectScore,     // Team got 8/8
+  playSuccess,      // Team improved their score
+  playFail,         // Team failed to improve (0 points)
+  stealSuccess,     // Other team stole the points
+  stealFail,        // Original team keeps points
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DATA MODELS
 // ═══════════════════════════════════════════════════════════════════════════
 
-class PopCard {
+/// A single card/item to be ranked by kinkiness
+class KinkCard {
   final String id;
   final String text;
-  final String category;
-  final String? subcategory;
-  final int heatLevel;
-  final int globalRank;      // Actual popularity rank (1 = most popular)
-  final double popularityScore; // 0-100 popularity
-  final int rankChange;      // Week-over-week change (+5 = moved up 5 spots)
+  final int trueRank;         // 1-200 (1 = most vanilla, 200 = most hardcore)
+  final double eloScore;      // Hidden Elo rating for crowd ranking
+  final int weeklyRankChange; // How much it moved this week
   
-  const PopCard({
+  const KinkCard({
     required this.id,
     required this.text,
-    required this.category,
-    this.subcategory,
-    this.heatLevel = 1,
-    this.globalRank = 50,
-    this.popularityScore = 50.0,
-    this.rankChange = 0,
+    required this.trueRank,
+    this.eloScore = 1000.0,
+    this.weeklyRankChange = 0,
   });
   
-  factory PopCard.fromJson(Map<String, dynamic> json) {
-    return PopCard(
+  factory KinkCard.fromJson(Map<String, dynamic> json) {
+    return KinkCard(
       id: json['id'] as String,
       text: json['text'] as String,
-      category: json['category'] as String? ?? 'vanilla',
-      subcategory: json['subcategory'] as String?,
-      heatLevel: json['heat_level'] as int? ?? 1,
-      globalRank: json['global_rank'] as int? ?? 50,
-      popularityScore: (json['popularity_score'] as num?)?.toDouble() ?? 50.0,
-      rankChange: json['rank_change'] as int? ?? 0,
+      trueRank: json['true_rank'] as int,
+      eloScore: (json['elo_score'] as num?)?.toDouble() ?? 1000.0,
+      weeklyRankChange: json['weekly_rank_change'] as int? ?? 0,
     );
   }
   
-  /// Get trend emoji based on rank change
-  String get trendEmoji {
-    if (rankChange > 5) return '🔥';  // Hot
-    if (rankChange > 0) return '📈';  // Rising
-    if (rankChange < -5) return '📉'; // Falling fast
-    if (rankChange < 0) return '⬇️';  // Declining
-    return '➡️';                       // Stable
-  }
-  
-  /// Get heat emoji
-  String get heatEmoji {
-    switch (heatLevel) {
-      case 1: return '🌸';
-      case 2: return '💜';
-      case 3: return '🌶️';
-      case 4: return '🔥';
-      case 5: return '💀';
-      default: return '💜';
-    }
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'text': text,
+    'true_rank': trueRank,
+    'elo_score': eloScore,
+    'weekly_rank_change': weeklyRankChange,
+  };
 }
 
-class PopPlayer {
-  final String id;
-  final String oduserId;
-  final String displayName;
-  final String? avatarUrl;
-  final Color avatarColor;
-  final bool isHost;
-  int score;
-  int correctGuesses;
-  int closeGuesses;
-  int totalGuesses;
-  int streak;
-  int bestStreak;
-  bool isLockedIn;
+/// Team data
+class Team {
+  final String name;
+  final Color color;
+  final int score;
+  final int roundsWon;
   
-  PopPlayer({
-    required this.id,
-    required this.oduserId,
-    required this.displayName,
-    this.avatarUrl,
-    required this.avatarColor,
-    this.isHost = false,
+  const Team({
+    required this.name,
+    required this.color,
     this.score = 0,
-    this.correctGuesses = 0,
-    this.closeGuesses = 0,
-    this.totalGuesses = 0,
-    this.streak = 0,
-    this.bestStreak = 0,
-    this.isLockedIn = false,
+    this.roundsWon = 0,
   });
   
-  factory PopPlayer.fromJson(Map<String, dynamic> json) {
-    return PopPlayer(
-      id: json['id'] as String,
-      oduserId: json['user_id'] as String,
-      displayName: json['display_name'] as String,
-      avatarUrl: json['avatar_url'] as String?,
-      avatarColor: _parseColor(json['avatar_color'] as String?),
-      isHost: json['is_host'] as bool? ?? false,
-      score: json['score'] as int? ?? 0,
-      correctGuesses: json['correct_guesses'] as int? ?? 0,
-      totalGuesses: json['total_guesses'] as int? ?? 0,
-      streak: json['streak'] as int? ?? 0,
-      bestStreak: json['best_streak'] as int? ?? 0,
-      isLockedIn: json['is_locked_in'] as bool? ?? false,
+  Team copyWith({String? name, Color? color, int? score, int? roundsWon}) {
+    return Team(
+      name: name ?? this.name,
+      color: color ?? this.color,
+      score: score ?? this.score,
+      roundsWon: roundsWon ?? this.roundsWon,
     );
   }
-  
-  static Color _parseColor(String? hex) {
-    if (hex == null) return const Color(0xFF4A9EFF);
-    return Color(int.parse(hex.replaceFirst('#', '0xFF')));
-  }
-  
-  /// Accuracy percentage
-  double get accuracy => totalGuesses > 0 ? correctGuesses / totalGuesses * 100 : 0;
 }
 
-class RoundResult {
-  final List<PopCard> correctOrder;  // Cards in correct popularity order
-  final List<PopCard> playerOrder;   // Player's guessed order
-  final int roundScore;
-  final int correctCount;
-  final int closeCount;
-  final List<CardResult> cardResults;
+/// Result of a single sorting attempt
+class SortResult {
+  final List<KinkCard> submittedOrder;
+  final List<KinkCard> correctOrder;
+  final int correctCount;          // How many are in correct position
+  final List<bool> positionCorrect; // Which positions are correct
   
-  const RoundResult({
+  const SortResult({
+    required this.submittedOrder,
     required this.correctOrder,
-    required this.playerOrder,
-    required this.roundScore,
     required this.correctCount,
-    required this.closeCount,
-    required this.cardResults,
+    required this.positionCorrect,
   });
+  
+  bool get isPerfect => correctCount == 8;
 }
 
-class CardResult {
-  final PopCard card;
-  final int playerPosition;  // Where player ranked it (1-5)
-  final int actualPosition;  // Where it actually is (1-5)
-  final int pointsEarned;
-  final bool isExact;
-  final bool isClose;
+/// Round data tracking the flow of a single round
+class RoundData {
+  final List<KinkCard> cards;           // The 8 cards for this round
+  final List<KinkCard> correctOrder;    // Cards sorted by true rank
+  SortResult? teamAFirstAttempt;
+  SortResult? teamASecondAttempt;       // If they chose PLAY
+  SortResult? teamBStealAttempt;        // If team A chose PASS
+  bool? teamAChosePlay;                 // true = PLAY, false = PASS
+  RoundOutcome? outcome;
+  int pointsAwarded;
+  TeamTurn? pointsAwardedTo;
   
-  const CardResult({
-    required this.card,
-    required this.playerPosition,
-    required this.actualPosition,
-    required this.pointsEarned,
-    required this.isExact,
-    required this.isClose,
+  RoundData({
+    required this.cards,
+    required this.correctOrder,
+    this.teamAFirstAttempt,
+    this.teamASecondAttempt,
+    this.teamBStealAttempt,
+    this.teamAChosePlay,
+    this.outcome,
+    this.pointsAwarded = 0,
+    this.pointsAwardedTo,
   });
 }
 
@@ -222,117 +155,110 @@ class CardResult {
 
 class PathOfPleasureState {
   final GamePhase phase;
+  final ConnectionMode connectionMode;
+  
+  // Session
   final String? sessionId;
   final String? roomCode;
-  final List<PopPlayer> players;
-  final String? currentPlayerId;
   final bool isHost;
   
-  // Game settings
-  final HeatLevel heatLevel;
+  // Teams
+  final Team teamA;
+  final Team teamB;
+  final TeamTurn currentTurn;
+  final TeamTurn? startingTeam;  // Who started the current round
+  
+  // Game config
+  final int winningScore;
   final int cardsPerRound;
-  final int totalRounds;
   
-  // Round data
-  final int currentRound;
-  final List<PopCard> roundCards;        // Cards to rank this round (shuffled)
-  final List<PopCard> playerRanking;     // Player's current ranking
-  final RoundResult? lastRoundResult;
-  final List<RoundResult> allResults;
+  // Round state
+  final int roundNumber;
+  final RoundData? currentRound;
+  final List<KinkCard> playerSorting;  // Current player's sorting attempt
+  final List<RoundData> completedRounds;
   
-  // Timing
-  final int timeRemaining;
-  final int maxTime;
-  
-  // UI State
+  // UI
   final bool isLoading;
   final String? error;
-  final bool isDemoMode;
-  final int revealIndex;  // For animating reveal
+  final bool showHandoffScreen;  // For Pass & Play between teams
+  
+  // Master card list
+  final List<KinkCard> masterDeck;
   
   const PathOfPleasureState({
     this.phase = GamePhase.idle,
+    this.connectionMode = ConnectionMode.passAndPlay,
     this.sessionId,
     this.roomCode,
-    this.players = const [],
-    this.currentPlayerId,
-    this.isHost = false,
-    this.heatLevel = HeatLevel.spicy,
-    this.cardsPerRound = 5,
-    this.totalRounds = 3,
-    this.currentRound = 1,
-    this.roundCards = const [],
-    this.playerRanking = const [],
-    this.lastRoundResult,
-    this.allResults = const [],
-    this.timeRemaining = 60,
-    this.maxTime = 60,
+    this.isHost = true,
+    this.teamA = const Team(name: 'Team A', color: Color(0xFFFF6B6B)),
+    this.teamB = const Team(name: 'Team B', color: Color(0xFF4ECDC4)),
+    this.currentTurn = TeamTurn.teamA,
+    this.startingTeam,
+    this.winningScore = 20,
+    this.cardsPerRound = 8,
+    this.roundNumber = 0,
+    this.currentRound,
+    this.playerSorting = const [],
+    this.completedRounds = const [],
     this.isLoading = false,
     this.error,
-    this.isDemoMode = false,
-    this.revealIndex = -1,
+    this.showHandoffScreen = false,
+    this.masterDeck = const [],
   });
   
-  PopPlayer? get me => currentPlayerId == null 
-      ? null 
-      : players.where((p) => p.id == currentPlayerId).firstOrNull;
+  Team get activeTeam => currentTurn == TeamTurn.teamA ? teamA : teamB;
+  Team get inactiveTeam => currentTurn == TeamTurn.teamA ? teamB : teamA;
   
-  bool get allPlayersLocked => players.every((p) => p.isLockedIn);
-  
-  int get lockedCount => players.where((p) => p.isLockedIn).length;
-  
-  int get myTotalScore => me?.score ?? 0;
-  
-  /// Get sorted leaderboard
-  List<PopPlayer> get leaderboard {
-    final sorted = [...players];
-    sorted.sort((a, b) => b.score.compareTo(a.score));
-    return sorted;
+  bool get isGameOver => teamA.score >= winningScore || teamB.score >= winningScore;
+  Team? get winner {
+    if (teamA.score >= winningScore) return teamA;
+    if (teamB.score >= winningScore) return teamB;
+    return null;
   }
   
   PathOfPleasureState copyWith({
     GamePhase? phase,
+    ConnectionMode? connectionMode,
     String? sessionId,
     String? roomCode,
-    List<PopPlayer>? players,
-    String? currentPlayerId,
     bool? isHost,
-    HeatLevel? heatLevel,
+    Team? teamA,
+    Team? teamB,
+    TeamTurn? currentTurn,
+    TeamTurn? startingTeam,
+    int? winningScore,
     int? cardsPerRound,
-    int? totalRounds,
-    int? currentRound,
-    List<PopCard>? roundCards,
-    List<PopCard>? playerRanking,
-    RoundResult? lastRoundResult,
-    List<RoundResult>? allResults,
-    int? timeRemaining,
-    int? maxTime,
+    int? roundNumber,
+    RoundData? currentRound,
+    List<KinkCard>? playerSorting,
+    List<RoundData>? completedRounds,
     bool? isLoading,
     String? error,
-    bool? isDemoMode,
-    int? revealIndex,
+    bool? showHandoffScreen,
+    List<KinkCard>? masterDeck,
   }) {
     return PathOfPleasureState(
       phase: phase ?? this.phase,
+      connectionMode: connectionMode ?? this.connectionMode,
       sessionId: sessionId ?? this.sessionId,
       roomCode: roomCode ?? this.roomCode,
-      players: players ?? this.players,
-      currentPlayerId: currentPlayerId ?? this.currentPlayerId,
       isHost: isHost ?? this.isHost,
-      heatLevel: heatLevel ?? this.heatLevel,
+      teamA: teamA ?? this.teamA,
+      teamB: teamB ?? this.teamB,
+      currentTurn: currentTurn ?? this.currentTurn,
+      startingTeam: startingTeam ?? this.startingTeam,
+      winningScore: winningScore ?? this.winningScore,
       cardsPerRound: cardsPerRound ?? this.cardsPerRound,
-      totalRounds: totalRounds ?? this.totalRounds,
+      roundNumber: roundNumber ?? this.roundNumber,
       currentRound: currentRound ?? this.currentRound,
-      roundCards: roundCards ?? this.roundCards,
-      playerRanking: playerRanking ?? this.playerRanking,
-      lastRoundResult: lastRoundResult ?? this.lastRoundResult,
-      allResults: allResults ?? this.allResults,
-      timeRemaining: timeRemaining ?? this.timeRemaining,
-      maxTime: maxTime ?? this.maxTime,
+      playerSorting: playerSorting ?? this.playerSorting,
+      completedRounds: completedRounds ?? this.completedRounds,
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      isDemoMode: isDemoMode ?? this.isDemoMode,
-      revealIndex: revealIndex ?? this.revealIndex,
+      showHandoffScreen: showHandoffScreen ?? this.showHandoffScreen,
+      masterDeck: masterDeck ?? this.masterDeck,
     );
   }
 }
@@ -342,433 +268,378 @@ class PathOfPleasureState {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
-  Timer? _roundTimer;
-  Timer? _revealTimer;
-  bool _disposed = false;
+  final SupabaseClient? _supabase;
   
-  PathOfPleasureNotifier() : super(const PathOfPleasureState());
-  
-  @override
-  void dispose() {
-    _disposed = true;
-    _roundTimer?.cancel();
-    _revealTimer?.cancel();
-    super.dispose();
-  }
-  
-  // Player colors for avatars
-  static const _playerColors = [
-    Color(0xFFFFD700), // Gold
-    Color(0xFF4A9EFF), // Blue
-    Color(0xFFDC143C), // Crimson
-    Color(0xFF2ECC71), // Emerald
-    Color(0xFF9B59B6), // Purple
-    Color(0xFFF39C12), // Orange
-    Color(0xFF1ABC9C), // Teal
-    Color(0xFFE74C3C), // Red
-  ];
+  PathOfPleasureNotifier([this._supabase]) : super(PathOfPleasureState(
+    masterDeck: _masterKinkCards,
+  ));
   
   // ═════════════════════════════════════════════════════════════════════════
-  // LOBBY ACTIONS
+  // SETUP & MODE SELECTION
   // ═════════════════════════════════════════════════════════════════════════
   
-  /// Host creates a new game session
-  Future<void> hostGame(String hostName) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      final roomCode = _generateRoomCode();
-      final hostId = 'host_${DateTime.now().millisecondsSinceEpoch}';
-      final playerId = 'player_${DateTime.now().millisecondsSinceEpoch}';
-      
-      final hostPlayer = PopPlayer(
-        id: playerId,
-        oduserId: hostId,
-        displayName: hostName,
-        avatarColor: _playerColors[0],
-        isHost: true,
-      );
-      
-      state = state.copyWith(
-        phase: GamePhase.lobby,
-        roomCode: roomCode,
-        sessionId: 'session_${DateTime.now().millisecondsSinceEpoch}',
-        players: [hostPlayer],
-        currentPlayerId: playerId,
-        isHost: true,
-        isLoading: false,
-        isDemoMode: true,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
+  void showModeSelect() {
+    state = state.copyWith(phase: GamePhase.modeSelect);
   }
   
-  /// Guest joins an existing game
-  Future<void> joinGame(String roomCode, String playerName) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      final playerId = 'player_${DateTime.now().millisecondsSinceEpoch}';
-      final existingPlayers = [...state.players];
-      
-      final newPlayer = PopPlayer(
-        id: playerId,
-        oduserId: 'user_$playerId',
-        displayName: playerName,
-        avatarColor: _playerColors[existingPlayers.length % _playerColors.length],
-      );
-      
-      existingPlayers.add(newPlayer);
-      
-      state = state.copyWith(
-        phase: GamePhase.lobby,
-        roomCode: roomCode.toUpperCase(),
-        players: existingPlayers,
-        currentPlayerId: playerId,
-        isHost: false,
-        isLoading: false,
-        isDemoMode: true,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Room not found');
-    }
-  }
-  
-  /// Add local player (for pass & play mode)
-  void addLocalPlayer(String name) {
-    if (name.trim().isEmpty || state.players.length >= 8) return;
-    
-    final playerId = 'player_${DateTime.now().millisecondsSinceEpoch}_${state.players.length}';
-    final newPlayer = PopPlayer(
-      id: playerId,
-      oduserId: 'local_$playerId',
-      displayName: name.trim(),
-      avatarColor: _playerColors[state.players.length % _playerColors.length],
+  void selectMode(ConnectionMode mode) {
+    state = state.copyWith(
+      connectionMode: mode,
+      phase: GamePhase.lobby,
     );
-    
-    state = state.copyWith(players: [...state.players, newPlayer]);
   }
   
-  void removePlayer(int index) {
-    if (index < 0 || index >= state.players.length) return;
-    if (state.players[index].isHost) return;
-    
-    final players = [...state.players];
-    players.removeAt(index);
-    state = state.copyWith(players: players);
+  void setTeamName(TeamTurn team, String name) {
+    if (team == TeamTurn.teamA) {
+      state = state.copyWith(teamA: state.teamA.copyWith(name: name));
+    } else {
+      state = state.copyWith(teamB: state.teamB.copyWith(name: name));
+    }
   }
   
-  /// Set heat level
-  void setHeatLevel(HeatLevel level) {
-    state = state.copyWith(heatLevel: level);
+  // ═════════════════════════════════════════════════════════════════════════
+  // MULTIPLAYER (Room Codes)
+  // ═════════════════════════════════════════════════════════════════════════
+  
+  Future<void> hostMultiScreenGame() async {
+    final roomCode = _generateRoomCode();
+    state = state.copyWith(
+      connectionMode: ConnectionMode.multiScreen,
+      roomCode: roomCode,
+      isHost: true,
+      phase: GamePhase.lobby,
+    );
+    // In production: Create room in Supabase/Firebase realtime
+  }
+  
+  Future<bool> joinMultiScreenGame(String code) async {
+    // In production: Validate code and join room
+    state = state.copyWith(
+      connectionMode: ConnectionMode.multiScreen,
+      roomCode: code,
+      isHost: false,
+      phase: GamePhase.lobby,
+    );
+    return true;
   }
   
   String _generateRoomCode() {
-    final words = ['LUST', 'VIBE', 'AURA', 'GLOW', 'HEAT', 'FIRE', 'BURN', 'RUSH',
-                   'PEAK', 'KISS', 'SILK', 'WILD', 'DARE', 'EDGE', 'SYNC', 'BOND'];
-    final word = words[Random().nextInt(words.length)];
-    final suffix = (Random().nextInt(90) + 10).toString();
-    return '$word$suffix';
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final random = Random();
+    return List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
   }
   
   // ═════════════════════════════════════════════════════════════════════════
-  // GAME FLOW
+  // GAME START
   // ═════════════════════════════════════════════════════════════════════════
   
-  /// Start the game - deal first round
-  Future<void> startGame() async {
-    if (!state.isHost || state.players.isEmpty) return;
-    
-    state = state.copyWith(isLoading: true);
-    
-    try {
-      // Get shuffled cards for this round
-      final cards = _getShuffledCards();
-      
-      // Reset player states
-      final players = state.players.map((p) {
-        p.isLockedIn = false;
-        p.score = 0;
-        p.correctGuesses = 0;
-        p.totalGuesses = 0;
-        p.streak = 0;
-        return p;
-      }).toList();
-      
-      state = state.copyWith(
-        phase: GamePhase.ranking,
-        roundCards: cards,
-        playerRanking: [...cards], // Start with shuffled order
-        currentRound: 1,
-        players: players,
-        allResults: [],
-        timeRemaining: state.maxTime,
-        isLoading: false,
-      );
-      
-      _startRoundTimer();
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-  
-  /// Reorder cards via drag and drop
-  void reorderCards(int oldIndex, int newIndex) {
-    if (oldIndex < newIndex) newIndex -= 1;
-    
-    final ranking = [...state.playerRanking];
-    final item = ranking.removeAt(oldIndex);
-    ranking.insert(newIndex, item);
-    
-    state = state.copyWith(playerRanking: ranking);
-  }
-  
-  /// Move a card to a specific position
-  void moveCard(int fromIndex, int toIndex) {
-    if (fromIndex == toIndex) return;
-    
-    final ranking = [...state.playerRanking];
-    final item = ranking.removeAt(fromIndex);
-    ranking.insert(toIndex, item);
-    
-    state = state.copyWith(playerRanking: ranking);
-  }
-  
-  /// Lock in rankings and calculate score
-  void lockIn() {
-    _roundTimer?.cancel();
-    
-    // Calculate score
-    final result = _calculateRoundScore();
-    
-    // Update player
-    final players = state.players.map((p) {
-      if (p.id == state.currentPlayerId) {
-        p.isLockedIn = true;
-        p.score += result.roundScore;
-        p.correctGuesses += result.correctCount;
-        p.closeGuesses += result.closeCount;
-        p.totalGuesses += state.cardsPerRound;
-        
-        // Update streak
-        if (result.correctCount >= 3) {
-          p.streak++;
-          if (p.streak > p.bestStreak) p.bestStreak = p.streak;
-        } else {
-          p.streak = 0;
-        }
-      }
-      return p;
-    }).toList();
+  void startGame() {
+    // Randomly decide who goes first
+    final startingTeam = Random().nextBool() ? TeamTurn.teamA : TeamTurn.teamB;
     
     state = state.copyWith(
-      players: players,
-      lastRoundResult: result,
-      allResults: [...state.allResults, result],
-      phase: GamePhase.reveal,
-      revealIndex: -1,
+      roundNumber: 1,
+      currentTurn: startingTeam,
+      startingTeam: startingTeam,
+      teamA: state.teamA.copyWith(score: 0, roundsWon: 0),
+      teamB: state.teamB.copyWith(score: 0, roundsWon: 0),
+      completedRounds: [],
     );
     
-    // Start reveal animation
-    _animateReveal();
+    _startNewRound();
   }
   
-  void _animateReveal() {
-    int index = -1;
-    _revealTimer?.cancel();
+  void _startNewRound() {
+    // Draw 8 random cards
+    final shuffled = [...state.masterDeck]..shuffle();
+    final roundCards = shuffled.take(8).toList();
     
-    _revealTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
-      if (_disposed) {
-        timer.cancel();
-        return;
-      }
-      
-      index++;
-      if (index >= state.cardsPerRound) {
-        timer.cancel();
-        // Show round score after reveal
-        Future.delayed(const Duration(seconds: 1), () {
-          if (_disposed) return;
-          _showRoundScore();
-        });
-      } else {
-        state = state.copyWith(revealIndex: index);
-      }
-    });
-  }
-  
-  void _showRoundScore() {
-    state = state.copyWith(phase: GamePhase.roundScore);
+    // Sort by true rank to get correct order
+    final correctOrder = [...roundCards]
+      ..sort((a, b) => a.trueRank.compareTo(b.trueRank));
     
-    // Auto-advance after a few seconds
-    Future.delayed(const Duration(seconds: 4), () {
-      if (_disposed) return;
-      
-      if (state.currentRound >= state.totalRounds) {
-        // End game
-        state = state.copyWith(phase: GamePhase.leaderboard);
-      } else {
-        // Next round
-        _startNextRound();
-      }
-    });
-  }
-  
-  void skipToNextRound() {
-    if (state.currentRound >= state.totalRounds) {
-      state = state.copyWith(phase: GamePhase.leaderboard);
-    } else {
-      _startNextRound();
-    }
-  }
-  
-  void _startNextRound() {
-    final nextRound = state.currentRound + 1;
-    final cards = _getShuffledCards();
-    
-    final players = state.players.map((p) {
-      p.isLockedIn = false;
-      return p;
-    }).toList();
-    
-    state = state.copyWith(
-      phase: GamePhase.ranking,
-      currentRound: nextRound,
-      roundCards: cards,
-      playerRanking: [...cards],
-      players: players,
-      timeRemaining: state.maxTime,
-      revealIndex: -1,
-    );
-    
-    _startRoundTimer();
-  }
-  
-  void _startRoundTimer() {
-    _roundTimer?.cancel();
-    _roundTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_disposed) {
-        timer.cancel();
-        return;
-      }
-      
-      final remaining = state.timeRemaining - 1;
-      
-      if (remaining <= 0) {
-        timer.cancel();
-        lockIn(); // Auto-submit when time runs out
-      } else {
-        state = state.copyWith(timeRemaining: remaining);
-      }
-    });
-  }
-  
-  RoundResult _calculateRoundScore() {
-    // Sort round cards by their actual global rank (lower = more popular)
-    final correctOrder = [...state.roundCards];
-    correctOrder.sort((a, b) => a.globalRank.compareTo(b.globalRank));
-    
-    final cardResults = <CardResult>[];
-    int totalScore = 0;
-    int correctCount = 0;
-    int closeCount = 0;
-    
-    for (int i = 0; i < state.playerRanking.length; i++) {
-      final playerCard = state.playerRanking[i];
-      final playerPos = i + 1;
-      
-      // Find where this card actually belongs
-      final actualPos = correctOrder.indexWhere((c) => c.id == playerCard.id) + 1;
-      
-      int points = 0;
-      bool isExact = false;
-      bool isClose = false;
-      
-      if (playerPos == actualPos) {
-        // Exact match!
-        points = 100;
-        isExact = true;
-        correctCount++;
-      } else if ((playerPos - actualPos).abs() == 1) {
-        // One off
-        points = 50;
-        isClose = true;
-        closeCount++;
-      } else if ((playerPos - actualPos).abs() == 2) {
-        // Two off
-        points = 25;
-      }
-      
-      totalScore += points;
-      
-      cardResults.add(CardResult(
-        card: playerCard,
-        playerPosition: playerPos,
-        actualPosition: actualPos,
-        pointsEarned: points,
-        isExact: isExact,
-        isClose: isClose,
-      ));
-    }
-    
-    // Bonus for perfect round
-    if (correctCount == state.cardsPerRound) {
-      totalScore += 200;
-    }
-    
-    return RoundResult(
+    final round = RoundData(
+      cards: roundCards,
       correctOrder: correctOrder,
-      playerOrder: [...state.playerRanking],
-      roundScore: totalScore,
+    );
+    
+    // For Pass & Play, show handoff screen
+    if (state.connectionMode == ConnectionMode.passAndPlay) {
+      state = state.copyWith(
+        currentRound: round,
+        playerSorting: [...roundCards], // Start with shuffled order
+        showHandoffScreen: true,
+        phase: GamePhase.sorting,
+      );
+    } else {
+      state = state.copyWith(
+        currentRound: round,
+        playerSorting: [...roundCards],
+        phase: GamePhase.sorting,
+      );
+    }
+  }
+  
+  void dismissHandoff() {
+    state = state.copyWith(showHandoffScreen: false);
+  }
+  
+  // ═════════════════════════════════════════════════════════════════════════
+  // SORTING (Drag & Drop)
+  // ═════════════════════════════════════════════════════════════════════════
+  
+  void reorderCard(int oldIndex, int newIndex) {
+    final cards = [...state.playerSorting];
+    final card = cards.removeAt(oldIndex);
+    cards.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, card);
+    state = state.copyWith(playerSorting: cards);
+  }
+  
+  void moveCardUp(int index) {
+    if (index <= 0) return;
+    reorderCard(index, index - 1);
+  }
+  
+  void moveCardDown(int index) {
+    if (index >= state.playerSorting.length - 1) return;
+    reorderCard(index, index + 2);
+  }
+  
+  // ═════════════════════════════════════════════════════════════════════════
+  // SUBMISSION & SCORING
+  // ═════════════════════════════════════════════════════════════════════════
+  
+  void submitSort() {
+    final round = state.currentRound;
+    if (round == null) return;
+    
+    final result = _calculateSortResult(state.playerSorting, round.correctOrder);
+    
+    // Determine which attempt this is
+    if (round.teamAFirstAttempt == null) {
+      // This is Team A's first attempt
+      round.teamAFirstAttempt = result;
+      
+      if (result.isPerfect) {
+        // Perfect score! Award 8 points immediately
+        _awardPoints(8, TeamTurn.teamA, RoundOutcome.perfectScore);
+      } else {
+        // Show score and move to decision phase
+        state = state.copyWith(
+          currentRound: round,
+          phase: GamePhase.scored,
+        );
+      }
+    } else if (round.teamAChosePlay == true && round.teamASecondAttempt == null) {
+      // Team A chose PLAY, this is their second attempt
+      round.teamASecondAttempt = result;
+      
+      final firstScore = round.teamAFirstAttempt!.correctCount;
+      final secondScore = result.correctCount;
+      
+      if (secondScore > firstScore) {
+        // Improved! Keep the new score
+        _awardPoints(secondScore, TeamTurn.teamA, RoundOutcome.playSuccess);
+      } else {
+        // Failed to improve, 0 points
+        _awardPoints(0, TeamTurn.teamA, RoundOutcome.playFail);
+      }
+    } else if (round.teamAChosePlay == false && round.teamBStealAttempt == null) {
+      // Team A passed, Team B is attempting to steal
+      round.teamBStealAttempt = result;
+      
+      final teamAScore = round.teamAFirstAttempt!.correctCount;
+      final teamBScore = result.correctCount;
+      
+      if (teamBScore > teamAScore) {
+        // Steal successful!
+        _awardPoints(teamBScore, TeamTurn.teamB, RoundOutcome.stealSuccess);
+      } else {
+        // Steal failed, Team A keeps their points
+        _awardPoints(teamAScore, TeamTurn.teamA, RoundOutcome.stealFail);
+      }
+    }
+  }
+  
+  SortResult _calculateSortResult(List<KinkCard> submitted, List<KinkCard> correct) {
+    final positionCorrect = <bool>[];
+    int correctCount = 0;
+    
+    for (int i = 0; i < submitted.length; i++) {
+      final isCorrect = submitted[i].id == correct[i].id;
+      positionCorrect.add(isCorrect);
+      if (isCorrect) correctCount++;
+    }
+    
+    return SortResult(
+      submittedOrder: submitted,
+      correctOrder: correct,
       correctCount: correctCount,
-      closeCount: closeCount,
-      cardResults: cardResults,
+      positionCorrect: positionCorrect,
     );
   }
   
-  /// Get shuffled cards for a round (demo mode)
-  List<PopCard> _getShuffledCards() {
-    // Filter by heat level and shuffle
-    final eligible = _demoCards
-        .where((c) => c.heatLevel <= state.heatLevel.maxHeat)
-        .toList();
+  void _awardPoints(int points, TeamTurn team, RoundOutcome outcome) {
+    final round = state.currentRound!;
+    round.outcome = outcome;
+    round.pointsAwarded = points;
+    round.pointsAwardedTo = team;
     
-    eligible.shuffle();
+    Team updatedTeamA = state.teamA;
+    Team updatedTeamB = state.teamB;
     
-    return eligible.take(state.cardsPerRound).toList();
+    if (team == TeamTurn.teamA) {
+      updatedTeamA = state.teamA.copyWith(
+        score: state.teamA.score + points,
+        roundsWon: state.teamA.roundsWon + (points > 0 ? 1 : 0),
+      );
+    } else {
+      updatedTeamB = state.teamB.copyWith(
+        score: state.teamB.score + points,
+        roundsWon: state.teamB.roundsWon + (points > 0 ? 1 : 0),
+      );
+    }
+    
+    // Log matchups for Elo calculation (backend)
+    _logMatchupsForElo(round);
+    
+    state = state.copyWith(
+      currentRound: round,
+      teamA: updatedTeamA,
+      teamB: updatedTeamB,
+      completedRounds: [...state.completedRounds, round],
+      phase: GamePhase.roundResult,
+    );
   }
   
-  /// Reset game
+  // ═════════════════════════════════════════════════════════════════════════
+  // DECISION PHASE (PASS or PLAY)
+  // ═════════════════════════════════════════════════════════════════════════
+  
+  void showDecision() {
+    state = state.copyWith(phase: GamePhase.decision);
+  }
+  
+  void choosePass() {
+    final round = state.currentRound;
+    if (round == null) return;
+    
+    round.teamAChosePlay = false;
+    
+    // Switch to Team B for steal attempt
+    // In Pass & Play, show handoff
+    if (state.connectionMode == ConnectionMode.passAndPlay) {
+      state = state.copyWith(
+        currentRound: round,
+        currentTurn: TeamTurn.teamB,
+        playerSorting: [...round.teamAFirstAttempt!.submittedOrder], // Start with Team A's order
+        showHandoffScreen: true,
+        phase: GamePhase.stealing,
+      );
+    } else {
+      state = state.copyWith(
+        currentRound: round,
+        currentTurn: TeamTurn.teamB,
+        playerSorting: [...round.teamAFirstAttempt!.submittedOrder],
+        phase: GamePhase.stealing,
+      );
+    }
+  }
+  
+  void choosePlay() {
+    final round = state.currentRound;
+    if (round == null) return;
+    
+    round.teamAChosePlay = true;
+    
+    // Team A gets another chance to sort
+    state = state.copyWith(
+      currentRound: round,
+      playerSorting: [...round.teamAFirstAttempt!.submittedOrder], // Start with their previous order
+      phase: GamePhase.sorting,
+    );
+  }
+  
+  // ═════════════════════════════════════════════════════════════════════════
+  // ROUND PROGRESSION
+  // ═════════════════════════════════════════════════════════════════════════
+  
+  void continueToNextRound() {
+    // Check for game over
+    if (state.isGameOver) {
+      state = state.copyWith(phase: GamePhase.gameOver);
+      return;
+    }
+    
+    // Alternate starting team
+    final nextStarting = state.startingTeam == TeamTurn.teamA 
+        ? TeamTurn.teamB 
+        : TeamTurn.teamA;
+    
+    state = state.copyWith(
+      roundNumber: state.roundNumber + 1,
+      currentTurn: nextStarting,
+      startingTeam: nextStarting,
+    );
+    
+    _startNewRound();
+  }
+  
+  // ═════════════════════════════════════════════════════════════════════════
+  // ELO RANKING SYSTEM (Backend Integration)
+  // ═════════════════════════════════════════════════════════════════════════
+  
+  void _logMatchupsForElo(RoundData round) {
+    // Get the winning submission
+    List<KinkCard>? winningOrder;
+    
+    if (round.outcome == RoundOutcome.perfectScore ||
+        round.outcome == RoundOutcome.playSuccess ||
+        round.outcome == RoundOutcome.stealFail) {
+      // Team A's submission was "correct"
+      winningOrder = round.teamASecondAttempt?.submittedOrder ?? 
+                     round.teamAFirstAttempt?.submittedOrder;
+    } else if (round.outcome == RoundOutcome.stealSuccess) {
+      // Team B's submission was "correct"
+      winningOrder = round.teamBStealAttempt?.submittedOrder;
+    }
+    
+    if (winningOrder == null || _supabase == null) return;
+    
+    // Extract pairwise matchups for Elo
+    // Each adjacent pair is a "vote" that card[i] < card[i+1]
+    final matchups = <Map<String, String>>[];
+    for (int i = 0; i < winningOrder.length - 1; i++) {
+      matchups.add({
+        'less_kinky_id': winningOrder[i].id,
+        'more_kinky_id': winningOrder[i + 1].id,
+      });
+    }
+    
+    // Log to backend (async, fire and forget)
+    _supabase?.from('pop_elo_matchups').insert({
+      'session_id': state.sessionId,
+      'matchups': matchups,
+      'created_at': DateTime.now().toIso8601String(),
+    }).then((_) {}).catchError((_) {});
+  }
+  
+  // ═════════════════════════════════════════════════════════════════════════
+  // RESET
+  // ═════════════════════════════════════════════════════════════════════════
+  
   void reset() {
-    _roundTimer?.cancel();
-    _revealTimer?.cancel();
-    state = const PathOfPleasureState();
+    state = PathOfPleasureState(masterDeck: _masterKinkCards);
   }
   
-  /// Back to lobby
   void backToLobby() {
-    _roundTimer?.cancel();
-    _revealTimer?.cancel();
-    
-    final players = state.players.map((p) {
-      p.score = 0;
-      p.correctGuesses = 0;
-      p.totalGuesses = 0;
-      p.streak = 0;
-      p.isLockedIn = false;
-      return p;
-    }).toList();
-    
     state = state.copyWith(
       phase: GamePhase.lobby,
-      currentRound: 1,
-      roundCards: [],
-      playerRanking: [],
-      allResults: [],
-      players: players,
+      roundNumber: 0,
+      currentRound: null,
+      completedRounds: [],
+      teamA: state.teamA.copyWith(score: 0, roundsWon: 0),
+      teamB: state.teamB.copyWith(score: 0, roundsWon: 0),
     );
   }
 }
@@ -778,57 +649,227 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 final pathOfPleasureProvider = StateNotifierProvider<PathOfPleasureNotifier, PathOfPleasureState>(
-  (ref) => PathOfPleasureNotifier(),
+  (ref) {
+    try {
+      return PathOfPleasureNotifier(Supabase.instance.client);
+    } catch (_) {
+      return PathOfPleasureNotifier();
+    }
+  },
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DEMO DATA - Cards with pre-set popularity rankings
+// MASTER CARD LIST - 200 Items Ranked by Kinkiness (1 = Vanilla, 200 = Hardcore)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const List<PopCard> _demoCards = [
-  // Vanilla - Most Popular (low globalRank = high popularity)
-  PopCard(id: 'v1', text: 'Forehead kisses', category: 'vanilla', heatLevel: 1, globalRank: 3, popularityScore: 94.5, rankChange: 2),
-  PopCard(id: 'v2', text: 'Holding hands while walking', category: 'vanilla', heatLevel: 1, globalRank: 5, popularityScore: 92.0, rankChange: 0),
-  PopCard(id: 'v3', text: 'Falling asleep on their chest', category: 'vanilla', heatLevel: 1, globalRank: 6, popularityScore: 91.0, rankChange: 1),
-  PopCard(id: 'v4', text: 'Hugging from behind', category: 'vanilla', heatLevel: 1, globalRank: 8, popularityScore: 89.0, rankChange: -2),
-  PopCard(id: 'v5', text: 'Long, slow kisses', category: 'vanilla', heatLevel: 1, globalRank: 4, popularityScore: 93.0, rankChange: 3),
-  PopCard(id: 'v6', text: 'Morning cuddles', category: 'vanilla', heatLevel: 1, globalRank: 2, popularityScore: 96.0, rankChange: 0),
-  PopCard(id: 'v7', text: 'Slow dancing together', category: 'vanilla', heatLevel: 1, globalRank: 18, popularityScore: 78.0, rankChange: -1),
-  PopCard(id: 'v8', text: 'Cooking together', category: 'vanilla', heatLevel: 1, globalRank: 12, popularityScore: 84.0, rankChange: 0),
-  PopCard(id: 'v9', text: 'Stargazing', category: 'vanilla', heatLevel: 1, globalRank: 28, popularityScore: 68.0, rankChange: -3),
-  PopCard(id: 'v10', text: 'Bubble bath together', category: 'vanilla', heatLevel: 2, globalRank: 22, popularityScore: 74.0, rankChange: 1),
+const List<KinkCard> _masterKinkCards = [
+  // VANILLA (1-40) - Sweet, innocent, universally loved
+  KinkCard(id: 'k001', text: 'Holding hands', trueRank: 1),
+  KinkCard(id: 'k002', text: 'Forehead kisses', trueRank: 2),
+  KinkCard(id: 'k003', text: 'Cuddling', trueRank: 3),
+  KinkCard(id: 'k004', text: 'Hugging from behind', trueRank: 4),
+  KinkCard(id: 'k005', text: 'Butterfly kisses', trueRank: 5),
+  KinkCard(id: 'k006', text: 'Slow dancing', trueRank: 6),
+  KinkCard(id: 'k007', text: 'Spooning', trueRank: 7),
+  KinkCard(id: 'k008', text: 'Morning cuddles', trueRank: 8),
+  KinkCard(id: 'k009', text: 'Hand on the small of back', trueRank: 9),
+  KinkCard(id: 'k010', text: 'Playing with hair', trueRank: 10),
+  KinkCard(id: 'k011', text: 'Watching sunset together', trueRank: 11),
+  KinkCard(id: 'k012', text: 'Cooking together', trueRank: 12),
+  KinkCard(id: 'k013', text: 'Falling asleep on their chest', trueRank: 13),
+  KinkCard(id: 'k014', text: 'Long goodbye hugs', trueRank: 14),
+  KinkCard(id: 'k015', text: 'Nose kisses', trueRank: 15),
+  KinkCard(id: 'k016', text: 'Stargazing', trueRank: 16),
+  KinkCard(id: 'k017', text: 'Sharing a blanket', trueRank: 17),
+  KinkCard(id: 'k018', text: 'Whispering sweet nothings', trueRank: 18),
+  KinkCard(id: 'k019', text: 'Bubble bath together', trueRank: 19),
+  KinkCard(id: 'k020', text: 'Massage (non-sexual)', trueRank: 20),
+  KinkCard(id: 'k021', text: 'French kissing', trueRank: 21),
+  KinkCard(id: 'k022', text: 'Making out', trueRank: 22),
+  KinkCard(id: 'k023', text: 'Hickeys', trueRank: 23),
+  KinkCard(id: 'k024', text: 'Neck kisses', trueRank: 24),
+  KinkCard(id: 'k025', text: 'Ear nibbling', trueRank: 25),
+  KinkCard(id: 'k026', text: 'Skinny dipping', trueRank: 26),
+  KinkCard(id: 'k027', text: 'Sleeping naked together', trueRank: 27),
+  KinkCard(id: 'k028', text: 'Strip poker', trueRank: 28),
+  KinkCard(id: 'k029', text: 'Body massage with oil', trueRank: 29),
+  KinkCard(id: 'k030', text: 'Netflix and Chill', trueRank: 30),
+  KinkCard(id: 'k031', text: 'Lap sitting', trueRank: 31),
+  KinkCard(id: 'k032', text: 'Grinding (clothed)', trueRank: 32),
+  KinkCard(id: 'k033', text: 'Dry humping', trueRank: 33),
+  KinkCard(id: 'k034', text: 'Teasing touches', trueRank: 34),
+  KinkCard(id: 'k035', text: 'Whispering fantasies', trueRank: 35),
+  KinkCard(id: 'k036', text: 'Sexting', trueRank: 36),
+  KinkCard(id: 'k037', text: 'Phone sex', trueRank: 37),
+  KinkCard(id: 'k038', text: 'Video call striptease', trueRank: 38),
+  KinkCard(id: 'k039', text: 'Sending nudes', trueRank: 39),
+  KinkCard(id: 'k040', text: 'Receiving nudes', trueRank: 40),
   
-  // Spicy - Medium popularity
-  PopCard(id: 's1', text: 'Neck kisses that linger', category: 'spicy', heatLevel: 2, globalRank: 7, popularityScore: 90.0, rankChange: 5),
-  PopCard(id: 's2', text: 'Being pinned against a wall', category: 'spicy', heatLevel: 3, globalRank: 15, popularityScore: 81.0, rankChange: 3),
-  PopCard(id: 's3', text: 'Morning sex', category: 'spicy', heatLevel: 3, globalRank: 9, popularityScore: 88.0, rankChange: 0),
-  PopCard(id: 's4', text: 'Hair pulling', category: 'spicy', heatLevel: 3, globalRank: 25, popularityScore: 71.0, rankChange: -2),
-  PopCard(id: 's5', text: 'Receiving nudes', category: 'spicy', heatLevel: 3, globalRank: 32, popularityScore: 64.0, rankChange: 1),
-  PopCard(id: 's6', text: 'Sending nudes', category: 'spicy', heatLevel: 3, globalRank: 35, popularityScore: 61.0, rankChange: -1),
-  PopCard(id: 's7', text: 'Light spanking', category: 'spicy', heatLevel: 3, globalRank: 38, popularityScore: 58.0, rankChange: 2),
-  PopCard(id: 's8', text: 'Blindfolded', category: 'spicy', heatLevel: 3, globalRank: 42, popularityScore: 54.0, rankChange: 0),
-  PopCard(id: 's9', text: 'Dirty talk', category: 'spicy', heatLevel: 3, globalRank: 30, popularityScore: 66.0, rankChange: 4),
-  PopCard(id: 's10', text: 'Strip tease', category: 'spicy', heatLevel: 3, globalRank: 45, popularityScore: 51.0, rankChange: -3),
+  // MILD (41-80) - Getting warmer, mainstream intimacy
+  KinkCard(id: 'k041', text: 'Missionary', trueRank: 41),
+  KinkCard(id: 'k042', text: 'Cowgirl', trueRank: 42),
+  KinkCard(id: 'k043', text: 'Reverse cowgirl', trueRank: 43),
+  KinkCard(id: 'k044', text: 'Doggy style', trueRank: 44),
+  KinkCard(id: 'k045', text: 'Spooning sex', trueRank: 45),
+  KinkCard(id: 'k046', text: 'Morning sex', trueRank: 46),
+  KinkCard(id: 'k047', text: 'Quickie', trueRank: 47),
+  KinkCard(id: 'k048', text: 'Shower sex', trueRank: 48),
+  KinkCard(id: 'k049', text: 'Bath sex', trueRank: 49),
+  KinkCard(id: 'k050', text: 'Hand job', trueRank: 50),
+  KinkCard(id: 'k051', text: 'Fingering', trueRank: 51),
+  KinkCard(id: 'k052', text: 'Blow job', trueRank: 52),
+  KinkCard(id: 'k053', text: 'Going down on her', trueRank: 53),
+  KinkCard(id: 'k054', text: 'Mutual masturbation', trueRank: 54),
+  KinkCard(id: 'k055', text: '69', trueRank: 55),
+  KinkCard(id: 'k056', text: 'Using a vibrator together', trueRank: 56),
+  KinkCard(id: 'k057', text: 'Dirty talk', trueRank: 57),
+  KinkCard(id: 'k058', text: 'Moaning loudly', trueRank: 58),
+  KinkCard(id: 'k059', text: 'Hair pulling', trueRank: 59),
+  KinkCard(id: 'k060', text: 'Light scratching', trueRank: 60),
+  KinkCard(id: 'k061', text: 'Biting (gentle)', trueRank: 61),
+  KinkCard(id: 'k062', text: 'Spanking (playful)', trueRank: 62),
+  KinkCard(id: 'k063', text: 'Using ice cubes', trueRank: 63),
+  KinkCard(id: 'k064', text: 'Whipped cream', trueRank: 64),
+  KinkCard(id: 'k065', text: 'Chocolate body paint', trueRank: 65),
+  KinkCard(id: 'k066', text: 'Feather tickler', trueRank: 66),
+  KinkCard(id: 'k067', text: 'Silk blindfold', trueRank: 67),
+  KinkCard(id: 'k068', text: 'Fuzzy handcuffs', trueRank: 68),
+  KinkCard(id: 'k069', text: 'Strip tease', trueRank: 69),
+  KinkCard(id: 'k070', text: 'Lap dance', trueRank: 70),
+  KinkCard(id: 'k071', text: 'Role play (light)', trueRank: 71),
+  KinkCard(id: 'k072', text: 'Sexy lingerie', trueRank: 72),
+  KinkCard(id: 'k073', text: 'Costumes', trueRank: 73),
+  KinkCard(id: 'k074', text: 'Mirror watching', trueRank: 74),
+  KinkCard(id: 'k075', text: 'Sex on the couch', trueRank: 75),
+  KinkCard(id: 'k076', text: 'Kitchen counter sex', trueRank: 76),
+  KinkCard(id: 'k077', text: 'Against the wall', trueRank: 77),
+  KinkCard(id: 'k078', text: 'Balcony/patio', trueRank: 78),
+  KinkCard(id: 'k079', text: 'Hotel room adventure', trueRank: 79),
+  KinkCard(id: 'k080', text: 'Car sex', trueRank: 80),
   
-  // Hot - Mixed popularity
-  PopCard(id: 'h1', text: 'Oral (receiving)', category: 'edgy', heatLevel: 4, globalRank: 10, popularityScore: 87.0, rankChange: 2),
-  PopCard(id: 'h2', text: 'Oral (giving)', category: 'edgy', heatLevel: 4, globalRank: 14, popularityScore: 82.0, rankChange: 0),
-  PopCard(id: 'h3', text: 'Using vibrators together', category: 'edgy', heatLevel: 4, globalRank: 26, popularityScore: 70.0, rankChange: 1),
-  PopCard(id: 'h4', text: '69 position', category: 'edgy', heatLevel: 4, globalRank: 48, popularityScore: 48.0, rankChange: -2),
-  PopCard(id: 'h5', text: 'Sex in the shower', category: 'edgy', heatLevel: 4, globalRank: 16, popularityScore: 80.0, rankChange: 3),
-  PopCard(id: 'h6', text: 'Rough sex', category: 'edgy', heatLevel: 4, globalRank: 33, popularityScore: 63.0, rankChange: 2),
-  PopCard(id: 'h7', text: 'Role play', category: 'edgy', heatLevel: 4, globalRank: 40, popularityScore: 56.0, rankChange: -1),
-  PopCard(id: 'h8', text: 'Tied up', category: 'edgy', heatLevel: 4, globalRank: 50, popularityScore: 46.0, rankChange: 0),
+  // SPICY (81-120) - Adventurous, requires communication
+  KinkCard(id: 'k081', text: 'Deep throat', trueRank: 81),
+  KinkCard(id: 'k082', text: 'Face sitting', trueRank: 82),
+  KinkCard(id: 'k083', text: 'Edging', trueRank: 83),
+  KinkCard(id: 'k084', text: 'Orgasm denial', trueRank: 84),
+  KinkCard(id: 'k085', text: 'Multiple orgasms', trueRank: 85),
+  KinkCard(id: 'k086', text: 'Squirting', trueRank: 86),
+  KinkCard(id: 'k087', text: 'Cream pie', trueRank: 87),
+  KinkCard(id: 'k088', text: 'Facial', trueRank: 88),
+  KinkCard(id: 'k089', text: 'Swallowing', trueRank: 89),
+  KinkCard(id: 'k090', text: 'Tit fucking', trueRank: 90),
+  KinkCard(id: 'k091', text: 'Prostate massage', trueRank: 91),
+  KinkCard(id: 'k092', text: 'Rimming', trueRank: 92),
+  KinkCard(id: 'k093', text: 'Anal play (fingers)', trueRank: 93),
+  KinkCard(id: 'k094', text: 'Butt plug', trueRank: 94),
+  KinkCard(id: 'k095', text: 'Anal beads', trueRank: 95),
+  KinkCard(id: 'k096', text: 'Anal sex', trueRank: 96),
+  KinkCard(id: 'k097', text: 'Double penetration (toys)', trueRank: 97),
+  KinkCard(id: 'k098', text: 'Bondage (light)', trueRank: 98),
+  KinkCard(id: 'k099', text: 'Handcuffs (real)', trueRank: 99),
+  KinkCard(id: 'k100', text: 'Rope bondage', trueRank: 100),
+  KinkCard(id: 'k101', text: 'Shibari', trueRank: 101),
+  KinkCard(id: 'k102', text: 'Blindfolded (full)', trueRank: 102),
+  KinkCard(id: 'k103', text: 'Sensory deprivation', trueRank: 103),
+  KinkCard(id: 'k104', text: 'Wax play', trueRank: 104),
+  KinkCard(id: 'k105', text: 'Impact play (spanking)', trueRank: 105),
+  KinkCard(id: 'k106', text: 'Paddle', trueRank: 106),
+  KinkCard(id: 'k107', text: 'Flogger', trueRank: 107),
+  KinkCard(id: 'k108', text: 'Riding crop', trueRank: 108),
+  KinkCard(id: 'k109', text: 'Nipple clamps', trueRank: 109),
+  KinkCard(id: 'k110', text: 'Cock ring', trueRank: 110),
+  KinkCard(id: 'k111', text: 'Collar and leash', trueRank: 111),
+  KinkCard(id: 'k112', text: 'Dom/sub dynamic', trueRank: 112),
+  KinkCard(id: 'k113', text: 'Praise kink', trueRank: 113),
+  KinkCard(id: 'k114', text: 'Degradation (consensual)', trueRank: 114),
+  KinkCard(id: 'k115', text: 'Daddy/Mommy kink', trueRank: 115),
+  KinkCard(id: 'k116', text: 'Brat taming', trueRank: 116),
+  KinkCard(id: 'k117', text: 'Aftercare', trueRank: 117),
+  KinkCard(id: 'k118', text: 'Safe words', trueRank: 118),
+  KinkCard(id: 'k119', text: 'Role play (intense)', trueRank: 119),
+  KinkCard(id: 'k120', text: 'Public teasing', trueRank: 120),
   
-  // Explicit - Lower popularity (more niche)
-  PopCard(id: 'e1', text: 'Light choking', category: 'edgy', heatLevel: 5, globalRank: 55, popularityScore: 41.0, rankChange: 4),
-  PopCard(id: 'e2', text: 'Anal play (fingers)', category: 'edgy', heatLevel: 5, globalRank: 58, popularityScore: 38.0, rankChange: -1),
-  PopCard(id: 'e3', text: 'Anal sex', category: 'edgy', heatLevel: 5, globalRank: 65, popularityScore: 31.0, rankChange: 0),
-  PopCard(id: 'e4', text: 'Threesome fantasy', category: 'edgy', heatLevel: 5, globalRank: 52, popularityScore: 44.0, rankChange: 2),
-  PopCard(id: 'e5', text: 'Actual threesome', category: 'edgy', heatLevel: 5, globalRank: 78, popularityScore: 18.0, rankChange: -3),
-  PopCard(id: 'e6', text: 'Sex in public', category: 'edgy', heatLevel: 5, globalRank: 72, popularityScore: 24.0, rankChange: 1),
-  PopCard(id: 'e7', text: 'Recording for private', category: 'edgy', heatLevel: 5, globalRank: 68, popularityScore: 28.0, rankChange: 0),
-  PopCard(id: 'e8', text: 'Using plugs', category: 'edgy', heatLevel: 5, globalRank: 62, popularityScore: 34.0, rankChange: 2),
-  PopCard(id: 'e9', text: 'Double penetration fantasy', category: 'edgy', heatLevel: 5, globalRank: 85, popularityScore: 11.0, rankChange: -2),
-  PopCard(id: 'e10', text: 'Exhibitionism', category: 'edgy', heatLevel: 5, globalRank: 75, popularityScore: 21.0, rankChange: 1),
+  // HOT (121-160) - Advanced, requires trust & experience
+  KinkCard(id: 'k121', text: 'Sex in public (risky)', trueRank: 121),
+  KinkCard(id: 'k122', text: 'Mile high club', trueRank: 122),
+  KinkCard(id: 'k123', text: 'Exhibitionism', trueRank: 123),
+  KinkCard(id: 'k124', text: 'Voyeurism', trueRank: 124),
+  KinkCard(id: 'k125', text: 'Recording (private)', trueRank: 125),
+  KinkCard(id: 'k126', text: 'Sex tape', trueRank: 126),
+  KinkCard(id: 'k127', text: 'Remote control vibrator (public)', trueRank: 127),
+  KinkCard(id: 'k128', text: 'Glory hole fantasy', trueRank: 128),
+  KinkCard(id: 'k129', text: 'Threesome fantasy', trueRank: 129),
+  KinkCard(id: 'k130', text: 'MFF threesome', trueRank: 130),
+  KinkCard(id: 'k131', text: 'MMF threesome', trueRank: 131),
+  KinkCard(id: 'k132', text: 'Cuckolding fantasy', trueRank: 132),
+  KinkCard(id: 'k133', text: 'Hotwife', trueRank: 133),
+  KinkCard(id: 'k134', text: 'Swinging (soft swap)', trueRank: 134),
+  KinkCard(id: 'k135', text: 'Swinging (full swap)', trueRank: 135),
+  KinkCard(id: 'k136', text: 'Open relationship', trueRank: 136),
+  KinkCard(id: 'k137', text: 'Polyamory', trueRank: 137),
+  KinkCard(id: 'k138', text: 'Unicorn hunting', trueRank: 138),
+  KinkCard(id: 'k139', text: 'Sex club visit', trueRank: 139),
+  KinkCard(id: 'k140', text: 'Dungeon experience', trueRank: 140),
+  KinkCard(id: 'k141', text: 'Pegging', trueRank: 141),
+  KinkCard(id: 'k142', text: 'Strap-on', trueRank: 142),
+  KinkCard(id: 'k143', text: 'Double-sided dildo', trueRank: 143),
+  KinkCard(id: 'k144', text: 'Fucking machine', trueRank: 144),
+  KinkCard(id: 'k145', text: 'Sex swing', trueRank: 145),
+  KinkCard(id: 'k146', text: 'Suspension bondage', trueRank: 146),
+  KinkCard(id: 'k147', text: 'Spreader bar', trueRank: 147),
+  KinkCard(id: 'k148', text: 'Ball gag', trueRank: 148),
+  KinkCard(id: 'k149', text: 'Chastity cage', trueRank: 149),
+  KinkCard(id: 'k150', text: 'Orgasm torture', trueRank: 150),
+  KinkCard(id: 'k151', text: 'Femdom', trueRank: 151),
+  KinkCard(id: 'k152', text: 'Findom', trueRank: 152),
+  KinkCard(id: 'k153', text: 'Foot worship', trueRank: 153),
+  KinkCard(id: 'k154', text: 'Foot job', trueRank: 154),
+  KinkCard(id: 'k155', text: 'Body worship', trueRank: 155),
+  KinkCard(id: 'k156', text: 'Free use', trueRank: 156),
+  KinkCard(id: 'k157', text: 'CNC', trueRank: 157),
+  KinkCard(id: 'k158', text: 'Breeding kink', trueRank: 158),
+  KinkCard(id: 'k159', text: 'Impregnation fantasy', trueRank: 159),
+  KinkCard(id: 'k160', text: 'Lactation', trueRank: 160),
+  
+  // HARDCORE (161-200) - Extreme, niche, requires expertise
+  KinkCard(id: 'k161', text: 'Gang bang fantasy', trueRank: 161),
+  KinkCard(id: 'k162', text: 'Bukkake', trueRank: 162),
+  KinkCard(id: 'k163', text: 'Double penetration (real)', trueRank: 163),
+  KinkCard(id: 'k164', text: 'Fisting', trueRank: 164),
+  KinkCard(id: 'k165', text: 'Sounding', trueRank: 165),
+  KinkCard(id: 'k166', text: 'CBT', trueRank: 166),
+  KinkCard(id: 'k167', text: 'Ball stretcher', trueRank: 167),
+  KinkCard(id: 'k168', text: 'Electro play', trueRank: 168),
+  KinkCard(id: 'k169', text: 'Violet wand', trueRank: 169),
+  KinkCard(id: 'k170', text: 'Needle play', trueRank: 170),
+  KinkCard(id: 'k171', text: 'Blood play', trueRank: 171),
+  KinkCard(id: 'k172', text: 'Knife play', trueRank: 172),
+  KinkCard(id: 'k173', text: 'Fire play', trueRank: 173),
+  KinkCard(id: 'k174', text: 'Breath play', trueRank: 174),
+  KinkCard(id: 'k175', text: 'Choking (intense)', trueRank: 175),
+  KinkCard(id: 'k176', text: 'Face slapping', trueRank: 176),
+  KinkCard(id: 'k177', text: 'Spitting', trueRank: 177),
+  KinkCard(id: 'k178', text: 'Golden shower', trueRank: 178),
+  KinkCard(id: 'k179', text: 'Scat', trueRank: 179),
+  KinkCard(id: 'k180', text: 'Enema', trueRank: 180),
+  KinkCard(id: 'k181', text: 'Medical play', trueRank: 181),
+  KinkCard(id: 'k182', text: 'Speculum', trueRank: 182),
+  KinkCard(id: 'k183', text: 'Age play', trueRank: 183),
+  KinkCard(id: 'k184', text: 'Pet play', trueRank: 184),
+  KinkCard(id: 'k185', text: 'Pony play', trueRank: 185),
+  KinkCard(id: 'k186', text: 'Puppy play', trueRank: 186),
+  KinkCard(id: 'k187', text: 'Furry', trueRank: 187),
+  KinkCard(id: 'k188', text: 'Latex/rubber', trueRank: 188),
+  KinkCard(id: 'k189', text: 'Gimp suit', trueRank: 189),
+  KinkCard(id: 'k190', text: 'Mummification', trueRank: 190),
+  KinkCard(id: 'k191', text: 'Sensory isolation', trueRank: 191),
+  KinkCard(id: 'k192', text: 'Total power exchange', trueRank: 192),
+  KinkCard(id: 'k193', text: '24/7 D/s', trueRank: 193),
+  KinkCard(id: 'k194', text: 'Slave contract', trueRank: 194),
+  KinkCard(id: 'k195', text: 'Humiliation (public)', trueRank: 195),
+  KinkCard(id: 'k196', text: 'Forced feminization', trueRank: 196),
+  KinkCard(id: 'k197', text: 'Sissy training', trueRank: 197),
+  KinkCard(id: 'k198', text: 'Objectification', trueRank: 198),
+  KinkCard(id: 'k199', text: 'Human furniture', trueRank: 199),
+  KinkCard(id: 'k200', text: 'Edge play (extreme)', trueRank: 200),
 ];

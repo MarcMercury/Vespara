@@ -1,5 +1,5 @@
 {
-  "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY && cp -r assets/images/drama_sutra build/web/assets/assets/images/",
+  "buildCommand": "flutter/bin/flutter build web --release --no-tree-shake-icons --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY",
   "outputDirectory": "build/web",
   "installCommand": "git clone https://github.com/flutter/flutter.git -b stable --depth 1 && flutter/bin/flutter config --enable-web && flutter/bin/flutter pub get",
   "framework": null,

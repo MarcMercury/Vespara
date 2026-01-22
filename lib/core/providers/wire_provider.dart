@@ -112,6 +112,9 @@ class WireNotifier extends StateNotifier<WireState> {
   final SupabaseClient _supabase;
   final String _currentUserId;
   
+  /// Get the current user's ID
+  String get currentUserId => _currentUserId;
+  
   // Realtime subscriptions
   RealtimeChannel? _messagesChannel;
   RealtimeChannel? _typingChannel;
@@ -391,21 +394,21 @@ class WireNotifier extends StateNotifier<WireState> {
   /// Load messages for a conversation
   Future<void> loadMessages(String conversationId, {int limit = 50, String? before}) async {
     try {
-      var query = _supabase
+      final baseQuery = _supabase
           .from('messages')
           .select('''
             *,
             profiles:sender_id(display_name, avatar_url)
           ''')
-          .eq('conversation_id', conversationId)
+          .eq('conversation_id', conversationId);
+      
+      final filteredQuery = before != null
+          ? baseQuery.lt('created_at', before)
+          : baseQuery;
+      
+      final response = await filteredQuery
           .order('created_at', ascending: false)
           .limit(limit);
-      
-      if (before != null) {
-        query = query.lt('created_at', before);
-      }
-      
-      final response = await query;
       
       final messages = (response as List<dynamic>)
           .map((json) => WireMessage.fromJson(json as Map<String, dynamic>))

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/events.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -26,7 +26,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _events = MockDataProvider.groupEvents;
+    _events = []; // Will be loaded from database
   }
 
   @override
@@ -152,7 +152,8 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
   }
 
   Widget _buildMyEvents() {
-    final myEvents = _events.where((e) => e.hostId == 'demo-user-001').toList();
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final myEvents = _events.where((e) => e.hostId == currentUserId).toList();
     
     if (myEvents.isEmpty) {
       return _buildEmptyState(
@@ -931,7 +932,8 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
   }
 
   void _showInviteDialog(GroupEvent event) {
-    final contacts = ['Alex', 'Jordan', 'Casey', 'Morgan', 'Riley', 'Sam'];
+    // Empty contacts list - in production, fetch from database
+    final contacts = <String>[];
     final selected = <String>{};
     showModalBottomSheet(
       context: context,
@@ -949,19 +951,35 @@ class _GroupScreenState extends ConsumerState<GroupScreen> with SingleTickerProv
             children: [
               Text('Invite to ${event.title}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: contacts.map((name) => FilterChip(
-                  label: Text(name),
-                  selected: selected.contains(name),
-                  onSelected: (v) => setModalState(() => v ? selected.add(name) : selected.remove(name)),
-                  selectedColor: VesparaColors.glow.withOpacity(0.3),
-                  checkmarkColor: VesparaColors.glow,
-                  backgroundColor: VesparaColors.background,
-                  labelStyle: TextStyle(color: selected.contains(name) ? VesparaColors.glow : VesparaColors.primary),
-                )).toList(),
-              ),
+              if (contacts.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.people_outline, size: 48, color: VesparaColors.secondary.withOpacity(0.5)),
+                        const SizedBox(height: 12),
+                        Text('No connections yet', style: TextStyle(color: VesparaColors.secondary)),
+                        const SizedBox(height: 4),
+                        Text('Add connections to invite them', style: TextStyle(color: VesparaColors.secondary.withOpacity(0.7), fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: contacts.map((name) => FilterChip(
+                    label: Text(name),
+                    selected: selected.contains(name),
+                    onSelected: (v) => setModalState(() => v ? selected.add(name) : selected.remove(name)),
+                    selectedColor: VesparaColors.glow.withOpacity(0.3),
+                    checkmarkColor: VesparaColors.glow,
+                    backgroundColor: VesparaColors.background,
+                    labelStyle: TextStyle(color: selected.contains(name) ? VesparaColors.glow : VesparaColors.primary),
+                  )).toList(),
+                ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,

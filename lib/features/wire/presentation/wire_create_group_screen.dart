@@ -81,14 +81,8 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      // Use mock data if roster fetch fails
-      _connections = [
-        {'id': '1', 'connected_user': {'id': 'user1', 'name': 'Emma Wilson', 'avatar_url': null}},
-        {'id': '2', 'connected_user': {'id': 'user2', 'name': 'Sarah Chen', 'avatar_url': null}},
-        {'id': '3', 'connected_user': {'id': 'user3', 'name': 'Mike Johnson', 'avatar_url': null}},
-        {'id': '4', 'connected_user': {'id': 'user4', 'name': 'Alex Rivera', 'avatar_url': null}},
-        {'id': '5', 'connected_user': {'id': 'user5', 'name': 'Jordan Lee', 'avatar_url': null}},
-      ];
+      // No connections found - show empty state
+      _connections = [];
       setState(() {});
     }
   }
@@ -154,7 +148,7 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
     
     try {
       await ref.read(wireProvider.notifier).createGroup(
-        name: name,
+        groupName: name,
         description: _groupDescriptionController.text.trim().isNotEmpty 
             ? _groupDescriptionController.text.trim() 
             : null,

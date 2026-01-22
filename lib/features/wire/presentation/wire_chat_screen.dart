@@ -694,7 +694,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => WireGroupInfoScreen(conversation: widget.conversation),
+        builder: (_) => WireGroupInfoScreen(conversationId: widget.conversation.id),
       ),
     );
   }
@@ -805,7 +805,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
               onPressed: () => Navigator.pop(context, 'me'),
               child: const Text('Delete for me'),
             ),
-            if (message.senderId == ref.read(wireProvider)._currentUserId)
+            if (message.senderId == ref.read(wireProvider.notifier).currentUserId)
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, 'everyone'),
                 style: ElevatedButton.styleFrom(

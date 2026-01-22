@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/models/match.dart';
 import '../domain/models/chat.dart';
-import '../data/vespara_mock_data.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// MATCH STATE PROVIDER
@@ -56,11 +55,9 @@ class MatchState {
 
 /// Match state notifier for handling all match-related actions
 class MatchStateNotifier extends StateNotifier<MatchState> {
-  MatchStateNotifier() : super(MatchState(
-    matches: MockDataProvider.matches,
-    conversations: {
-      for (var c in MockDataProvider.conversations) c.matchId: c
-    },
+  MatchStateNotifier() : super(const MatchState(
+    matches: [],
+    conversations: {},
   ));
 
   /// Like a profile from Discover

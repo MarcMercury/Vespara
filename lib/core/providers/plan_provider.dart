@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/models/plan_event.dart';
 import '../domain/models/roster_match.dart';
 import '../domain/models/vespara_event.dart';
-import '../data/mock_data_provider.dart';
 import 'events_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -135,10 +134,9 @@ class PlanNotifier extends StateNotifier<PlanState> {
   void _initialize() {
     loadEvents();
     loadExperienceEvents();
-    _loadMockAiSuggestions();
   }
 
-  /// Load events from database or mock data
+  /// Load events from database
   Future<void> loadEvents() async {
     state = state.copyWith(isLoading: true);
     
@@ -159,16 +157,16 @@ class PlanNotifier extends StateNotifier<PlanState> {
         
         state = state.copyWith(events: events, isLoading: false);
       } else {
-        // Use mock data
+        // No user - return empty
         state = state.copyWith(
-          events: _getMockEvents(),
+          events: [],
           isLoading: false,
         );
       }
     } catch (e) {
-      // Fall back to mock data
+      // Return empty on error
       state = state.copyWith(
-        events: _getMockEvents(),
+        events: [],
         isLoading: false,
       );
     }
@@ -211,15 +209,15 @@ class PlanNotifier extends StateNotifier<PlanState> {
         
         state = state.copyWith(experienceEvents: experienceEvents);
       } else {
-        // Use mock experience events
+        // No user - return empty
         state = state.copyWith(
-          experienceEvents: _getMockExperienceEvents(),
+          experienceEvents: [],
         );
       }
     } catch (e) {
-      // Fall back to mock data
+      // Return empty on error
       state = state.copyWith(
-        experienceEvents: _getMockExperienceEvents(),
+        experienceEvents: [],
       );
     }
   }
@@ -228,7 +226,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   PlanEvent _convertVesparaEventToPlanEvent(Map<String, dynamic> json, bool isHosting) {
     return PlanEvent(
       id: 'exp-${json['id']}',
-      userId: _supabase?.auth.currentUser?.id ?? 'mock-user',
+      userId: _supabase?.auth.currentUser?.id ?? '',
       title: json['title'] as String,
       description: json['description'] as String?,
       startTime: DateTime.parse(json['start_time'] as String),
@@ -262,7 +260,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
           events: [...state.events, newEvent],
         );
       } else {
-        // Mock: just add to local state
+        // No user: add to local state only
         state = state.copyWith(
           events: [...state.events, event],
         );
@@ -326,7 +324,6 @@ class PlanNotifier extends StateNotifier<PlanState> {
     
     try {
       // In production, this would call an AI endpoint
-      // For now, simulate AI processing with mock data
       await Future.delayed(const Duration(seconds: 1));
       
       final suggestions = await _generateAiSuggestions(
@@ -353,7 +350,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
   Future<void> acceptSuggestion(AiDateSuggestion suggestion, DateTime selectedTime) async {
     final event = PlanEvent(
       id: 'event-${DateTime.now().millisecondsSinceEpoch}',
-      userId: _supabase?.auth.currentUser?.id ?? 'mock-user',
+      userId: _supabase?.auth.currentUser?.id ?? '',
       title: 'Date with ${suggestion.connection.name}',
       startTime: selectedTime,
       endTime: selectedTime.add(const Duration(hours: 2)),
@@ -422,187 +419,42 @@ class PlanNotifier extends StateNotifier<PlanState> {
     DateTime? preferredDate,
     List<String>? preferredConnectionIds,
   }) async {
-    // Get connections from mock data
-    final connections = MockDataProvider.rosterMatches
-        .where((m) => m.stage == PipelineStage.activeRotation || m.stage == PipelineStage.bench)
-        .take(5)
-        .toList();
-    
-    final now = DateTime.now();
+    // In production, fetch matches from the database
+    // For now, return empty suggestions until real data is available
     final suggestions = <AiDateSuggestion>[];
     
-    for (int i = 0; i < connections.length && i < 3; i++) {
-      final match = connections[i];
-      
-      // Generate suggested times based on "AI analysis"
-      final suggestedTimes = <DateTime>[
-        preferredDate ?? now.add(Duration(days: i + 1, hours: 19)),
-        now.add(Duration(days: i + 2, hours: 20)),
-        now.add(Duration(days: i + 4, hours: 18)),
-      ];
-      
-      suggestions.add(AiDateSuggestion(
-        id: 'suggestion-${match.id}',
-        connection: EventConnection(
-          id: match.id,
-          name: match.name,
-          avatarUrl: match.avatarUrl,
-          pipeline: match.pipelineValue,
-        ),
-        suggestedTimes: suggestedTimes,
-        reason: _generateSuggestionReason(match),
-        compatibilityScore: match.momentumScore,
-        sharedInterest: match.interests.isNotEmpty ? match.interests.first : null,
-        isHotMatch: match.momentumScore > 0.7,
-      ));
-    }
+    // TODO: Implement real AI suggestion generation from database
+    // This would query roster_matches table for active rotation and bench matches
     
     return suggestions;
   }
 
-  String _generateSuggestionReason(RosterMatch match) {
+  String _generateSuggestionReason(String matchId, List<String> interests) {
     final reasons = [
       'You\'ve been chatting frequently and both seem available this week',
       'High compatibility score and overlapping availability windows',
       'Momentum is strong - time to take it offline!',
-      'Both of you mentioned interest in ${match.interests.isNotEmpty ? match.interests.first : "connecting"}',
+      'Both of you mentioned interest in ${interests.isNotEmpty ? interests.first : "connecting"}',
       'Your schedules align well for the upcoming weekend',
     ];
-    return reasons[match.id.hashCode % reasons.length];
+    return reasons[matchId.hashCode % reasons.length];
   }
 
-  void _loadMockAiSuggestions() async {
+  void _loadAiSuggestions() async {
     // Delay to simulate loading
     await Future.delayed(const Duration(milliseconds: 500));
     await findMeADate();
   }
 
-  List<PlanEvent> _getMockEvents() {
-    final now = DateTime.now();
-    final userId = _supabase?.auth.currentUser?.id ?? 'mock-user';
-    
-    return [
-      PlanEvent(
-        id: 'plan-1',
-        userId: userId,
-        title: 'Drinks at The Roosevelt',
-        startTime: now.add(const Duration(days: 1, hours: 19)),
-        endTime: now.add(const Duration(days: 1, hours: 21)),
-        location: 'The Roosevelt Bar',
-        connections: [
-          const EventConnection(id: 'c1', name: 'Sarah', pipeline: 'active'),
-        ],
-        certainty: EventCertainty.locked,
-        createdAt: now.subtract(const Duration(days: 2)),
-      ),
-      PlanEvent(
-        id: 'plan-2',
-        userId: userId,
-        title: 'Coffee catch-up',
-        startTime: now.add(const Duration(days: 3, hours: 10)),
-        endTime: now.add(const Duration(days: 3, hours: 11, minutes: 30)),
-        location: 'Blue Bottle Coffee',
-        connections: [
-          const EventConnection(id: 'c2', name: 'Mike', pipeline: 'bench'),
-        ],
-        certainty: EventCertainty.likely,
-        createdAt: now.subtract(const Duration(days: 1)),
-      ),
-      PlanEvent(
-        id: 'plan-3',
-        userId: userId,
-        title: 'Dinner date',
-        startTime: now.add(const Duration(days: 5, hours: 19, minutes: 30)),
-        endTime: now.add(const Duration(days: 5, hours: 22)),
-        location: 'Bestia',
-        connections: [
-          const EventConnection(id: 'c3', name: 'Emma', pipeline: 'active'),
-        ],
-        certainty: EventCertainty.tentative,
-        createdAt: now.subtract(const Duration(hours: 12)),
-      ),
-      PlanEvent(
-        id: 'plan-4',
-        userId: userId,
-        title: 'Group hangout',
-        startTime: now.add(const Duration(days: 7, hours: 20)),
-        endTime: now.add(const Duration(days: 7, hours: 23)),
-        location: 'TBD',
-        connections: [
-          const EventConnection(id: 'c4', name: 'Alex', pipeline: 'active'),
-          const EventConnection(id: 'c5', name: 'Jordan', pipeline: 'bench'),
-          const EventConnection(id: 'c6', name: 'Taylor', pipeline: 'incoming'),
-        ],
-        certainty: EventCertainty.exploring,
-        createdAt: now,
-      ),
-      PlanEvent(
-        id: 'plan-5',
-        userId: userId,
-        title: 'Weekend getaway?',
-        startTime: now.add(const Duration(days: 14)),
-        isAllDay: true,
-        connections: [
-          const EventConnection(id: 'c3', name: 'Emma', pipeline: 'active'),
-        ],
-        certainty: EventCertainty.wishful,
-        createdAt: now,
-      ),
-    ];
+  List<PlanEvent> _getEmptyEvents() {
+    // Return empty list - no mock data
+    return [];
   }
 
-  /// Mock experience events (from Experience page)
-  List<PlanEvent> _getMockExperienceEvents() {
-    final now = DateTime.now();
-    final userId = _supabase?.auth.currentUser?.id ?? 'mock-user';
-    
-    return [
-      PlanEvent(
-        id: 'exp-1',
-        userId: userId,
-        title: 'Sunset Rooftop Social',
-        description: 'A chill evening with good vibes and great views',
-        startTime: now.add(const Duration(days: 2, hours: 18)),
-        endTime: now.add(const Duration(days: 2, hours: 22)),
-        location: 'The Standard Rooftop',
-        connections: [],
-        certainty: EventCertainty.locked,
-        isFromExperience: true,
-        experienceHostName: 'Alex',
-        isHosting: false,
-        createdAt: now.subtract(const Duration(days: 5)),
-      ),
-      PlanEvent(
-        id: 'exp-2',
-        userId: userId,
-        title: 'Wine & Paint Night',
-        description: 'Get creative while sipping on some vino',
-        startTime: now.add(const Duration(days: 4, hours: 19)),
-        endTime: now.add(const Duration(days: 4, hours: 22)),
-        location: 'Paint Nite Studio',
-        connections: [],
-        certainty: EventCertainty.locked,
-        isFromExperience: true,
-        experienceHostName: 'You',
-        isHosting: true,
-        createdAt: now.subtract(const Duration(days: 3)),
-      ),
-      PlanEvent(
-        id: 'exp-3',
-        userId: userId,
-        title: 'Speakeasy Saturday',
-        description: 'Secret location revealed 1 hour before',
-        startTime: now.add(const Duration(days: 6, hours: 21)),
-        endTime: now.add(const Duration(days: 6, hours: 24)),
-        location: 'TBA - Speakeasy',
-        connections: [],
-        certainty: EventCertainty.locked,
-        isFromExperience: true,
-        experienceHostName: 'Jordan',
-        isHosting: false,
-        createdAt: now.subtract(const Duration(days: 1)),
-      ),
-    ];
+  /// Empty experience events - to be loaded from database
+  List<PlanEvent> _getExperienceEvents() {
+    // Return empty list - no mock data
+    return [];
   }
 }
 
@@ -618,15 +470,9 @@ final planProvider = StateNotifierProvider<PlanNotifier, PlanState>((ref) {
 
 /// Get connections available for planning
 final planConnectionsProvider = FutureProvider<List<EventConnection>>((ref) async {
-  // Get from roster matches
-  final matches = MockDataProvider.rosterMatches;
-  
-  return matches.map((m) => EventConnection(
-    id: m.id,
-    name: m.name,
-    avatarUrl: m.avatarUrl,
-    pipeline: m.pipelineValue,
-  )).toList();
+  // TODO: Fetch real matches from database
+  // For now return empty list until real data is available
+  return [];
 });
 
 /// Get AI suggestions

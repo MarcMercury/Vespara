@@ -213,7 +213,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    conversation.name,
+                    conversation.groupName ?? 'Unnamed Group',
                     style: const TextStyle(
                       color: VesparaColors.primary,
                       fontSize: 24,
@@ -290,13 +290,13 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            conversation.description ?? 'No description',
+            conversation.groupDescription ?? 'No description',
             style: TextStyle(
-              color: conversation.description != null 
+              color: conversation.groupDescription != null 
                   ? VesparaColors.primary 
                   : VesparaColors.secondary,
               fontSize: 14,
-              fontStyle: conversation.description == null 
+              fontStyle: conversation.groupDescription == null 
                   ? FontStyle.italic 
                   : FontStyle.normal,
             ),
@@ -620,7 +620,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
   // ══════════════════════════════════════════════════════════════════════════
 
   void _startEditingName(WireConversation conversation) {
-    _editNameController.text = conversation.name;
+    _editNameController.text = conversation.groupName ?? '';
     setState(() => _isEditingName = true);
   }
 
@@ -731,7 +731,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
   }
 
   void _showEditDescriptionDialog(WireConversation conversation) {
-    _editDescriptionController.text = conversation.description ?? '';
+    _editDescriptionController.text = conversation.groupDescription ?? '';
     
     showDialog(
       context: context,
@@ -822,7 +822,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-                await ref.read(wireProvider.notifier).makeParticipantAdmin(
+                await ref.read(wireProvider.notifier).makeAdmin(
                   widget.conversationId,
                   participant.userId,
                 );

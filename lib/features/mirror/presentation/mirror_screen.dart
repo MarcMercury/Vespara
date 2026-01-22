@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/analytics.dart';
 import '../../../core/providers/app_providers.dart';
@@ -45,8 +44,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
     // Analytics will be loaded via provider
   }
   
-  UserAnalytics get _analytics {
-    return _cachedAnalytics ?? MockDataProvider.analytics;
+  UserAnalytics? get _analytics {
+    return _cachedAnalytics;
   }
   
   void _navigateToEditProfile(UserProfile profile) {
@@ -1200,8 +1199,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
         ]),
         const SizedBox(height: 16),
         _buildSettingsSection('Account', [
-          _buildSettingTile('Subscription', 'Vespara Plus', Icons.star_outline, () => _showSubscriptionDialog()),
-          _buildSettingTile('Email', 'demo@vespara.app', Icons.email_outlined, () => _showEditEmailDialog()),
+          _buildSettingTile('Subscription', 'Free', Icons.star_outline, () => _showSubscriptionDialog()),
+          _buildSettingTile('Email', ref.watch(userProfileProvider).valueOrNull?.email ?? 'Not set', Icons.email_outlined, () => _showEditEmailDialog()),
           _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined, () => _showEditPhoneDialog()),
         ]),
         const SizedBox(height: 24),
@@ -1503,7 +1502,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   }
 
   void _showEditEmailDialog() {
-    final controller = TextEditingController(text: 'demo@vespara.app');
+    final currentEmail = ref.read(userProfileProvider).valueOrNull?.email ?? '';
+    final controller = TextEditingController(text: currentEmail);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

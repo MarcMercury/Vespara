@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/models/user_profile.dart';
-import '../data/vespara_mock_data.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// CONNECTION STATE PROVIDER
@@ -172,82 +171,11 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
   ConnectionStateNotifier() : super(_initialState());
 
   static VesparaConnectionState _initialState() {
-    // Create mock events and connections
-    final now = DateTime.now();
-    
-    final mockEvents = [
-      VesparaEvent(
-        id: 'event-1',
-        hostId: 'host-1',
-        hostName: 'Club Euphoria',
-        title: 'Friday Night Social',
-        description: 'Meet new people in a relaxed atmosphere. Drinks, music, and good vibes.',
-        venue: 'Club Euphoria',
-        address: '123 Downtown Ave',
-        startTime: now.subtract(const Duration(days: 3)),
-        endTime: now.subtract(const Duration(days: 3)).add(const Duration(hours: 4)),
-        isPublic: true,
-        maxAttendees: 50,
-        attendees: [
-          EventAttendee(userId: 'user-1', name: 'Jordan', avatar: null, joinedAt: now.subtract(const Duration(days: 5))),
-          EventAttendee(userId: 'user-2', name: 'Taylor', avatar: null, joinedAt: now.subtract(const Duration(days: 4))),
-          EventAttendee(userId: 'user-3', name: 'Morgan', avatar: null, joinedAt: now.subtract(const Duration(days: 4))),
-          EventAttendee(userId: 'user-4', name: 'Casey', avatar: null, joinedAt: now.subtract(const Duration(days: 3))),
-        ],
-        createdAt: now.subtract(const Duration(days: 10)),
-      ),
-      VesparaEvent(
-        id: 'event-2',
-        hostId: 'host-2',
-        hostName: 'Vespara Official',
-        title: 'Singles Mixer - Rooftop Edition',
-        description: 'Exclusive rooftop party for Vespara members. Amazing views, great music, and even better company.',
-        venue: 'Sky Lounge',
-        address: '456 High Street, Penthouse',
-        startTime: now.add(const Duration(days: 5)),
-        endTime: now.add(const Duration(days: 5)).add(const Duration(hours: 5)),
-        isPublic: true,
-        maxAttendees: 100,
-        attendees: [
-          EventAttendee(userId: 'user-5', name: 'Riley', avatar: null, joinedAt: now.subtract(const Duration(days: 1))),
-        ],
-        createdAt: now.subtract(const Duration(days: 7)),
-      ),
-      VesparaEvent(
-        id: 'event-3',
-        hostId: 'current-user',
-        hostName: 'You',
-        title: 'Wine & Jazz Night',
-        description: 'Intimate gathering for wine lovers. BYOB optional, jazz mandatory.',
-        venue: 'My Place',
-        address: 'Private Location',
-        startTime: now.add(const Duration(days: 10)),
-        isPublic: false,
-        maxAttendees: 12,
-        attendees: [],
-        createdAt: now.subtract(const Duration(days: 2)),
-      ),
-      VesparaEvent(
-        id: 'event-4',
-        hostId: 'host-3',
-        hostName: 'The Social Club',
-        title: 'Speed Dating 2.0',
-        description: 'Modern speed dating with a twist. AI-matched conversations, themed rounds, and guaranteed connections.',
-        venue: 'The Social Club',
-        address: '789 Connection Blvd',
-        startTime: now.add(const Duration(days: 2)),
-        endTime: now.add(const Duration(days: 2)).add(const Duration(hours: 3)),
-        isPublic: true,
-        maxAttendees: 40,
-        attendees: [],
-        createdAt: now.subtract(const Duration(days: 5)),
-      ),
-    ];
-
-    return VesparaConnectionState(
-      events: mockEvents,
+    // Start with empty state - data will be loaded from database
+    return const VesparaConnectionState(
+      events: [],
       connections: [],
-      connectedUserIds: {'match-1', 'match-2', 'match-3'}, // Already connected from matches
+      connectedUserIds: {},
     );
   }
 

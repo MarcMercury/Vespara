@@ -42,6 +42,12 @@ class VesparaColors {
   /// 🔴 RED - Erotic & Explicit
   static const Color tagsRed = Color(0xFFD32F2F);
   
+  /// 🔵 BLUE - Communication/Sharing
+  static const Color tagsBlue = Color(0xFF2196F3);
+  
+  /// 💜 PURPLE - Media/Gallery
+  static const Color tagsPurple = Color(0xFF9C27B0);
+  
   // ═══════════════════════════════════════════════════════════════════════════
   // UTILITY COLORS
   // ═══════════════════════════════════════════════════════════════════════════

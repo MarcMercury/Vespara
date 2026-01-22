@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/chat.dart';
 import '../../../core/providers/match_state_provider.dart';
 
@@ -29,12 +28,9 @@ class _WireScreenState extends ConsumerState<WireScreen> {
   }
 
   List<ChatConversation> get _conversations {
-    // Combine mock data with global state conversations
+    // Get conversations from global state only
     final stateConversations = ref.watch(allConversationsProvider);
-    if (stateConversations.isNotEmpty) {
-      return stateConversations;
-    }
-    return MockDataProvider.conversations;
+    return stateConversations;
   }
 
   @override
@@ -436,9 +432,9 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
     
     final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId == null) {
-      // Fall back to mock data if not logged in
+      // Not logged in - show empty
       setState(() {
-        _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
+        _messages = [];
         _isLoading = false;
       });
       return;
@@ -461,23 +457,15 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
         createdAt: DateTime.parse(json['created_at'] as String),
       )).toList();
       
-      if (dbMessages.isEmpty) {
-        // No DB messages, use mock data for demo
-        setState(() {
-          _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _messages = dbMessages;
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _messages = dbMessages;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint('Error loading messages: $e');
-      // Fall back to mock data on error
+      // Show empty on error
       setState(() {
-        _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
+        _messages = [];
         _isLoading = false;
       });
     }

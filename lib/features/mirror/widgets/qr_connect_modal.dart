@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/connection_state_provider.dart';
+import '../../../core/providers/app_providers.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// QR CONNECT MODAL
@@ -204,21 +205,32 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Alex Morgan',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: VesparaColors.primary,
-                  ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final profile = ref.watch(userProfileProvider).valueOrNull;
+                    return Text(
+                      profile?.displayName ?? 'Your Name',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.primary,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '@alex_vespara',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: VesparaColors.secondary,
-                  ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final user = ref.watch(currentUserProvider).valueOrNull;
+                    final username = user?.email?.split('@').first ?? 'user';
+                    return Text(
+                      '@$username',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: VesparaColors.secondary,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -428,7 +440,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
     );
   }
 
-  /// Simulate a QR scan (for demo purposes)
+  /// Simulate a QR scan (for demo purposes - remove in production)
   void _simulateScan() async {
     if (_isScanning) return;
 
@@ -441,16 +453,17 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
     if (mounted) {
       HapticFeedback.heavyImpact();
       
-      // Add the connection
-      ref.read(connectionStateProvider.notifier).connectViaQr(
-        'scanned-user-${DateTime.now().millisecondsSinceEpoch}',
-        'Jordan Rivers',
-        null,
+      // In production, this would decode the scanned QR to get real user data
+      // For now, show a message that real scanning requires camera permission
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('QR scanning requires camera integration'),
+          backgroundColor: VesparaColors.surface,
+        ),
       );
 
       setState(() {
         _isScanning = false;
-        _showSuccess = true;
       });
     }
   }
@@ -522,7 +535,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
           const SizedBox(height: 8),
 
           Text(
-            'Jordan Rivers',
+            _scannedResult ?? 'New Connection',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,

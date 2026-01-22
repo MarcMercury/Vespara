@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE SHREDDER - Module 7
@@ -18,13 +17,13 @@ class ShredderScreen extends ConsumerStatefulWidget {
 }
 
 class _ShredderScreenState extends ConsumerState<ShredderScreen> {
-  late List<Map<String, dynamic>> _suggestions;
+  List<Map<String, dynamic>> _suggestions = [];
   final List<Map<String, dynamic>> _shreddedHistory = [];
   
   @override
   void initState() {
     super.initState();
-    _suggestions = MockDataProvider.shredSuggestions;
+    // Suggestions will be loaded from database/AI
   }
 
   @override

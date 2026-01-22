@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/models/group.dart';
 import '../domain/models/match.dart';
-import '../data/vespara_mock_data.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// GROUPS PROVIDER
@@ -464,14 +463,9 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
 
   /// Get users available to invite (from matches)
   List<Match> getInvitableUsers(String groupId) {
-    // Get current group members
-    final group = state.groups.firstWhere(
-      (g) => g.id == groupId,
-      orElse: () => throw Exception('Group not found'),
-    );
-    
-    // In real implementation, filter out existing members
-    return MockDataProvider.matches;
+    // TODO: Get matches from database
+    // For now return empty list until real data is available
+    return [];
   }
 
   /// Mark notification as read

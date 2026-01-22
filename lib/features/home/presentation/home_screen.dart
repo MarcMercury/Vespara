@@ -5,13 +5,12 @@ import 'dart:math' as math;
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/app_providers.dart';
-import '../../../core/data/vespara_mock_data.dart';
 
 // Import all 8 module screens
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../discover/presentation/discover_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
-import '../../wire/presentation/wire_screen.dart';
+import '../../wire/presentation/wire_home_screen.dart';
 import '../../planner/presentation/planner_screen.dart';
 import '../../events/presentation/events_home_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
@@ -110,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     MirrorScreen(),      // 0: Mirror - Profile/Analytics
     DiscoverScreen(),    // 1: Discover - Swipe Marketplace
     NestScreen(),        // 2: Nest - CRM Roster
-    WireScreen(),        // 3: Wire - Chat
+    WireHomeScreen(),    // 3: Wire - WhatsApp-Style Chat
     PlannerScreen(),     // 4: Planner - Calendar
     EventsHomeScreen(),  // 5: Group - Partiful-Style Events
     ShredderScreen(),    // 6: Shredder - AI Cleanup
@@ -180,7 +179,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final analyticsAsync = ref.watch(userAnalyticsProvider);
-    final analytics = analyticsAsync.valueOrNull ?? MockDataProvider.analytics;
+    final analytics = analyticsAsync.valueOrNull;
     
     return Scaffold(
       backgroundColor: VesparaColors.background,
