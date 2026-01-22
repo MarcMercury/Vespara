@@ -162,6 +162,11 @@ class PlanEvent extends Equatable {
   final bool isCancelled;
   final bool isCompleted;
   
+  // Experience event fields (auto-synced from Experience page)
+  final bool isFromExperience;
+  final String? experienceHostName;
+  final bool isHosting;
+  
   // Metadata
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -188,6 +193,9 @@ class PlanEvent extends Equatable {
     this.conflictReason,
     this.isCancelled = false,
     this.isCompleted = false,
+    this.isFromExperience = false,
+    this.experienceHostName,
+    this.isHosting = false,
     required this.createdAt,
     this.updatedAt,
   });
@@ -220,6 +228,9 @@ class PlanEvent extends Equatable {
       conflictReason: json['conflict_reason'] as String?,
       isCancelled: json['is_cancelled'] as bool? ?? false,
       isCompleted: json['is_completed'] as bool? ?? false,
+      isFromExperience: json['is_from_experience'] as bool? ?? false,
+      experienceHostName: json['experience_host_name'] as String?,
+      isHosting: json['is_hosting'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
@@ -248,6 +259,9 @@ class PlanEvent extends Equatable {
     'conflict_reason': conflictReason,
     'is_cancelled': isCancelled,
     'is_completed': isCompleted,
+    'is_from_experience': isFromExperience,
+    'experience_host_name': experienceHostName,
+    'is_hosting': isHosting,
   };
 
   /// Formatted date for display
@@ -321,6 +335,9 @@ class PlanEvent extends Equatable {
     String? conflictReason,
     bool? isCancelled,
     bool? isCompleted,
+    bool? isFromExperience,
+    String? experienceHostName,
+    bool? isHosting,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -346,6 +363,9 @@ class PlanEvent extends Equatable {
       conflictReason: conflictReason ?? this.conflictReason,
       isCancelled: isCancelled ?? this.isCancelled,
       isCompleted: isCompleted ?? this.isCompleted,
+      isFromExperience: isFromExperience ?? this.isFromExperience,
+      experienceHostName: experienceHostName ?? this.experienceHostName,
+      isHosting: isHosting ?? this.isHosting,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

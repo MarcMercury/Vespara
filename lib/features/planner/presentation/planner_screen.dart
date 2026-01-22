@@ -130,10 +130,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         children: [
           _buildStatItem('This Week', state.thisWeekEvents.length.toString(), Icons.event),
           Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildStatItem('Experiences', state.experienceEventCount.toString(), Icons.celebration,
+              color: const Color(0xFFEC4899)),
+          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
           _buildStatItem('Locked', state.confirmedCount.toString(), Icons.lock, 
               color: EventCertainty.locked.color),
-          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildStatItem('Pending', state.tentativeCount.toString(), Icons.pending),
           Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
           _buildStatItem('AI Ideas', state.aiSuggestions.length.toString(), Icons.auto_awesome,
               color: VesparaColors.glow),
@@ -389,14 +390,46 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        event.connectionNames,
+                        event.isFromExperience 
+                            ? (event.isHosting 
+                                ? 'Hosting this Experience' 
+                                : 'Hosted by ${event.experienceHostName ?? "Someone"}')
+                            : event.connectionNames,
                         style: TextStyle(fontSize: 13, color: VesparaColors.glow),
                       ),
                     ],
                   ),
                 ),
-                // Certainty badge
-                Container(
+                // Certainty badge or Experience badge
+                event.isFromExperience
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF6366F1),
+                              const Color(0xFFEC4899),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.celebration, size: 10, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              'EXPERIENCE',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: event.certainty.color.withOpacity(0.15),

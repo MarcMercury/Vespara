@@ -3,8 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/models/plan_event.dart';
 import '../domain/models/roster_match.dart';
+import '../domain/models/vespara_event.dart';
 import '../data/vespara_mock_data.dart';
 import '../data/mock_data_provider.dart';
+import 'events_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// PLAN PROVIDER
@@ -15,6 +17,7 @@ import '../data/mock_data_provider.dart';
 /// State class for Plan
 class PlanState {
   final List<PlanEvent> events;
+  final List<PlanEvent> experienceEvents; // Events from Experience page (auto-synced)
   final List<AiDateSuggestion> aiSuggestions;
   final List<TimeSlot> userAvailability;
   final bool isLoading;
@@ -28,6 +31,7 @@ class PlanState {
 
   const PlanState({
     this.events = const [],
+    this.experienceEvents = const [],
     this.aiSuggestions = const [],
     this.userAvailability = const [],
     this.isLoading = false,
@@ -38,8 +42,16 @@ class PlanState {
     this.lastSyncTime,
   });
 
+  /// All events combined (user-created + experience events)
+  List<PlanEvent> get allEvents {
+    final combined = [...events, ...experienceEvents];
+    combined.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return combined;
+  }
+
   PlanState copyWith({
     List<PlanEvent>? events,
+    List<PlanEvent>? experienceEvents,
     List<AiDateSuggestion>? aiSuggestions,
     List<TimeSlot>? userAvailability,
     bool? isLoading,
@@ -51,6 +63,7 @@ class PlanState {
   }) {
     return PlanState(
       events: events ?? this.events,
+      experienceEvents: experienceEvents ?? this.experienceEvents,
       aiSuggestions: aiSuggestions ?? this.aiSuggestions,
       userAvailability: userAvailability ?? this.userAvailability,
       isLoading: isLoading ?? this.isLoading,
@@ -62,18 +75,18 @@ class PlanState {
     );
   }
 
-  // Computed getters
+  // Computed getters - now use allEvents to include Experience events
   List<PlanEvent> get upcomingEvents => 
-      events.where((e) => !e.isPast && !e.isCancelled).toList()
+      allEvents.where((e) => !e.isPast && !e.isCancelled).toList()
         ..sort((a, b) => a.startTime.compareTo(b.startTime));
   
   List<PlanEvent> get todayEvents => 
-      events.where((e) => e.isToday && !e.isCancelled).toList();
+      allEvents.where((e) => e.isToday && !e.isCancelled).toList();
   
   List<PlanEvent> get thisWeekEvents {
     final now = DateTime.now();
     final weekEnd = now.add(const Duration(days: 7));
-    return events.where((e) => 
+    return allEvents.where((e) => 
       e.startTime.isAfter(now) && 
       e.startTime.isBefore(weekEnd) && 
       !e.isCancelled
@@ -81,10 +94,10 @@ class PlanState {
   }
   
   List<PlanEvent> get conflictedEvents => 
-      events.where((e) => e.isConflicted).toList();
+      allEvents.where((e) => e.isConflicted).toList();
   
   List<PlanEvent> eventsForDate(DateTime date) => 
-      events.where((e) => 
+      allEvents.where((e) => 
         e.startTime.year == date.year &&
         e.startTime.month == date.month &&
         e.startTime.day == date.day &&
@@ -92,13 +105,19 @@ class PlanState {
       ).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
   
   int get confirmedCount => 
-      events.where((e) => e.certainty == EventCertainty.locked && !e.isCancelled).length;
+      allEvents.where((e) => e.certainty == EventCertainty.locked && !e.isCancelled).length;
   
   int get tentativeCount => 
-      events.where((e) => 
+      allEvents.where((e) => 
         e.certainty != EventCertainty.locked && 
         !e.isCancelled
       ).length;
+  
+  // Experience events counts
+  int get experienceEventCount => experienceEvents.length;
+  
+  List<PlanEvent> get goingExperiences => 
+      experienceEvents.where((e) => !e.isCancelled && !e.isPast).toList();
   
   bool get hasCalendarConnected => 
       googleCalendarConnected || appleCalendarConnected;
@@ -116,6 +135,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
 
   void _initialize() {
     loadEvents();
+    loadExperienceEvents();
     _loadMockAiSuggestions();
   }
 
@@ -153,6 +173,77 @@ class PlanNotifier extends StateNotifier<PlanState> {
         isLoading: false,
       );
     }
+  }
+
+  /// Load Experience events (from Partiful-style events page)
+  /// These auto-sync to show what the user has already committed to
+  Future<void> loadExperienceEvents() async {
+    try {
+      final userId = _supabase?.auth.currentUser?.id;
+      
+      if (userId != null && _supabase != null) {
+        // Load events where user is going or hosting
+        final response = await _supabase!
+            .from('vespara_events')
+            .select('''
+              *,
+              rsvps:vespara_event_rsvps(user_id, status)
+            ''')
+            .or('host_id.eq.$userId')
+            .order('start_time');
+        
+        final experienceEvents = <PlanEvent>[];
+        
+        for (final eventJson in response as List) {
+          final rsvps = eventJson['rsvps'] as List? ?? [];
+          final userRsvp = rsvps.firstWhere(
+            (r) => r['user_id'] == userId,
+            orElse: () => null,
+          );
+          
+          // Include if hosting or RSVP'd as going
+          final isHosting = eventJson['host_id'] == userId;
+          final isGoing = userRsvp != null && userRsvp['status'] == 'going';
+          
+          if (isHosting || isGoing) {
+            experienceEvents.add(_convertVesparaEventToPlanEvent(eventJson, isHosting));
+          }
+        }
+        
+        state = state.copyWith(experienceEvents: experienceEvents);
+      } else {
+        // Use mock experience events
+        state = state.copyWith(
+          experienceEvents: _getMockExperienceEvents(),
+        );
+      }
+    } catch (e) {
+      // Fall back to mock data
+      state = state.copyWith(
+        experienceEvents: _getMockExperienceEvents(),
+      );
+    }
+  }
+
+  /// Convert a VesparaEvent JSON to PlanEvent
+  PlanEvent _convertVesparaEventToPlanEvent(Map<String, dynamic> json, bool isHosting) {
+    return PlanEvent(
+      id: 'exp-${json['id']}',
+      userId: _supabase?.auth.currentUser?.id ?? 'mock-user',
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      startTime: DateTime.parse(json['start_time'] as String),
+      endTime: json['end_time'] != null 
+          ? DateTime.parse(json['end_time'] as String) 
+          : null,
+      location: json['venue_name'] as String? ?? json['venue_address'] as String?,
+      connections: [], // Experience events are group events
+      certainty: EventCertainty.locked, // User has committed to this
+      isFromExperience: true,
+      experienceHostName: isHosting ? 'You' : (json['host_name'] as String?),
+      isHosting: isHosting,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
   }
 
   /// Create a new event
@@ -457,6 +548,60 @@ class PlanNotifier extends StateNotifier<PlanState> {
         ],
         certainty: EventCertainty.wishful,
         createdAt: now,
+      ),
+    ];
+  }
+
+  /// Mock experience events (from Experience page)
+  List<PlanEvent> _getMockExperienceEvents() {
+    final now = DateTime.now();
+    final userId = _supabase?.auth.currentUser?.id ?? 'mock-user';
+    
+    return [
+      PlanEvent(
+        id: 'exp-1',
+        userId: userId,
+        title: 'Sunset Rooftop Social',
+        description: 'A chill evening with good vibes and great views',
+        startTime: now.add(const Duration(days: 2, hours: 18)),
+        endTime: now.add(const Duration(days: 2, hours: 22)),
+        location: 'The Standard Rooftop',
+        connections: [],
+        certainty: EventCertainty.locked,
+        isFromExperience: true,
+        experienceHostName: 'Alex',
+        isHosting: false,
+        createdAt: now.subtract(const Duration(days: 5)),
+      ),
+      PlanEvent(
+        id: 'exp-2',
+        userId: userId,
+        title: 'Wine & Paint Night',
+        description: 'Get creative while sipping on some vino',
+        startTime: now.add(const Duration(days: 4, hours: 19)),
+        endTime: now.add(const Duration(days: 4, hours: 22)),
+        location: 'Paint Nite Studio',
+        connections: [],
+        certainty: EventCertainty.locked,
+        isFromExperience: true,
+        experienceHostName: 'You',
+        isHosting: true,
+        createdAt: now.subtract(const Duration(days: 3)),
+      ),
+      PlanEvent(
+        id: 'exp-3',
+        userId: userId,
+        title: 'Speakeasy Saturday',
+        description: 'Secret location revealed 1 hour before',
+        startTime: now.add(const Duration(days: 6, hours: 21)),
+        endTime: now.add(const Duration(days: 6, hours: 24)),
+        location: 'TBA - Speakeasy',
+        connections: [],
+        certainty: EventCertainty.locked,
+        isFromExperience: true,
+        experienceHostName: 'Jordan',
+        isHosting: false,
+        createdAt: now.subtract(const Duration(days: 1)),
       ),
     ];
   }
