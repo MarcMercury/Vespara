@@ -80,7 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Schedule encounters',
     },
     {
-      'name': 'GROUP',
+      'name': 'EXPERIENCES',
       'subtitle': 'The Scene 🥂',
       'icon': Icons.local_fire_department_rounded,
       'emoji': '🥂',

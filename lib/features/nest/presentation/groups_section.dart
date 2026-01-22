@@ -45,7 +45,7 @@ class GroupsSection extends ConsumerWidget {
           Row(
             children: [
               Text(
-                'MY EXPERIENCES',
+                'MY CIRCLES',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -97,7 +97,7 @@ class GroupsSection extends ConsumerWidget {
                         Icon(Icons.add, color: VesparaColors.background, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          'Create Experience',
+                          'Create Circle',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
