@@ -1,23 +1,18 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/haptics.dart';
-import '../../../core/providers/app_providers.dart';
-import '../../../core/domain/models/analytics.dart';
+import '../../../core/data/vespara_mock_data.dart';
 import '../../../core/domain/models/user_profile.dart';
-import 'app_settings_screen.dart';
+import '../../../core/domain/models/analytics.dart';
+import '../../../core/providers/app_providers.dart';
+import '../widgets/qr_connect_modal.dart';
+import 'edit_profile_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// THE MIRROR - Redesigned with Tabs
-/// 1. Brutal Truth (Analytics) - Now FIRST
-/// 2. My Profile (What others see, editable)
-/// 3. Build Experience (Vibe/Interests/Desires - 20+ options each)
+/// THE MIRROR - Module 1
+/// Profile management, brutal honest AI feedback, settings, analytics
+/// "Look at yourself. No, really look."
 /// ════════════════════════════════════════════════════════════════════════════
 
 class MirrorScreen extends ConsumerStatefulWidget {
@@ -27,51 +22,73 @@ class MirrorScreen extends ConsumerStatefulWidget {
   ConsumerState<MirrorScreen> createState() => _MirrorScreenState();
 }
 
-class _MirrorScreenState extends ConsumerState<MirrorScreen>
-    with TickerProviderStateMixin {
+class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
+  
+  // Settings state
+  final Map<String, bool> _toggleSettings = {
+    'New Matches': true,
+    'Messages': true,
+    'Date Reminders': true,
+    'AI Insights': false,
+    'Show Online Status': true,
+    'Read Receipts': false,
+    'Profile Visible': true,
+  };
+  
+  UserAnalytics? _cachedAnalytics;
   
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    );
-    _animationController.forward();
+    // Analytics will be loaded via provider
   }
   
+  UserAnalytics get _analytics {
+    return _cachedAnalytics ?? MockDataProvider.analytics;
+  }
+  
+  void _navigateToEditProfile(UserProfile profile) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(profile: profile),
+      ),
+    ).then((updated) {
+      // Refresh profile if changes were made
+      if (updated == true) {
+        ref.invalidate(userProfileProvider);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Load analytics from provider
+    final analyticsAsync = ref.watch(userAnalyticsProvider);
+    _cachedAnalytics = analyticsAsync.valueOrNull;
+    
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            _buildHeader(),
             _buildTabBar(),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _BrutalTruthTab(),
-                  _MyProfileTab(),
-                  _BuildExperienceTab(),
-                  _SettingsTab(),
+                  _buildBrutalTruthTab(),  // TRUTH
+                  _buildProfileTab(),       // PROFILE
+                  _buildBuildTab(),         // BUILD
+                  _buildSettingsTab(),      // SETTINGS
                 ],
               ),
             ),
@@ -80,274 +97,612 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
       ),
     );
   }
-  
-  Widget _buildHeader(BuildContext context) {
+
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
+      padding: const EdgeInsets.all(16),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(
-            onTap: () {
-              VesparaHaptics.lightTap();
-              // FIX: Use Navigator.pop for proper back navigation
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              } else {
-                context.go('/home');
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: VesparaColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: VesparaColors.border),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+          ),
+          Column(
+            children: [
+              Text(
+                'THE MIRROR',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 4,
+                  color: VesparaColors.primary,
+                ),
               ),
-              child: const Icon(
-                Icons.arrow_back,
+              Text(
+                'Face yourself',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: VesparaColors.secondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: () => showQrConnectModal(context),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [VesparaColors.glow, VesparaColors.primary],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: VesparaColors.glow,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: VesparaColors.background,
+        unselectedLabelColor: VesparaColors.secondary,
+        labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+        dividerHeight: 0,
+        tabs: [
+          Tab(icon: Icon(Icons.psychology_outlined, size: 16), text: 'TRUTH'),
+          Tab(icon: Icon(Icons.person_outline, size: 16), text: 'PROFILE'),
+          Tab(icon: Icon(Icons.auto_awesome, size: 16), text: 'BUILD'),
+          Tab(icon: Icon(Icons.settings_outlined, size: 16), text: 'SETTINGS'),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // PROFILE TAB
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildProfileTab() {
+    final profileAsync = ref.watch(userProfileProvider);
+    
+    return profileAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: VesparaColors.error, size: 48),
+            const SizedBox(height: 16),
+            Text('Failed to load profile', style: TextStyle(color: VesparaColors.secondary)),
+            TextButton(
+              onPressed: () => ref.invalidate(userProfileProvider),
+              child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
+            ),
+          ],
+        ),
+      ),
+      data: (profile) => profile != null 
+          ? _buildProfileContent(profile)
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_off_outlined, color: VesparaColors.secondary, size: 48),
+                  const SizedBox(height: 16),
+                  Text('No profile found', style: TextStyle(color: VesparaColors.secondary)),
+                  TextButton(
+                    onPressed: () => ref.invalidate(userProfileProvider),
+                    child: Text('Retry', style: TextStyle(color: VesparaColors.glow)),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+  
+  Widget _buildProfileContent(UserProfile profile) {
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Profile photo
+          Center(
+            child: Stack(
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [VesparaColors.glow, VesparaColors.glow.withOpacity(0.5)],
+                    ),
+                    border: Border.all(color: VesparaColors.glow, width: 3),
+                  ),
+                  child: Center(
+                    child: Text(
+                      profile.displayName[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.background,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: VesparaColors.surface,
+                      border: Border.all(color: VesparaColors.glow),
+                    ),
+                    child: Icon(Icons.edit, size: 16, color: VesparaColors.glow),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              profile.displayName,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
                 color: VesparaColors.primary,
-                size: 20,
               ),
             ),
           ),
-          const SizedBox(width: VesparaSpacing.md),
+          Center(
+            child: Text(
+              profile.headline ?? 'Add a headline...',
+              style: TextStyle(
+                fontSize: 14,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Quick stats
+          _buildQuickStats(),
+          
+          const SizedBox(height: 24),
+          
+          // Profile sections
+          _buildProfileSection('About Me', profile.bio ?? 'No bio yet', Icons.person_outline),
+          _buildProfileSection('Location', profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Not set', Icons.location_on_outlined),
+          _buildProfileSection('Pronouns', profile.pronouns ?? 'Not set', Icons.person_pin_outlined),
+          _buildProfileSection('Gender', profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Not set', Icons.face_outlined),
+          _buildProfileSection('Orientation', profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Not set', Icons.favorite_border),
+          _buildProfileSection('Relationship Status', profile.relationshipStatus.isNotEmpty ? profile.relationshipStatus.join(', ') : 'Not set', Icons.people_outline),
+          _buildProfileSection('Seeking', profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Not set', Icons.search),
+          _buildProfileSection('Looking For', profile.lookingFor.isNotEmpty ? profile.lookingFor.join(', ') : 'Not set', Icons.favorite_outline),
+          _buildProfileSection('Kinks & Interests', profile.kinks.isNotEmpty ? profile.kinks.join(', ') : 'Not set', Icons.whatshot_outlined),
+          _buildProfileSection('Boundaries', profile.boundaries.isNotEmpty ? profile.boundaries.join(', ') : 'Not set', Icons.shield_outlined),
+          _buildProfileSection('Love Languages', profile.loveLanguages.isNotEmpty ? profile.loveLanguages.join(', ') : 'Not set', Icons.language),
+          _buildProfileSection('Availability', profile.availabilityGeneral.isNotEmpty ? profile.availabilityGeneral.join(', ') : 'Not set', Icons.schedule_outlined),
+          _buildProfileSection('Hosting Status', profile.hostingStatus ?? 'Not set', Icons.home_outlined),
+          _buildProfileSection('Discretion Level', profile.discretionLevel ?? 'Not set', Icons.visibility_outlined),
+          
+          const SizedBox(height: 24),
+          
+          // Edit profile button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _navigateToEditProfile(profile),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.glow,
+                foregroundColor: VesparaColors.background,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStats() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            VesparaColors.glow.withOpacity(0.15),
+            VesparaColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatColumn(_analytics.totalMatches.toString(), 'Matches'),
+          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildStatColumn('${(_analytics.responseRate * 100).toInt()}%', 'Response'),
+          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildStatColumn(_analytics.activeDays.toString(), 'Days Active'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: VesparaColors.glow,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: VesparaColors.secondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileSection(String title, String content, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: VesparaColors.glow, size: 20),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'THE MIRROR',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    letterSpacing: 3,
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.secondary,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  'Know yourself, build yourself',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  content.isNotEmpty ? content : 'Not set',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: VesparaColors.primary,
+                  ),
                 ),
               ],
             ),
           ),
+          Icon(Icons.chevron_right, color: VesparaColors.secondary, size: 20),
         ],
       ),
     );
   }
-  
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.border),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: VesparaColors.background,
-        unselectedLabelColor: VesparaColors.secondary,
-        indicator: BoxDecoration(
-          color: VesparaColors.glow,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        indicatorPadding: const EdgeInsets.all(4),
-        dividerColor: Colors.transparent,
-        labelStyle: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-        ),
-        tabs: const [
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.psychology, size: 16),
-                SizedBox(width: 4),
-                Text('TRUTH'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.person, size: 16),
-                SizedBox(width: 4),
-                Text('PROFILE'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.auto_awesome, size: 16),
-                SizedBox(width: 4),
-                Text('BUILD'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.settings, size: 16),
-                SizedBox(width: 4),
-                Text('SETTINGS'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-/// ════════════════════════════════════════════════════════════════════════════
-/// TAB 1: BRUTAL TRUTH - Analytics Dashboard (NOW FIRST)
-/// ════════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  // BRUTAL TRUTH TAB - AI Feedback
+  // ════════════════════════════════════════════════════════════════════════════
 
-class _BrutalTruthTab extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final analytics = ref.watch(userAnalyticsProvider);
-    
-    return analytics.when(
-      data: (data) => data != null 
-        ? _buildContent(context, data)
-        : _buildEmptyState(context),
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: VesparaColors.glow),
-      ),
-      error: (e, _) => Center(
-        child: Text('Unable to load analytics', 
-          style: TextStyle(color: VesparaColors.error)),
-      ),
-    );
-  }
-  
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.psychology, size: 64, color: VesparaColors.glow.withOpacity(0.5)),
-          const SizedBox(height: 16),
-          Text('No analytics yet', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text('Start using the app to see your data',
-            style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildContent(BuildContext context, UserAnalytics analytics) {
-    final insights = _generateInsights(analytics);
-    
+  Widget _buildBrutalTruthTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // BRUTAL TRUTH SECTION - NOW FIRST!
-          _buildBrutalTruthCard(context, insights),
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Overall score
-          _buildOverviewCard(context, analytics),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          // Metrics grid
-          _buildMetricsGrid(context, analytics),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          // Activity breakdown
-          _buildActivityBreakdown(context, analytics),
-          const SizedBox(height: VesparaSpacing.xl),
+          _buildBrutalHeader(),
+          const SizedBox(height: 24),
+          _buildPersonalitySummary(),
+          const SizedBox(height: 20),
+          _buildDatingStyle(),
+          const SizedBox(height: 20),
+          _buildBehaviorMetrics(),
+          const SizedBox(height: 20),
+          _buildImprovementTips(),
+          const SizedBox(height: 20),
+          _buildRedFlags(),
         ],
       ),
     );
   }
-  
-  Widget _buildBrutalTruthCard(BuildContext context, List<Map<String, dynamic>> insights) {
+
+  Widget _buildBrutalHeader() {
     return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.lg),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            VesparaColors.tagsYellow.withOpacity(0.15),
+            VesparaColors.error.withOpacity(0.3),
             VesparaColors.surface,
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: VesparaColors.tagsYellow.withOpacity(0.4)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.psychology, size: 48, color: VesparaColors.error),
+          const SizedBox(height: 12),
+          Text(
+            'The Brutal Truth',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'AI analysis of your dating behavior. No sugarcoating. No excuses.',
+            style: TextStyle(
+              fontSize: 13,
+              color: VesparaColors.secondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalitySummary() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: VesparaColors.tagsYellow.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.psychology,
-                  color: VesparaColors.tagsYellow,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: VesparaSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'THE BRUTAL TRUTH',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        letterSpacing: 2,
-                        color: VesparaColors.tagsYellow,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'AI-powered insights from your behavior',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+              Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'AI Personality Summary',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.glow,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          ...insights.map((insight) => Padding(
-            padding: const EdgeInsets.only(bottom: VesparaSpacing.md),
+          const SizedBox(height: 12),
+          Text(
+            _analytics.aiPersonalitySummary ?? 
+            'You\'re charming on the surface but tend to lose interest after the chase. You match with many but commit to few. Your texting game is strong early but fades fast. You like attention more than connection.',
+            style: TextStyle(
+              fontSize: 14,
+              color: VesparaColors.primary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDatingStyle() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.heart_broken, color: VesparaColors.tagsYellow, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Your Dating Style',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.tagsYellow,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _analytics.aiDatingStyle ?? '"The Collector"',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You enjoy the validation of matching more than the work of connecting. You keep options open even when you find someone good. Classic commitment-phobe behavior disguised as "keeping things casual".',
+            style: TextStyle(
+              fontSize: 13,
+              color: VesparaColors.secondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBehaviorMetrics() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Behavior Metrics',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildMetricRow('Ghost Rate', _analytics.ghostRate, VesparaColors.error),
+          _buildMetricRow('Flake Rate', _analytics.flakeRate, VesparaColors.warning),
+          _buildMetricRow('Response Rate', _analytics.responseRate, VesparaColors.success),
+          _buildMetricRow('Match Rate', _analytics.matchRate, VesparaColors.glow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricRow(String label, double value, Color color) {
+    final percentage = (value * 100).toInt();
+    final isGood = label == 'Response Rate' || label == 'Match Rate' ? value > 0.5 : value < 0.3;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              Text(
+                '$percentage%',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Stack(
+            children: [
+              Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: value,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImprovementTips() {
+    final tips = _analytics.aiImprovementTips ?? [
+      'Stop swiping right on everyone - be selective',
+      'Actually follow through on date plans instead of flaking',
+      'Reply within 24 hours or don\'t reply at all',
+      'Be honest about what you want instead of stringing people along',
+    ];
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lightbulb_outline, color: VesparaColors.success, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'How to Not Suck',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.success,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...tips.map((tip) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: (insight['color'] as Color).withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    insight['icon'] as IconData,
-                    color: insight['color'] as Color,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: VesparaSpacing.sm),
+                Icon(Icons.check_circle, size: 16, color: VesparaColors.success),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    insight['text'] as String,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    tip,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: VesparaColors.primary,
                       height: 1.4,
                     ),
                   ),
@@ -359,2240 +714,420 @@ class _BrutalTruthTab extends ConsumerWidget {
       ),
     );
   }
-  
-  Widget _buildOverviewCard(BuildContext context, UserAnalytics analytics) {
-    final overallScore = _calculateOverallScore(analytics);
-    final scoreColor = _getScoreColor(overallScore);
-    
+
+  Widget _buildRedFlags() {
     return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.lg),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scoreColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: overallScore / 100,
-                  strokeWidth: 6,
-                  backgroundColor: VesparaColors.background,
-                  valueColor: AlwaysStoppedAnimation(scoreColor),
-                ),
-                Text(
-                  '${overallScore.toInt()}',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: scoreColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: VesparaSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getScoreLabel(overallScore),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: scoreColor,
-                  ),
-                ),
-                Text(
-                  _getScoreDescription(overallScore),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildMetricsGrid(BuildContext context, UserAnalytics analytics) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(child: _buildMetricCard(context, 
-              icon: Icons.visibility_off,
-              label: 'GHOST RATE', 
-              value: analytics.ghostRate,
-              isNegative: true)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMetricCard(context,
-              icon: Icons.event_busy,
-              label: 'FLAKE RATE',
-              value: analytics.flakeRate,
-              isNegative: true)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _buildMetricCard(context,
-              icon: Icons.swap_horiz,
-              label: 'SWIPE RATIO',
-              value: analytics.swipeRatio,
-              isNegative: false)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMetricCard(context,
-              icon: Icons.reply,
-              label: 'RESPONSE',
-              value: analytics.responseRate,
-              isNegative: false)),
-          ],
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildMetricCard(BuildContext context, {
-    required IconData icon,
-    required String label,
-    required double value,
-    required bool isNegative,
-  }) {
-    final color = isNegative
-        ? (value < 20 ? VesparaColors.tagsGreen : 
-           (value < 50 ? VesparaColors.tagsYellow : VesparaColors.tagsRed))
-        : (value > 70 ? VesparaColors.tagsGreen : 
-           (value > 40 ? VesparaColors.tagsYellow : VesparaColors.tagsRed));
-    
-    return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
+        color: VesparaColors.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color, size: 20),
-              Text(
-                '${value.toInt()}%',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: value / 100,
-            backgroundColor: VesparaColors.background,
-            valueColor: AlwaysStoppedAnimation(color),
-            minHeight: 3,
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildActivityBreakdown(BuildContext context, UserAnalytics analytics) {
-    return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.lg),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: VesparaColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('ACTIVITY', style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2)),
-          const SizedBox(height: 16),
-          _buildStatRow(context, 'Messages Sent', analytics.messagesSent, VesparaColors.glow),
-          _buildStatRow(context, 'Messages Received', analytics.messagesReceived, VesparaColors.secondary),
-          _buildStatRow(context, 'Matches Total', analytics.totalMatches, VesparaColors.tagsYellow),
-          _buildStatRow(context, 'Dates Scheduled', analytics.datesScheduled, VesparaColors.tagsGreen),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildStatRow(BuildContext context, String label, int value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '$value',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Helper methods
-  double _calculateOverallScore(UserAnalytics analytics) {
-    final responseWeight = analytics.responseRate * 0.3;
-    final ghostPenalty = (100 - analytics.ghostRate) * 0.25;
-    final flakePenalty = (100 - analytics.flakeRate) * 0.25;
-    final activityBonus = math.min(analytics.swipeRatio * 0.2, 20);
-    return (responseWeight + ghostPenalty + flakePenalty + activityBonus).clamp(0, 100);
-  }
-  
-  Color _getScoreColor(double score) {
-    if (score >= 75) return VesparaColors.tagsGreen;
-    if (score >= 50) return VesparaColors.tagsYellow;
-    return VesparaColors.tagsRed;
-  }
-  
-  String _getScoreLabel(double score) {
-    if (score >= 85) return 'Excellent';
-    if (score >= 70) return 'Strong';
-    if (score >= 50) return 'Average';
-    if (score >= 30) return 'Needs Work';
-    return 'Critical';
-  }
-  
-  String _getScoreDescription(double score) {
-    if (score >= 85) return 'You\'re crushing it. Keep the momentum.';
-    if (score >= 70) return 'Solid performance with room to grow.';
-    if (score >= 50) return 'Middle of the pack. Time to step up.';
-    if (score >= 30) return 'Your metrics need serious attention.';
-    return 'Major changes needed. Let\'s fix this.';
-  }
-  
-  List<Map<String, dynamic>> _generateInsights(UserAnalytics analytics) {
-    final insights = <Map<String, dynamic>>[];
-    
-    if (analytics.ghostRate > 50) {
-      insights.add({
-        'icon': Icons.visibility_off,
-        'text': 'You\'re ghosting over half your matches. Either engage meaningfully or clean up your roster.',
-        'color': VesparaColors.tagsRed,
-      });
-    } else if (analytics.ghostRate > 25) {
-      insights.add({
-        'icon': Icons.visibility_off,
-        'text': 'Your ghost rate is creeping up. Consider using The Shredder for graceful exits.',
-        'color': VesparaColors.tagsYellow,
-      });
-    }
-    
-    if (analytics.responseRate < 40) {
-      insights.add({
-        'icon': Icons.reply,
-        'text': 'Your response rate is low. Try the Conversation Resuscitator in The Wire.',
-        'color': VesparaColors.tagsRed,
-      });
-    } else if (analytics.responseRate > 80) {
-      insights.add({
-        'icon': Icons.reply,
-        'text': 'Excellent response rate! You\'re keeping conversations alive.',
-        'color': VesparaColors.tagsGreen,
-      });
-    }
-    
-    if (analytics.flakeRate > 40) {
-      insights.add({
-        'icon': Icons.event_busy,
-        'text': 'Too many plans falling through. Only confirm dates you\'ll actually keep.',
-        'color': VesparaColors.tagsRed,
-      });
-    }
-    
-    if (analytics.firstMessagesSent < analytics.totalMatches * 0.3) {
-      insights.add({
-        'icon': Icons.send,
-        'text': 'You\'re waiting for others to message first. Take initiative.',
-        'color': VesparaColors.tagsYellow,
-      });
-    }
-    
-    if (insights.isEmpty) {
-      insights.add({
-        'icon': Icons.star,
-        'text': 'Your metrics look healthy. Keep doing what you\'re doing.',
-        'color': VesparaColors.tagsGreen,
-      });
-    }
-    
-    return insights;
-  }
-}
-
-/// ════════════════════════════════════════════════════════════════════════════
-/// TAB 2: MY PROFILE - What others see, editable
-/// ════════════════════════════════════════════════════════════════════════════
-
-class _MyProfileTab extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_MyProfileTab> createState() => _MyProfileTabState();
-}
-
-class _MyProfileTabState extends ConsumerState<_MyProfileTab> {
-  bool _isEditing = false;
-  bool _isSaving = false;
-  
-  // Controllers for editable fields
-  late TextEditingController _displayNameController;
-  late TextEditingController _headlineController;
-  late TextEditingController _bioController;
-  late TextEditingController _occupationController;
-  late TextEditingController _cityController;
-  
-  @override
-  void initState() {
-    super.initState();
-    _displayNameController = TextEditingController();
-    _headlineController = TextEditingController();
-    _bioController = TextEditingController();
-    _occupationController = TextEditingController();
-    _cityController = TextEditingController();
-  }
-  
-  @override
-  void dispose() {
-    _displayNameController.dispose();
-    _headlineController.dispose();
-    _bioController.dispose();
-    _occupationController.dispose();
-    _cityController.dispose();
-    super.dispose();
-  }
-  
-  void _loadProfileData(UserProfile profile) {
-    _displayNameController.text = profile.displayName ?? '';
-    _headlineController.text = profile.headline ?? '';
-    _bioController.text = profile.bio ?? '';
-    _occupationController.text = profile.occupation ?? '';
-    _cityController.text = profile.city ?? '';
-  }
-  
-  Future<void> _saveProfile() async {
-    setState(() => _isSaving = true);
-    
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('Not logged in');
-      
-      await Supabase.instance.client.from('profiles').update({
-        'display_name': _displayNameController.text.trim(),
-        'headline': _headlineController.text.trim(),
-        'bio': _bioController.text.trim(),
-        'occupation': _occupationController.text.trim(),
-        'city': _cityController.text.trim(),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
-      
-      ref.invalidate(userProfileProvider);
-      
-      setState(() {
-        _isEditing = false;
-        _isSaving = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: VesparaColors.success),
-                const SizedBox(width: 8),
-                Text('Profile updated!'),
-              ],
-            ),
-            backgroundColor: VesparaColors.surface,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isSaving = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: VesparaColors.error,
-          ),
-        );
-      }
-    }
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    final profileAsync = ref.watch(userProfileProvider);
-    
-    return profileAsync.when(
-      data: (profile) {
-        if (profile == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.person_off, size: 64, color: VesparaColors.secondary),
-                const SizedBox(height: 16),
-                Text('Profile not found'),
-              ],
-            ),
-          );
-        }
-        
-        // Load initial data when not editing
-        if (!_isEditing && _displayNameController.text.isEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _loadProfileData(profile);
-          });
-        }
-        
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(VesparaSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with edit toggle
-              _buildProfileHeader(context, profile),
-              const SizedBox(height: VesparaSpacing.lg),
-              
-              // Preview card (what others see)
-              _buildProfilePreviewCard(context, profile),
-              const SizedBox(height: VesparaSpacing.lg),
-              
-              // Editable sections
-              if (_isEditing) ...[
-                _buildEditableFields(context, profile),
-                const SizedBox(height: VesparaSpacing.lg),
-                _buildSaveButton(context),
-              ] else ...[
-                _buildProfileDetails(context, profile),
-              ],
-              
-              const SizedBox(height: VesparaSpacing.xl),
-            ],
-          ),
-        );
-      },
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: VesparaColors.glow),
-      ),
-      error: (e, _) => Center(child: Text('Error: $e')),
-    );
-  }
-  
-  Widget _buildProfileHeader(BuildContext context, UserProfile profile) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'MY PROFILE',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                letterSpacing: 2,
-                color: VesparaColors.secondary,
-              ),
-            ),
-            Text(
-              'What others see',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ],
-        ),
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            if (_isEditing) {
-              // Cancel editing
-              _loadProfileData(profile);
-            }
-            setState(() => _isEditing = !_isEditing);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: _isEditing 
-                  ? VesparaColors.error.withOpacity(0.15)
-                  : VesparaColors.glow.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _isEditing 
-                    ? VesparaColors.error.withOpacity(0.3)
-                    : VesparaColors.glow.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _isEditing ? Icons.close : Icons.edit,
-                  size: 16,
-                  color: _isEditing ? VesparaColors.error : VesparaColors.glow,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _isEditing ? 'Cancel' : 'Edit',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _isEditing ? VesparaColors.error : VesparaColors.glow,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildProfilePreviewCard(BuildContext context, UserProfile profile) {
-    return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            VesparaColors.glow.withOpacity(0.1),
-            VesparaColors.surface,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          // Avatar
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: VesparaColors.glow.withOpacity(0.2),
-              border: Border.all(color: VesparaColors.glow.withOpacity(0.5), width: 3),
-            ),
-            child: profile.avatarUrl != null
-                ? ClipOval(child: Image.network(profile.avatarUrl!, fit: BoxFit.cover))
-                : Icon(Icons.person, size: 50, color: VesparaColors.glow),
-          ),
-          const SizedBox(height: 16),
-          
-          // Name
-          Text(
-            profile.displayName ?? 'Anonymous',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          
-          // Age & Location
-          if (profile.city != null || profile.age != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                [
-                  if (profile.age != null) '${profile.age}',
-                  if (profile.city != null) profile.city,
-                ].join(' • '),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: VesparaColors.secondary,
-                ),
-              ),
-            ),
-          
-          // Headline
-          if (profile.headline != null && profile.headline!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                profile.headline!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontStyle: FontStyle.italic,
-                  color: VesparaColors.glow,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildProfileDetails(BuildContext context, UserProfile profile) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Bio section
-        if (profile.bio != null && profile.bio!.isNotEmpty)
-          _buildDetailSection(
-            context,
-            title: 'ABOUT ME',
-            icon: Icons.person_outline,
-            child: Text(profile.bio!, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        
-        // Looking for
-        if (profile.seeking.isNotEmpty)
-          _buildDetailSection(
-            context,
-            title: 'LOOKING FOR',
-            icon: Icons.search,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: profile.seeking.map((s) => _buildChip(s)).toList(),
-            ),
-          ),
-        
-        // Traits
-        if (profile.lookingFor.isNotEmpty)
-          _buildDetailSection(
-            context,
-            title: 'MY VIBE',
-            icon: Icons.auto_awesome,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: profile.lookingFor.map((t) => _buildChip(t)).toList(),
-            ),
-          ),
-      ],
-    );
-  }
-  
-  Widget _buildDetailSection(BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: VesparaSpacing.md),
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.border),
+        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: VesparaColors.secondary),
+              Icon(Icons.flag, color: VesparaColors.error, size: 18),
               const SizedBox(width: 8),
               Text(
-                title,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 1,
+                'Red Flags We\'ve Noticed',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.error,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          child,
+          _buildRedFlagItem('You ghosted 3 people this month'),
+          _buildRedFlagItem('Average conversation dies after 12 messages'),
+          _buildRedFlagItem('You only swipe on people 5+ years younger'),
+          _buildRedFlagItem('Last 4 dates were cancelled by you'),
         ],
       ),
     );
   }
-  
-  Widget _buildChip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: VesparaColors.glow.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: VesparaColors.glow,
-          fontWeight: FontWeight.w500,
-        ),
+
+  Widget _buildRedFlagItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber, size: 14, color: VesparaColors.error),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-  
-  Widget _buildEditableFields(BuildContext context, UserProfile profile) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // BUILD TAB - Edit Vibes, Interests, Desires from Onboarding
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildBuildTab() {
+    final profileAsync = ref.watch(userProfileProvider);
+    
+    return profileAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error loading profile', style: TextStyle(color: VesparaColors.error))),
+      data: (profile) => profile == null 
+          ? Center(child: Text('No profile found', style: TextStyle(color: VesparaColors.secondary)))
+          : _buildBuildContent(profile),
+    );
+  }
+
+  Widget _buildBuildContent(UserProfile profile) {
+    // All vibe options from onboarding
+    final allVibes = [
+      {'emoji': '🌙', 'label': 'Night Owl'},
+      {'emoji': '❄️', 'label': 'Early Riser'},
+      {'emoji': '⚡', 'label': 'High Energy'},
+      {'emoji': '🧘', 'label': 'Calm & Centered'},
+      {'emoji': '🎉', 'label': 'Life of the Party'},
+      {'emoji': '🏠', 'label': 'Cozy Homebody'},
+      {'emoji': '👥', 'label': 'Small Groups Only'},
+      {'emoji': '🦋', 'label': 'Social Butterfly'},
+      {'emoji': '😂', 'label': 'Witty & Sarcastic'},
+      {'emoji': '💝', 'label': 'Hopeless Romantic'},
+      {'emoji': '🔥', 'label': 'Passionate'},
+      {'emoji': '😌', 'label': 'Easy Going'},
+      {'emoji': '😈', 'label': 'Mischievous'},
+      {'emoji': '🏔️', 'label': 'Adventurous'},
+      {'emoji': '📚', 'label': 'Intellectual'},
+      {'emoji': '🎨', 'label': 'Creative'},
+      {'emoji': '🚀', 'label': 'Ambitious'},
+      {'emoji': '🎲', 'label': 'Spontaneous'},
+      {'emoji': '🧠', 'label': 'Deep Thinker'},
+      {'emoji': '🦅', 'label': 'Free Spirit'},
+      {'emoji': '👴', 'label': 'Old Soul'},
+      {'emoji': '❤️', 'label': 'Young at Heart'},
+    ];
+    
+    final allInterests = [
+      {'emoji': '✈️', 'label': 'Travel'},
+      {'emoji': '🎵', 'label': 'Music'},
+      {'emoji': '🎬', 'label': 'Movies & TV'},
+      {'emoji': '📚', 'label': 'Reading'},
+      {'emoji': '🎮', 'label': 'Gaming'},
+      {'emoji': '🏋️', 'label': 'Fitness'},
+      {'emoji': '🍳', 'label': 'Cooking'},
+      {'emoji': '🍷', 'label': 'Wine & Spirits'},
+      {'emoji': '🎨', 'label': 'Art'},
+      {'emoji': '📷', 'label': 'Photography'},
+      {'emoji': '🌿', 'label': 'Nature'},
+      {'emoji': '🎭', 'label': 'Theater'},
+      {'emoji': '💃', 'label': 'Dancing'},
+      {'emoji': '🧘', 'label': 'Yoga & Meditation'},
+      {'emoji': '🏖️', 'label': 'Beach Life'},
+      {'emoji': '⛷️', 'label': 'Winter Sports'},
+    ];
+    
+    // Get current selections from profile
+    final selectedVibes = profile.lookingFor;  // This is where onboarding saves vibe traits
+    final selectedInterests = profile.interestTags;
+    
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          'EDIT YOUR PROFILE',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            letterSpacing: 2,
-            color: VesparaColors.glow,
-          ),
-        ),
-        const SizedBox(height: 16),
-        
-        _buildTextField(
-          controller: _displayNameController,
-          label: 'Display Name',
-          hint: 'What should we call you?',
-          icon: Icons.badge,
-        ),
-        const SizedBox(height: 12),
-        
-        _buildTextField(
-          controller: _headlineController,
-          label: 'Headline',
-          hint: 'A catchy one-liner about you',
-          icon: Icons.format_quote,
-        ),
-        const SizedBox(height: 12),
-        
-        _buildTextField(
-          controller: _bioController,
-          label: 'About Me',
-          hint: 'Tell others about yourself...',
-          icon: Icons.person_outline,
-          maxLines: 4,
-        ),
-        const SizedBox(height: 12),
-        
-        _buildTextField(
-          controller: _occupationController,
-          label: 'Occupation',
-          hint: 'What do you do?',
-          icon: Icons.work_outline,
-        ),
-        const SizedBox(height: 12),
-        
-        _buildTextField(
-          controller: _cityController,
-          label: 'City',
-          hint: 'Where are you based?',
-          icon: Icons.location_on_outlined,
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // AI helper button
+        // Header
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: VesparaColors.tagsYellow.withOpacity(0.1),
+            gradient: LinearGradient(
+              colors: [VesparaColors.glow.withOpacity(0.2), VesparaColors.surface],
+            ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: VesparaColors.tagsYellow.withOpacity(0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.auto_awesome, color: VesparaColors.tagsYellow),
+              Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 32),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI Bio Helper',
+                      'BUILD YOUR EXPERIENCE',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.tagsYellow,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.primary,
                       ),
                     ),
                     Text(
-                      'Let AI craft a bio from your profile',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      'Help AI understand you better',
+                      style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
                     ),
                   ],
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  // TODO: AI bio generation
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('AI bio generation coming soon!')),
-                  );
-                },
-                child: Text('Generate', style: TextStyle(color: VesparaColors.tagsYellow)),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    int maxLines = 1,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.border),
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: TextStyle(color: VesparaColors.primary),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: TextStyle(color: VesparaColors.secondary),
-          hintStyle: TextStyle(color: VesparaColors.inactive),
-          prefixIcon: Icon(icon, color: VesparaColors.secondary),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildSaveButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isSaving ? null : _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: VesparaColors.glow,
-          foregroundColor: VesparaColors.background,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: _isSaving
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: VesparaColors.background,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check),
-                  const SizedBox(width: 8),
-                  Text('Save Profile', style: TextStyle(fontWeight: FontWeight.w600)),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-/// ════════════════════════════════════════════════════════════════════════════
-/// TAB 3: BUILD EXPERIENCE - Vibe, Interests, Desires (20+ options each)
-/// ════════════════════════════════════════════════════════════════════════════
-
-class _BuildExperienceTab extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_BuildExperienceTab> createState() => _BuildExperienceTabState();
-}
-
-class _BuildExperienceTabState extends ConsumerState<_BuildExperienceTab> {
-  final Set<String> _selectedVibes = {};
-  final Set<String> _selectedInterests = {};
-  final Set<String> _selectedDesires = {};
-  bool _isSaving = false;
-  
-  // Discovery preferences
-  double _maxDistance = 25.0;
-  RangeValues _ageRange = const RangeValues(21, 45);
-  bool _showVerifiedOnly = false;
-  bool _showActiveRecently = true;
-  
-  // 20+ VIBE OPTIONS
-  static const List<Map<String, dynamic>> _vibeOptions = [
-    {'id': 'night_owl', 'emoji': '🌙', 'label': 'Night Owl'},
-    {'id': 'early_riser', 'emoji': '☀️', 'label': 'Early Riser'},
-    {'id': 'high_energy', 'emoji': '⚡', 'label': 'High Energy'},
-    {'id': 'calm_centered', 'emoji': '🧘', 'label': 'Calm & Centered'},
-    {'id': 'life_of_party', 'emoji': '🎉', 'label': 'Life of the Party'},
-    {'id': 'cozy_homebody', 'emoji': '🏠', 'label': 'Cozy Homebody'},
-    {'id': 'small_groups', 'emoji': '👥', 'label': 'Small Groups Only'},
-    {'id': 'social_butterfly', 'emoji': '🦋', 'label': 'Social Butterfly'},
-    {'id': 'witty_sarcastic', 'emoji': '😂', 'label': 'Witty & Sarcastic'},
-    {'id': 'hopeless_romantic', 'emoji': '💝', 'label': 'Hopeless Romantic'},
-    {'id': 'passionate', 'emoji': '🔥', 'label': 'Passionate'},
-    {'id': 'easy_going', 'emoji': '😌', 'label': 'Easy Going'},
-    {'id': 'mischievous', 'emoji': '😈', 'label': 'Mischievous'},
-    {'id': 'adventurous', 'emoji': '🏔️', 'label': 'Adventurous'},
-    {'id': 'intellectual', 'emoji': '📚', 'label': 'Intellectual'},
-    {'id': 'creative', 'emoji': '🎨', 'label': 'Creative'},
-    {'id': 'ambitious', 'emoji': '🚀', 'label': 'Ambitious'},
-    {'id': 'spontaneous', 'emoji': '🎲', 'label': 'Spontaneous'},
-    {'id': 'deep_thinker', 'emoji': '🧠', 'label': 'Deep Thinker'},
-    {'id': 'free_spirit', 'emoji': '🌊', 'label': 'Free Spirit'},
-    {'id': 'old_soul', 'emoji': '🕰️', 'label': 'Old Soul'},
-    {'id': 'young_at_heart', 'emoji': '🎈', 'label': 'Young at Heart'},
-  ];
-  
-  // 20+ INTEREST OPTIONS
-  static const List<Map<String, dynamic>> _interestOptions = [
-    {'id': 'travel', 'emoji': '✈️', 'label': 'Travel'},
-    {'id': 'fitness', 'emoji': '💪', 'label': 'Fitness'},
-    {'id': 'music', 'emoji': '🎵', 'label': 'Music'},
-    {'id': 'art', 'emoji': '🎨', 'label': 'Art & Design'},
-    {'id': 'food', 'emoji': '🍷', 'label': 'Fine Dining'},
-    {'id': 'cooking', 'emoji': '👨‍🍳', 'label': 'Cooking'},
-    {'id': 'movies', 'emoji': '🎬', 'label': 'Movies'},
-    {'id': 'reading', 'emoji': '📖', 'label': 'Reading'},
-    {'id': 'gaming', 'emoji': '🎮', 'label': 'Gaming'},
-    {'id': 'hiking', 'emoji': '🥾', 'label': 'Hiking'},
-    {'id': 'yoga', 'emoji': '🧘‍♀️', 'label': 'Yoga'},
-    {'id': 'dancing', 'emoji': '💃', 'label': 'Dancing'},
-    {'id': 'photography', 'emoji': '📸', 'label': 'Photography'},
-    {'id': 'podcasts', 'emoji': '🎙️', 'label': 'Podcasts'},
-    {'id': 'concerts', 'emoji': '🎤', 'label': 'Live Music'},
-    {'id': 'wine', 'emoji': '🍷', 'label': 'Wine Tasting'},
-    {'id': 'festivals', 'emoji': '🎪', 'label': 'Festivals'},
-    {'id': 'beach', 'emoji': '🏖️', 'label': 'Beach Life'},
-    {'id': 'camping', 'emoji': '⛺', 'label': 'Camping'},
-    {'id': 'sports', 'emoji': '⚽', 'label': 'Sports'},
-    {'id': 'fashion', 'emoji': '👗', 'label': 'Fashion'},
-    {'id': 'tech', 'emoji': '💻', 'label': 'Technology'},
-    {'id': 'spirituality', 'emoji': '🔮', 'label': 'Spirituality'},
-    {'id': 'meditation', 'emoji': '🕉️', 'label': 'Meditation'},
-  ];
-  
-  // 20+ DESIRE OPTIONS
-  static const List<Map<String, dynamic>> _desireOptions = [
-    {'id': 'deep_connection', 'emoji': '💫', 'label': 'Deep Connection'},
-    {'id': 'adventure', 'emoji': '🌋', 'label': 'Adventure'},
-    {'id': 'romance', 'emoji': '🌹', 'label': 'Romance'},
-    {'id': 'passion', 'emoji': '🔥', 'label': 'Passion'},
-    {'id': 'intimacy', 'emoji': '💋', 'label': 'Intimacy'},
-    {'id': 'exploration', 'emoji': '🗺️', 'label': 'Exploration'},
-    {'id': 'trust', 'emoji': '🤝', 'label': 'Trust Building'},
-    {'id': 'communication', 'emoji': '💬', 'label': 'Open Communication'},
-    {'id': 'spontaneity', 'emoji': '🎲', 'label': 'Spontaneity'},
-    {'id': 'chemistry', 'emoji': '⚗️', 'label': 'Chemistry'},
-    {'id': 'vulnerability', 'emoji': '💎', 'label': 'Vulnerability'},
-    {'id': 'playfulness', 'emoji': '🎭', 'label': 'Playfulness'},
-    {'id': 'sensuality', 'emoji': '🌸', 'label': 'Sensuality'},
-    {'id': 'dominance', 'emoji': '👑', 'label': 'Taking Control'},
-    {'id': 'submission', 'emoji': '🦋', 'label': 'Letting Go'},
-    {'id': 'switch', 'emoji': '🔄', 'label': 'Switching Roles'},
-    {'id': 'roleplay', 'emoji': '🎪', 'label': 'Roleplay'},
-    {'id': 'experimentation', 'emoji': '🧪', 'label': 'Experimentation'},
-    {'id': 'consistency', 'emoji': '📅', 'label': 'Consistency'},
-    {'id': 'variety', 'emoji': '🌈', 'label': 'Variety'},
-    {'id': 'slow_build', 'emoji': '🌅', 'label': 'Slow Build'},
-    {'id': 'instant_spark', 'emoji': '⚡', 'label': 'Instant Spark'},
-  ];
-  
-  @override
-  void initState() {
-    super.initState();
-    _loadExistingSelections();
-  }
-  
-  void _loadExistingSelections() {
-    final profile = ref.read(userProfileProvider).valueOrNull;
-    if (profile != null) {
-      // Load from profile.lookingFor or similar field
-      // For now, start fresh
-    }
-  }
-  
-  Future<void> _saveExperience() async {
-    setState(() => _isSaving = true);
-    
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('Not logged in');
-      
-      await Supabase.instance.client.from('profiles').update({
-        'vibe_tags': _selectedVibes.toList(),
-        'interest_tags': _selectedInterests.toList(),
-        'desire_tags': _selectedDesires.toList(),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
-      
-      ref.invalidate(userProfileProvider);
-      
-      setState(() => _isSaving = false);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: VesparaColors.success),
-                const SizedBox(width: 8),
-                Text('Experience saved!'),
-              ],
-            ),
-            backgroundColor: VesparaColors.surface,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isSaving = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e'), backgroundColor: VesparaColors.error),
-        );
-      }
-    }
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          _buildHeader(context),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          // AI Check Me Component
-          _buildAICheckMe(context),
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Vibe Section
-          _buildSection(
-            context,
-            title: 'YOUR VIBE',
-            subtitle: 'How would you describe your energy?',
-            icon: Icons.mood,
-            color: VesparaColors.tagsYellow,
-            options: _vibeOptions,
-            selected: _selectedVibes,
-            onToggle: (id) => setState(() {
-              _selectedVibes.contains(id) 
-                  ? _selectedVibes.remove(id) 
-                  : _selectedVibes.add(id);
-            }),
-          ),
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Interests Section
-          _buildSection(
-            context,
-            title: 'YOUR INTERESTS',
-            subtitle: 'What lights you up?',
-            icon: Icons.favorite,
-            color: VesparaColors.glow,
-            options: _interestOptions,
-            selected: _selectedInterests,
-            onToggle: (id) => setState(() {
-              _selectedInterests.contains(id) 
-                  ? _selectedInterests.remove(id) 
-                  : _selectedInterests.add(id);
-            }),
-          ),
-          const SizedBox(height: VesparaSpacing.lg),
-          
-          // Desires Section
-          _buildSection(
-            context,
-            title: 'YOUR DESIRES',
-            subtitle: 'What are you seeking?',
-            icon: Icons.auto_awesome,
-            color: VesparaColors.tagsRed,
-            options: _desireOptions,
-            selected: _selectedDesires,
-            onToggle: (id) => setState(() {
-              _selectedDesires.contains(id) 
-                  ? _selectedDesires.remove(id) 
-                  : _selectedDesires.add(id);
-            }),
-          ),
-          const SizedBox(height: VesparaSpacing.xl),
-          
-          // Discovery Preferences Section
-          _buildDiscoverySection(context),
-          const SizedBox(height: VesparaSpacing.xl),
-          
-          // Save Button
-          _buildSaveButton(context),
-          const SizedBox(height: VesparaSpacing.xl),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildHeader(BuildContext context) {
-    final totalSelected = _selectedVibes.length + _selectedInterests.length + _selectedDesires.length;
-    
-    return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            VesparaColors.glow.withOpacity(0.15),
-            VesparaColors.surface,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: VesparaColors.glow.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'BUILD YOUR EXPERIENCE',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    letterSpacing: 1,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Help AI understand you better',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: totalSelected > 0 
-                  ? VesparaColors.tagsGreen.withOpacity(0.2)
-                  : VesparaColors.surface,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '$totalSelected selected',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: totalSelected > 0 
-                    ? VesparaColors.tagsGreen 
-                    : VesparaColors.secondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildSection(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required List<Map<String, dynamic>> options,
-    required Set<String> selected,
-    required Function(String) onToggle,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                letterSpacing: 1,
-                color: color,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '${selected.length} selected',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        Text(
-          subtitle,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: VesparaColors.secondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: options.map((option) {
-            final isSelected = selected.contains(option['id']);
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onToggle(option['id']);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected 
-                      ? color.withOpacity(0.2)
-                      : VesparaColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected 
-                        ? color 
-                        : VesparaColors.border,
-                    width: isSelected ? 2 : 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(option['emoji'], style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 6),
-                    Text(
-                      option['label'],
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? color : VesparaColors.primary,
-                      ),
-                    ),
-                    if (isSelected) ...[
-                      const SizedBox(width: 6),
-                      Icon(Icons.check, size: 14, color: color),
-                    ],
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-  
-  // AI Check Me Component
-  Widget _buildAICheckMe(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            VesparaColors.secondary.withOpacity(0.15),
-            VesparaColors.glow.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.auto_fix_high, color: VesparaColors.glow, size: 18),
-              ),
-              const SizedBox(width: 10),
               Text(
-                'CHECK ME',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                  color: VesparaColors.glow,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: VesparaColors.tagsGreen.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'AI POWERED',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: VesparaColors.tagsGreen,
-                  ),
-                ),
+                '${selectedVibes.length + selectedInterests.length} selected',
+                style: TextStyle(fontSize: 12, color: VesparaColors.glow),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Get personalized suggestions based on your profile, interests, and what others with similar vibes enjoy.',
-            style: TextStyle(
-              fontSize: 12,
-              color: VesparaColors.secondary,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildAISuggestions(),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAISuggestions() {
-    // Generate AI suggestions based on selected vibes/interests
-    final suggestions = _generateAISuggestions();
-    
-    if (suggestions.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: VesparaColors.surface,
-          borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.lightbulb_outline, color: VesparaColors.secondary, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Select some vibes or interests above to get AI recommendations!',
-                style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'You might also like:',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.secondary,
-            ),
+        
+        const SizedBox(height: 24),
+        
+        // AI Suggestions Section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VesparaColors.border),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: suggestions.map((suggestion) {
-              final isVibe = suggestion['type'] == 'vibe';
-              final alreadySelected = isVibe 
-                  ? _selectedVibes.contains(suggestion['id'])
-                  : _selectedInterests.contains(suggestion['id']);
-              
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    if (isVibe) {
-                      if (!_selectedVibes.contains(suggestion['id'])) {
-                        _selectedVibes.add(suggestion['id']);
-                      }
-                    } else {
-                      if (!_selectedInterests.contains(suggestion['id'])) {
-                        _selectedInterests.add(suggestion['id']);
-                      }
-                    }
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: alreadySelected 
-                        ? VesparaColors.tagsGreen.withOpacity(0.2)
-                        : (isVibe ? VesparaColors.tagsYellow : VesparaColors.glow).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: alreadySelected 
-                          ? VesparaColors.tagsGreen
-                          : (isVibe ? VesparaColors.tagsYellow : VesparaColors.glow).withOpacity(0.5),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
-                      Text(suggestion['emoji'], style: const TextStyle(fontSize: 12)),
-                      const SizedBox(width: 4),
+                      Icon(Icons.auto_fix_high, color: VesparaColors.glow, size: 20),
+                      const SizedBox(width: 8),
                       Text(
-                        suggestion['label'],
+                        'CHECK ME',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: alreadySelected 
-                              ? VesparaColors.tagsGreen 
-                              : VesparaColors.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: VesparaColors.primary,
                         ),
                       ),
-                      if (!alreadySelected) ...[
-                        const SizedBox(width: 4),
-                        Icon(Icons.add, size: 12, color: VesparaColors.secondary),
-                      ] else ...[
-                        const SizedBox(width: 4),
-                        Icon(Icons.check, size: 12, color: VesparaColors.tagsGreen),
-                      ],
                     ],
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  List<Map<String, dynamic>> _generateAISuggestions() {
-    final suggestions = <Map<String, dynamic>>[];
-    
-    // Based on selected vibes, suggest related ones
-    if (_selectedVibes.contains('adventurous')) {
-      if (!_selectedVibes.contains('spontaneous')) {
-        suggestions.add({'type': 'vibe', 'id': 'spontaneous', 'emoji': '🎲', 'label': 'Spontaneous'});
-      }
-      if (!_selectedInterests.contains('travel')) {
-        suggestions.add({'type': 'interest', 'id': 'travel', 'emoji': '✈️', 'label': 'Travel'});
-      }
-      if (!_selectedInterests.contains('hiking')) {
-        suggestions.add({'type': 'interest', 'id': 'hiking', 'emoji': '🥾', 'label': 'Hiking'});
-      }
-    }
-    
-    if (_selectedVibes.contains('creative')) {
-      if (!_selectedInterests.contains('art')) {
-        suggestions.add({'type': 'interest', 'id': 'art', 'emoji': '🎨', 'label': 'Art & Design'});
-      }
-      if (!_selectedInterests.contains('photography')) {
-        suggestions.add({'type': 'interest', 'id': 'photography', 'emoji': '📸', 'label': 'Photography'});
-      }
-    }
-    
-    if (_selectedVibes.contains('intellectual')) {
-      if (!_selectedInterests.contains('reading')) {
-        suggestions.add({'type': 'interest', 'id': 'reading', 'emoji': '📖', 'label': 'Reading'});
-      }
-      if (!_selectedInterests.contains('podcasts')) {
-        suggestions.add({'type': 'interest', 'id': 'podcasts', 'emoji': '🎙️', 'label': 'Podcasts'});
-      }
-      if (!_selectedVibes.contains('deep_thinker')) {
-        suggestions.add({'type': 'vibe', 'id': 'deep_thinker', 'emoji': '🧠', 'label': 'Deep Thinker'});
-      }
-    }
-    
-    if (_selectedVibes.contains('social_butterfly') || _selectedVibes.contains('life_of_party')) {
-      if (!_selectedInterests.contains('dancing')) {
-        suggestions.add({'type': 'interest', 'id': 'dancing', 'emoji': '💃', 'label': 'Dancing'});
-      }
-      if (!_selectedInterests.contains('concerts')) {
-        suggestions.add({'type': 'interest', 'id': 'concerts', 'emoji': '🎤', 'label': 'Live Music'});
-      }
-      if (!_selectedInterests.contains('festivals')) {
-        suggestions.add({'type': 'interest', 'id': 'festivals', 'emoji': '🎪', 'label': 'Festivals'});
-      }
-    }
-    
-    if (_selectedVibes.contains('calm_centered')) {
-      if (!_selectedInterests.contains('yoga')) {
-        suggestions.add({'type': 'interest', 'id': 'yoga', 'emoji': '🧘‍♀️', 'label': 'Yoga'});
-      }
-      if (!_selectedInterests.contains('meditation')) {
-        suggestions.add({'type': 'interest', 'id': 'meditation', 'emoji': '🕉️', 'label': 'Meditation'});
-      }
-    }
-    
-    if (_selectedInterests.contains('fitness')) {
-      if (!_selectedVibes.contains('high_energy')) {
-        suggestions.add({'type': 'vibe', 'id': 'high_energy', 'emoji': '⚡', 'label': 'High Energy'});
-      }
-      if (!_selectedInterests.contains('hiking')) {
-        suggestions.add({'type': 'interest', 'id': 'hiking', 'emoji': '🥾', 'label': 'Hiking'});
-      }
-    }
-    
-    if (_selectedInterests.contains('wine') || _selectedInterests.contains('food')) {
-      if (!_selectedVibes.contains('hopeless_romantic')) {
-        suggestions.add({'type': 'vibe', 'id': 'hopeless_romantic', 'emoji': '💝', 'label': 'Hopeless Romantic'});
-      }
-      if (!_selectedInterests.contains('cooking')) {
-        suggestions.add({'type': 'interest', 'id': 'cooking', 'emoji': '👨‍🍳', 'label': 'Cooking'});
-      }
-    }
-    
-    // Popular suggestions if nothing selected
-    if (suggestions.isEmpty && _selectedVibes.isEmpty && _selectedInterests.isEmpty) {
-      suggestions.addAll([
-        {'type': 'vibe', 'id': 'adventurous', 'emoji': '🏔️', 'label': 'Adventurous'},
-        {'type': 'vibe', 'id': 'creative', 'emoji': '🎨', 'label': 'Creative'},
-        {'type': 'interest', 'id': 'travel', 'emoji': '✈️', 'label': 'Travel'},
-        {'type': 'interest', 'id': 'music', 'emoji': '🎵', 'label': 'Music'},
-      ]);
-    }
-    
-    // Limit to 5 suggestions
-    return suggestions.take(5).toList();
-  }
-  
-  Widget _buildDiscoverySection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section Header
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: VesparaColors.glow.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'AI POWERED',
+                      style: TextStyle(fontSize: 10, color: VesparaColors.glow, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
-              child: Icon(Icons.explore, color: VesparaColors.glow, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'DISCOVERY PREFERENCES',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Text(
-                  'Who do you want to meet?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: VesparaColors.secondary,
-                  ),
-                ),
-              ],
+              const SizedBox(height: 8),
+              Text(
+                'Get personalized suggestions based on your profile, interests, and what others with similar vibes enjoy.',
+                style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+              ),
+              const SizedBox(height: 12),
+              Text('You might also like:', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildSuggestionChip('🏔️', 'Adventurous'),
+                  _buildSuggestionChip('🎨', 'Creative'),
+                  _buildSuggestionChip('✈️', 'Travel'),
+                  _buildSuggestionChip('🎵', 'Music'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // YOUR VIBE Section
+        _buildBuildSection(
+          title: 'YOUR VIBE',
+          subtitle: 'How would you describe your energy?',
+          icon: Icons.mood,
+          selectedCount: selectedVibes.length,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: allVibes.map((vibe) {
+                final isSelected = selectedVibes.any((v) => v.contains(vibe['label']!));
+                return _buildVibeChip(vibe['emoji']!, vibe['label']!, isSelected);
+              }).toList(),
             ),
           ],
         ),
-        const SizedBox(height: VesparaSpacing.md),
         
-        // Max Distance Slider
-        Container(
-          padding: const EdgeInsets.all(VesparaSpacing.md),
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.near_me, color: VesparaColors.glow, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Maximum Distance', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.glow.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_maxDistance.round()} mi',
-                      style: TextStyle(
-                        color: VesparaColors.glow,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Slider(
-                value: _maxDistance,
-                min: 1,
-                max: 100,
-                activeColor: VesparaColors.glow,
-                inactiveColor: VesparaColors.border,
-                onChanged: (v) => setState(() => _maxDistance = v),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: VesparaSpacing.md),
+        const SizedBox(height: 24),
         
-        // Age Range Slider
-        Container(
-          padding: const EdgeInsets.all(VesparaSpacing.md),
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.cake, color: VesparaColors.glow, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Age Range', style: TextStyle(fontWeight: FontWeight.w600)),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.glow.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_ageRange.start.round()} - ${_ageRange.end.round()}',
-                      style: TextStyle(
-                        color: VesparaColors.glow,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              RangeSlider(
-                values: _ageRange,
-                min: 18,
-                max: 65,
-                activeColor: VesparaColors.glow,
-                inactiveColor: VesparaColors.border,
-                onChanged: (v) => setState(() => _ageRange = v),
-              ),
-            ],
-          ),
+        // YOUR INTERESTS Section
+        _buildBuildSection(
+          title: 'YOUR INTERESTS',
+          subtitle: 'What lights you up?',
+          icon: Icons.favorite,
+          selectedCount: selectedInterests.length,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: allInterests.map((interest) {
+                final isSelected = selectedInterests.contains(interest['label']);
+                return _buildVibeChip(interest['emoji']!, interest['label']!, isSelected);
+              }).toList(),
+            ),
+          ],
         ),
-        const SizedBox(height: VesparaSpacing.md),
         
-        // Filters
-        Container(
-          decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              SwitchListTile(
-                title: Text('Verified Only', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('Only show verified profiles', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
-                secondary: Icon(Icons.verified, color: VesparaColors.glow),
-                value: _showVerifiedOnly,
-                onChanged: (v) => setState(() => _showVerifiedOnly = v),
-                activeColor: VesparaColors.glow,
-              ),
-              Divider(height: 1, color: VesparaColors.border),
-              SwitchListTile(
-                title: Text('Recently Active', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('Prioritize people active in the last 24 hours', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
-                secondary: Icon(Icons.access_time, color: VesparaColors.glow),
-                value: _showActiveRecently,
-                onChanged: (v) => setState(() => _showActiveRecently = v),
-                activeColor: VesparaColors.glow,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildSaveButton(BuildContext context) {
-    final totalSelected = _selectedVibes.length + _selectedInterests.length + _selectedDesires.length;
-    
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: totalSelected == 0 || _isSaving ? null : _saveExperience,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: VesparaColors.glow,
-          foregroundColor: VesparaColors.background,
-          disabledBackgroundColor: VesparaColors.surface,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: _isSaving
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: VesparaColors.background,
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.save),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Save Experience ($totalSelected)',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-/// ════════════════════════════════════════════════════════════════════════════
-/// TAB 4: SETTINGS - Embedded Settings with sub-tabs
-/// ════════════════════════════════════════════════════════════════════════════
-
-class _SettingsTab extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_SettingsTab> createState() => _SettingsTabState();
-}
-
-class _SettingsTabState extends ConsumerState<_SettingsTab>
-    with SingleTickerProviderStateMixin {
-  late TabController _settingsTabController;
-  
-  // Access settings
-  bool _locationEnabled = false;
-  bool _notificationsEnabled = true;
-  bool _cameraEnabled = false;
-  bool _photosEnabled = false;
-  
-  // Account settings
-  bool _profileVisible = true;
-  bool _accountPaused = false;
-  
-  // AI settings
-  bool _aiSuggestionsEnabled = true;
-  bool _aiMatchInsights = true;
-  
-  @override
-  void initState() {
-    super.initState();
-    _settingsTabController = TabController(length: 4, vsync: this);
-  }
-  
-  @override
-  void dispose() {
-    _settingsTabController.dispose();
-    super.dispose();
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: VesparaSpacing.sm),
-        _buildSettingsTabBar(),
-        Expanded(
-          child: TabBarView(
-            controller: _settingsTabController,
-            children: [
-              _buildAccessTab(),
-              _buildAccountTab(),
-              _buildAITab(),
-              _buildIntegrationsTab(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildSettingsTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TabBar(
-        controller: _settingsTabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        indicator: BoxDecoration(
-          color: VesparaColors.glow.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        indicatorPadding: const EdgeInsets.all(3),
-        dividerColor: Colors.transparent,
-        labelColor: VesparaColors.glow,
-        unselectedLabelColor: VesparaColors.secondary,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
-        unselectedLabelStyle: const TextStyle(fontSize: 11),
-        tabs: const [
-          Tab(text: 'ACCESS'),
-          Tab(text: 'ACCOUNT'),
-          Tab(text: 'AI'),
-          Tab(text: 'INTEGRATIONS'),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAccessTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('App Permissions', Icons.security),
-          const SizedBox(height: VesparaSpacing.md),
-          _buildPermissionCard(
-            icon: Icons.location_on,
-            title: 'Location',
-            subtitle: 'Find nearby matches, events, and enable Tonight Mode',
-            isEnabled: _locationEnabled,
-            onToggle: (v) => setState(() => _locationEnabled = v),
-            features: ['Nearby matches', 'Local events', 'Tonight Mode', 'Distance filtering'],
-          ),
-          const SizedBox(height: VesparaSpacing.sm),
-          _buildPermissionCard(
-            icon: Icons.notifications_active,
-            title: 'Notifications',
-            subtitle: 'Stay updated on matches, messages, and experiences',
-            isEnabled: _notificationsEnabled,
-            onToggle: (v) => setState(() => _notificationsEnabled = v),
-            features: ['Match alerts', 'Message notifications', 'Experience reminders', 'AI nudges'],
-          ),
-          const SizedBox(height: VesparaSpacing.sm),
-          _buildPermissionCard(
-            icon: Icons.camera_alt,
-            title: 'Camera',
-            subtitle: 'Take photos for your profile and verify your identity',
-            isEnabled: _cameraEnabled,
-            onToggle: (v) => setState(() => _cameraEnabled = v),
-            features: ['Profile photos', 'Verification', 'In-app capture'],
-          ),
-          const SizedBox(height: VesparaSpacing.sm),
-          _buildPermissionCard(
-            icon: Icons.photo_library,
-            title: 'Photo Library',
-            subtitle: 'Access your photos for profile and experience media',
-            isEnabled: _photosEnabled,
-            onToggle: (v) => setState(() => _photosEnabled = v),
-            features: ['Profile gallery', 'Experience photos', 'Chat media'],
-          ),
-          const SizedBox(height: VesparaSpacing.lg),
-          _buildPrivacyNote(),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPermissionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isEnabled,
-    required ValueChanged<bool> onToggle,
-    required List<String> features,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isEnabled ? VesparaColors.glow.withOpacity(0.3) : VesparaColors.border,
-        ),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isEnabled 
-                    ? VesparaColors.glow.withOpacity(0.2)
-                    : VesparaColors.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: isEnabled ? VesparaColors.glow : VesparaColors.secondary,
-              ),
-            ),
-            title: Text(
-              title,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              subtitle,
-              style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
-            ),
-            trailing: Switch(
-              value: isEnabled,
-              onChanged: onToggle,
-              activeColor: VesparaColors.glow,
-            ),
-          ),
-          if (!isEnabled)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: features.map((feature) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: VesparaColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.lock_outline, size: 12, color: VesparaColors.secondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        feature,
-                        style: TextStyle(color: VesparaColors.secondary, fontSize: 11),
-                      ),
-                    ],
-                  ),
-                )).toList(),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPrivacyNote() {
-    return Container(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.glow.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.shield_outlined, color: VesparaColors.glow),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your Privacy Matters',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'We only access what you allow. Location is never shared without consent.',
-                  style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAccountTab() {
-    final user = Supabase.instance.client.auth.currentUser;
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Account Details', Icons.person),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          // Email
-          _buildInfoTile(
-            icon: Icons.email,
-            title: 'Email',
-            value: user?.email ?? 'Not set',
-          ),
-          
-          // Phone
-          _buildInfoTile(
-            icon: Icons.phone,
-            title: 'Phone',
-            value: user?.phone ?? 'Not set',
-          ),
-          
-          const SizedBox(height: VesparaSpacing.lg),
-          _buildSectionHeader('Privacy', Icons.lock),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          _buildToggleTile(
-            icon: Icons.visibility,
-            title: 'Profile Visible',
-            subtitle: 'Others can see your profile',
-            value: _profileVisible,
-            onChanged: (v) => setState(() => _profileVisible = v),
-          ),
-          
-          _buildToggleTile(
-            icon: Icons.pause_circle,
-            title: 'Pause Account',
-            subtitle: 'Temporarily hide from discovery',
-            value: _accountPaused,
-            onChanged: (v) => setState(() => _accountPaused = v),
-          ),
-          
-          _buildActionTile(
-            icon: Icons.block,
-            title: 'Blocked Users',
-            subtitle: 'Manage your block list',
-            onTap: () {},
-          ),
-          
-          _buildActionTile(
-            icon: Icons.download,
-            title: 'Download My Data',
-            subtitle: 'Request a copy of your data',
-            onTap: () {},
-          ),
-          
-          const SizedBox(height: VesparaSpacing.lg),
-          _buildSectionHeader('Danger Zone', Icons.warning),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          _buildActionTile(
-            icon: Icons.logout,
-            title: 'Log Out',
-            subtitle: 'Sign out of your account',
-            onTap: () async {
-              await Supabase.instance.client.auth.signOut();
-            },
-            isDestructive: true,
-          ),
-          
-          _buildActionTile(
-            icon: Icons.delete_forever,
-            title: 'Delete Account',
-            subtitle: 'Permanently delete your account and data',
-            onTap: () => _showDeleteConfirmation(context),
-            isDestructive: true,
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        title: Text('Delete Account?', style: TextStyle(color: VesparaColors.error)),
-        content: Text(
-          'This action cannot be undone. All your data will be permanently deleted.',
-          style: TextStyle(color: VesparaColors.secondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement account deletion
-            },
-            child: Text('Delete', style: TextStyle(color: VesparaColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: VesparaSpacing.sm),
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
+        const SizedBox(height: 24),
+        
+        // Heat Level
+        if (profile.heatLevel != null)
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: VesparaColors.glow.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: VesparaColors.glow, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
-                Text(value, style: TextStyle(fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: VesparaColors.secondary),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAITab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('AI Personalization', Icons.auto_awesome),
-          const SizedBox(height: VesparaSpacing.md),
-          _buildToggleTile(
-            icon: Icons.lightbulb,
-            title: 'AI Suggestions',
-            subtitle: 'Get personalized recommendations',
-            value: _aiSuggestionsEnabled,
-            onChanged: (v) => setState(() => _aiSuggestionsEnabled = v),
-          ),
-          _buildToggleTile(
-            icon: Icons.insights,
-            title: 'Match Insights',
-            subtitle: 'AI-powered compatibility analysis',
-            value: _aiMatchInsights,
-            onChanged: (v) => setState(() => _aiMatchInsights = v),
-          ),
-          const SizedBox(height: VesparaSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(VesparaSpacing.md),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  VesparaColors.glow.withOpacity(0.1),
-                  VesparaColors.secondary.withOpacity(0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.psychology, size: 40, color: VesparaColors.glow),
-                const SizedBox(height: 8),
-                Text(
-                  'Vespara AI',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Our AI learns from your preferences to help you find meaningful connections.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildIntegrationsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Integrations', Icons.extension),
-          const SizedBox(height: VesparaSpacing.md),
-          
-          Container(
-            padding: const EdgeInsets.all(VesparaSpacing.lg),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: VesparaColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: VesparaColors.border),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.construction, size: 48, color: VesparaColors.secondary),
-                const SizedBox(height: 12),
-                Text(
-                  'Coming Soon',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: VesparaColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Connect your favorite apps and services to enhance your Vespara experience.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: VesparaColors.secondary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
+                Row(
                   children: [
-                    _buildIntegrationChip('Calendar', Icons.calendar_today),
-                    _buildIntegrationChip('Spotify', Icons.music_note),
-                    _buildIntegrationChip('Instagram', Icons.camera_alt),
-                    _buildIntegrationChip('Health', Icons.favorite),
+                    Text('🔥', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'YOUR HEAT LEVEL',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _getHeatColor(profile.heatLevel!).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _getHeatColor(profile.heatLevel!)),
+                  ),
+                  child: Text(
+                    profile.heatLevel!.toUpperCase(),
+                    style: TextStyle(
+                      color: _getHeatColor(profile.heatLevel!),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+        
+        const SizedBox(height: 32),
+        
+        // Edit button
+        ElevatedButton.icon(
+          onPressed: () => _navigateToEditProfile(profile),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: VesparaColors.glow,
+            foregroundColor: VesparaColors.background,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          icon: const Icon(Icons.edit),
+          label: const Text('Edit Your Experience', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  Widget _buildBuildSection({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required int selectedCount,
+    required List<Widget> children,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: VesparaColors.glow, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: VesparaColors.glow,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '$selectedCount selected',
+              style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(subtitle, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+        const SizedBox(height: 12),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _buildVibeChip(String emoji, String label, bool isSelected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? VesparaColors.glow.withOpacity(0.2) : VesparaColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? VesparaColors.glow : VesparaColors.border,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isSelected ? VesparaColors.glow : VesparaColors.primary,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+          if (!isSelected) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.add, size: 14, color: VesparaColors.secondary),
+          ],
         ],
       ),
     );
   }
-  
-  Widget _buildIntegrationChip(String label, IconData icon) {
+
+  Widget _buildSuggestionChip(String emoji, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -2603,116 +1138,644 @@ class _SettingsTabState extends ConsumerState<_SettingsTab>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: VesparaColors.glow),
+          Text(emoji),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 12, color: VesparaColors.glow)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: VesparaColors.primary),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.add, size: 14, color: VesparaColors.glow),
         ],
       ),
     );
   }
-  
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Row(
+
+  Color _getHeatColor(String heatLevel) {
+    switch (heatLevel.toLowerCase()) {
+      case 'mild':
+        return Colors.pink.shade300;
+      case 'medium':
+        return Colors.orange.shade400;
+      case 'hot':
+        return Colors.red.shade400;
+      case 'nuclear':
+        return Colors.purple.shade400;
+      default:
+        return VesparaColors.glow;
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SETTINGS TAB
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildSettingsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        Icon(icon, size: 20, color: VesparaColors.glow),
-        const SizedBox(width: 8),
+        _buildSettingsSection('Discovery Preferences', [
+          _buildSettingTile('Age Range', '21-45', Icons.cake_outlined, () => _showAgeRangeDialog()),
+          _buildSettingTile('Distance', 'Within 25 miles', Icons.location_on_outlined, () => _showDistanceDialog()),
+          _buildSettingTile('Show Me', 'Everyone', Icons.people_outline, () => _showGenderPreferenceDialog()),
+          _buildSettingTile('Relationship Types', '3 selected', Icons.favorite_outline, () => _showRelationshipTypesDialog()),
+        ]),
+        const SizedBox(height: 16),
+        _buildSettingsSection('Notifications', [
+          _buildSettingToggle('New Matches'),
+          _buildSettingToggle('Messages'),
+          _buildSettingToggle('Date Reminders'),
+          _buildSettingToggle('AI Insights'),
+        ]),
+        const SizedBox(height: 16),
+        _buildSettingsSection('Privacy', [
+          _buildSettingToggle('Show Online Status'),
+          _buildSettingToggle('Read Receipts'),
+          _buildSettingToggle('Profile Visible'),
+        ]),
+        const SizedBox(height: 16),
+        _buildSettingsSection('Calendar Sync', [
+          _buildSettingTile('Google Calendar', 'Connected', Icons.calendar_today, () => _showCalendarSyncDialog('Google')),
+          _buildSettingTile('Apple Calendar', 'Not Connected', Icons.event, () => _showCalendarSyncDialog('Apple')),
+        ]),
+        const SizedBox(height: 16),
+        _buildSettingsSection('Account', [
+          _buildSettingTile('Subscription', 'Vespara Plus', Icons.star_outline, () => _showSubscriptionDialog()),
+          _buildSettingTile('Email', 'demo@vespara.app', Icons.email_outlined, () => _showEditEmailDialog()),
+          _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined, () => _showEditPhoneDialog()),
+        ]),
+        const SizedBox(height: 24),
+        _buildDangerZone(),
+      ],
+    );
+  }
+
+  void _showAgeRangeDialog() {
+    RangeValues range = const RangeValues(21, 45);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Age Range', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              const SizedBox(height: 24),
+              Text('${range.start.toInt()} - ${range.end.toInt()} years',
+                  style: TextStyle(fontSize: 24, color: VesparaColors.glow)),
+              RangeSlider(
+                values: range,
+                min: 18,
+                max: 65,
+                divisions: 47,
+                activeColor: VesparaColors.glow,
+                inactiveColor: VesparaColors.glow.withOpacity(0.2),
+                onChanged: (v) => setModalState(() => range = v),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VesparaColors.glow,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Age range updated to ${range.start.toInt()}-${range.end.toInt()}')),
+                    );
+                  },
+                  child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDistanceDialog() {
+    double distance = 25;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Maximum Distance', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              const SizedBox(height: 24),
+              Text('${distance.toInt()} miles', style: TextStyle(fontSize: 24, color: VesparaColors.glow)),
+              Slider(
+                value: distance,
+                min: 1,
+                max: 100,
+                divisions: 99,
+                activeColor: VesparaColors.glow,
+                inactiveColor: VesparaColors.glow.withOpacity(0.2),
+                onChanged: (v) => setModalState(() => distance = v),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VesparaColors.glow,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Distance updated to ${distance.toInt()} miles')),
+                    );
+                  },
+                  child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showGenderPreferenceDialog() {
+    String selected = 'Everyone';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Show Me', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              const SizedBox(height: 24),
+              ...['Women', 'Men', 'Everyone'].map((option) => RadioListTile<String>(
+                title: Text(option, style: TextStyle(color: VesparaColors.primary)),
+                value: option,
+                groupValue: selected,
+                activeColor: VesparaColors.glow,
+                onChanged: (v) {
+                  setModalState(() => selected = v!);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Preference updated to $v')),
+                  );
+                },
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRelationshipTypesDialog() {
+    final types = ['Long-term', 'Casual', 'Open', 'Friendship', 'Unsure'];
+    final selected = {'Long-term', 'Casual', 'Friendship'};
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Relationship Types', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+              const SizedBox(height: 24),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: types.map((type) => FilterChip(
+                  label: Text(type),
+                  selected: selected.contains(type),
+                  onSelected: (v) {
+                    setModalState(() {
+                      v ? selected.add(type) : selected.remove(type);
+                    });
+                  },
+                  selectedColor: VesparaColors.glow.withOpacity(0.3),
+                  checkmarkColor: VesparaColors.glow,
+                  backgroundColor: VesparaColors.background,
+                  labelStyle: TextStyle(color: selected.contains(type) ? VesparaColors.glow : VesparaColors.primary),
+                )).toList(),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VesparaColors.glow,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${selected.length} relationship types selected')),
+                    );
+                  },
+                  child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCalendarSyncDialog(String provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('$provider Calendar', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(
+          provider == 'Google' 
+            ? 'Your Google Calendar is connected. Disconnect?' 
+            : 'Connect your Apple Calendar to sync dates automatically.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(provider == 'Google' ? 'Disconnected from Google Calendar' : 'Connecting to Apple Calendar...')),
+              );
+            },
+            child: Text(provider == 'Google' ? 'Disconnect' : 'Connect', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSubscriptionDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.star, size: 48, color: VesparaColors.glow),
+            const SizedBox(height: 16),
+            Text('Vespara Plus', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: VesparaColors.glow)),
+            const SizedBox(height: 8),
+            Text('You\'re on the Plus plan!', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 24),
+            _buildSubscriptionFeature('Unlimited swipes'),
+            _buildSubscriptionFeature('See who likes you'),
+            _buildSubscriptionFeature('AI dating coach'),
+            _buildSubscriptionFeature('Priority matching'),
+            const SizedBox(height: 24),
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Opening subscription management...')),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: VesparaColors.glow),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('Manage Subscription', style: TextStyle(color: VesparaColors.glow)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionFeature(String feature) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: VesparaColors.success, size: 20),
+          const SizedBox(width: 12),
+          Text(feature, style: TextStyle(color: VesparaColors.primary)),
+        ],
+      ),
+    );
+  }
+
+  void _showEditEmailDialog() {
+    final controller = TextEditingController(text: 'demo@vespara.app');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Update Email', style: TextStyle(color: VesparaColors.primary)),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            prefixIcon: Icon(Icons.email, color: VesparaColors.glow),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          style: TextStyle(color: VesparaColors.primary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Verification email sent to ${controller.text}')),
+              );
+            },
+            child: Text('Save', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditPhoneDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Update Phone', style: TextStyle(color: VesparaColors.primary)),
+        content: TextField(
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            hintText: '+1 (555) 000-0000',
+            hintStyle: TextStyle(color: VesparaColors.secondary),
+            prefixIcon: Icon(Icons.phone, color: VesparaColors.glow),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          style: TextStyle(color: VesparaColors.primary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Verification code sent to your phone')),
+              );
+            },
+            child: Text('Save', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Text(
           title,
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-            color: VesparaColors.primary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: VesparaColors.secondary,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: children,
           ),
         ),
       ],
     );
   }
-  
-  Widget _buildToggleTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: VesparaSpacing.sm),
-      padding: const EdgeInsets.all(VesparaSpacing.md),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
+
+  Widget _buildSettingTile(String title, String value, IconData icon, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: VesparaColors.glow, size: 20),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          color: VesparaColors.primary,
+        ),
       ),
-      child: Row(
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: VesparaColors.glow.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: VesparaColors.glow, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
-                Text(subtitle, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
-              ],
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              color: VesparaColors.secondary,
             ),
           ),
-          Switch(
-            value: value,
-            activeColor: VesparaColors.glow,
-            onChanged: onChanged,
+          const SizedBox(width: 4),
+          Icon(Icons.chevron_right, color: VesparaColors.secondary, size: 18),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildSettingToggle(String title) {
+    return ListTile(
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          color: VesparaColors.primary,
+        ),
+      ),
+      trailing: Switch.adaptive(
+        value: _toggleSettings[title] ?? false,
+        onChanged: (v) {
+          setState(() => _toggleSettings[title] = v);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$title ${v ? 'enabled' : 'disabled'}'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        },
+        activeColor: VesparaColors.glow,
+      ),
+    );
+  }
+
+  Widget _buildDangerZone() {
+    return Container(
+      decoration: BoxDecoration(
+        color: VesparaColors.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(Icons.pause_circle_outline, color: VesparaColors.warning),
+            title: Text('Pause Account', style: TextStyle(color: VesparaColors.primary)),
+            onTap: () => _showPauseAccountDialog(),
+          ),
+          ListTile(
+            leading: Icon(Icons.delete_outline, color: VesparaColors.error),
+            title: Text('Delete Account', style: TextStyle(color: VesparaColors.error)),
+            onTap: () => _showDeleteAccountDialog(),
+          ),
+          ListTile(
+            leading: Icon(Icons.logout, color: VesparaColors.error),
+            title: Text('Log Out', style: TextStyle(color: VesparaColors.error)),
+            onTap: () => _showLogoutDialog(),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildActionTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    bool isDestructive = false,
-  }) {
-    final color = isDestructive ? VesparaColors.error : VesparaColors.glow;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: VesparaSpacing.sm),
-        padding: const EdgeInsets.all(VesparaSpacing.md),
-        decoration: BoxDecoration(
-          color: VesparaColors.surface,
-          borderRadius: BorderRadius.circular(16),
+
+  void _showPauseAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Pause Your Account?', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(
+          'Your profile will be hidden and you won\'t receive new matches. You can unpause anytime.',
+          style: TextStyle(color: VesparaColors.secondary),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: isDestructive ? color : null)),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: VesparaColors.secondary),
-          ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Account paused. Come back when you\'re ready!'),
+                  backgroundColor: VesparaColors.warning,
+                ),
+              );
+            },
+            child: Text('Pause', style: TextStyle(color: VesparaColors.warning)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete Account?', style: TextStyle(color: VesparaColors.error)),
+        content: Text(
+          'This action cannot be undone. All your data, matches, and messages will be permanently deleted.',
+          style: TextStyle(color: VesparaColors.secondary),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to home
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Account deleted. We\'re sorry to see you go.'),
+                  backgroundColor: VesparaColors.error,
+                ),
+              );
+            },
+            child: Text('Delete Forever', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Log Out?', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(
+          'You\'ll need to sign in again to access your account.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to home
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Logged out successfully')),
+              );
+            },
+            child: Text('Log Out', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
       ),
     );
   }
