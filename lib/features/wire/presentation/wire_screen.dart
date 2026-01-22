@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/data/vespara_mock_data.dart';
@@ -403,7 +404,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
 }
 
 /// Individual chat screen
-class _ChatDetailScreen extends StatefulWidget {
+class _ChatDetailScreen extends ConsumerStatefulWidget {
   final ChatConversation conversation;
   final VoidCallback onBack;
   
@@ -413,19 +414,73 @@ class _ChatDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<_ChatDetailScreen> createState() => _ChatDetailScreenState();
+  ConsumerState<_ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<_ChatDetailScreen> {
+class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  late List<ChatMessage> _messages;
+  List<ChatMessage> _messages = [];
   bool _showMediaOptions = false;
+  bool _isLoading = true;
+  final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
+    _loadMessages();
+  }
+  
+  Future<void> _loadMessages() async {
+    setState(() => _isLoading = true);
+    
+    final currentUserId = _supabase.auth.currentUser?.id;
+    if (currentUserId == null) {
+      // Fall back to mock data if not logged in
+      setState(() {
+        _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
+        _isLoading = false;
+      });
+      return;
+    }
+    
+    try {
+      // Load messages from database
+      final response = await _supabase
+          .from('messages')
+          .select()
+          .eq('conversation_id', widget.conversation.id)
+          .order('created_at', ascending: true);
+      
+      final dbMessages = (response as List<dynamic>).map((json) => ChatMessage(
+        id: json['id'] as String,
+        conversationId: json['conversation_id'] as String,
+        senderId: json['sender_id'] as String,
+        isFromMe: json['sender_id'] == currentUserId,
+        content: json['content'] as String? ?? '',
+        createdAt: DateTime.parse(json['created_at'] as String),
+      )).toList();
+      
+      if (dbMessages.isEmpty) {
+        // No DB messages, use mock data for demo
+        setState(() {
+          _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _messages = dbMessages;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading messages: $e');
+      // Fall back to mock data on error
+      setState(() {
+        _messages = MockDataProvider.getMessagesForConversation(widget.conversation.id);
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -435,29 +490,107 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     
+    final content = _messageController.text.trim();
+    final currentUserId = _supabase.auth.currentUser?.id;
+    final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
+    
+    // Optimistic update - add message immediately
+    final optimisticMessage = ChatMessage(
+      id: tempId,
+      conversationId: widget.conversation.id,
+      senderId: currentUserId ?? 'demo-user-001',
+      isFromMe: true,
+      content: content,
+      createdAt: DateTime.now(),
+    );
+    
     setState(() {
-      _messages.add(ChatMessage(
-        id: 'msg-${_messages.length + 1}',
-        conversationId: widget.conversation.id,
-        senderId: 'demo-user-001',
-        isFromMe: true,
-        content: _messageController.text.trim(),
-        createdAt: DateTime.now(),
-      ));
+      _messages.add(optimisticMessage);
       _messageController.clear();
     });
     
     // Scroll to bottom
     Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
+    
+    // Save to database if logged in
+    if (currentUserId != null) {
+      try {
+        // Ensure conversation exists in database first
+        await _ensureConversationExists(widget.conversation.id, currentUserId);
+        
+        final response = await _supabase
+            .from('messages')
+            .insert({
+              'conversation_id': widget.conversation.id,
+              'sender_id': currentUserId,
+              'content': content,
+              'message_type': 'text',
+            })
+            .select()
+            .single();
+        
+        // Replace temp message with real one from DB
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = ChatMessage(
+              id: response['id'] as String,
+              conversationId: response['conversation_id'] as String,
+              senderId: response['sender_id'] as String,
+              isFromMe: true,
+              content: response['content'] as String? ?? '',
+              createdAt: DateTime.parse(response['created_at'] as String),
+            );
+          }
+        });
+        
+        debugPrint('✅ Message saved to database: ${response['id']}');
+      } catch (e) {
+        debugPrint('❌ Error saving message: $e');
+        // Message stays in local state even if DB save fails
+      }
+    }
+  }
+  
+  Future<void> _ensureConversationExists(String conversationId, String userId) async {
+    try {
+      // Check if conversation exists
+      final existing = await _supabase
+          .from('conversations')
+          .select('id')
+          .eq('id', conversationId)
+          .maybeSingle();
+      
+      if (existing == null) {
+        // Create conversation if it doesn't exist
+        await _supabase.from('conversations').insert({
+          'id': conversationId,
+          'user_id': userId,
+          'conversation_type': 'direct',
+        });
+        
+        // Add current user as participant
+        await _supabase.from('conversation_participants').insert({
+          'conversation_id': conversationId,
+          'user_id': userId,
+        });
+        
+        debugPrint('✅ Created conversation: $conversationId');
+      }
+    } catch (e) {
+      debugPrint('Error ensuring conversation exists: $e');
+    }
   }
 
   void _showVideoCallDialog() {
