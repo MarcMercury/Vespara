@@ -55,6 +55,21 @@ class UserProfile extends Equatable {
   final int travelRadius;  // miles willing to travel
   final List<String> partyAvailability;  // event/party preferences
   
+  /// Returns a display-friendly location string
+  /// Prioritizes city/state, falls back to location field
+  String get displayLocation {
+    if (city != null && city!.isNotEmpty && state != null && state!.isNotEmpty) {
+      return '$city, $state';
+    } else if (city != null && city!.isNotEmpty) {
+      return city!;
+    } else if (location != null && location!.isNotEmpty) {
+      return location!;
+    } else if (zipCode != null && zipCode!.isNotEmpty) {
+      return zipCode!;
+    }
+    return '';
+  }
+
   const UserProfile({
     required this.id,
     required this.email,
