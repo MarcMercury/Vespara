@@ -278,6 +278,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
   
   Widget _buildQuickStats(dynamic analytics) {
+    // Handle null analytics - show 0s as defaults
+    final totalMatches = analytics?.totalMatches ?? 0;
+    final activeConversations = analytics?.activeConversations ?? 0;
+    final datesScheduled = analytics?.datesScheduled ?? 0;
+    final matchRate = (analytics?.matchRate ?? 0.0).toInt();
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -293,13 +299,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildQuickStat('${analytics.totalMatches}', 'Matches', Icons.favorite),
+          _buildQuickStat('$totalMatches', 'Matches', Icons.favorite),
           Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildQuickStat('${analytics.activeConversations}', 'Active', Icons.chat_bubble),
+          _buildQuickStat('$activeConversations', 'Active', Icons.chat_bubble),
           Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildQuickStat('${analytics.datesScheduled}', 'Dates', Icons.calendar_today),
+          _buildQuickStat('$datesScheduled', 'Dates', Icons.calendar_today),
           Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildQuickStat('${analytics.matchRate.toInt()}%', 'Rate', Icons.trending_up),
+          _buildQuickStat('$matchRate%', 'Rate', Icons.trending_up),
         ],
       ),
     );
