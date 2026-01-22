@@ -13,6 +13,62 @@ import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ERROR HANDLING - Prevent grey screen on uncaught errors
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // Custom error widget to show instead of grey screen
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    debugPrint('ErrorWidget triggered: ${details.exception}');
+    debugPrint('Stack: ${details.stack}');
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A1523), // VesparaColors.background
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: const Color(0xFFCF6679), size: 64),
+              const SizedBox(height: 24),
+              Text(
+                'Something went wrong',
+                style: TextStyle(
+                  color: const Color(0xFFE0D8EA),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                kDebugMode ? details.exception.toString() : 'Please try again',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: const Color(0xFF9D85B1),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  };
+  
+  // Global Flutter error handler
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('╔══════════════════════════════════════════════════════════');
+    debugPrint('║ FLUTTER ERROR CAUGHT');
+    debugPrint('║ Exception: ${details.exception}');
+    debugPrint('║ Library: ${details.library}');
+    debugPrint('╚══════════════════════════════════════════════════════════');
+    if (details.stack != null) {
+      debugPrint('Stack trace:\n${details.stack}');
+    }
+    // Let Flutter's default error handling also run
+    FlutterError.presentError(details);
+  };
+  
   await Supabase.initialize(
     url: Env.supabaseUrl,
     anonKey: Env.supabaseAnonKey,

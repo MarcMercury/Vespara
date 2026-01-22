@@ -897,9 +897,30 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   Widget build(BuildContext context) {
     // Show velvet rope intro first
     if (_showIntro) {
-      return VelvetRopeIntro(
-        onComplete: () {
-          setState(() => _showIntro = false);
+      // Wrap in a Builder to catch any rendering errors and provide fallback
+      return Builder(
+        builder: (context) {
+          try {
+            return VelvetRopeIntro(
+              onComplete: () {
+                setState(() => _showIntro = false);
+              },
+            );
+          } catch (e) {
+            debugPrint('VelvetRopeIntro error: $e');
+            // Skip intro if there's an error and go straight to onboarding
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() => _showIntro = false);
+              }
+            });
+            return Scaffold(
+              backgroundColor: VesparaColors.background,
+              body: Center(
+                child: CircularProgressIndicator(color: VesparaColors.glow),
+              ),
+            );
+          }
         },
       );
     }

@@ -162,51 +162,63 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
   
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _triggerEntry,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_mainController, _glowController, _textController]),
-        builder: (context, child) {
-          return Opacity(
-            opacity: _fadeOutAnim.value,
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFF0A0A0F),
-              ),
-              child: Stack(
-                children: [
-                  // Background ambient glow
-                  _buildAmbientGlow(),
-                  
-                  // The exclusive inner world (glimpse through curtains)
-                  _buildInnerWorld(),
-                  
-                  // Left velvet curtain
-                  _buildCurtain(isLeft: true),
-                  
-                  // Right velvet curtain
-                  _buildCurtain(isLeft: false),
-                  
-                  // Velvet rope
-                  _buildVelvetRope(),
-                  
-                  // Gold stanchions
-                  _buildStanchions(),
-                  
-                  // Text overlay
-                  _buildTextOverlay(),
-                  
-                  // Tap prompt
-                  if (_showTapPrompt && !_hasBeenTapped)
-                    _buildTapPrompt(),
-                ],
-              ),
-            ),
+    // Use LayoutBuilder to ensure we have valid constraints before building
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Guard against zero constraints which can cause shader/rendering issues
+        if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
+          return Container(
+            color: const Color(0xFF0A0A0F),
           );
-        },
-      ),
+        }
+        
+        return GestureDetector(
+          onTap: _triggerEntry,
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_mainController, _glowController, _textController]),
+            builder: (context, child) {
+              return Opacity(
+                opacity: _fadeOutAnim.value,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0A0A0F),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Background ambient glow
+                      _buildAmbientGlow(),
+                      
+                      // The exclusive inner world (glimpse through curtains)
+                      _buildInnerWorld(),
+                      
+                      // Left velvet curtain
+                      _buildCurtain(isLeft: true),
+                      
+                      // Right velvet curtain
+                      _buildCurtain(isLeft: false),
+                      
+                      // Velvet rope
+                      _buildVelvetRope(),
+                      
+                      // Gold stanchions
+                      _buildStanchions(),
+                      
+                      // Text overlay
+                      _buildTextOverlay(),
+                      
+                      // Tap prompt
+                      if (_showTapPrompt && !_hasBeenTapped)
+                        _buildTapPrompt(),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
   
@@ -276,6 +288,12 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
   }
   
   List<Widget> _buildFloatingParticles() {
+    final screenSize = MediaQuery.of(context).size;
+    // Guard against invalid screen size
+    if (screenSize.width <= 0 || screenSize.height <= 0) {
+      return [];
+    }
+    
     final random = math.Random(42);
     return List.generate(20, (index) {
       final x = random.nextDouble();
@@ -284,8 +302,8 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
       final delay = random.nextDouble() * 2;
       
       return Positioned(
-        left: MediaQuery.of(context).size.width * x,
-        top: MediaQuery.of(context).size.height * y,
+        left: screenSize.width * x,
+        top: screenSize.height * y,
         child: AnimatedOpacity(
           duration: Duration(milliseconds: 500 + (delay * 1000).toInt()),
           opacity: _leftCurtainAnim.value * (0.3 + random.nextDouble() * 0.5),
@@ -311,8 +329,13 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
   }
   
   Widget _buildCurtain({required bool isLeft}) {
-    final progress = isLeft ? _leftCurtainAnim.value : _rightCurtainAnim.value;
     final screenWidth = MediaQuery.of(context).size.width;
+    // Guard against invalid screen width
+    if (screenWidth <= 0) {
+      return const SizedBox.shrink();
+    }
+    
+    final progress = isLeft ? _leftCurtainAnim.value : _rightCurtainAnim.value;
     
     // Calculate curtain position (opening from center)
     final xOffset = isLeft 
@@ -336,13 +359,19 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
   }
   
   Widget _buildVelvetRope() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Guard against invalid screen height
+    if (screenHeight <= 0) {
+      return const SizedBox.shrink();
+    }
+    
     final dropProgress = _ropeDropAnim.value;
     final openProgress = _leftCurtainAnim.value;
     
     return Positioned(
       left: 0,
       right: 0,
-      top: MediaQuery.of(context).size.height * 0.5 - 40,
+      top: screenHeight * 0.5 - 40,
       child: Transform.translate(
         offset: Offset(0, -100 * (1 - dropProgress)), // Drop from above
         child: Opacity(
@@ -422,6 +451,12 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
   }
   
   Widget _buildStanchions() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Guard against invalid screen height
+    if (screenHeight <= 0) {
+      return const SizedBox.shrink();
+    }
+    
     final dropProgress = _ropeDropAnim.value;
     final openProgress = _leftCurtainAnim.value;
     final separation = 100 + openProgress * 80;
@@ -429,7 +464,7 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
     return Positioned(
       left: 0,
       right: 0,
-      top: MediaQuery.of(context).size.height * 0.5 - 100,
+      top: screenHeight * 0.5 - 100,
       child: Opacity(
         opacity: dropProgress * (1 - openProgress * 0.7),
         child: Row(
@@ -645,38 +680,49 @@ class _AmbientGlowPainter extends CustomPainter {
   
   @override
   void paint(Canvas canvas, Size size) {
-    // Top corner glows
-    final topGlowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          const Color(0xFFD4AF37).withOpacity(0.1 * glowIntensity),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(0, 0),
-        radius: size.width * 0.5,
-      ));
+    // Guard against zero or invalid size to prevent shader issues
+    if (size.width <= 0 || size.height <= 0) {
+      return;
+    }
     
-    canvas.drawCircle(Offset(0, 0), size.width * 0.5, topGlowPaint);
-    canvas.drawCircle(Offset(size.width, 0), size.width * 0.5, topGlowPaint);
+    // Top corner glows
+    final cornerRadius = size.width * 0.5;
+    if (cornerRadius > 0) {
+      final topGlowPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFD4AF37).withOpacity(0.1 * glowIntensity),
+            Colors.transparent,
+          ],
+        ).createShader(Rect.fromCircle(
+          center: Offset(0, 0),
+          radius: cornerRadius,
+        ));
+      
+      canvas.drawCircle(Offset(0, 0), cornerRadius, topGlowPaint);
+      canvas.drawCircle(Offset(size.width, 0), cornerRadius, topGlowPaint);
+    }
     
     // Center glow (increases as curtains open)
-    final centerGlowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          const Color(0xFFD4AF37).withOpacity(0.15 * curtainProgress),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(size.width / 2, size.height / 2),
-        radius: size.width * 0.6,
-      ));
-    
-    canvas.drawCircle(
-      Offset(size.width / 2, size.height / 2),
-      size.width * 0.6,
-      centerGlowPaint,
-    );
+    final centerRadius = size.width * 0.6;
+    if (centerRadius > 0 && curtainProgress > 0) {
+      final centerGlowPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFD4AF37).withOpacity(0.15 * curtainProgress),
+            Colors.transparent,
+          ],
+        ).createShader(Rect.fromCircle(
+          center: Offset(size.width / 2, size.height / 2),
+          radius: centerRadius,
+        ));
+      
+      canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2),
+        centerRadius,
+        centerGlowPaint,
+      );
+    }
   }
   
   @override
@@ -697,6 +743,11 @@ class _VelvetCurtainPainter extends CustomPainter {
   
   @override
   void paint(Canvas canvas, Size size) {
+    // Guard against zero or invalid size to prevent shader issues
+    if (size.width <= 0 || size.height <= 0) {
+      return;
+    }
+    
     final rect = Offset.zero & size;
     
     // Base velvet gradient (deep crimson)
@@ -784,6 +835,11 @@ class _VelvetCurtainPainter extends CustomPainter {
 class _RopeTexturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    // Guard against zero or invalid size
+    if (size.width <= 0 || size.height <= 0) {
+      return;
+    }
+    
     final linePaint = Paint()
       ..color = const Color(0xFF5C0E1F).withOpacity(0.4)
       ..strokeWidth = 0.5;
