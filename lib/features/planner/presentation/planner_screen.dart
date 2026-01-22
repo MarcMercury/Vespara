@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/data/vespara_mock_data.dart';
-import '../../../core/domain/models/events.dart';
+import '../../../core/providers/plan_provider.dart';
+import '../../../core/domain/models/plan_event.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// THE PLANNER - Module 5
-/// AI-powered calendar with date scheduling and conflict detection
-/// Syncs with Google/iCal, analyzes conversations for smart scheduling
+/// THE PLAN - Enhanced Planner Screen
+/// One-stop shop for:
+/// - Viewing availability and scheduled events
+/// - Adding quick events with certainty levels
+/// - AI-powered "Find Me a Date" suggestions
+/// - Calendar integration (Google/Apple)
 /// ════════════════════════════════════════════════════════════════════════════
 
 class PlannerScreen extends ConsumerStatefulWidget {
@@ -18,32 +21,51 @@ class PlannerScreen extends ConsumerStatefulWidget {
   ConsumerState<PlannerScreen> createState() => _PlannerScreenState();
 }
 
-class _PlannerScreenState extends ConsumerState<PlannerScreen> {
-  late List<CalendarEvent> _events;
+class _PlannerScreenState extends ConsumerState<PlannerScreen> 
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   DateTime _selectedDate = DateTime.now();
+  bool _showAiSuggestions = true;
 
   @override
   void initState() {
     super.initState();
-    _events = MockDataProvider.calendarEvents;
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final planState = ref.watch(planProvider);
+
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
-            _buildQuickStats(),
-            _buildWeekStrip(),
-            Expanded(child: _buildEventsList()),
+            _buildQuickStats(planState),
+            _buildTabBar(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildCalendarTab(planState),
+                  _buildFindDateTab(planState),
+                  _buildIntegrationsTab(planState),
+                ],
+              ),
+            ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddEvent,
+        onPressed: () => _showAddEventWizard(),
         backgroundColor: VesparaColors.glow,
         child: Icon(Icons.add, color: VesparaColors.background),
       ),
@@ -81,7 +103,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
             ],
           ),
           IconButton(
-            onPressed: () => _showCalendarDialog(),
+            onPressed: () => _showCalendarPicker(),
             icon: Icon(Icons.calendar_month, color: VesparaColors.secondary),
           ),
         ],
@@ -89,14 +111,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
     );
   }
 
-  Widget _buildQuickStats() {
-    final thisWeekEvents = _events.where((e) {
-      final diff = e.startTime.difference(DateTime.now()).inDays;
-      return diff >= 0 && diff <= 7;
-    }).length;
-    
-    final conflicts = _events.where((e) => e.aiConflictDetected).length;
-    
+  Widget _buildQuickStats(PlanState state) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -113,56 +128,143 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('This Week', thisWeekEvents.toString(), Icons.event),
+          _buildStatItem('This Week', state.thisWeekEvents.length.toString(), Icons.event),
           Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildStatItem('Total', _events.length.toString(), Icons.calendar_today),
+          _buildStatItem('Locked', state.confirmedCount.toString(), Icons.lock, 
+              color: EventCertainty.locked.color),
           Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
-          _buildStatItem('Conflicts', conflicts.toString(), Icons.warning_amber, highlight: conflicts > 0),
+          _buildStatItem('Pending', state.tentativeCount.toString(), Icons.pending),
+          Container(width: 1, height: 40, color: VesparaColors.glow.withOpacity(0.2)),
+          _buildStatItem('AI Ideas', state.aiSuggestions.length.toString(), Icons.auto_awesome,
+              color: VesparaColors.glow),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, {bool highlight = false}) {
+  Widget _buildStatItem(String label, String value, IconData icon, {Color? color}) {
     return Column(
       children: [
-        Icon(icon, size: 20, color: highlight ? VesparaColors.warning : VesparaColors.glow),
+        Icon(icon, size: 18, color: color ?? VesparaColors.secondary),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: highlight ? VesparaColors.warning : VesparaColors.primary)),
-        Text(label, style: TextStyle(fontSize: 11, color: VesparaColors.secondary)),
+        Text(value, 
+          style: TextStyle(
+            fontSize: 16, 
+            fontWeight: FontWeight.w700, 
+            color: VesparaColors.primary,
+          ),
+        ),
+        Text(label, 
+          style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+        ),
       ],
     );
   }
 
-  Widget _buildWeekStrip() {
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: VesparaColors.glow,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        labelColor: VesparaColors.background,
+        unselectedLabelColor: VesparaColors.secondary,
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        tabs: const [
+          Tab(text: 'CALENDAR'),
+          Tab(text: 'FIND A DATE'),
+          Tab(text: 'SYNC'),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CALENDAR TAB
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildCalendarTab(PlanState state) {
+    return Column(
+      children: [
+        _buildWeekStrip(state),
+        Expanded(child: _buildEventsList(state)),
+      ],
+    );
+  }
+
+  Widget _buildWeekStrip(PlanState state) {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
-    
+
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(7, (index) {
           final day = weekStart.add(Duration(days: index));
-          final isSelected = day.day == _selectedDate.day && day.month == _selectedDate.month;
+          final isSelected = day.day == _selectedDate.day && 
+              day.month == _selectedDate.month;
           final isToday = day.day == now.day && day.month == now.month;
-          final hasEvent = _events.any((e) => e.startTime.day == day.day && e.startTime.month == day.month);
-          
+          final dayEvents = state.eventsForDate(day);
+          final hasEvent = dayEvents.isNotEmpty;
+
+          // Get the most "certain" event color for the indicator
+          Color? eventIndicatorColor;
+          if (hasEvent) {
+            final mostCertain = dayEvents.reduce((a, b) => 
+              a.certainty.percentage > b.certainty.percentage ? a : b
+            );
+            eventIndicatorColor = mostCertain.certainty.color;
+          }
+
           return GestureDetector(
             onTap: () => setState(() => _selectedDate = day),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? VesparaColors.glow : (isToday ? VesparaColors.glow.withOpacity(0.2) : Colors.transparent),
+                color: isSelected
+                    ? VesparaColors.glow
+                    : (isToday ? VesparaColors.glow.withOpacity(0.2) : Colors.transparent),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
-                  Text(_getDayName(day.weekday), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: isSelected ? VesparaColors.background : VesparaColors.secondary)),
+                  Text(
+                    _getDayName(day.weekday),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? VesparaColors.background : VesparaColors.secondary,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(day.day.toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isSelected ? VesparaColors.background : VesparaColors.primary)),
+                  Text(
+                    day.day.toString(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? VesparaColors.background : VesparaColors.primary,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  if (hasEvent) Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? VesparaColors.background : VesparaColors.glow)) else const SizedBox(width: 6, height: 6),
+                  if (hasEvent)
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected ? VesparaColors.background : eventIndicatorColor,
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 6, height: 6),
                 ],
               ),
             ),
@@ -172,13 +274,15 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
     );
   }
 
-  Widget _buildEventsList() {
-    final dayEvents = _events.where((e) => e.startTime.day == _selectedDate.day && e.startTime.month == _selectedDate.month && e.startTime.year == _selectedDate.year).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
-    
-    if (dayEvents.isEmpty) return _buildEmptyDay();
-    
+  Widget _buildEventsList(PlanState state) {
+    final dayEvents = state.eventsForDate(_selectedDate);
+
+    if (dayEvents.isEmpty) {
+      return _buildEmptyDay();
+    }
+
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       itemCount: dayEvents.length,
       itemBuilder: (context, index) => _buildEventCard(dayEvents[index]),
     );
@@ -191,90 +295,692 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
         children: [
           Icon(Icons.event_available, size: 64, color: VesparaColors.glow.withOpacity(0.3)),
           const SizedBox(height: 16),
-          Text('No plans for this day', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+          Text(
+            'No plans for this day',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary),
+          ),
           const SizedBox(height: 8),
-          Text('Tap + to schedule a date', style: TextStyle(fontSize: 14, color: VesparaColors.secondary)),
+          Text(
+            'Tap + to schedule something',
+            style: TextStyle(fontSize: 14, color: VesparaColors.secondary),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () {
+              _tabController.animateTo(1); // Go to Find a Date tab
+            },
+            icon: Icon(Icons.auto_awesome, color: VesparaColors.glow),
+            label: Text('Let AI find you a date', style: TextStyle(color: VesparaColors.glow)),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: VesparaColors.glow),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEventCard(CalendarEvent event) {
-    final statusColor = _getStatusColor(event.status);
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: event.aiConflictDetected ? VesparaColors.warning.withOpacity(0.5) : VesparaColors.glow.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(width: 4, height: 40, decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEventCard(PlanEvent event) {
+    return GestureDetector(
+      onTap: () => _showEventDetails(event),
+      onLongPress: () => _showEventOptions(event),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: event.isConflicted 
+                ? VesparaColors.warning.withOpacity(0.5) 
+                : event.certainty.color.withOpacity(0.3),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Certainty indicator bar
+                Container(
+                  width: 4,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: event.certainty.color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              event.title,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: VesparaColors.primary,
+                              ),
+                            ),
+                          ),
+                          if (event.isAiSuggested)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: VesparaColors.glow.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 10, color: VesparaColors.glow),
+                                  const SizedBox(width: 2),
+                                  Text('AI', style: TextStyle(fontSize: 9, color: VesparaColors.glow)),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        event.connectionNames,
+                        style: TextStyle(fontSize: 13, color: VesparaColors.glow),
+                      ),
+                    ],
+                  ),
+                ),
+                // Certainty badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: event.certainty.color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    event.certainty.label.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: event.certainty.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.access_time, size: 14, color: VesparaColors.secondary),
+                const SizedBox(width: 4),
+                Text(
+                  event.formattedTimeRange,
+                  style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+                ),
+                if (event.location != null) ...[
+                  const SizedBox(width: 16),
+                  Icon(Icons.location_on, size: 14, color: VesparaColors.secondary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      event.location!,
+                      style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (event.isConflicted) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: VesparaColors.warning.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
                   children: [
-                    Text(event.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-                    const SizedBox(height: 2),
-                    Text('with ${event.matchName ?? 'someone special'}', style: TextStyle(fontSize: 13, color: VesparaColors.glow)),
+                    Icon(Icons.warning, size: 14, color: VesparaColors.warning),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        event.conflictReason ?? 'Potential scheduling conflict',
+                        style: TextStyle(fontSize: 11, color: VesparaColors.warning),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text(event.status.label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor)),
-              ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.access_time, size: 14, color: VesparaColors.secondary),
-              const SizedBox(width: 4),
-              Text(event.formattedTimeRange, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
-              const SizedBox(width: 16),
-              Icon(Icons.location_on, size: 14, color: VesparaColors.secondary),
-              const SizedBox(width: 4),
-              Expanded(child: Text(event.location ?? 'Location TBD', style: TextStyle(fontSize: 12, color: VesparaColors.secondary), overflow: TextOverflow.ellipsis)),
-            ],
-          ),
-          if (event.aiConflictDetected) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: VesparaColors.warning.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Row(
-                children: [
-                  Icon(Icons.warning, size: 14, color: VesparaColors.warning),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(event.aiConflictReason ?? 'Potential scheduling conflict detected', style: TextStyle(fontSize: 11, color: VesparaColors.warning))),
-                ],
-              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FIND A DATE TAB
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildFindDateTab(PlanState state) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Find Me a Date button
+          _buildFindMeADateButton(state),
+          const SizedBox(height: 24),
+          
+          // AI Suggestions section
+          if (state.aiSuggestions.isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'AI SUGGESTIONS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => ref.read(planProvider.notifier).findMeADate(),
+                  child: Text('Refresh', style: TextStyle(color: VesparaColors.glow, fontSize: 12)),
+                ),
+              ],
             ),
+            const SizedBox(height: 12),
+            ...state.aiSuggestions.map((s) => _buildAiSuggestionCard(s)),
+          ] else ...[
+            _buildNoSuggestionsState(state),
           ],
         ],
       ),
     );
   }
 
-  Color _getStatusColor(EventStatus status) {
-    switch (status) {
-      case EventStatus.confirmed:
-        return VesparaColors.success;
-      case EventStatus.tentative:
-        return VesparaColors.tagsYellow;
-      case EventStatus.cancelled:
-        return VesparaColors.error;
-    }
+  Widget _buildFindMeADateButton(PlanState state) {
+    return GestureDetector(
+      onTap: state.isLoadingSuggestions 
+          ? null 
+          : () => ref.read(planProvider.notifier).findMeADate(),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF6366F1),
+              const Color(0xFFEC4899),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            if (state.isLoadingSuggestions)
+              const CircularProgressIndicator(color: Colors.white)
+            else
+              Icon(Icons.auto_awesome, size: 48, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(
+              'FIND ME A DATE',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'AI analyzes your connections, chat history,\nand availability to suggest the perfect match',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
+
+  Widget _buildAiSuggestionCard(AiDateSuggestion suggestion) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: suggestion.isHotMatch 
+              ? VesparaColors.glow.withOpacity(0.5)
+              : VesparaColors.glow.withOpacity(0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                backgroundImage: suggestion.connection.avatarUrl != null
+                    ? NetworkImage(suggestion.connection.avatarUrl!)
+                    : null,
+                child: suggestion.connection.avatarUrl == null
+                    ? Text(
+                        suggestion.connection.name[0].toUpperCase(),
+                        style: TextStyle(
+                          color: VesparaColors.glow,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          suggestion.connection.name,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        if (suggestion.isHotMatch) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: VesparaColors.glow,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '🔥 HOT MATCH',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: VesparaColors.background,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${(suggestion.compatibilityScore * 100).toInt()}% compatibility',
+                      style: TextStyle(fontSize: 12, color: VesparaColors.glow),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => ref.read(planProvider.notifier)
+                    .dismissSuggestion(suggestion.id),
+                icon: Icon(Icons.close, size: 18, color: VesparaColors.secondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // AI Reason
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome, size: 16, color: VesparaColors.glow),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    suggestion.reason,
+                    style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Suggested times
+          Text(
+            'SUGGESTED TIMES',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: suggestion.suggestedTimes.take(3).map((time) {
+              return GestureDetector(
+                onTap: () => _confirmAiSuggestion(suggestion, time),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _formatSuggestedTime(time),
+                    style: TextStyle(fontSize: 12, color: VesparaColors.primary),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoSuggestionsState(PlanState state) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 48, color: VesparaColors.secondary.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(
+            'No suggestions yet',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tap "Find Me a Date" to get AI-powered suggestions',
+            style: TextStyle(fontSize: 13, color: VesparaColors.secondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTEGRATIONS TAB
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildIntegrationsTab(PlanState state) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CALENDAR INTEGRATIONS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Google Calendar
+          _buildCalendarIntegrationCard(
+            name: 'Google Calendar',
+            icon: Icons.calendar_today,
+            iconColor: const Color(0xFF4285F4),
+            isConnected: state.googleCalendarConnected,
+            onConnect: () => ref.read(planProvider.notifier).connectGoogleCalendar(),
+            onDisconnect: () => ref.read(planProvider.notifier).disconnectGoogleCalendar(),
+          ),
+          const SizedBox(height: 12),
+          
+          // Apple Calendar
+          _buildCalendarIntegrationCard(
+            name: 'Apple Calendar',
+            icon: Icons.event,
+            iconColor: const Color(0xFFFF3B30),
+            isConnected: state.appleCalendarConnected,
+            onConnect: () => ref.read(planProvider.notifier).connectAppleCalendar(),
+            onDisconnect: () => ref.read(planProvider.notifier).disconnectAppleCalendar(),
+          ),
+          
+          if (state.hasCalendarConnected) ...[
+            const SizedBox(height: 24),
+            
+            // Sync section
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Sync Status',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
+                      ),
+                      if (state.isLoading)
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: VesparaColors.glow,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (state.lastSyncTime != null)
+                    Text(
+                      'Last synced: ${_formatSyncTime(state.lastSyncTime!)}',
+                      style: TextStyle(fontSize: 13, color: VesparaColors.secondary),
+                    )
+                  else
+                    Text(
+                      'Not synced yet',
+                      style: TextStyle(fontSize: 13, color: VesparaColors.secondary),
+                    ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: state.isLoading 
+                          ? null 
+                          : () => ref.read(planProvider.notifier).syncCalendars(),
+                      icon: Icon(Icons.sync, color: VesparaColors.glow),
+                      label: Text('Sync Now', style: TextStyle(color: VesparaColors.glow)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: VesparaColors.glow),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 24),
+          
+          // How it works
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 20, color: VesparaColors.glow),
+                    const SizedBox(width: 8),
+                    Text(
+                      'How Calendar Sync Works',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildInfoItem('AI sees your busy times (not event details)'),
+                _buildInfoItem('Suggests dates when you\'re both free'),
+                _buildInfoItem('Detects scheduling conflicts automatically'),
+                _buildInfoItem('Events you create sync back to your calendar'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarIntegrationCard({
+    required String name,
+    required IconData icon,
+    required Color iconColor,
+    required bool isConnected,
+    required VoidCallback onConnect,
+    required VoidCallback onDisconnect,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: isConnected 
+            ? Border.all(color: VesparaColors.success.withOpacity(0.3))
+            : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isConnected ? 'Connected' : 'Not connected',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isConnected ? VesparaColors.success : VesparaColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: isConnected ? onDisconnect : onConnect,
+            child: Text(
+              isConnected ? 'Disconnect' : 'Connect',
+              style: TextStyle(
+                color: isConnected ? VesparaColors.error : VesparaColors.glow,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check, size: 16, color: VesparaColors.glow),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ADD EVENT WIZARD
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  void _showAddEventWizard() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => const AddEventWizard(),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPER METHODS
+  // ═══════════════════════════════════════════════════════════════════════════
 
   String _getDayName(int weekday) {
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -282,147 +988,214 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
   }
 
   String _getMonthYear(DateTime date) {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
     return '${months[date.month - 1]} ${date.year}';
   }
 
-  void _showAddEvent() {
+  String _formatSuggestedTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = time.difference(now).inDays;
+    
+    String dayStr;
+    if (diff == 0) {
+      dayStr = 'Today';
+    } else if (diff == 1) {
+      dayStr = 'Tomorrow';
+    } else if (diff < 7) {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      dayStr = days[time.weekday - 1];
+    } else {
+      dayStr = '${time.month}/${time.day}';
+    }
+    
+    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    
+    return '$dayStr $hour$period';
+  }
+
+  String _formatSyncTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  void _showCalendarPicker() {
+    showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: VesparaColors.glow,
+              surface: VesparaColors.surface,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    ).then((date) {
+      if (date != null) {
+        setState(() => _selectedDate = date);
+      }
+    });
+  }
+
+  void _showEventDetails(PlanEvent event) {
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => EventDetailSheet(event: event),
+    );
+  }
+
+  void _showEventOptions(PlanEvent event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: VesparaColors.secondary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.edit, color: VesparaColors.glow),
+              title: Text('Edit Event', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: Open edit wizard
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.tune, color: VesparaColors.secondary),
+              title: Text('Change Certainty', style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                _showCertaintyPicker(event);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete, color: VesparaColors.error),
+              title: Text('Delete Event', style: TextStyle(color: VesparaColors.error)),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(planProvider.notifier).deleteEvent(event.id);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCertaintyPicker(PlanEvent event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: VesparaColors.secondary, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 20),
-            Text('Schedule a Date', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-            const SizedBox(height: 24),
-            ListTile(
-              onTap: () => _scheduleDateOption('Drinks Tonight', 'Find a bar nearby'),
-              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.local_bar, color: VesparaColors.glow)),
-              title: Text('Drinks Tonight', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              subtitle: Text('Quick cocktails or wine', style: TextStyle(color: VesparaColors.secondary)),
-            ),
-            ListTile(
-              onTap: () => _scheduleDateOption('Dinner Date', 'Make a reservation'),
-              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.restaurant, color: VesparaColors.glow)),
-              title: Text('Dinner Date', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              subtitle: Text('Restaurant reservation', style: TextStyle(color: VesparaColors.secondary)),
-            ),
-            ListTile(
-              onTap: () => _scheduleDateOption('Coffee Meetup', 'Low-key first date'),
-              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.coffee, color: VesparaColors.glow)),
-              title: Text('Coffee Meetup', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              subtitle: Text('Low-key first date', style: TextStyle(color: VesparaColors.secondary)),
-            ),
-            ListTile(
-              onTap: () => _showCustomEventDialog(),
-              leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: VesparaColors.glow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.edit_calendar, color: VesparaColors.glow)),
-              title: Text('Custom Event', style: TextStyle(fontWeight: FontWeight.w600, color: VesparaColors.primary)),
-              subtitle: Text('Create your own date', style: TextStyle(color: VesparaColors.secondary)),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: VesparaColors.secondary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
             const SizedBox(height: 20),
+            Text(
+              'How certain is this?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...EventCertainty.values.map((certainty) => 
+              ListTile(
+                leading: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: certainty.color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: event.certainty == certainty
+                      ? Icon(Icons.check, size: 14, color: Colors.white)
+                      : null,
+                ),
+                title: Text(certainty.label, style: TextStyle(color: VesparaColors.primary)),
+                subtitle: Text(certainty.description, 
+                  style: TextStyle(fontSize: 11, color: VesparaColors.secondary)),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(planProvider.notifier).updateCertainty(event.id, certainty);
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _scheduleDateOption(String type, String subtitle) {
-    Navigator.pop(context);
+  void _confirmAiSuggestion(AiDateSuggestion suggestion, DateTime time) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(type, style: TextStyle(color: VesparaColors.glow)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(subtitle, style: TextStyle(color: VesparaColors.secondary)),
-            const SizedBox(height: 20),
-            _buildTimeSlot('Tonight, 7 PM'),
-            _buildTimeSlot('Tomorrow, 8 PM'),
-            _buildTimeSlot('This Weekend'),
-          ],
+        title: Text(
+          'Schedule Date?',
+          style: TextStyle(color: VesparaColors.primary),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeSlot(String time) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(time, style: TextStyle(color: VesparaColors.primary)),
-      trailing: Icon(Icons.chevron_right, color: VesparaColors.glow),
-      onTap: () {
-        Navigator.pop(context);
-        setState(() {
-          _events.add(CalendarEvent(
-            id: 'event-${_events.length + 1}',
-            userId: 'current-user',
-            title: 'New Date',
-            matchName: 'Someone Special',
-            startTime: DateTime.now().add(const Duration(hours: 3)),
-            endTime: DateTime.now().add(const Duration(hours: 5)),
-            location: 'Downtown Bar',
-            status: EventStatus.tentative,
-            createdAt: DateTime.now(),
-          ));
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Date scheduled for $time'),
-            backgroundColor: VesparaColors.success,
-          ),
-        );
-      },
-    );
-  }
-
-  void _showCustomEventDialog() {
-    Navigator.pop(context);
-    final titleController = TextEditingController();
-    final locationController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Create Custom Event', style: TextStyle(color: VesparaColors.primary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                hintText: 'Event name',
-                hintStyle: TextStyle(color: VesparaColors.secondary),
-                prefixIcon: Icon(Icons.event, color: VesparaColors.glow),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            Text(
+              'Date with ${suggestion.connection.name}',
               style: TextStyle(color: VesparaColors.primary),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: locationController,
-              decoration: InputDecoration(
-                hintText: 'Location',
-                hintStyle: TextStyle(color: VesparaColors.secondary),
-                prefixIcon: Icon(Icons.location_on, color: VesparaColors.glow),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              style: TextStyle(color: VesparaColors.primary),
+            const SizedBox(height: 8),
+            Text(
+              _formatSuggestedTime(time),
+              style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -434,90 +1207,781 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              if (titleController.text.isNotEmpty) {
-                setState(() {
-                  _events.add(CalendarEvent(
-                    id: 'event-${_events.length + 1}',
-                    userId: 'current-user',
-                    title: titleController.text,
-                    matchName: 'Custom Event',
-                    startTime: DateTime.now().add(const Duration(days: 1)),
-                    endTime: DateTime.now().add(const Duration(days: 1, hours: 2)),
-                    location: locationController.text.isEmpty ? 'TBD' : locationController.text,
-                    status: EventStatus.tentative,
-                    createdAt: DateTime.now(),
-                  ));
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Event "${titleController.text}" created'),
-                    backgroundColor: VesparaColors.success,
-                  ),
-                );
-              }
+              ref.read(planProvider.notifier).acceptSuggestion(suggestion, time);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Date scheduled with ${suggestion.connection.name}!'),
+                  backgroundColor: VesparaColors.success,
+                ),
+              );
             },
-            child: Text('Create', style: TextStyle(color: VesparaColors.glow)),
+            child: Text('Schedule', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADD EVENT WIZARD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class AddEventWizard extends ConsumerStatefulWidget {
+  const AddEventWizard({super.key});
+
+  @override
+  ConsumerState<AddEventWizard> createState() => _AddEventWizardState();
+}
+
+class _AddEventWizardState extends ConsumerState<AddEventWizard> {
+  final _titleController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _notesController = TextEditingController();
+  
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 19, minute: 0);
+  EventCertainty _certainty = EventCertainty.tentative;
+  List<EventConnection> _selectedConnections = [];
+  int _step = 0; // 0: basics, 1: who, 2: certainty
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _locationController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: VesparaColors.secondary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (_step > 0)
+                  IconButton(
+                    onPressed: () => setState(() => _step--),
+                    icon: Icon(Icons.arrow_back, color: VesparaColors.primary),
+                  )
+                else
+                  const SizedBox(width: 48),
+                Text(
+                  _stepTitle,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close, color: VesparaColors.secondary),
+                ),
+              ],
+            ),
+          ),
+          
+          // Progress indicator
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: List.generate(3, (index) => Expanded(
+                child: Container(
+                  height: 3,
+                  margin: EdgeInsets.only(right: index < 2 ? 4 : 0),
+                  decoration: BoxDecoration(
+                    color: index <= _step 
+                        ? VesparaColors.glow 
+                        : VesparaColors.glow.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              )),
+            ),
+          ),
+          
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: _buildStepContent(),
+            ),
+          ),
+          
+          // Action button
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _canProceed ? _handleNext : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.glow,
+                  disabledBackgroundColor: VesparaColors.glow.withOpacity(0.3),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  _step == 2 ? 'Create Event' : 'Next',
+                  style: TextStyle(
+                    color: VesparaColors.background,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showCalendarDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Calendar Options', style: TextStyle(color: VesparaColors.primary)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+  String get _stepTitle {
+    switch (_step) {
+      case 0: return 'Event Details';
+      case 1: return 'Who\'s Invited?';
+      case 2: return 'How Certain?';
+      default: return '';
+    }
+  }
+
+  bool get _canProceed {
+    switch (_step) {
+      case 0: return _titleController.text.isNotEmpty;
+      case 1: return true; // Connections are optional
+      case 2: return true;
+      default: return false;
+    }
+  }
+
+  Widget _buildStepContent() {
+    switch (_step) {
+      case 0: return _buildBasicsStep();
+      case 1: return _buildConnectionsStep();
+      case 2: return _buildCertaintyStep();
+      default: return const SizedBox();
+    }
+  }
+
+  Widget _buildBasicsStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Event name
+        TextField(
+          controller: _titleController,
+          style: TextStyle(color: VesparaColors.primary),
+          decoration: InputDecoration(
+            labelText: 'Event Name',
+            labelStyle: TextStyle(color: VesparaColors.secondary),
+            hintText: 'e.g., Drinks at The Roosevelt',
+            hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+            prefixIcon: Icon(Icons.event, color: VesparaColors.glow),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow.withOpacity(0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // Date & Time row
+        Row(
           children: [
-            ListTile(
-              leading: Icon(Icons.sync, color: VesparaColors.glow),
-              title: Text('Sync Now', style: TextStyle(color: VesparaColors.primary)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Syncing with calendar...')),
-                );
-              },
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickDate,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 20, color: VesparaColors.glow),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatDate(_selectedDate),
+                        style: TextStyle(color: VesparaColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            ListTile(
-              leading: Icon(Icons.calendar_today, color: VesparaColors.glow),
-              title: Text('Google Calendar', style: TextStyle(color: VesparaColors.primary)),
-              subtitle: Text('Connected', style: TextStyle(color: VesparaColors.success)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening Google Calendar settings...')),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.event, color: VesparaColors.glow),
-              title: Text('Apple Calendar', style: TextStyle(color: VesparaColors.primary)),
-              subtitle: Text('Not connected', style: TextStyle(color: VesparaColors.secondary)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Connecting to Apple Calendar...')),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.settings, color: VesparaColors.glow),
-              title: Text('Calendar Settings', style: TextStyle(color: VesparaColors.primary)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening calendar settings...')),
-                );
-              },
+            const SizedBox(width: 12),
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickTime,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time, size: 20, color: VesparaColors.glow),
+                      const SizedBox(width: 8),
+                      Text(
+                        _selectedTime.format(context),
+                        style: TextStyle(color: VesparaColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),
+        const SizedBox(height: 20),
+        
+        // Location
+        TextField(
+          controller: _locationController,
+          style: TextStyle(color: VesparaColors.primary),
+          decoration: InputDecoration(
+            labelText: 'Location (optional)',
+            labelStyle: TextStyle(color: VesparaColors.secondary),
+            hintText: 'e.g., Blue Bottle Coffee',
+            hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+            prefixIcon: Icon(Icons.location_on, color: VesparaColors.glow),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow.withOpacity(0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // Notes
+        TextField(
+          controller: _notesController,
+          style: TextStyle(color: VesparaColors.primary),
+          maxLines: 3,
+          decoration: InputDecoration(
+            labelText: 'Notes (optional)',
+            labelStyle: TextStyle(color: VesparaColors.secondary),
+            hintText: 'Any details you want to remember...',
+            hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(bottom: 48),
+              child: Icon(Icons.notes, color: VesparaColors.glow),
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow.withOpacity(0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: VesparaColors.glow),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConnectionsStep() {
+    final connectionsAsync = ref.watch(planConnectionsProvider);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Select who this event is with',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'You can skip this if it\'s a solo event',
+          style: TextStyle(fontSize: 12, color: VesparaColors.secondary.withOpacity(0.7)),
+        ),
+        const SizedBox(height: 20),
+        
+        connectionsAsync.when(
+          data: (connections) => Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: connections.map((c) {
+              final isSelected = _selectedConnections.any((sc) => sc.id == c.id);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedConnections.removeWhere((sc) => sc.id == c.id);
+                    } else {
+                      _selectedConnections.add(c);
+                    }
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? VesparaColors.glow : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected ? VesparaColors.glow : VesparaColors.glow.withOpacity(0.3),
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: isSelected 
+                            ? VesparaColors.background.withOpacity(0.3)
+                            : VesparaColors.glow.withOpacity(0.2),
+                        backgroundImage: c.avatarUrl != null ? NetworkImage(c.avatarUrl!) : null,
+                        child: c.avatarUrl == null
+                            ? Text(
+                                c.name[0].toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isSelected ? VesparaColors.background : VesparaColors.glow,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        c.name,
+                        style: TextStyle(
+                          color: isSelected ? VesparaColors.background : VesparaColors.primary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 4),
+                        Icon(Icons.check, size: 16, color: VesparaColors.background),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => Text('Failed to load connections', 
+              style: TextStyle(color: VesparaColors.error)),
+        ),
+        
+        if (_selectedConnections.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.people, size: 20, color: VesparaColors.glow),
+                const SizedBox(width: 8),
+                Text(
+                  '${_selectedConnections.length} ${_selectedConnections.length == 1 ? 'person' : 'people'} selected',
+                  style: TextStyle(color: VesparaColors.primary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCertaintyStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'How likely is this to happen?',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'This helps you and your connections know what to expect',
+          style: TextStyle(fontSize: 12, color: VesparaColors.secondary.withOpacity(0.7)),
+        ),
+        const SizedBox(height: 24),
+        
+        ...EventCertainty.values.map((certainty) => GestureDetector(
+          onTap: () => setState(() => _certainty = certainty),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _certainty == certainty 
+                  ? certainty.color.withOpacity(0.1) 
+                  : VesparaColors.background,
+              border: Border.all(
+                color: _certainty == certainty 
+                    ? certainty.color 
+                    : VesparaColors.glow.withOpacity(0.1),
+                width: _certainty == certainty ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: certainty.color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${(certainty.percentage * 100).toInt()}%',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        certainty.label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
+                      ),
+                      Text(
+                        certainty.description,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: VesparaColors.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_certainty == certainty)
+                  Icon(Icons.check_circle, color: certainty.color),
+              ],
+            ),
+          ),
+        )),
+      ],
+    );
+  }
+
+  void _handleNext() {
+    if (_step < 2) {
+      setState(() => _step++);
+    } else {
+      _createEvent();
+    }
+  }
+
+  void _createEvent() {
+    final event = PlanEvent(
+      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+      userId: 'current-user', // Would come from auth
+      title: _titleController.text,
+      notes: _notesController.text.isEmpty ? null : _notesController.text,
+      startTime: DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
       ),
+      endTime: DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour + 2,
+        _selectedTime.minute,
+      ),
+      location: _locationController.text.isEmpty ? null : _locationController.text,
+      connections: _selectedConnections,
+      certainty: _certainty,
+      createdAt: DateTime.now(),
+    );
+    
+    ref.read(planProvider.notifier).createEvent(event);
+    
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Event "${event.title}" created!'),
+        backgroundColor: VesparaColors.success,
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}';
+  }
+
+  void _pickDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: VesparaColors.glow,
+              surface: VesparaColors.surface,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (date != null) {
+      setState(() => _selectedDate = date);
+    }
+  }
+
+  void _pickTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: VesparaColors.glow,
+              surface: VesparaColors.surface,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (time != null) {
+      setState(() => _selectedTime = time);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EVENT DETAIL SHEET
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class EventDetailSheet extends StatelessWidget {
+  final PlanEvent event;
+  
+  const EventDetailSheet({super.key, required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: VesparaColors.secondary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Title with certainty badge
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: event.certainty.color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  event.title,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: event.certainty.color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  event.certainty.label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: event.certainty.color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Date & Time
+          _buildDetailRow(Icons.calendar_today, event.formattedDate),
+          const SizedBox(height: 12),
+          _buildDetailRow(Icons.access_time, event.formattedTimeRange),
+          
+          if (event.location != null) ...[
+            const SizedBox(height: 12),
+            _buildDetailRow(Icons.location_on, event.location!),
+          ],
+          
+          // Connections
+          if (event.connections.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text(
+              'WITH',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: event.connections.map((c) => Chip(
+                avatar: CircleAvatar(
+                  radius: 12,
+                  backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                  backgroundImage: c.avatarUrl != null ? NetworkImage(c.avatarUrl!) : null,
+                  child: c.avatarUrl == null
+                      ? Text(c.name[0].toUpperCase(), 
+                          style: TextStyle(fontSize: 10, color: VesparaColors.glow))
+                      : null,
+                ),
+                label: Text(c.name),
+                backgroundColor: VesparaColors.surface,
+                labelStyle: TextStyle(color: VesparaColors.primary),
+              )).toList(),
+            ),
+          ],
+          
+          // Notes
+          if (event.notes != null) ...[
+            const SizedBox(height: 20),
+            Text(
+              'NOTES',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              event.notes!,
+              style: TextStyle(color: VesparaColors.primary),
+            ),
+          ],
+          
+          // AI badge
+          if (event.isAiSuggested) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 18, color: VesparaColors.glow),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      event.aiSuggestionReason ?? 'AI suggested this date based on your activity',
+                      style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: VesparaColors.glow),
+        const SizedBox(width: 12),
+        Text(
+          text,
+          style: TextStyle(fontSize: 15, color: VesparaColors.primary),
+        ),
+      ],
     );
   }
 }
