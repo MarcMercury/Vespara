@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/events_provider.dart';
+import '../../../core/providers/app_providers.dart';
 import '../widgets/event_tile_card.dart';
 import 'event_creation_screen.dart';
 import 'event_detail_screen.dart';
@@ -22,7 +23,11 @@ class EventsHomeScreen extends ConsumerStatefulWidget {
 
 class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   String _selectedFilter = 'Upcoming';
-  final String _userName = 'Marc'; // Would come from auth provider
+
+  String get _userName {
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    return profile?.displayName ?? 'Friend';
+  }
 
   List<VesparaEvent> get _allEvents => ref.watch(allVesparaEventsProvider);
 

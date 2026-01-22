@@ -311,7 +311,12 @@ final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
         .from('user_analytics')
         .select()
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+    
+    if (response == null) {
+      // No analytics row exists yet - return defaults instead of error
+      return MockDataProvider.userAnalytics;
+    }
     return UserAnalytics.fromJson(response);
   } catch (e) {
     return MockDataProvider.userAnalytics;

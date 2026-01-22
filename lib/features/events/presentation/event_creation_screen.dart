@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/events_provider.dart';
+import '../../../core/providers/app_providers.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// EVENT CREATION SCREEN - Partiful-Style Comprehensive Event Builder
@@ -45,10 +46,10 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   final List<EventLink> _links = [];
   final List<EventCoHost> _coHosts = [];
   
-  // Emoji customization for RSVP
-  String _goingEmoji = '👍';
-  String _maybeEmoji = '🥺';
-  String _cantGoEmoji = '😢';
+  // Emoji customization for RSVP - alluring and sophisticated
+  String _goingEmoji = '🙌';
+  String _maybeEmoji = '🤔';
+  String _cantGoEmoji = '🥀';
   
   bool get _isEditing => widget.eventToEdit != null;
 
@@ -392,10 +393,21 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
           Row(
             children: [
               // Host avatar
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: VesparaColors.glow.withOpacity(0.3),
-                child: Text('M', style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.w600)),
+              Builder(
+                builder: (context) {
+                  final profile = ref.watch(userProfileProvider).valueOrNull;
+                  final displayName = profile?.displayName ?? 'You';
+                  return CircleAvatar(
+                    radius: 24,
+                    backgroundColor: VesparaColors.glow.withOpacity(0.3),
+                    backgroundImage: profile?.avatarUrl != null 
+                        ? NetworkImage(profile!.avatarUrl!) 
+                        : null,
+                    child: profile?.avatarUrl == null 
+                        ? Text(displayName[0].toUpperCase(), style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.w600))
+                        : null,
+                  );
+                },
               ),
               const SizedBox(width: 12),
               
@@ -404,13 +416,18 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Marc Mercury',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.primary,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final profile = ref.watch(userProfileProvider).valueOrNull;
+                        return Text(
+                          profile?.displayName ?? 'You',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                        );
+                      },
                     ),
                     Row(
                       children: [
@@ -1029,7 +1046,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
               ),
             ),
             child: Text(
-              _isEditing ? 'Update Experience' : 'Create Experience',
+              _isEditing ? 'Update Event' : 'Create Event',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -1428,7 +1445,8 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   }
 
   void _customizeEmoji(String label) {
-    final emojis = ['👍', '🔥', '❤️', '🎉', '✨', '🤔', '😅', '🥺', '😢', '💔', '👎', '❌'];
+    // Curated emoji options - sophisticated and alluring for events
+    final emojis = ['🙌', '🔥', '❤️‍🔥', '🥂', '✧', '🤔', '🤭', '💌', '🥀', '💔', '🫠', '❌'];
     
     showModalBottomSheet(
       context: context,
@@ -1579,20 +1597,49 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
     );
   }
 
-  void _saveDraft() {
+  void _saveDraft() async {
     HapticFeedback.mediumImpact();
     
-    // Create and save as draft
-    final event = _buildEventFromForm(isDraft: true);
-    ref.read(eventsProvider.notifier).createVesparaEvent(event);
+    // Create and save event as draft
+    if (_titleController.text.isNotEmpty) {
+      final profile = ref.read(userProfileProvider).valueOrNull;
+      final draftEvent = VesparaEvent(
+        id: 'draft-${DateTime.now().millisecondsSinceEpoch}',
+        hostId: 'current-user',
+        hostName: profile?.displayName ?? 'You',
+        title: _titleController.text,
+        titleStyle: _titleStyle,
+        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        coverImageUrl: _coverImageUrl,
+        startTime: _eventDate ?? DateTime.now().add(const Duration(days: 1)),
+        endTime: _eventDate?.add(const Duration(hours: 3)),
+        venueName: _locationController.text.isEmpty ? null : _locationController.text,
+        venueAddress: _locationController.text.isEmpty ? null : _locationController.text,
+        maxSpots: _unlimitedSpots ? null : int.tryParse(_spotsController.text),
+        costPerPerson: _hasCost ? double.tryParse(_costController.text) : null,
+        visibility: _visibility,
+        requiresApproval: _requiresApproval,
+        collectGuestInfo: _collectGuestInfo,
+        sendReminders: _sendReminders,
+        links: _links,
+        coHosts: _coHosts,
+        createdAt: DateTime.now(),
+        isDraft: true, // Mark as draft
+      );
+      
+      // Save to database as draft
+      await ref.read(eventsProvider.notifier).createVesparaEvent(draftEvent);
+    }
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Event saved as draft'),
-        backgroundColor: VesparaColors.surface,
-      ),
-    );
-    Navigator.pop(context);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Event saved as draft'),
+          backgroundColor: VesparaColors.surface,
+        ),
+      );
+      Navigator.pop(context);
+    }
   }
 
   void _publishEvent() async {
@@ -1609,34 +1656,11 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
     HapticFeedback.heavyImpact();
     
     // Create the event
-    final event = _buildEventFromForm(isDraft: false);
-    
-    // Save to provider (which saves to database)
-    final result = await ref.read(eventsProvider.notifier).createVesparaEvent(event);
-    
-    if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('🎉 "${event.title}" created successfully!'),
-          backgroundColor: VesparaColors.success,
-        ),
-      );
-      Navigator.pop(context, result); // Return the created event
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to create experience. Please try again.'),
-          backgroundColor: VesparaColors.error,
-        ),
-      );
-    }
-  }
-  
-  VesparaEvent _buildEventFromForm({required bool isDraft}) {
-    return VesparaEvent(
+    final profile = ref.read(userProfileProvider).valueOrNull;
+    final event = VesparaEvent(
       id: 'event-${DateTime.now().millisecondsSinceEpoch}',
       hostId: 'current-user',
-      hostName: 'Marc Mercury',
+      hostName: profile?.displayName ?? 'You',
       title: _titleController.text,
       titleStyle: _titleStyle,
       description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
@@ -1654,7 +1678,29 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       links: _links,
       coHosts: _coHosts,
       createdAt: DateTime.now(),
-      isDraft: isDraft,
     );
+    
+    // SAVE TO DATABASE using the events provider
+    await ref.read(eventsProvider.notifier).createVesparaEvent(event);
+    
+    // Also create a calendar event for visibility in The Planner
+    await ref.read(eventsProvider.notifier).createCalendarEvent(
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime ?? event.startTime.add(const Duration(hours: 3)),
+      description: event.description,
+      location: event.venueName ?? event.venueAddress,
+    );
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎉 "${event.title}" created successfully!'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+      
+      Navigator.pop(context, event); // Return the created event
+    }
   }
 }
