@@ -56,7 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Find your next obsession',
     },
     {
-      'name': 'SANCTUM',
+      'name': 'NEST',
       'subtitle': 'Your Conquests 💜',
       'icon': Icons.favorite_rounded,
       'emoji': '💜',
@@ -72,7 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Secrets exchanged',
     },
     {
-      'name': 'PLAN',
+      'name': 'PLANNER',
       'subtitle': 'Rendezvous 🌙',
       'icon': Icons.event_available_rounded,
       'emoji': '🌙',
@@ -80,7 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Schedule encounters',
     },
     {
-      'name': 'EXPERIENCES',
+      'name': 'GROUP',
       'subtitle': 'The Scene 🥂',
       'icon': Icons.local_fire_department_rounded,
       'emoji': '🥂',
@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     },
     {
       'name': 'TAG',
-      'subtitle': 'Play Games 🎭',
+      'subtitle': 'Trusted Adult Games 🎭',
       'icon': Icons.local_fire_department_rounded,
       'emoji': '🎭',
       'color': Color(0xFFFFD54F), // Yellow
@@ -106,15 +106,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ];
 
   /// Screens for each module
-  static List<Widget> get _screens => [
-    const MirrorScreen(),      // 0: Mirror - Profile/Analytics
-    const DiscoverScreen(),    // 1: Discover - Swipe Marketplace
-    const NestScreen(),        // 2: Sanctum - CRM Roster
-    const WireScreen(),        // 3: Wire - Chat
-    const PlannerScreen(),     // 4: Plan - Calendar
-    const EventsHomeScreen(),  // 5: Experiences - Partiful-Style Events
-    const ShredderScreen(),    // 6: Shredder - AI Cleanup
-    const TagScreen(),         // 7: TAG - Games
+  static const List<Widget> _screens = [
+    MirrorScreen(),      // 0: Mirror - Profile/Analytics
+    DiscoverScreen(),    // 1: Discover - Swipe Marketplace
+    NestScreen(),        // 2: Nest - CRM Roster
+    WireScreen(),        // 3: Wire - Chat
+    PlannerScreen(),     // 4: Planner - Calendar
+    EventsHomeScreen(),  // 5: Group - Partiful-Style Events
+    ShredderScreen(),    // 6: Shredder - AI Cleanup
+    TagScreen(),         // 7: TAG - Games
   ];
   
   @override
