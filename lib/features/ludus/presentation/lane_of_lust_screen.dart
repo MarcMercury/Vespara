@@ -268,9 +268,42 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           
           GestureDetector(
             onTap: () => _showHowToPlay(),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: const Center(
+                child: Text(
+                  'How It Works',
+                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // TAG Rating info
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (_) => const TagRatingInfoSheet(),
+              );
+            },
             child: const Text(
-              'How to Play',
-              style: TextStyle(fontSize: 14, color: Colors.white38, decoration: TextDecoration.underline),
+              'About TAG Ratings \u2192',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white38,
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
           

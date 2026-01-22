@@ -150,16 +150,6 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 const TagRatingDisplay(rating: TagRating.pathOfPleasure),
                 const SizedBox(height: 32),
                 
-                TextButton.icon(
-                  onPressed: () => _showHowToPlay(context),
-                  icon: const Icon(VesparaIcons.help, color: Colors.white70),
-                  label: Text(
-                    'How to Play',
-                    style: AppTheme.labelLarge.copyWith(color: Colors.white70),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
                 _buildPrimaryButton(
                   label: 'Play Now',
                   icon: VesparaIcons.play,
@@ -168,6 +158,49 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     ref.read(pathOfPleasureProvider.notifier).showModeSelect();
                   },
                 ),
+                const SizedBox(height: 16),
+                
+                // How It Works button
+                GestureDetector(
+                  onTap: () => _showHowToPlay(context),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'How It Works',
+                        style: AppTheme.labelLarge.copyWith(color: Colors.white70),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // TAG Rating info
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (_) => const TagRatingInfoSheet(),
+                    );
+                  },
+                  child: const Text(
+                    'About TAG Ratings \u2192',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white38,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

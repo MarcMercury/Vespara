@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../../../core/domain/models/tags_game.dart';
+import '../../../core/domain/models/tag_rating.dart';
+import '../widgets/tag_rating_display.dart';
 import 'ice_breakers_screen.dart';
 import 'velvet_rope_screen.dart';
 import 'down_to_clown_screen.dart';
@@ -184,123 +186,42 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
         ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Icon + Title row
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: categoryColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          _getCategoryIcon(game.category),
-                          color: categoryColor,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          game.title,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: VesparaColors.primary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Rating badges - wrap to handle overflow
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: [
-                      _buildRatingBadge(
-                        '🏎️',
-                        game.category.velocityLabel,
-                        const Color(0xFFFF6B6B),
-                      ),
-                      _buildRatingBadge(
-                        '🔥',
-                        game.category.heatRating,
-                        const Color(0xFFFF9500),
-                      ),
-                      _buildRatingBadge(
-                        '⏱️',
-                        game.category.durationLabel == 'Full Session' ? 'Full' : game.category.durationLabel,
-                        const Color(0xFF5AC8FA),
-                      ),
-                    ],
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Player count at bottom
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: categoryColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(VesparaIcons.group, size: 10, color: categoryColor),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${game.category.minPlayers}-${game.category.maxPlayers}',
-                          style: TextStyle(fontSize: 9, color: categoryColor, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Game Title
+              Text(
+                game.title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: VesparaColors.primary,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRatingBadge(String emoji, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 10)),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
+              
+              const SizedBox(height: 8),
+              
+              // Subtitle (category description)
+              Text(
+                game.category.description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: VesparaColors.secondary,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -401,68 +322,25 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Header
-                Row(
+                // Header - simplified
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: categoryColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        _getCategoryIcon(game.category),
-                        color: categoryColor,
-                        size: 32,
+                    Text(
+                      game.title,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: VesparaColors.primary,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            game.title,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: VesparaColors.primary,
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: categoryColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  game.category.displayName,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                game.currentConsentLevel.emoji,
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                game.currentConsentLevel.displayName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: VesparaColors.secondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    const SizedBox(height: 4),
+                    Text(
+                      game.description ?? game.category.description,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: VesparaColors.secondary,
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -470,38 +348,8 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                 
                 const SizedBox(height: 24),
                 
-                // Description
-                Text(
-                  game.description ?? game.category.description,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: VesparaColors.primary,
-                    height: 1.5,
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Info cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoCard(
-                        'Players',
-                        '${game.category.minPlayers}-${game.category.maxPlayers}',
-                        VesparaIcons.group,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildInfoCard(
-                        'Level',
-                        game.currentConsentLevel.displayName,
-                        VesparaIcons.fire,
-                      ),
-                    ),
-                  ],
-                ),
+                // TAG Rating Grid
+                TagRatingDisplay(rating: _getTagRating(game.category)),
                 
                 const SizedBox(height: 24),
                 
@@ -543,6 +391,25 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         ),
       ),
     );
+  }
+  
+  TagRating _getTagRating(GameCategory category) {
+    switch (category) {
+      case GameCategory.downToClown:
+        return TagRating.downToClown;
+      case GameCategory.icebreakers:
+        return TagRating.iceBreakers;
+      case GameCategory.velvetRope:
+        return TagRating.shareOrDare;
+      case GameCategory.pathOfPleasure:
+        return TagRating.pathOfPleasure;
+      case GameCategory.laneOfLust:
+        return TagRating.laneOfLust;
+      case GameCategory.dramaSutra:
+        return TagRating.dramaSutra;
+      case GameCategory.flashFreeze:
+        return TagRating.flashFreeze;
+    }
   }
 
   Widget _buildInfoCard(String label, String value, IconData icon) {

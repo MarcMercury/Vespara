@@ -241,6 +241,28 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
             ),
           ),
         ),
+        
+        const SizedBox(height: 12),
+        
+        // TAG Rating info
+        GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (_) => const TagRatingInfoSheet(),
+            );
+          },
+          child: const Text(
+            'About TAG Ratings \u2192',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white38,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
       ],
     );
   }

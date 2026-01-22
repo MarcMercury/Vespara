@@ -476,8 +476,119 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                 },
               ),
             ),
+            
+            const SizedBox(height: 16),
+            
+            // How It Works button
+            GestureDetector(
+              onTap: _showHowItWorks,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Center(
+                  child: Text(
+                    'How It Works',
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // TAG Rating info
+            GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (_) => const TagRatingInfoSheet(),
+                );
+              },
+              child: const Text(
+                'About TAG Ratings \u2192',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white38,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 32),
           ],
         ),
+      ),
+    );
+  }
+  
+  void _showHowItWorks() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: DramaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'HOW TO PLAY',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildHowToRow('🎬', 'One player is the Director'),
+            _buildHowToRow('🧘', 'Card shows a position/scene'),
+            _buildHowToRow('🗣️', 'Director describes without naming'),
+            _buildHowToRow('👥', 'Others act it out'),
+            _buildHowToRow('📸', 'Freeze and capture the moment'),
+            _buildHowToRow('⏱️', '30 seconds per pose'),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildHowToRow(String emoji, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
