@@ -26,13 +26,22 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   
   // Settings state
   final Map<String, bool> _toggleSettings = {
+    // Notifications
     'New Matches': true,
     'Messages': true,
     'Date Reminders': true,
-    'AI Insights': false,
+    'AI Insights': true,
+    'Event Invitations': true,
+    'Group Activity': true,
+    'Game Requests': false,
+    'Weekly Digest': true,
+    // Privacy
     'Show Online Status': true,
     'Read Receipts': false,
     'Profile Visible': true,
+    'Show Last Active': false,
+    'Allow Screenshotting': false,
+    'Incognito Browsing': false,
   };
   
   UserAnalytics? _cachedAnalytics;
@@ -1724,45 +1733,941 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   // ════════════════════════════════════════════════════════════════════════════
   // SETTINGS TAB
   // ════════════════════════════════════════════════════════════════════════════
+  
+  // AI Discovery state
+  bool _aiDiscoveryEnabled = true;
+  double _aiConfidenceThreshold = 0.7;
 
   Widget _buildSettingsTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildSettingsSection('Discovery Preferences', [
-          _buildSettingTile('Age Range', '21-45', Icons.cake_outlined, () => _showAgeRangeDialog()),
-          _buildSettingTile('Distance', 'Within 25 miles', Icons.location_on_outlined, () => _showDistanceDialog()),
-          _buildSettingTile('Show Me', 'Everyone', Icons.people_outline, () => _showGenderPreferenceDialog()),
-          _buildSettingTile('Relationship Types', '3 selected', Icons.favorite_outline, () => _showRelationshipTypesDialog()),
+        // AI-Powered Discovery Section
+        _buildAIDiscoverySection(),
+        const SizedBox(height: 24),
+        
+        // Manual Discovery Overrides
+        _buildSettingsSection('Manual Overrides', [
+          _buildSettingTile('Age Range', '21-55', Icons.cake_outlined, () => _showAgeRangeDialog()),
+          _buildSettingTile('Distance', 'Within 50 miles', Icons.location_on_outlined, () => _showDistanceDialog()),
+          _buildSettingTile('Show Me', 'AI Optimized', Icons.people_outline, () => _showGenderPreferenceDialog()),
         ]),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
+        
+        // Notifications - Expanded
         _buildSettingsSection('Notifications', [
           _buildSettingToggle('New Matches'),
           _buildSettingToggle('Messages'),
           _buildSettingToggle('Date Reminders'),
           _buildSettingToggle('AI Insights'),
+          _buildSettingToggle('Event Invitations'),
+          _buildSettingToggle('Group Activity'),
+          _buildSettingToggle('Game Requests'),
+          _buildSettingToggle('Weekly Digest'),
+          _buildSettingTile('Quiet Hours', '11pm - 7am', Icons.bedtime_outlined, () => _showQuietHoursDialog()),
         ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Privacy', [
+        const SizedBox(height: 24),
+        
+        // Privacy & Permissions
+        _buildSettingsSection('Privacy & Permissions', [
           _buildSettingToggle('Show Online Status'),
           _buildSettingToggle('Read Receipts'),
           _buildSettingToggle('Profile Visible'),
-        ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Calendar Sync', [
-          _buildSettingTile('Google Calendar', 'Connected', Icons.calendar_today, () => _showCalendarSyncDialog('Google')),
-          _buildSettingTile('Apple Calendar', 'Not Connected', Icons.event, () => _showCalendarSyncDialog('Apple')),
-        ]),
-        const SizedBox(height: 16),
-        _buildSettingsSection('Account', [
-          _buildSettingTile('Subscription', 'Free', Icons.star_outline, () => _showSubscriptionDialog()),
-          _buildSettingTile('Email', ref.watch(userProfileProvider).valueOrNull?.email ?? 'Not set', Icons.email_outlined, () => _showEditEmailDialog()),
-          _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined, () => _showEditPhoneDialog()),
+          _buildSettingToggle('Show Last Active'),
+          _buildSettingToggle('Allow Screenshotting'),
+          _buildSettingToggle('Incognito Browsing'),
+          _buildSettingTile('Blocked Users', '0 blocked', Icons.block_outlined, () => _showBlockedUsersDialog()),
+          _buildSettingTile('Hidden Profiles', '3 hidden', Icons.visibility_off_outlined, () => _showHiddenProfilesDialog()),
+          _buildSettingTile('Data Privacy', 'Manage', Icons.security_outlined, () => _showDataPrivacyDialog()),
         ]),
         const SizedBox(height: 24),
+        
+        // Integrations
+        _buildSettingsSection('Integrations', [
+          _buildSettingTile('Google Calendar', 'Connected', Icons.calendar_today, () => _showCalendarSyncDialog('Google')),
+          _buildSettingTile('Apple Calendar', 'Not Connected', Icons.event, () => _showCalendarSyncDialog('Apple')),
+          _buildSettingTile('Spotify', 'Not Connected', Icons.music_note, () => _showIntegrationDialog('Spotify', 'Share your music taste on your profile')),
+          _buildSettingTile('Instagram', 'Not Connected', Icons.camera_alt_outlined, () => _showIntegrationDialog('Instagram', 'Display your latest photos')),
+          _buildSettingTile('Location Services', 'Enabled', Icons.location_on_outlined, () => _showLocationServicesDialog()),
+          _buildSettingTile('Contacts', 'Not Synced', Icons.contacts_outlined, () => _showContactsSyncDialog()),
+        ]),
+        const SizedBox(height: 24),
+        
+        // Data & Storage
+        _buildSettingsSection('Data & Storage', [
+          _buildSettingTile('Auto-Download Media', 'WiFi Only', Icons.download_outlined, () => _showMediaDownloadDialog()),
+          _buildSettingTile('Cache Size', '127 MB', Icons.storage_outlined, () => _showClearCacheDialog()),
+          _buildSettingTile('Export My Data', 'Download all', Icons.cloud_download_outlined, () => _showExportDataDialog()),
+        ]),
+        const SizedBox(height: 24),
+        
+        // Account
+        _buildSettingsSection('Account', [
+          _buildSettingTile('Subscription', 'Vespara Plus', Icons.star, () => _showSubscriptionDialog()),
+          _buildSettingTile('Email', ref.watch(userProfileProvider).valueOrNull?.email ?? 'Not set', Icons.email_outlined, () => _showEditEmailDialog()),
+          _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined, () => _showEditPhoneDialog()),
+          _buildSettingTile('Verification', 'Photo verified ✓', Icons.verified_outlined, () => _showVerificationDialog()),
+        ]),
+        const SizedBox(height: 24),
+        
+        // Support
+        _buildSettingsSection('Support', [
+          _buildSettingTile('Help Center', '', Icons.help_outline, () => _showHelpCenter()),
+          _buildSettingTile('Report a Problem', '', Icons.bug_report_outlined, () => _showReportProblem()),
+          _buildSettingTile('Community Guidelines', '', Icons.gavel_outlined, () => _showCommunityGuidelines()),
+          _buildSettingTile('Terms of Service', '', Icons.description_outlined, () => _showTermsOfService()),
+          _buildSettingTile('Privacy Policy', '', Icons.privacy_tip_outlined, () => _showPrivacyPolicy()),
+        ]),
+        const SizedBox(height: 24),
+        
         _buildDangerZone(),
+        
+        const SizedBox(height: 16),
+        Center(
+          child: Text(
+            'Vespara v2.1.0 • Made with 💜',
+            style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+          ),
+        ),
+        const SizedBox(height: 24),
       ],
     );
+  }
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // AI DISCOVERY SECTION
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  Widget _buildAIDiscoverySection() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [VesparaColors.glow.withOpacity(0.15), VesparaColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.glow.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('AI Discovery Engine', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: VesparaColors.primary)),
+                        Text('Learns from your activity', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                      ],
+                    ),
+                  ],
+                ),
+                Switch.adaptive(
+                  value: _aiDiscoveryEnabled,
+                  onChanged: (v) => setState(() => _aiDiscoveryEnabled = v),
+                  activeColor: VesparaColors.glow,
+                ),
+              ],
+            ),
+          ),
+          
+          if (_aiDiscoveryEnabled) ...[
+            Divider(color: VesparaColors.border, height: 1),
+            
+            // AI Confidence slider
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Match Confidence', style: TextStyle(fontSize: 13, color: VesparaColors.secondary)),
+                      Text('${(_aiConfidenceThreshold * 100).toInt()}%+', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: VesparaColors.glow)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 6,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                    ),
+                    child: Slider(
+                      value: _aiConfidenceThreshold,
+                      min: 0.3,
+                      max: 0.95,
+                      activeColor: VesparaColors.glow,
+                      inactiveColor: VesparaColors.glow.withOpacity(0.2),
+                      onChanged: (v) => setState(() => _aiConfidenceThreshold = v),
+                    ),
+                  ),
+                  Text(
+                    _aiConfidenceThreshold > 0.8 
+                        ? 'Showing only highly compatible matches'
+                        : _aiConfidenceThreshold > 0.6 
+                            ? 'Balanced: quality matches with variety'
+                            : 'Exploratory: casting a wider net',
+                    style: TextStyle(fontSize: 11, color: VesparaColors.secondary, fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+            
+            Divider(color: VesparaColors.border, height: 1),
+            
+            // AI-Suggested Preferences
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('AI-SUGGESTED PREFERENCES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: VesparaColors.secondary, letterSpacing: 1)),
+                      GestureDetector(
+                        onTap: () => _refreshAISuggestions(),
+                        child: Row(
+                          children: [
+                            Icon(Icons.refresh, size: 14, color: VesparaColors.glow),
+                            const SizedBox(width: 4),
+                            Text('Refresh', style: TextStyle(fontSize: 11, color: VesparaColors.glow)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Vibe Matches
+                  _buildAIPreferenceCategory('Vibes You Click With', [
+                    'High Energy', 'Adventurous', 'Witty & Sarcastic', 'Mischievous',
+                  ], Icons.mood),
+                  const SizedBox(height: 12),
+                  
+                  // Relationship Styles
+                  _buildAIPreferenceCategory('Relationship Styles', [
+                    'ENM/Open', 'Poly-Curious', 'Casual Dating', 'FWB',
+                  ], Icons.favorite_outline),
+                  const SizedBox(height: 12),
+                  
+                  // Seeking Types
+                  _buildAIPreferenceCategory('Looking For', [
+                    'Ongoing Connections', 'Play Partners', 'Group Experiences', 'Events & Parties',
+                  ], Icons.search),
+                  const SizedBox(height: 12),
+                  
+                  // Experience Level
+                  _buildAIPreferenceCategory('Experience Compatibility', [
+                    'Experienced', 'Open to Teaching', 'Kink-Aware', 'Communication-First',
+                  ], Icons.psychology),
+                  const SizedBox(height: 12),
+                  
+                  // Heat Level
+                  _buildAIPreferenceCategory('Heat Level Range', [
+                    'Medium 🔥', 'Hot 🔥🔥', 'Nuclear 🔥🔥🔥',
+                  ], Icons.whatshot),
+                  const SizedBox(height: 12),
+                  
+                  // Availability
+                  _buildAIPreferenceCategory('Schedule Compatibility', [
+                    'Weekend Evenings', 'Spontaneous', 'Same-Day Plans OK',
+                  ], Icons.schedule),
+                  const SizedBox(height: 16),
+                  
+                  // Edit all button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showEditAIPreferences(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: VesparaColors.glow),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: Icon(Icons.edit, size: 18, color: VesparaColors.glow),
+                      label: Text('Customize AI Preferences', style: TextStyle(color: VesparaColors.glow)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            Divider(color: VesparaColors.border, height: 1),
+            
+            // Learning Insights
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('WHAT AI LEARNED ABOUT YOU', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: VesparaColors.secondary, letterSpacing: 1)),
+                  const SizedBox(height: 12),
+                  _buildLearningInsight('You tend to swipe right on profiles with detailed bios', Icons.article_outlined),
+                  _buildLearningInsight('Weekend evening availability aligns with your matches', Icons.event_available),
+                  _buildLearningInsight('ENM/poly profiles get 3x more engagement from you', Icons.favorite),
+                  _buildLearningInsight('You prefer profiles with verified photos', Icons.verified),
+                  _buildLearningInsight('Conversation starters with humor get longer replies', Icons.chat_bubble_outline),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildAIPreferenceCategory(String title, List<String> items, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: VesparaColors.glow),
+            const SizedBox(width: 8),
+            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: items.map((item) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+            ),
+            child: Text(item, style: TextStyle(fontSize: 12, color: VesparaColors.glow)),
+          )).toList(),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildLearningInsight(String insight, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: VesparaColors.secondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(insight, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _refreshAISuggestions() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+            const SizedBox(width: 12),
+            Text('Analyzing your latest activity...'),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+        backgroundColor: VesparaColors.glow,
+      ),
+    );
+    
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✨ AI preferences updated!'),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    });
+  }
+  
+  void _showEditAIPreferences() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, controller) => Container(
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+                    ),
+                    Text('Edit AI Preferences', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Preferences saved!'), backgroundColor: VesparaColors.success),
+                        );
+                      },
+                      child: Text('Save', style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: controller,
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text('Tap to add or remove preferences. AI will use these as starting points and learn from your activity.',
+                        style: TextStyle(fontSize: 13, color: VesparaColors.secondary)),
+                    const SizedBox(height: 24),
+                    _buildEditablePreferenceSection('Vibes', _allVibeOptions),
+                    _buildEditablePreferenceSection('Relationship Styles', _allRelationshipOptions),
+                    _buildEditablePreferenceSection('Looking For', _allSeekingOptions),
+                    _buildEditablePreferenceSection('Heat Levels', _allHeatOptions),
+                    _buildEditablePreferenceSection('Experience', _allExperienceOptions),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Options for AI preferences
+  static const List<String> _allVibeOptions = [
+    'High Energy', 'Calm & Centered', 'Adventurous', 'Cozy Homebody',
+    'Witty & Sarcastic', 'Hopeless Romantic', 'Mischievous', 'Intellectual',
+    'Creative', 'Spontaneous', 'Deep Thinker', 'Free Spirit', 'Night Owl', 'Early Riser',
+  ];
+  
+  static const List<String> _allRelationshipOptions = [
+    'Single', 'ENM/Open', 'Poly', 'Monogamous', 'Casual Dating',
+    'Relationship Anarchist', 'Exploring', 'Divorced', 'Situationship', 'Solo Poly',
+  ];
+  
+  static const List<String> _allSeekingOptions = [
+    'Friends', 'FWB', 'Ongoing Connections', 'Play Partners', 'Casual Dates',
+    'Serious Relationship', 'Third/Unicorn', 'Couples', 'Group Experiences', 'Events & Parties',
+  ];
+  
+  static const List<String> _allHeatOptions = [
+    'Mild 🌸', 'Medium 🔥', 'Hot 🔥🔥', 'Nuclear 🔥🔥🔥',
+  ];
+  
+  static const List<String> _allExperienceOptions = [
+    'Beginner', 'Experienced', 'Open to Teaching', 'Learning',
+    'Kink-Aware', 'Vanilla+', 'Communication-First',
+  ];
+  
+  Widget _buildEditablePreferenceSection(String title, List<String> options) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: VesparaColors.secondary, letterSpacing: 1)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = option.contains('High') || option.contains('ENM') || option.contains('Ongoing') || option.contains('Hot');
+            return FilterChip(
+              label: Text(option),
+              selected: isSelected,
+              onSelected: (_) {},
+              selectedColor: VesparaColors.glow.withOpacity(0.3),
+              checkmarkColor: VesparaColors.glow,
+              backgroundColor: VesparaColors.background,
+              labelStyle: TextStyle(fontSize: 12, color: isSelected ? VesparaColors.glow : VesparaColors.secondary),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // NEW SETTINGS DIALOGS
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  void _showQuietHoursDialog() {
+    TimeOfDay startTime = const TimeOfDay(hour: 23, minute: 0);
+    TimeOfDay endTime = const TimeOfDay(hour: 7, minute: 0);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Quiet Hours', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 8),
+            Text('No notifications during these hours', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildTimePicker('Start', startTime, (t) => startTime = t),
+                Icon(Icons.arrow_forward, color: VesparaColors.secondary),
+                _buildTimePicker('End', endTime, (t) => endTime = t),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.glow,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quiet hours updated')));
+                },
+                child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTimePicker(String label, TimeOfDay time, Function(TimeOfDay) onChanged) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(color: VesparaColors.secondary, fontSize: 12)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () async {
+            final picked = await showTimePicker(context: context, initialTime: time);
+            if (picked != null) onChanged(picked);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: VesparaColors.background,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: VesparaColors.border),
+            ),
+            child: Text(time.format(context), style: TextStyle(fontSize: 16, color: VesparaColors.primary)),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  void _showBlockedUsersDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Blocked Users', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 24),
+            Icon(Icons.block, size: 48, color: VesparaColors.secondary),
+            const SizedBox(height: 16),
+            Text('No blocked users', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 8),
+            Text('When you block someone, they\'ll appear here.', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showHiddenProfilesDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Hidden Profiles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 16),
+            Text('3 profiles are hidden from your discovery feed', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: CircleAvatar(backgroundColor: VesparaColors.glow.withOpacity(0.3), child: Text('J')),
+              title: Text('JakeFromState...', style: TextStyle(color: VesparaColors.primary)),
+              trailing: TextButton(onPressed: () {}, child: Text('Unhide', style: TextStyle(color: VesparaColors.glow))),
+            ),
+            ListTile(
+              leading: CircleAvatar(backgroundColor: VesparaColors.glow.withOpacity(0.3), child: Text('S')),
+              title: Text('SarahAdven...', style: TextStyle(color: VesparaColors.primary)),
+              trailing: TextButton(onPressed: () {}, child: Text('Unhide', style: TextStyle(color: VesparaColors.glow))),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showDataPrivacyDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Data Privacy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 24),
+            _buildPrivacyOption('Share anonymous usage data', 'Help improve Vespara', true),
+            _buildPrivacyOption('Personalized AI recommendations', 'Based on your activity', true),
+            _buildPrivacyOption('Third-party analytics', 'Anonymized insights', false),
+            _buildPrivacyOption('Marketing communications', 'Feature updates & tips', true),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showExportDataDialog();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: VesparaColors.glow),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text('Export Data', style: TextStyle(color: VesparaColors.glow)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Request submitted. This may take 24-48 hours.'), backgroundColor: VesparaColors.warning),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: VesparaColors.error),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text('Delete All Data', style: TextStyle(color: VesparaColors.error)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPrivacyOption(String title, String subtitle, bool value) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title, style: TextStyle(color: VesparaColors.primary, fontSize: 14)),
+      subtitle: Text(subtitle, style: TextStyle(color: VesparaColors.secondary, fontSize: 12)),
+      trailing: Switch.adaptive(value: value, onChanged: (_) {}, activeColor: VesparaColors.glow),
+    );
+  }
+  
+  void _showIntegrationDialog(String service, String description) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Connect $service', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(description, style: TextStyle(color: VesparaColors.secondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Connecting to $service...'), backgroundColor: VesparaColors.glow));
+            },
+            child: Text('Connect', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showLocationServicesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Location Services', style: TextStyle(color: VesparaColors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLocationOption('Always', 'Best for discovery accuracy', true),
+            _buildLocationOption('While Using App', 'Standard mode', false),
+            _buildLocationOption('Never', 'Location-based features disabled', false),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Done', style: TextStyle(color: VesparaColors.glow))),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLocationOption(String title, String subtitle, bool selected) {
+    return RadioListTile(
+      title: Text(title, style: TextStyle(color: VesparaColors.primary)),
+      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+      value: selected,
+      groupValue: true,
+      onChanged: (_) {},
+      activeColor: VesparaColors.glow,
+      contentPadding: EdgeInsets.zero,
+    );
+  }
+  
+  void _showContactsSyncDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Sync Contacts', style: TextStyle(color: VesparaColors.primary)),
+        content: Text('Sync your contacts to avoid matching with people you know. Contact info is never shared.', style: TextStyle(color: VesparaColors.secondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Not Now', style: TextStyle(color: VesparaColors.secondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Contacts synced! 47 contacts hidden from discovery.')));
+            },
+            child: Text('Sync', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showMediaDownloadDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Auto-Download Media', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            const SizedBox(height: 24),
+            ...['WiFi Only', 'WiFi & Cellular', 'Never'].map((opt) => RadioListTile(
+              title: Text(opt, style: TextStyle(color: VesparaColors.primary)),
+              value: opt == 'WiFi Only',
+              groupValue: true,
+              onChanged: (_) {},
+              activeColor: VesparaColors.glow,
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showClearCacheDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Clear Cache', style: TextStyle(color: VesparaColors.primary)),
+        content: Text('Clear 127 MB of cached data? This won\'t delete your account data.', style: TextStyle(color: VesparaColors.secondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cache cleared! Freed 127 MB'), backgroundColor: VesparaColors.success));
+            },
+            child: Text('Clear', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showExportDataDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Export Your Data', style: TextStyle(color: VesparaColors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Download a copy of all your Vespara data including:', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 12),
+            _buildExportItem('Profile information'),
+            _buildExportItem('Matches & conversations'),
+            _buildExportItem('Activity history'),
+            _buildExportItem('Uploaded photos'),
+            const SizedBox(height: 12),
+            Text('You\'ll receive an email with a download link within 24 hours.', style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export requested! Check your email.'), backgroundColor: VesparaColors.success));
+            },
+            child: Text('Request Export', style: TextStyle(color: VesparaColors.glow)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildExportItem(String item) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(Icons.check, size: 16, color: VesparaColors.success),
+          const SizedBox(width: 8),
+          Text(item, style: TextStyle(fontSize: 13, color: VesparaColors.primary)),
+        ],
+      ),
+    );
+  }
+  
+  void _showVerificationDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.verified, size: 48, color: VesparaColors.success),
+            const SizedBox(height: 16),
+            Text('You\'re Verified!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: VesparaColors.primary)),
+            const SizedBox(height: 8),
+            Text('Photo verified on Jan 15, 2026', style: TextStyle(color: VesparaColors.secondary)),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 20, color: VesparaColors.success),
+                const SizedBox(width: 8),
+                Text('Photo matches your profile', style: TextStyle(color: VesparaColors.primary)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 20, color: VesparaColors.success),
+                const SizedBox(width: 8),
+                Text('Blue badge shown on profile', style: TextStyle(color: VesparaColors.primary)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(side: BorderSide(color: VesparaColors.glow)),
+              child: Text('Re-verify', style: TextStyle(color: VesparaColors.glow)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // Support dialogs
+  void _showHelpCenter() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opening Help Center...')));
+  }
+  
+  void _showReportProblem() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opening Report Form...')));
+  }
+  
+  void _showCommunityGuidelines() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opening Community Guidelines...')));
+  }
+  
+  void _showTermsOfService() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opening Terms of Service...')));
+  }
+  
+  void _showPrivacyPolicy() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opening Privacy Policy...')));
   }
 
   void _showAgeRangeDialog() {
