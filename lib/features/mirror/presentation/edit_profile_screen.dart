@@ -7,49 +7,67 @@ import '../../../core/domain/models/user_profile.dart';
 import '../../../core/providers/app_providers.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// EDIT PROFILE SCREEN
-/// Allows users to update their profile information
+/// EDIT PROFILE SCREEN (BUILD)
+/// Complete profile editor matching all onboarding categories
+/// Shows current saved values and allows updating
 /// ════════════════════════════════════════════════════════════════════════════
 
 class EditProfileScreen extends ConsumerStatefulWidget {
-  final UserProfile profile;
+  final UserProfile? profile;
   
-  const EditProfileScreen({super.key, required this.profile});
+  const EditProfileScreen({super.key, this.profile});
 
   @override
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  // Text controllers
   late TextEditingController _displayNameController;
   late TextEditingController _bioController;
+  late TextEditingController _hookController;
   late TextEditingController _headlineController;
   late TextEditingController _occupationController;
   late TextEditingController _cityController;
   late TextEditingController _stateController;
   late TextEditingController _zipCodeController;
-  late TextEditingController _hookController;
   
+  // Identity
   String? _selectedPronouns;
   List<String> _selectedGender = [];
   List<String> _selectedOrientation = [];
+  
+  // Relationship
   List<String> _selectedRelationshipStatus = [];
   List<String> _selectedSeeking = [];
   List<String> _selectedLookingFor = [];
+  String? _selectedPartnerInvolvement;
+  
+  // Availability & Logistics
   List<String> _selectedAvailability = [];
   String? _selectedHostingStatus;
   String? _selectedDiscretionLevel;
   String? _selectedSchedulingStyle;
-  String? _selectedPartnerInvolvement;
-  String? _selectedHeatLevel;
-  List<String> _selectedHardLimits = [];
-  double _bandwidth = 0.5;
   int _travelRadius = 25;
   List<String> _selectedPartyAvailability = [];
   
-  bool _isSaving = false;
+  // THE INTERVIEW fields
+  String? _selectedHeatLevel;
+  List<String> _selectedHardLimits = [];
+  double _bandwidth = 0.5;
   
-  // Options
+  // Vibe & Interests
+  List<String> _selectedVibeTags = [];
+  List<String> _selectedInterestTags = [];
+  List<String> _selectedDesireTags = [];
+  
+  bool _isSaving = false;
+  bool _isLoaded = false;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OPTIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  
   static const List<String> _pronounOptions = [
     'He/Him', 'She/Her', 'They/Them', 'He/They', 'She/They', 'Any pronouns', 'Ask me'
   ];
@@ -102,69 +120,97 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     'Looking for couples', 'Depends on the situation'
   ];
   
-  static const List<String> _heatLevelOptions = [
-    'mild', 'medium', 'hot', 'nuclear'
+  static const List<String> _partyAvailabilityOptions = [
+    'House parties', 'Club events', 'Private gatherings', 'Lifestyle events',
+    'Meetups', 'Travel events', 'Not interested in parties'
   ];
   
-  static const Map<String, String> _heatLevelLabels = {
-    'mild': '🌸 Mild - Romance first',
-    'medium': '🔥 Medium - Balanced heat',
-    'hot': '🌶️ Hot - Bring the spice',
-    'nuclear': '☢️ Nuclear - Anything goes',
-  };
+  static const List<String> _heatLevelOptions = [
+    'Mild', 'Medium', 'Hot', 'Nuclear'
+  ];
   
   static const List<String> _hardLimitOptions = [
-    'no_smokers', 'no_drugs', 'no_pain', 'no_blood', 'no_humiliation',
-    'no_anal', 'no_choking', 'protection_required', 'no_bareback',
-    'no_age_gaps', 'no_couples', 'no_singles', 'no_public', 'no_filming',
-    'must_verify', 'no_strangers', 'sti_tested_only'
+    'No photos', 'No public play', 'No group activities', 'No same room',
+    'No drugs/alcohol', 'No overnight', 'No unprotected', 'Other (specify in bio)'
   ];
   
-  static const List<String> _partyAvailabilityOptions = [
-    'House parties', 'Club events', 'Private events', 'Lifestyle events',
-    'Not interested in events'
+  static const List<String> _vibeTagOptions = [
+    'Chill', 'Intense', 'Romantic', 'Playful', 'Adventurous', 'Intellectual',
+    'Sensual', 'Kinky', 'Vanilla', 'Curious', 'Experienced', 'New to this'
+  ];
+  
+  static const List<String> _interestTagOptions = [
+    'Travel', 'Music', 'Art', 'Food & Wine', 'Fitness', 'Dancing',
+    'Photography', 'Outdoors', 'Gaming', 'Reading', 'Movies', 'Concerts'
+  ];
+  
+  static const List<String> _desireTagOptions = [
+    'Connection', 'Intimacy', 'Exploration', 'Fantasy fulfillment', 'New experiences',
+    'Regular partners', 'One-time encounters', 'Long-term dynamics'
   ];
 
   @override
   void initState() {
     super.initState();
-    _displayNameController = TextEditingController(text: widget.profile.displayName);
-    _bioController = TextEditingController(text: widget.profile.bio ?? '');
-    _headlineController = TextEditingController(text: widget.profile.headline ?? '');
-    _occupationController = TextEditingController(text: widget.profile.occupation ?? '');
-    _cityController = TextEditingController(text: widget.profile.city ?? '');
-    _stateController = TextEditingController(text: widget.profile.state ?? '');
-    _zipCodeController = TextEditingController(text: widget.profile.zipCode ?? '');
-    _hookController = TextEditingController(text: widget.profile.hook ?? '');
+    // Initialize controllers with empty values - will be populated when profile loads
+    _displayNameController = TextEditingController();
+    _bioController = TextEditingController();
+    _hookController = TextEditingController();
+    _headlineController = TextEditingController();
+    _occupationController = TextEditingController();
+    _cityController = TextEditingController();
+    _stateController = TextEditingController();
+    _zipCodeController = TextEditingController();
     
-    _selectedPronouns = widget.profile.pronouns;
-    _selectedGender = List.from(widget.profile.gender);
-    _selectedOrientation = List.from(widget.profile.orientation);
-    _selectedRelationshipStatus = List.from(widget.profile.relationshipStatus);
-    _selectedSeeking = List.from(widget.profile.seeking);
-    _selectedLookingFor = List.from(widget.profile.lookingFor);
-    _selectedAvailability = List.from(widget.profile.availabilityGeneral);
-    _selectedHostingStatus = widget.profile.hostingStatus;
-    _selectedDiscretionLevel = widget.profile.discretionLevel;
-    _selectedSchedulingStyle = widget.profile.schedulingStyle;
-    _selectedPartnerInvolvement = widget.profile.partnerInvolvement;
-    _selectedHeatLevel = widget.profile.heatLevel;
-    _selectedHardLimits = List.from(widget.profile.hardLimits);
-    _bandwidth = widget.profile.bandwidth;
-    _travelRadius = widget.profile.travelRadius;
-    _selectedPartyAvailability = List.from(widget.profile.partyAvailability);
+    // If a profile was passed in, use it initially
+    if (widget.profile != null) {
+      _populateFromProfile(widget.profile!);
+    }
+  }
+
+  void _populateFromProfile(UserProfile profile) {
+    _displayNameController.text = profile.displayName;
+    _bioController.text = profile.bio ?? '';
+    _hookController.text = profile.hook ?? '';
+    _headlineController.text = profile.headline ?? '';
+    _occupationController.text = profile.occupation ?? '';
+    _cityController.text = profile.city ?? '';
+    _stateController.text = profile.state ?? '';
+    _zipCodeController.text = profile.zipCode ?? '';
+    
+    _selectedPronouns = profile.pronouns;
+    _selectedGender = List.from(profile.gender);
+    _selectedOrientation = List.from(profile.orientation);
+    _selectedRelationshipStatus = List.from(profile.relationshipStatus);
+    _selectedSeeking = List.from(profile.seeking);
+    _selectedLookingFor = List.from(profile.lookingFor);
+    _selectedAvailability = List.from(profile.availabilityGeneral);
+    _selectedHostingStatus = profile.hostingStatus;
+    _selectedDiscretionLevel = profile.discretionLevel;
+    _selectedSchedulingStyle = profile.schedulingStyle;
+    _selectedPartnerInvolvement = profile.partnerInvolvement;
+    _travelRadius = profile.travelRadius;
+    _selectedPartyAvailability = List.from(profile.partyAvailability);
+    _selectedHeatLevel = profile.heatLevel;
+    _selectedHardLimits = List.from(profile.hardLimits);
+    _bandwidth = profile.bandwidth;
+    _selectedVibeTags = List.from(profile.vibeTags);
+    _selectedInterestTags = List.from(profile.interestTags);
+    _selectedDesireTags = List.from(profile.desireTags);
+    
+    _isLoaded = true;
   }
 
   @override
   void dispose() {
     _displayNameController.dispose();
     _bioController.dispose();
+    _hookController.dispose();
     _headlineController.dispose();
     _occupationController.dispose();
     _cityController.dispose();
     _stateController.dispose();
     _zipCodeController.dispose();
-    _hookController.dispose();
     super.dispose();
   }
 
@@ -180,30 +226,47 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
       
       final updates = {
+        // Basic Info
         'display_name': _displayNameController.text.trim(),
         'bio': _bioController.text.trim(),
+        'hook': _hookController.text.trim(),
         'headline': _headlineController.text.trim(),
         'occupation': _occupationController.text.trim(),
+        
+        // Location
         'city': _cityController.text.trim(),
         'state': _stateController.text.trim(),
         'zip_code': _zipCodeController.text.trim(),
-        'hook': _hookController.text.trim(),
+        
+        // Identity
         'pronouns': _selectedPronouns,
         'gender': _selectedGender,
         'orientation': _selectedOrientation,
+        
+        // Relationship
         'relationship_status': _selectedRelationshipStatus,
         'seeking': _selectedSeeking,
         'looking_for': _selectedLookingFor,
+        'partner_involvement': _selectedPartnerInvolvement,
+        
+        // Availability & Logistics
         'availability_general': _selectedAvailability,
         'hosting_status': _selectedHostingStatus,
         'discretion_level': _selectedDiscretionLevel,
         'scheduling_style': _selectedSchedulingStyle,
-        'partner_involvement': _selectedPartnerInvolvement,
-        'heat_level': _selectedHeatLevel,
-        'hard_limits': _selectedHardLimits,
-        'bandwidth': _bandwidth,
         'travel_radius': _travelRadius,
         'party_availability': _selectedPartyAvailability,
+        
+        // THE INTERVIEW fields
+        'heat_level': _selectedHeatLevel?.toLowerCase(),
+        'hard_limits': _selectedHardLimits,
+        'bandwidth': _bandwidth,
+        
+        // Vibe & Interests
+        'vibe_tags': _selectedVibeTags,
+        'interest_tags': _selectedInterestTags,
+        'desire_tags': _selectedDesireTags,
+        
         'updated_at': DateTime.now().toIso8601String(),
       };
       
@@ -258,151 +321,276 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VesparaColors.background,
-      appBar: AppBar(
+    // Watch the profile provider for fresh data
+    final profileAsync = ref.watch(userProfileProvider);
+    
+    return profileAsync.when(
+      loading: () => Scaffold(
         backgroundColor: VesparaColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: VesparaColors.primary),
-          onPressed: () => Navigator.of(context).pop(),
+        body: Center(
+          child: CircularProgressIndicator(color: VesparaColors.glow),
         ),
-        title: Text(
-          'Edit Profile',
-          style: TextStyle(
-            color: VesparaColors.primary,
-            fontWeight: FontWeight.w600,
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: VesparaColors.background,
+        appBar: _buildAppBar(),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: VesparaColors.error, size: 48),
+              const SizedBox(height: 16),
+              Text('Failed to load profile', style: TextStyle(color: VesparaColors.secondary)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(userProfileProvider),
+                child: Text('Retry'),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: _isSaving ? null : _saveProfile,
-            child: _isSaving
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: VesparaColors.glow,
-                    ),
-                  )
-                : Text(
-                    'Save',
-                    style: TextStyle(
-                      color: VesparaColors.glow,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
+      ),
+      data: (profile) {
+        // Populate form with fresh data if not already loaded
+        if (!_isLoaded && profile != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _populateFromProfile(profile);
+            setState(() {});
+          });
+        }
+        
+        return Scaffold(
+          backgroundColor: VesparaColors.background,
+          appBar: _buildAppBar(),
+          body: _buildBody(),
+        );
+      },
+    );
+  }
+  
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: VesparaColors.background,
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(Icons.close, color: VesparaColors.primary),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Column(
+        children: [
+          Text(
+            'BUILD',
+            style: TextStyle(
+              color: VesparaColors.primary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
+            ),
+          ),
+          Text(
+            'Edit your profile',
+            style: TextStyle(
+              fontSize: 12,
+              color: VesparaColors.secondary,
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Basic Info Section
-            _buildSectionHeader('Basic Info'),
-            _buildTextField('Display Name', _displayNameController),
-            _buildTextField('Headline', _headlineController, hint: 'A catchy tagline...'),
-            _buildTextField('Bio', _bioController, maxLines: 4, hint: 'Tell people about yourself...'),
-            _buildTextField('Occupation', _occupationController),
-            
-            const SizedBox(height: 24),
-            
-            // Location Section
-            _buildSectionHeader('Location'),
-            Row(
-              children: [
-                Expanded(flex: 2, child: _buildTextField('City', _cityController)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildTextField('State', _stateController)),
-              ],
-            ),
-            _buildTextField('ZIP Code', _zipCodeController),
-            
-            const SizedBox(height: 24),
-            
-            // Identity Section
-            _buildSectionHeader('Identity'),
-            _buildDropdown('Pronouns', _pronounOptions, _selectedPronouns, 
-                (val) => setState(() => _selectedPronouns = val)),
-            _buildMultiSelect('Gender', _genderOptions, _selectedGender),
-            _buildMultiSelect('Orientation', _orientationOptions, _selectedOrientation),
-            
-            const SizedBox(height: 24),
-            
-            // Relationship Section
-            _buildSectionHeader('Relationship'),
-            _buildMultiSelect('Relationship Status', _relationshipStatusOptions, _selectedRelationshipStatus),
-            _buildMultiSelect('Seeking', _seekingOptions, _selectedSeeking),
-            _buildMultiSelect('Looking For (Traits)', _lookingForOptions, _selectedLookingFor),
-            _buildDropdown('Partner Involvement', _partnerInvolvementOptions, _selectedPartnerInvolvement,
-                (val) => setState(() => _selectedPartnerInvolvement = val)),
-            
-            const SizedBox(height: 24),
-            
-            // Logistics Section
-            _buildSectionHeader('Logistics'),
-            _buildMultiSelect('Availability', _availabilityOptions, _selectedAvailability),
-            _buildDropdown('Scheduling Style', _schedulingOptions, _selectedSchedulingStyle,
-                (val) => setState(() => _selectedSchedulingStyle = val)),
-            _buildDropdown('Hosting Status', _hostingOptions, _selectedHostingStatus,
-                (val) => setState(() => _selectedHostingStatus = val)),
-            _buildDropdown('Discretion Level', _discretionOptions, _selectedDiscretionLevel,
-                (val) => setState(() => _selectedDiscretionLevel = val)),
-            
-            const SizedBox(height: 40),
-            
-            // Save button at bottom
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VesparaColors.glow,
-                  foregroundColor: VesparaColors.background,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+      centerTitle: true,
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : _saveProfile,
+          child: _isSaving
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: VesparaColors.glow,
+                  ),
+                )
+              : Text(
+                  'Save',
+                  style: TextStyle(
+                    color: VesparaColors.glow,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
-                child: _isSaving
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: VesparaColors.background,
-                        ),
-                      )
-                    : Text('Save Changes', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildBody() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ═══════════════════════════════════════════════════════════════════
+          // BASIC INFO
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Basic Info', Icons.person_outline),
+          _buildTextField('Display Name', _displayNameController),
+          _buildTextField('Hook', _hookController, hint: '140 char tagline...', maxLength: 140),
+          _buildTextField('Headline', _headlineController, hint: 'A catchy tagline...'),
+          _buildTextField('Bio', _bioController, maxLines: 4, hint: 'Tell people about yourself...'),
+          _buildTextField('Occupation', _occupationController),
+          
+          const SizedBox(height: 32),
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // LOCATION
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Location', Icons.location_on_outlined),
+          Row(
+            children: [
+              Expanded(flex: 2, child: _buildTextField('City', _cityController)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildTextField('State', _stateController)),
+            ],
+          ),
+          _buildTextField('ZIP Code', _zipCodeController),
+          
+          const SizedBox(height: 32),
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // IDENTITY
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Identity', Icons.face_outlined),
+          _buildDropdown('Pronouns', _pronounOptions, _selectedPronouns, 
+              (val) => setState(() => _selectedPronouns = val)),
+          _buildMultiSelect('Gender', _genderOptions, _selectedGender),
+          _buildMultiSelect('Orientation', _orientationOptions, _selectedOrientation),
+          
+          const SizedBox(height: 32),
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // RELATIONSHIP
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Relationship', Icons.favorite_border),
+          _buildMultiSelect('Relationship Status', _relationshipStatusOptions, _selectedRelationshipStatus),
+          _buildMultiSelect('Seeking', _seekingOptions, _selectedSeeking),
+          _buildMultiSelect('Looking For (Traits)', _lookingForOptions, _selectedLookingFor),
+          _buildDropdown('Partner Involvement', _partnerInvolvementOptions, _selectedPartnerInvolvement,
+              (val) => setState(() => _selectedPartnerInvolvement = val)),
+          
+          const SizedBox(height: 32),
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // AVAILABILITY & LOGISTICS
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Availability & Logistics', Icons.schedule_outlined),
+          _buildMultiSelect('General Availability', _availabilityOptions, _selectedAvailability),
+          _buildDropdown('Scheduling Style', _schedulingOptions, _selectedSchedulingStyle,
+              (val) => setState(() => _selectedSchedulingStyle = val)),
+          _buildDropdown('Hosting Status', _hostingOptions, _selectedHostingStatus,
+              (val) => setState(() => _selectedHostingStatus = val)),
+          _buildDropdown('Discretion Level', _discretionOptions, _selectedDiscretionLevel,
+              (val) => setState(() => _selectedDiscretionLevel = val)),
+          
+          // Travel Radius slider
+          _buildSliderField(
+            'Travel Radius',
+            '$_travelRadius miles',
+            _travelRadius.toDouble(),
+            5,
+            100,
+            (val) => setState(() => _travelRadius = val.round()),
+          ),
+          
+          _buildMultiSelect('Party/Event Availability', _partyAvailabilityOptions, _selectedPartyAvailability),
+          
+          const SizedBox(height: 32),
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // THE INTERVIEW (Heat, Limits, Bandwidth)
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Intensity & Boundaries', Icons.whatshot_outlined),
+          _buildDropdown('Heat Level', _heatLevelOptions, _selectedHeatLevel,
+              (val) => setState(() => _selectedHeatLevel = val)),
+          _buildMultiSelect('Hard Limits', _hardLimitOptions, _selectedHardLimits),
+          
+          // Bandwidth slider
+          _buildSliderField(
+            'Current Bandwidth',
+            '${(_bandwidth * 100).toInt()}% available',
+            _bandwidth,
+            0,
+            1,
+            (val) => setState(() => _bandwidth = val),
+            divisions: 10,
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // VIBE & INTERESTS
+          // ═══════════════════════════════════════════════════════════════════
+          _buildSectionHeader('Vibe & Interests', Icons.auto_awesome),
+          _buildMultiSelect('Your Vibe', _vibeTagOptions, _selectedVibeTags),
+          _buildMultiSelect('Interests', _interestTagOptions, _selectedInterestTags),
+          _buildMultiSelect('Desires', _desireTagOptions, _selectedDesireTags),
+          
+          const SizedBox(height: 40),
+          
+          // Save button at bottom
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSaving ? null : _saveProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.glow,
+                foregroundColor: VesparaColors.background,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              child: _isSaving
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: VesparaColors.background,
+                      ),
+                    )
+                  : Text('Save Changes', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
             ),
-            
-            const SizedBox(height: 40),
-          ],
-        ),
+          ),
+          
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
   
-  Widget _buildSectionHeader(String title) {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WIDGETS
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  Widget _buildSectionHeader(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: VesparaColors.glow,
-        ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: VesparaColors.glow, size: 22),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: VesparaColors.glow,
+            ),
+          ),
+        ],
       ),
     );
   }
   
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hint}) {
+  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hint, int? maxLength}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -420,12 +608,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           TextField(
             controller: controller,
             maxLines: maxLines,
+            maxLength: maxLength,
             style: TextStyle(color: VesparaColors.primary),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
               filled: true,
               fillColor: VesparaColors.surface,
+              counterStyle: TextStyle(color: VesparaColors.secondary),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -465,7 +655,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                value: options.contains(value) ? value : null,
+                value: options.map((o) => o.toLowerCase()).contains(value?.toLowerCase()) 
+                    ? options.firstWhere((o) => o.toLowerCase() == value?.toLowerCase())
+                    : null,
                 isExpanded: true,
                 dropdownColor: VesparaColors.surface,
                 hint: Text('Select...', style: TextStyle(color: VesparaColors.secondary.withOpacity(0.5))),
@@ -490,13 +682,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: VesparaColors.secondary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              if (selected.isNotEmpty)
+                Text(
+                  '${selected.length} selected',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: VesparaColors.glow,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -534,6 +739,54 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               );
             }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildSliderField(String label, String displayValue, double value, double min, double max, Function(double) onChanged, {int? divisions}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              Text(
+                displayValue,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.glow,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: VesparaColors.glow,
+              inactiveTrackColor: VesparaColors.surface,
+              thumbColor: VesparaColors.glow,
+              overlayColor: VesparaColors.glow.withOpacity(0.2),
+            ),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: divisions,
+              onChanged: onChanged,
+            ),
           ),
         ],
       ),
