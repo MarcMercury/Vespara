@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/models/plan_event.dart';
 import '../domain/models/roster_match.dart';
 import '../domain/models/vespara_event.dart';
-import '../data/vespara_mock_data.dart';
 import '../data/mock_data_provider.dart';
 import 'events_provider.dart';
 
