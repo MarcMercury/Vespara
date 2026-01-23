@@ -234,7 +234,7 @@ class TagAchievementsService {
     final gameTypeAchievements = {
       TagGameType.downToClown: 'try_dtc',
       TagGameType.iceBreakers: 'try_icebreakers',
-      TagGameType.velvetRope: 'try_velvet',
+      TagGameType.shareOrDare: 'try_velvet',
       TagGameType.pathOfPleasure: 'try_pop',
       TagGameType.laneOfLust: 'try_lol',
       TagGameType.dramaSutra: 'try_drama',
@@ -376,7 +376,7 @@ class TagAchievementsService {
     return switch (gameType) {
       TagGameType.downToClown => {10: 'dtc_10', 50: 'dtc_50', 100: 'dtc_master'},
       TagGameType.iceBreakers => {10: 'icebreakers_10', 50: 'icebreakers_50'},
-      TagGameType.velvetRope => {10: 'velvet_10', 50: 'velvet_50'},
+      TagGameType.shareOrDare => {10: 'velvet_10', 50: 'velvet_50'},
       TagGameType.pathOfPleasure => {10: 'pop_10', 50: 'pop_50'},
       TagGameType.laneOfLust => {10: 'lol_10', 50: 'lol_50'},
       TagGameType.dramaSutra => {10: 'drama_10', 50: 'drama_50'},

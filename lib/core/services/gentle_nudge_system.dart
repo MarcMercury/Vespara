@@ -169,7 +169,7 @@ class GentleNudgeSystem {
         return 'Down to Clown';
       case 'ice_breakers':
         return 'Ice Breakers';
-      case 'velvet_rope':
+      case 'share_or_dare':
         return 'Share or Dare';
       case 'path_of_pleasure':
         return 'Path of Pleasure';

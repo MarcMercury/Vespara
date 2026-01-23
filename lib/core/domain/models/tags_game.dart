@@ -62,7 +62,7 @@ extension ConsentLevelExtension on ConsentLevel {
 enum GameCategory {
   downToClown, // Heads Up-style guessing game
   icebreakers, // Ice Breakers conversation starters
-  velvetRope, // Share or Dare - Truth or Dare evolved
+  shareOrDare, // Share or Dare - Truth or Dare evolved
   pathOfPleasure, // Comparative ranking game
   laneOfLust, // Timeline/Shit Happens style game with desire index
   dramaSutra, // Kama Sutra meets Improv Comedy
@@ -76,7 +76,7 @@ extension GameCategoryExtension on GameCategory {
         return 'Down to Clown';
       case GameCategory.icebreakers:
         return 'Ice Breakers';
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         return 'Share or Dare';
       case GameCategory.pathOfPleasure:
         return 'Path of Pleasure';
@@ -95,7 +95,7 @@ extension GameCategoryExtension on GameCategory {
         return 'Heads Up-style guessing game with spicy vocab.';
       case GameCategory.icebreakers:
         return 'Light conversation starters for new connections.';
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         return 'Spin the wheel, share a secret or prove your courage.';
       case GameCategory.pathOfPleasure:
         return 'Family Feud-style ranking game of desires.';
@@ -113,7 +113,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.icebreakers:
       case GameCategory.downToClown:
         return ConsentLevel.green;
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
         return ConsentLevel.green; // Can scale to any level
@@ -128,7 +128,7 @@ extension GameCategoryExtension on GameCategory {
     switch (this) {
       case GameCategory.downToClown:
       case GameCategory.icebreakers:
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
       case GameCategory.dramaSutra:
@@ -142,7 +142,7 @@ extension GameCategoryExtension on GameCategory {
     switch (this) {
       case GameCategory.downToClown:
       case GameCategory.icebreakers:
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
       case GameCategory.dramaSutra:
@@ -158,7 +158,7 @@ extension GameCategoryExtension on GameCategory {
         return 0;   // Innocent fun — safe for brunch
       case GameCategory.downToClown:
         return 40;  // Flirty tension and teasing
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         return 70;  // Expect sparks — possibly skin
       case GameCategory.pathOfPleasure:
         return 40;  // Flirty tension and teasing
@@ -185,7 +185,7 @@ extension GameCategoryExtension on GameCategory {
         return 'PG';     // Playful, suggestive, mostly teasing
       case GameCategory.downToClown:
         return 'PG-13';  // Light touching, kissing, bold flirting
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         return 'R';      // Risqué, passionate, hands-on
       case GameCategory.pathOfPleasure:
         return 'PG-13';  // Light touching, kissing, bold flirting
@@ -205,7 +205,7 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.downToClown:
       case GameCategory.flashFreeze:
         return 'Quickie';    // 5-15 min
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
         return 'Foreplay';   // 20-45 min

@@ -9,7 +9,7 @@ import '../../../core/theme/vespara_icons.dart';
 import '../../../core/providers/ice_breakers_provider.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
-import 'velvet_rope_screen.dart';
+import 'share_or_dare_screen.dart';
 import 'down_to_clown_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -1288,7 +1288,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
               // Navigate to Share or Dare (Truth or Dare evolved)
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),
+                MaterialPageRoute(builder: (_) => const ShareOrDareScreen()),
               );
             },
             child: Container(

@@ -395,7 +395,7 @@ class TagAnalyticsService {
 enum TagGameType {
   downToClown('down_to_clown', 'Down to Clown'),
   iceBreakers('ice_breakers', 'Ice Breakers'),
-  velvetRope('velvet_rope', 'Share or Dare'),
+  shareOrDare('share_or_dare', 'Share or Dare'),
   pathOfPleasure('path_of_pleasure', 'Path of Pleasure'),
   laneOfLust('lane_of_lust', 'Lane of Lust'),
   dramaSutra('drama_sutra', 'Drama-Sutra'),

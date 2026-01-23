@@ -1,23 +1,23 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// VelvetRopeIntro - The Exclusive Entry Animation
+/// VesparaIntro - The Exclusive Entry Animation
 /// A dramatic, sensual curtain reveal that makes users feel special
-class VelvetRopeIntro extends StatefulWidget {
+class VesparaIntro extends StatefulWidget {
   final VoidCallback onComplete;
   final Duration duration;
   
-  const VelvetRopeIntro({
+  const VesparaIntro({
     super.key,
     required this.onComplete,
     this.duration = const Duration(milliseconds: 4500),
   });
   
   @override
-  State<VelvetRopeIntro> createState() => _VelvetRopeIntroState();
+  State<VesparaIntro> createState() => _VesparaIntroState();
 }
 
-class _VelvetRopeIntroState extends State<VelvetRopeIntro>
+class _VesparaIntroState extends State<VesparaIntro>
     with TickerProviderStateMixin {
   
   late AnimationController _mainController;
@@ -200,7 +200,7 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
                       _buildCurtain(isLeft: false),
                       
                       // Velvet rope
-                      _buildVelvetRope(),
+                      _buildVesparaRope(),
                       
                       // Gold stanchions
                       _buildStanchions(),
@@ -358,7 +358,7 @@ class _VelvetRopeIntroState extends State<VelvetRopeIntro>
     );
   }
   
-  Widget _buildVelvetRope() {
+  Widget _buildVesparaRope() {
     final screenHeight = MediaQuery.of(context).size.height;
     // Guard against invalid screen height
     if (screenHeight <= 0) {

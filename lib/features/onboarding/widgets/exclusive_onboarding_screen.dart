@@ -11,7 +11,7 @@ import '../../../core/services/image_upload_service.dart';
 import '../../../core/services/permission_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/zipcode_service.dart';
-import 'velvet_rope_intro.dart';
+import 'vespara_intro.dart';
 
 /// ExclusiveOnboardingScreen - The Club Interview
 /// A luxurious, exclusive onboarding experience that makes users feel special
@@ -33,7 +33,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
   final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isLoading = false;
-  bool _showIntro = true; // Re-enabled VelvetRopeIntro
+  bool _showIntro = true; // Re-enabled VesparaIntro
   bool _isGeneratingBio = false;
   
   // Image services
@@ -987,13 +987,13 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
       return Builder(
         builder: (context) {
           try {
-            return VelvetRopeIntro(
+            return VesparaIntro(
               onComplete: () {
                 setState(() => _showIntro = false);
               },
             );
           } catch (e) {
-            debugPrint('VelvetRopeIntro error: $e');
+            debugPrint('VesparaIntro error: $e');
             // Skip intro if there's an error and go straight to onboarding
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {

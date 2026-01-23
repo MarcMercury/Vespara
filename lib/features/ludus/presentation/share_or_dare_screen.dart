@@ -5,7 +5,7 @@ import 'dart:math';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
-import '../../../core/providers/velvet_rope_provider.dart';
+import '../../../core/providers/share_or_dare_provider.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
 
@@ -28,14 +28,14 @@ class VelvetColors {
   static const lavender = Color(0xFFE0D8EA);         // Soft text
 }
 
-class VelvetRopeScreen extends ConsumerStatefulWidget {
-  const VelvetRopeScreen({super.key});
+class ShareOrDareScreen extends ConsumerStatefulWidget {
+  const ShareOrDareScreen({super.key});
 
   @override
-  ConsumerState<VelvetRopeScreen> createState() => _VelvetRopeScreenState();
+  ConsumerState<ShareOrDareScreen> createState() => _ShareOrDareScreenState();
 }
 
-class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
+class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
     with TickerProviderStateMixin {
   
   // Controllers
@@ -90,7 +90,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   void _onSpinTick() {
     if (_spinVelocity <= 0) return;
     
-    final state = ref.read(velvetRopeProvider);
+    final state = ref.read(shareOrDareProvider);
     if (state.players.isEmpty) return;
     
     // Calculate current slice based on angle
@@ -116,7 +116,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
         // Calculate final selection
         final selectedIndex = _calculateSelectedPlayer(state.players.length);
         HapticFeedback.heavyImpact();
-        ref.read(velvetRopeProvider.notifier).spinComplete(selectedIndex);
+        ref.read(shareOrDareProvider.notifier).spinComplete(selectedIndex);
       }
     });
   }
@@ -140,7 +140,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(velvetRopeProvider);
+    final state = ref.watch(shareOrDareProvider);
     
     return Scaffold(
       backgroundColor: VelvetColors.background,
@@ -153,18 +153,18 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
     );
   }
   
-  Widget _buildPhase(VelvetRopeState state) {
+  Widget _buildPhase(ShareOrDareState state) {
     switch (state.phase) {
-      case VelvetPhase.lobby:
+      case ShareOrDarePhase.lobby:
         return _buildLobby(state);
-      case VelvetPhase.spinning:
+      case ShareOrDarePhase.spinning:
         return _buildSpinning(state);
-      case VelvetPhase.selecting:
+      case ShareOrDarePhase.selecting:
         return _buildSelection(state);
-      case VelvetPhase.revealing:
-      case VelvetPhase.reading:
+      case ShareOrDarePhase.revealing:
+      case ShareOrDarePhase.reading:
         return _buildCardReveal(state);
-      case VelvetPhase.results:
+      case ShareOrDarePhase.results:
         return _buildResults(state);
     }
   }
@@ -173,7 +173,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   // LOBBY PHASE
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildLobby(VelvetRopeState state) {
+  Widget _buildLobby(ShareOrDareState state) {
     return Container(
       key: const ValueKey('lobby'),
       child: Column(
@@ -328,7 +328,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                     GestureDetector(
                       onTap: state.isLoading ? null : () {
                         HapticFeedback.heavyImpact();
-                        ref.read(velvetRopeProvider.notifier).startGame();
+                        ref.read(shareOrDareProvider.notifier).startGame();
                       },
                       child: Container(
                         width: double.infinity,
@@ -385,7 +385,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
     );
   }
   
-  Widget _buildHeatSelector(VelvetRopeState state) {
+  Widget _buildHeatSelector(ShareOrDareState state) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -413,7 +413,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.selectionClick();
-                    ref.read(velvetRopeProvider.notifier).setHeatLevel(level);
+                    ref.read(shareOrDareProvider.notifier).setHeatLevel(level);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -458,7 +458,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
     );
   }
   
-  Widget _buildPlayerRow(VelvetPlayer player, int index) {
+  Widget _buildPlayerRow(ShareOrDarePlayer player, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -500,7 +500,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
           IconButton(
             onPressed: () {
               HapticFeedback.lightImpact();
-              ref.read(velvetRopeProvider.notifier).removePlayer(index);
+              ref.read(shareOrDareProvider.notifier).removePlayer(index);
             },
             icon: Icon(VesparaIcons.close, color: Colors.white38, size: 20),
           ),
@@ -541,7 +541,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               onSubmitted: (value) {
                 if (value.trim().isNotEmpty) {
                   HapticFeedback.lightImpact();
-                  ref.read(velvetRopeProvider.notifier).addPlayer(value);
+                  ref.read(shareOrDareProvider.notifier).addPlayer(value);
                   _nameController.clear();
                 }
               },
@@ -551,7 +551,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
             onPressed: () {
               if (_nameController.text.trim().isNotEmpty) {
                 HapticFeedback.lightImpact();
-                ref.read(velvetRopeProvider.notifier).addPlayer(_nameController.text);
+                ref.read(shareOrDareProvider.notifier).addPlayer(_nameController.text);
                 _nameController.clear();
               }
             },
@@ -566,7 +566,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   // SPINNING PHASE - THE ORBITAL WHEEL
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildSpinning(VelvetRopeState state) {
+  Widget _buildSpinning(ShareOrDareState state) {
     return Container(
       key: const ValueKey('spinning'),
       child: LayoutBuilder(
@@ -585,7 +585,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                   children: [
                     IconButton(
                       onPressed: () {
-                        ref.read(velvetRopeProvider.notifier).endGame();
+                        ref.read(shareOrDareProvider.notifier).endGame();
                       },
                       icon: Icon(VesparaIcons.stop, color: Colors.white54),
                     ),
@@ -726,7 +726,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   // SELECTION PHASE - SHARE OR DARE
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildSelection(VelvetRopeState state) {
+  Widget _buildSelection(ShareOrDareState state) {
     final player = state.selectedPlayer;
     if (player == null) return const SizedBox();
     
@@ -778,7 +778,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               GestureDetector(
                 onTap: () {
                   HapticFeedback.heavyImpact();
-                  ref.read(velvetRopeProvider.notifier).selectType(CardType.share);
+                  ref.read(shareOrDareProvider.notifier).selectType(CardType.share);
                 },
                 child: AnimatedBuilder(
                   animation: _pulseController,
@@ -836,7 +836,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               GestureDetector(
                 onTap: () {
                   HapticFeedback.heavyImpact();
-                  ref.read(velvetRopeProvider.notifier).selectType(CardType.dare);
+                  ref.read(shareOrDareProvider.notifier).selectType(CardType.dare);
                 },
                 child: AnimatedBuilder(
                   animation: _pulseController,
@@ -900,15 +900,15 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   // CARD REVEAL PHASE
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildCardReveal(VelvetRopeState state) {
+  Widget _buildCardReveal(ShareOrDareState state) {
     final card = state.currentCard;
     final player = state.selectedPlayer;
     if (card == null || player == null) return const SizedBox();
     
     // Start flip animation
-    if (state.phase == VelvetPhase.revealing && !_cardFlipController.isAnimating) {
+    if (state.phase == ShareOrDarePhase.revealing && !_cardFlipController.isAnimating) {
       _cardFlipController.forward().then((_) {
-        ref.read(velvetRopeProvider.notifier).cardRevealed();
+        ref.read(shareOrDareProvider.notifier).cardRevealed();
       });
     }
     
@@ -1044,7 +1044,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
           const Spacer(),
           
           // Action buttons (only after reveal)
-          if (state.phase == VelvetPhase.reading)
+          if (state.phase == ShareOrDarePhase.reading)
             Row(
               children: [
                 // Skip
@@ -1053,7 +1053,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                     onTap: () {
                       HapticFeedback.lightImpact();
                       _cardFlipController.reset();
-                      ref.read(velvetRopeProvider.notifier).skipCard();
+                      ref.read(shareOrDareProvider.notifier).skipCard();
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1084,7 +1084,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                     onTap: () {
                       HapticFeedback.heavyImpact();
                       _cardFlipController.reset();
-                      ref.read(velvetRopeProvider.notifier).completeCard();
+                      ref.read(shareOrDareProvider.notifier).completeCard();
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1118,7 +1118,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
   // RESULTS PHASE
   // ═══════════════════════════════════════════════════════════════════════════
   
-  Widget _buildResults(VelvetRopeState state) {
+  Widget _buildResults(ShareOrDareState state) {
     // Sort players by total completed
     final sortedPlayers = [...state.players]
       ..sort((a, b) => b.totalCompleted.compareTo(a.totalCompleted));
@@ -1220,7 +1220,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    ref.read(velvetRopeProvider.notifier).reset();
+                    ref.read(shareOrDareProvider.notifier).reset();
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -1241,7 +1241,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.heavyImpact();
-                    ref.read(velvetRopeProvider.notifier).backToLobby();
+                    ref.read(shareOrDareProvider.notifier).backToLobby();
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1458,7 +1458,7 @@ class _VelvetRopeScreenState extends ConsumerState<VelvetRopeScreen>
 // ═══════════════════════════════════════════════════════════════════════════
 
 class OrbitalWheelPainter extends CustomPainter {
-  final List<VelvetPlayer> players;
+  final List<ShareOrDarePlayer> players;
   
   OrbitalWheelPainter({required this.players});
   

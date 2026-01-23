@@ -212,7 +212,7 @@ class PrefetchService {
     final gameTypes = [
       'down_to_clown',
       'ice_breakers',
-      'velvet_rope',
+      'share_or_dare',
       'path_of_pleasure',
       'lane_of_lust',
       'drama_sutra',
@@ -229,8 +229,8 @@ class PrefetchService {
         return 'dtc_prompts';
       case 'ice_breakers':
         return 'ice_breaker_questions';
-      case 'velvet_rope':
-        return 'velvet_rope_cards';
+      case 'share_or_dare':
+        return 'share_or_dare_cards';
       case 'path_of_pleasure':
         return 'pop_prompts';
       case 'lane_of_lust':

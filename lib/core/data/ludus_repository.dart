@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/models/tags_game.dart';
-import '../providers/velvet_rope_provider.dart';
+import '../providers/share_or_dare_provider.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// LUDUS REPOSITORY
@@ -330,19 +330,19 @@ class LudusRepository {
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // VELVET ROPE (Share or Dare)
+  // SHARE OR DARE (Share or Dare)
   // ═══════════════════════════════════════════════════════════════════════════
   
-  /// Fetch Velvet Rope cards filtered by heat level
-  Future<List<VelvetRopeCard>> getVelvetRopeCards(String maxHeat) async {
+  /// Fetch Share or Dare cards filtered by heat level
+  Future<List<ShareOrDareCard>> getShareOrDareCards(String maxHeat) async {
     try {
-      final response = await _supabase.rpc('get_velvet_rope_deck', params: {
+      final response = await _supabase.rpc('get_share_or_dare_deck', params: {
         'p_max_heat': maxHeat,
         'p_limit': 50,
       });
       
       return (response as List)
-          .map((json) => VelvetRopeCard.fromJson(json))
+          .map((json) => ShareOrDareCard.fromJson(json))
           .toList();
     } catch (e) {
       // Fallback to direct query
@@ -356,13 +356,13 @@ class LudusRepository {
         }
         
         final response = await _supabase
-            .from('velvet_rope_cards')
+            .from('share_or_dare_cards')
             .select()
             .inFilter('heat_level', allowedLevels)
             .limit(50);
         
         final cards = (response as List)
-            .map((json) => VelvetRopeCard.fromJson(json))
+            .map((json) => ShareOrDareCard.fromJson(json))
             .toList();
         cards.shuffle();
         return cards;

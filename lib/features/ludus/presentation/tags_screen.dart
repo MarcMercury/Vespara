@@ -7,7 +7,7 @@ import '../../../core/domain/models/tags_game.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
 import 'ice_breakers_screen.dart';
-import 'velvet_rope_screen.dart';
+import 'share_or_dare_screen.dart';
 import 'down_to_clown_screen.dart';
 import 'path_of_pleasure_screen.dart';
 import 'lane_of_lust_screen.dart';
@@ -55,7 +55,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       TagsGame(
         id: 'velvet',
         title: 'Share or Dare',
-        category: GameCategory.velvetRope,
+        category: GameCategory.shareOrDare,
         description: 'Truth or dare with a twist',
         minPlayers: 2,
         maxPlayers: 8,
@@ -312,7 +312,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return Icons.sentiment_very_satisfied_rounded; // 🤡 Clown/guessing
       case GameCategory.icebreakers:
         return Icons.ac_unit_rounded; // ❄️ Ice
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         return Icons.theater_comedy_rounded; // 🎭 Share or Dare
       case GameCategory.pathOfPleasure:
         return Icons.leaderboard_rounded; // 📊 Ranking game
@@ -447,7 +447,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return TagRating.downToClown;
       case GameCategory.icebreakers:
         return TagRating.iceBreakers;
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         return TagRating.shareOrDare;
       case GameCategory.pathOfPleasure:
         return TagRating.pathOfPleasure;
@@ -512,10 +512,10 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           MaterialPageRoute(builder: (_) => const IceBreakersScreen()),
         );
         break;
-      case GameCategory.velvetRope:
+      case GameCategory.shareOrDare:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const VelvetRopeScreen()),
+          MaterialPageRoute(builder: (_) => const ShareOrDareScreen()),
         );
         break;
       case GameCategory.pathOfPleasure:

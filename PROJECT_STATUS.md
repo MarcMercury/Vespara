@@ -63,7 +63,7 @@ Vespara uses a **feature-first architecture** with Flutter + Riverpod for state 
 #### Onboarding (`lib/features/onboarding/`)
 - [x] `onboarding_screen.dart` - 4-step profile setup wizard
 - [x] `widgets/exclusive_onboarding_screen.dart` - Premium "Exclusive Club Interview" experience
-- [x] `widgets/velvet_rope_intro.dart` - Animated velvet rope entrance
+- [x] `widgets/vespara_intro.dart` - Animated Share or Dare entrance
 
 #### Mirror (`lib/features/mirror/`)
 - [x] `mirror_screen.dart` - Profile & analytics dashboard
@@ -103,7 +103,7 @@ Vespara uses a **feature-first architecture** with Flutter + Riverpod for state 
   - `path_of_pleasure_screen.dart` - Family Feud-style ranking game
   - `ice_breakers_screen.dart` - Conversation starters
   - `down_to_clown_screen.dart` - Fun challenges
-  - `velvet_rope_screen.dart` - VIP entrance game
+  - `share_or_dare_screen.dart` - VIP entrance game
   - `lane_of_lust_screen.dart` - Desire pathway
   - `drama_sutra_screen.dart` - Roleplay scenarios
   - `flash_freeze_screen.dart` - Quick reaction game
@@ -119,7 +119,7 @@ Vespara uses a **feature-first architecture** with Flutter + Riverpod for state 
   - `path_of_pleasure_provider.dart`
   - `ice_breakers_provider.dart`
   - `dtc_game_provider.dart` (Down to Clown)
-  - `velvet_rope_provider.dart`
+  - `share_or_dare_provider.dart`
   - `lane_of_lust_provider.dart`
   - `drama_sutra_provider.dart`
 

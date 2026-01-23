@@ -125,7 +125,7 @@ class SmartDefaultsService {
         return 'PG-13';
       case 'ice_breakers':
         return 'PG';
-      case 'velvet_rope':
+      case 'share_or_dare':
         return 'PG-13';
       case 'path_of_pleasure':
         return 'PG-13';
@@ -342,9 +342,9 @@ class SmartDefaultsService {
 
     // Building connection
     if (metrics['message_count'] < 100) {
-      if (!played.contains('velvet_rope')) {
+      if (!played.contains('share_or_dare')) {
         return GameSuggestion(
-          gameType: 'velvet_rope',
+          gameType: 'share_or_dare',
           reason: 'Share or Dare to learn more',
           suggestedHeat: 'PG-13',
         );
