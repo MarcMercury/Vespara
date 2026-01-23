@@ -510,6 +510,39 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
         ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense BDSM experience with a group?', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
         ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense BDSM experience with a stranger?', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
         ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most unusual thing you\'ve done to get someone to agree to sex?', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        // ═══════════════════════════════════════════════════════════════════════════
+        // EXTREME DARE CHALLENGES - Group Play
+        // ═══════════════════════════════════════════════════════════════════════════
+        // "Give" Dares - You perform on others
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Strip Tease: Take off your clothes, one item at a time, while the other players watch and cheer you on.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Lap Dance: Give a lap dance to 2 people at the same time. Group chooses the song.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Massage: Give a 1-minute massage to 2 other players, focusing on their neck and shoulders.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Blindfolded Kiss: Blindfold 2 other players and give them each a 1-minute kiss.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Threeway Kiss: Give a 1-minute tongue kiss to 2 other players at the same time.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Finger Play: Give 2 other players a 1-minute finger play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Threeway 69: Pick 2 people and figure out a 696 or 969 position together.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Feet Play: Give 2 other players a 1-minute feet play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Cuddle: Cuddle with 2 other players for 1 minute, arms and legs wrapped around them.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Nipple Play: Give 2 other players a 1-minute nipple play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Anal Play: Give 2 other players a 1-minute anal play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Oral Play: Give 2 other players a 1-minute oral play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Sensual Lick: Sensually lick anywhere on another player\'s body of your choosing.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Sensual Squeeze: Give 2 other players a 1-minute sensual squeeze, focusing on their breasts and ass.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        // "Receive" Dares - Others perform on you
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Strip Tease: Choose 2 people to give you a strip tease, one item at a time.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Lap Dance: Choose 2 people to give you a lap dance at the same time. Group chooses the song.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Massage: Choose 2 people to give you a 1-minute massage, focusing on your neck and shoulders.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Blindfolded Kiss: Choose 2 people to give you a 1-minute blindfolded kiss.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Threeway Kiss: Choose 2 people to give you a 1-minute tongue kiss at the same time.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Finger Play: Choose 2 people to give you a 1-minute finger play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Threeway 69: Choose 2 people and engage in a 696 or 969 position with them.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Feet Play: Choose 2 people to give you a 1-minute feet play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Cuddle: Choose 2 people to cuddle with you for 1 minute, arms and legs wrapped around you.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.physical),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Nipple Play: Choose 2 people to give you a 1-minute nipple play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Anal Play: Choose 2 people to give you a 1-minute anal play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Oral Play: Choose 2 people to give you a 1-minute oral play session.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Sensual Lick: Choose 2 people to sensually lick anywhere on your body.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
+        ShareOrDareCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Sensual Squeeze: Choose 2 people to give you a 1-minute sensual squeeze, focusing on your breasts and ass.', heatLevel: HeatLevel.x, category: ShareOrDareCategory.kinky),
       ]);
     }
     
