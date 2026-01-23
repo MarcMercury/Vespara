@@ -415,15 +415,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
           child: Stack(
             children: [
-              // Full tile icon image with padding to prevent overflow
+              // Full tile icon image - fills the tile nicely
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(19),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Image.asset(
-                      _getModuleIconPath(moduleName),
-                      fit: BoxFit.contain,
+                  child: Image.asset(
+                    _getModuleIconPath(moduleName),
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback to text if image not found
                       return Container(
@@ -440,7 +438,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       );
                     },
-                  ),
                   ),
                 ),
               ),

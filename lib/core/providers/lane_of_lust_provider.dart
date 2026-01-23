@@ -214,6 +214,9 @@ class LaneOfLustState {
       : null;
   
   bool get isMyTurn {
+    // In demo mode, it's always "your turn" since all players are on same device
+    if (isDemoMode) return true;
+    
     if (gameState == LaneGameState.stealing) {
       return stealingPlayer?.id == currentPlayerId;
     }
