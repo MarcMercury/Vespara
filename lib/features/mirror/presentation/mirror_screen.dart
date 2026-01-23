@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/user_profile.dart';
@@ -49,11 +50,61 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   
   UserAnalytics? _cachedAnalytics;
   
+  // Settings state that gets saved to database
+  RangeValues _ageRange = const RangeValues(21, 55);
+  double _maxDistance = 50;
+  String _showMe = 'Everyone';
+  
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // Analytics will be loaded via provider
+    // Load saved settings
+    _loadSavedSettings();
+  }
+  
+  Future<void> _loadSavedSettings() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    
+    try {
+      final response = await Supabase.instance.client
+          .from('user_settings')
+          .select()
+          .eq('user_id', user.id)
+          .maybeSingle();
+      
+      if (response != null) {
+        setState(() {
+          _ageRange = RangeValues(
+            (response['min_age'] as num?)?.toDouble() ?? 21,
+            (response['max_age'] as num?)?.toDouble() ?? 55,
+          );
+          _maxDistance = (response['max_distance'] as num?)?.toDouble() ?? 50;
+          _showMe = response['show_me'] as String? ?? 'Everyone';
+        });
+      }
+    } catch (e) {
+      print('Error loading settings: $e');
+    }
+  }
+  
+  Future<void> _saveSettings() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    
+    try {
+      await Supabase.instance.client.from('user_settings').upsert({
+        'user_id': user.id,
+        'min_age': _ageRange.start.toInt(),
+        'max_age': _ageRange.end.toInt(),
+        'max_distance': _maxDistance.toInt(),
+        'show_me': _showMe,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print('Error saving settings: $e');
+    }
   }
   
   UserAnalytics? get _analytics {
@@ -299,46 +350,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
         ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
-            // Profile photo section
-            Center(
-              child: GestureDetector(
-                onTap: () => _showPhotoOptions(),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [VesparaColors.glow, VesparaColors.glow.withOpacity(0.5)],
-                        ),
-                        border: Border.all(color: VesparaColors.glow, width: 3),
-                      ),
-                      child: Center(
-                        child: Text(
-                          profile.displayName.isNotEmpty ? profile.displayName[0].toUpperCase() : '?',
-                          style: TextStyle(fontSize: 40, fontWeight: FontWeight.w600, color: VesparaColors.background),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: VesparaColors.glow,
-                          border: Border.all(color: VesparaColors.background, width: 2),
-                        ),
-                        child: Icon(Icons.camera_alt, size: 14, color: VesparaColors.background),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // Photo Gallery with Rankings
+            _buildPhotoGallerySection(),
             
             const SizedBox(height: 24),
             
@@ -724,6 +737,332 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
         ),
       ),
     );
+  }
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // PHOTO GALLERY SECTION
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  Widget _buildPhotoGallerySection() {
+    final photosState = ref.watch(profilePhotosProvider);
+    final photos = photosState.photos;
+    final recommendation = photosState.recommendation;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'YOUR PHOTOS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.secondary,
+                letterSpacing: 1,
+              ),
+            ),
+            if (photosState.totalRankingsReceived > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.people, size: 12, color: VesparaColors.glow),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${photosState.totalRankingsReceived} rankings',
+                      style: TextStyle(fontSize: 11, color: VesparaColors.glow),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        
+        // Vespara Recommendation Banner
+        if (recommendation != null && recommendation.confidence > 0.6)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [VesparaColors.glow.withOpacity(0.15), VesparaColors.surface],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Vespara Recommends',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.glow,
+                        ),
+                      ),
+                      Text(
+                        recommendation.insights.isNotEmpty ? recommendation.insights.first : 'Reorder your photos based on community feedback',
+                        style: TextStyle(fontSize: 11, color: VesparaColors.secondary),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _applyRecommendedOrder(),
+                  child: Text('Apply', style: TextStyle(color: VesparaColors.glow, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+        
+        // Photo Grid - Ranked Left to Right
+        SizedBox(
+          height: 140,
+          child: photos.isEmpty
+              ? _buildEmptyPhotoGrid()
+              : ReorderableListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: photos.length + (5 - photos.length), // Fill remaining slots
+                  proxyDecorator: (child, index, animation) {
+                    return Material(
+                      color: Colors.transparent,
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(12),
+                      child: child,
+                    );
+                  },
+                  onReorder: (oldIndex, newIndex) async {
+                    if (oldIndex < photos.length && newIndex <= photos.length) {
+                      if (newIndex > oldIndex) newIndex--;
+                      // Reorder using the photos list
+                      final photoIds = photos.map((p) => p.id).toList();
+                      final movedId = photoIds.removeAt(oldIndex);
+                      photoIds.insert(newIndex, movedId);
+                      await ref.read(profilePhotosProvider.notifier).reorderPhotos(photoIds);
+                    }
+                  },
+                  itemBuilder: (context, index) {
+                    if (index < photos.length) {
+                      final photo = photos[index];
+                      return _buildRankedPhotoSlot(
+                        key: ValueKey(photo.id),
+                        photo: photo,
+                        position: index + 1,
+                        isFirst: index == 0,
+                      );
+                    } else {
+                      return _buildEmptyPhotoSlot(
+                        key: ValueKey('empty_$index'),
+                        position: index + 1,
+                      );
+                    }
+                  },
+                ),
+        ),
+        
+        const SizedBox(height: 8),
+        
+        // Helper text
+        Text(
+          'Drag to reorder • First photo is your main profile photo',
+          style: TextStyle(fontSize: 11, color: VesparaColors.secondary, fontStyle: FontStyle.italic),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildEmptyPhotoGrid() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: 5,
+      itemBuilder: (context, index) => _buildEmptyPhotoSlot(
+        key: ValueKey('empty_$index'),
+        position: index + 1,
+      ),
+    );
+  }
+  
+  Widget _buildRankedPhotoSlot({
+    required Key key,
+    required ProfilePhoto photo,
+    required int position,
+    bool isFirst = false,
+  }) {
+    final score = photo.score;
+    
+    return Container(
+      key: key,
+      width: 100,
+      margin: const EdgeInsets.only(right: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isFirst ? VesparaColors.glow : VesparaColors.border,
+          width: isFirst ? 2 : 1,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Photo
+          ClipRRect(
+            borderRadius: BorderRadius.circular(11),
+            child: Image.network(
+              photo.photoUrl,
+              width: 100,
+              height: 140,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: VesparaColors.surface,
+                child: Icon(Icons.broken_image, color: VesparaColors.secondary),
+              ),
+            ),
+          ),
+          
+          // Position badge
+          Positioned(
+            top: 6,
+            left: 6,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: isFirst ? VesparaColors.glow : VesparaColors.background.withOpacity(0.8),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  '$position',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isFirst ? VesparaColors.background : VesparaColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Score indicator
+          if (score != null && score.totalRankings > 0)
+            Positioned(
+              bottom: 6,
+              left: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      score.averageRank <= 2 ? Icons.thumb_up : Icons.trending_flat,
+                      size: 10,
+                      color: score.averageRank <= 2 ? VesparaColors.success : VesparaColors.secondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '#${score.averageRank.toStringAsFixed(1)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          
+          // Primary badge
+          if (isFirst)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'MAIN',
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: VesparaColors.background,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyPhotoSlot({required Key key, required int position}) {
+    return GestureDetector(
+      onTap: () => _uploadPhoto(position),
+      child: Container(
+        key: key,
+        width: 100,
+        margin: const EdgeInsets.only(right: 8),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: VesparaColors.border, style: BorderStyle.solid),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate_outlined, color: VesparaColors.glow, size: 28),
+            const SizedBox(height: 6),
+            Text(
+              'Add Photo',
+              style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Future<void> _uploadPhoto(int position) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1200, maxHeight: 1200);
+    
+    if (image == null) return;
+    
+    final bytes = await image.readAsBytes();
+    await ref.read(profilePhotosProvider.notifier).uploadPhoto(bytes, position);
+  }
+  
+  void _applyRecommendedOrder() async {
+    await ref.read(profilePhotosProvider.notifier).applyAIRecommendation();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Photo order updated!'), backgroundColor: VesparaColors.success),
+      );
+    }
   }
   
   void _showPhotoOptions() {
@@ -1750,15 +2089,15 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // AI-Powered Discovery Section
+        // Vespara-Powered Discovery Section
         _buildAIDiscoverySection(),
         const SizedBox(height: 24),
         
         // Manual Discovery Overrides
         _buildSettingsSection('Manual Overrides', [
-          _buildSettingTile('Age Range', '21-55', Icons.cake_outlined, () => _showAgeRangeDialog()),
-          _buildSettingTile('Distance', 'Within 50 miles', Icons.location_on_outlined, () => _showDistanceDialog()),
-          _buildSettingTile('Show Me', 'AI Optimized', Icons.people_outline, () => _showGenderPreferenceDialog()),
+          _buildSettingTile('Age Range', '${_ageRange.start.toInt()}-${_ageRange.end.toInt()}', Icons.cake_outlined, () => _showAgeRangeDialog()),
+          _buildSettingTile('Distance', 'Within ${_maxDistance.toInt()} miles', Icons.location_on_outlined, () => _showDistanceDialog()),
+          _buildSettingTile('Show Me', _showMe, Icons.people_outline, () => _showGenderPreferenceDialog()),
         ]),
         const SizedBox(height: 24),
         
@@ -2153,7 +2492,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
                   controller: controller,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Text('Tap to add or remove preferences. AI will use these as starting points and learn from your activity.',
+                    Text('Tap to add or remove preferences. Vespara will use these as starting points and learn from your activity.',
                         style: TextStyle(fontSize: 13, color: VesparaColors.secondary)),
                     const SizedBox(height: 24),
                     _buildEditablePreferenceSection('Vibes', _allVibeOptions),
@@ -2679,7 +3018,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   }
 
   void _showAgeRangeDialog() {
-    RangeValues range = const RangeValues(21, 45);
+    RangeValues range = _ageRange;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2715,11 +3054,15 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Age range updated to ${range.start.toInt()}-${range.end.toInt()}')),
-                    );
+                    setState(() => _ageRange = range);
+                    await _saveSettings();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Age range saved: ${range.start.toInt()}-${range.end.toInt()}'), backgroundColor: VesparaColors.success),
+                      );
+                    }
                   },
                   child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
                 ),
@@ -2732,7 +3075,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   }
 
   void _showDistanceDialog() {
-    double distance = 25;
+    double distance = _maxDistance;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2767,11 +3110,15 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Distance updated to ${distance.toInt()} miles')),
-                    );
+                    setState(() => _maxDistance = distance);
+                    await _saveSettings();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Distance saved: ${distance.toInt()} miles'), backgroundColor: VesparaColors.success),
+                      );
+                    }
                   },
                   child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
                 ),
@@ -2784,7 +3131,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   }
 
   void _showGenderPreferenceDialog() {
-    String selected = 'Everyone';
+    String selected = _showMe;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2805,12 +3152,16 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
                 value: option,
                 groupValue: selected,
                 activeColor: VesparaColors.glow,
-                onChanged: (v) {
+                onChanged: (v) async {
                   setModalState(() => selected = v!);
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Preference updated to $v')),
-                  );
+                  setState(() => _showMe = v!);
+                  await _saveSettings();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Preference saved: $v'), backgroundColor: VesparaColors.success),
+                    );
+                  }
                 },
               )),
             ],

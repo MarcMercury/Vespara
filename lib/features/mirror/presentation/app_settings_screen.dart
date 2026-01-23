@@ -1065,7 +1065,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
         children: [
           _buildSectionHeader(
             'AI Personalization',
-            'Let AI craft your perfect experience',
+            'Let Vespara craft your perfect experience',
             Icons.auto_awesome_rounded,
           ),
           const SizedBox(height: VesparaSpacing.lg),

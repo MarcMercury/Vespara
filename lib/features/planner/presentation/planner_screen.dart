@@ -311,7 +311,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               _tabController.animateTo(1); // Go to Find a Date tab
             },
             icon: Icon(Icons.auto_awesome, color: VesparaColors.glow),
-            label: Text('Let AI find you a date', style: TextStyle(color: VesparaColors.glow)),
+            label: Text('Let Vespara find you a date', style: TextStyle(color: VesparaColors.glow)),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: VesparaColors.glow),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

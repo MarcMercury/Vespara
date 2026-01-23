@@ -341,7 +341,7 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     {'title': 'THE SEARCH', 'subtitle': 'What you\'re looking for'},
     {'title': 'THE VIBE', 'subtitle': 'Your dynamic & heat level'},
     {'title': 'THE DOSSIER', 'subtitle': 'Photos & your hook'},
-    {'title': 'AI PROFILE', 'subtitle': 'Let AI craft your story'},
+    {'title': 'VESPARA PROFILE', 'subtitle': 'Let Vespara craft your story'},
   ];
   
   @override
