@@ -222,7 +222,9 @@ class PathOfPleasureState {
     GamePhase? phase,
     ConnectionMode? connectionMode,
     String? sessionId,
+    bool clearSessionId = false,
     String? roomCode,
+    bool clearRoomCode = false,
     bool? isHost,
     Team? teamA,
     Team? teamB,
@@ -232,18 +234,20 @@ class PathOfPleasureState {
     int? cardsPerRound,
     int? roundNumber,
     RoundData? currentRound,
+    bool clearCurrentRound = false,
     List<KinkCard>? playerSorting,
     List<RoundData>? completedRounds,
     bool? isLoading,
     String? error,
+    bool clearError = false,
     bool? showHandoffScreen,
     List<KinkCard>? masterDeck,
   }) {
     return PathOfPleasureState(
       phase: phase ?? this.phase,
       connectionMode: connectionMode ?? this.connectionMode,
-      sessionId: sessionId ?? this.sessionId,
-      roomCode: roomCode ?? this.roomCode,
+      sessionId: clearSessionId ? null : (sessionId ?? this.sessionId),
+      roomCode: clearRoomCode ? null : (roomCode ?? this.roomCode),
       isHost: isHost ?? this.isHost,
       teamA: teamA ?? this.teamA,
       teamB: teamB ?? this.teamB,
@@ -252,11 +256,11 @@ class PathOfPleasureState {
       winningScore: winningScore ?? this.winningScore,
       cardsPerRound: cardsPerRound ?? this.cardsPerRound,
       roundNumber: roundNumber ?? this.roundNumber,
-      currentRound: currentRound ?? this.currentRound,
+      currentRound: clearCurrentRound ? null : (currentRound ?? this.currentRound),
       playerSorting: playerSorting ?? this.playerSorting,
       completedRounds: completedRounds ?? this.completedRounds,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: clearError ? null : error,
       showHandoffScreen: showHandoffScreen ?? this.showHandoffScreen,
       masterDeck: masterDeck ?? this.masterDeck,
     );
@@ -576,10 +580,13 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         ? TeamTurn.teamB 
         : TeamTurn.teamA;
     
+    // Clear previous round state and prepare for next round
     state = state.copyWith(
       roundNumber: state.roundNumber + 1,
       currentTurn: nextStarting,
       startingTeam: nextStarting,
+      showHandoffScreen: false, // Reset handoff state
+      clearCurrentRound: true, // Clear previous round
     );
     
     _startNewRound();
