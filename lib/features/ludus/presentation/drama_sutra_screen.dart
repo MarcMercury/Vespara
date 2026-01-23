@@ -339,7 +339,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             
             const SizedBox(height: 24),
             
-            // Player count selector
+            // Actor count selector (2 or 3 only)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -350,12 +350,12 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'Players:',
+                    'Actors:',
                     style: TextStyle(color: Colors.white70),
                   ),
                   const SizedBox(width: 16),
-                  ...List.generate(7, (i) {
-                    final count = i + 2; // 2-8 players
+                  // Only 2 or 3 actors allowed
+                  ...[2, 3].map((count) {
                     final isSelected = state.playerCount == count;
                     return GestureDetector(
                       onTap: () {
@@ -363,14 +363,18 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                         ref.read(dramaSutraProvider.notifier).setPlayerCount(count);
                       },
                       child: Container(
-                        width: 36,
-                        height: 36,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 60,
+                        height: 48,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: BoxDecoration(
                           color: isSelected 
                               ? DramaColors.gold 
                               : Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? DramaColors.gold : Colors.white24,
+                            width: 2,
+                          ),
                         ),
                         child: Center(
                           child: Text(
@@ -378,6 +382,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                             style: TextStyle(
                               color: isSelected ? Colors.black : Colors.white70,
                               fontWeight: FontWeight.w700,
+                              fontSize: 20,
                             ),
                           ),
                         ),
@@ -410,10 +415,10 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '• Describe the pose WITHOUT saying the name\n'
-                    '• NO body parts (arm, leg, etc.)\n'
-                    '• NO touching or demonstrating\n'
-                    '• Point camera at players when time runs out!',
+                    '• Director has 1 MINUTE to direct the actors\n'
+                    '• Show the image to the Director only\n'
+                    '• Director describes without showing the image\n'
+                    '• Photo is snapped when timer runs out!',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 13,

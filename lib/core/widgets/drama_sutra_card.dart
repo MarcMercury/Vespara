@@ -72,20 +72,9 @@ class DramaSutraCard extends StatelessWidget {
               // Background pattern
               _buildBackgroundPattern(),
               
-              // Main content
-              Column(
-                children: [
-                  // Top header with intensity badge
-                  _buildHeader(),
-                  
-                  // Position image area (main content)
-                  Expanded(
-                    child: _buildImageArea(),
-                  ),
-                  
-                  // Bottom section with name and details
-                  _buildFooter(),
-                ],
+              // Image only - fills the entire card
+              Positioned.fill(
+                child: _buildImageArea(),
               ),
               
               // Corner decorations
@@ -166,61 +155,54 @@ class DramaSutraCard extends StatelessWidget {
 
   Widget _buildImageArea() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
         color: Colors.black.withOpacity(0.3),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            // Actual image
-            position.imageUrl != null && position.imageUrl!.isNotEmpty
-                ? Image.asset(
-                    position.imageUrl!,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                  )
-                : _buildPlaceholder(),
-            
-            // Blur overlay when hidden
-            if (isBlurred)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                    child: Container(
-                      color: cardBackground.withOpacity(0.7),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              canReveal ? Icons.touch_app_rounded : Icons.visibility_off_rounded,
-                              color: goldAccent.withOpacity(0.6),
-                              size: 48,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              canReveal ? 'TAP TO REVEAL' : 'HIDDEN',
-                              style: TextStyle(
-                                color: goldAccent.withOpacity(0.8),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                          ],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Actual image - fills the card
+          position.imageUrl != null && position.imageUrl!.isNotEmpty
+              ? Image.asset(
+                  position.imageUrl!,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                )
+              : _buildPlaceholder(),
+          
+          // Blur overlay when hidden
+          if (isBlurred)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                child: Container(
+                  color: cardBackground.withOpacity(0.7),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          canReveal ? Icons.touch_app_rounded : Icons.visibility_off_rounded,
+                          color: goldAccent.withOpacity(0.6),
+                          size: 48,
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Text(
+                          canReveal ? 'TAP TO REVEAL' : 'HIDDEN',
+                          style: TextStyle(
+                            color: goldAccent.withOpacity(0.8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

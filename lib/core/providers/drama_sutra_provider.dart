@@ -181,8 +181,8 @@ class DramaSutraState {
     this.currentRound = 0,
     this.maxRounds = 10,
     this.currentPosition,
-    this.timerSeconds = 30,
-    this.timerRemaining = 30,
+    this.timerSeconds = 60,
+    this.timerRemaining = 60,
     this.capturedPhoto,
     this.roundHistory = const [],
     this.scores = const [],
@@ -252,9 +252,11 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   // ─────────────────────────────────────────────────────────────────────────
   
   void setPlayerCount(int count) {
+    // Only allow 2 or 3 actors
+    final validCount = count == 3 ? 3 : 2;
     state = state.copyWith(
-      playerCount: count.clamp(2, 8),
-      scores: List.filled(count.clamp(2, 8), 0),
+      playerCount: validCount,
+      scores: List.filled(validCount, 0),
     );
   }
   
@@ -268,8 +270,11 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   
   /// Called when Director hits ACTION button
   void startAction() {
+    // Use appropriate position list based on player count
+    final positionList = state.playerCount == 3 ? _threePersonPositions : _twoPersonPositions;
+    
     // Pick a random position we haven't used yet
-    final available = _allPositions.where(
+    final available = positionList.where(
       (p) => !_usedPositions.any((used) => used.id == p.id)
     ).toList();
     
@@ -278,7 +283,7 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
       _usedPositions.clear();
     }
     
-    final positions = available.isNotEmpty ? available : _allPositions;
+    final positions = available.isNotEmpty ? available : positionList;
     final position = positions[_random.nextInt(positions.length)];
     _usedPositions.add(position);
     
@@ -361,241 +366,55 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // POSITION DATA - 38 SEXUAL POSITIONS (12 Group + 26 Bingo)
+  // POSITION DATA - Image-only positions from 2 People and 3 People folders
   // ─────────────────────────────────────────────────────────────────────────
   
-  static const List<DramaPosition> _allPositions = [
-    // GROUP POSITIONS (12)
-    DramaPosition(
-      id: 'g1', name: 'The Constellation',
-      description: 'Three bodies intertwined like stars.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-1_X5.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'g2', name: 'The Daisy Chain',
-      description: 'A continuous circle of pleasure.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-2_X5.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'g3', name: 'The Pyramid',
-      description: 'Bodies stacked forming an ancient shape.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-3_X5.png',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'g4', name: 'The Thunderclap',
-      description: 'All parties converge at the center.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-4_X5.png',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'g5', name: 'The Velvet Sandwich',
-      description: 'One in the middle, surrounded.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-5_X5.png',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'g6', name: 'The Serpentine',
-      description: 'Bodies curve like an undulating wave.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-6_X5.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'g7', name: 'The Triple Crown',
-      description: 'A royal arrangement of attention.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-7_X5.png',
-      difficulty: 3, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'g8', name: 'The Circus Act',
-      description: 'Balance, trust, and flexibility required.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-8_X5.png',
-      difficulty: 5, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'g9', name: 'The Love Knot',
-      description: 'Limbs intertwined in complex embrace.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-9_X5.png',
-      difficulty: 4, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'g10', name: 'The Tidal Wave',
-      description: 'Bodies rise and fall in rhythm.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-10_X5.png',
-      difficulty: 3, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'g11', name: 'The Phoenix Rising',
-      description: 'One rises from the embrace of others.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-11_X5.png',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'g12', name: 'The Grand Finale',
-      description: 'All reach the crescendo together.',
-      imageUrl: 'assets/images/drama_sutra/group-sex-12_X5.png',
-      difficulty: 5, intensity: PositionIntensity.intimate,
-    ),
-    
-    // BINGO POSITIONS (26)
-    DramaPosition(
-      id: 'b1', name: 'Acrobat',
-      description: 'Gravity-defying flexibility required.',
-      imageUrl: 'assets/images/drama_sutra/acrobat.png',
-      difficulty: 5, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b2', name: 'Ballerina',
-      description: 'Graceful, one partner on tiptoe.',
-      imageUrl: 'assets/images/drama_sutra/ballerina.png',
-      difficulty: 3, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b3', name: 'Best Seat in the House',
-      description: 'VIP treatment - perfect view.',
-      imageUrl: 'assets/images/drama_sutra/best-seat-in-the-house.png',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b4', name: 'Body Surfing',
-      description: 'Ride the waves of passion.',
-      imageUrl: 'assets/images/drama_sutra/body-surfing.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b5', name: 'Celebration',
-      description: 'Toast to an unforgettable night.',
-      imageUrl: 'assets/images/drama_sutra/celebration.png',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b6', name: 'Deep Throat',
-      description: 'Intimate oral position.',
-      imageUrl: 'assets/images/drama_sutra/deep-throat.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b7', name: 'Doggy',
-      description: 'Classic from behind.',
-      imageUrl: 'assets/images/drama_sutra/doggy.png',
-      difficulty: 1, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b8', name: 'Front Row Seat',
-      description: 'Up-close view of the action.',
-      imageUrl: 'assets/images/drama_sutra/front-row-seat.png',
-      difficulty: 2, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b9', name: 'Hammock',
-      description: 'Swinging in lazy bliss.',
-      imageUrl: 'assets/images/drama_sutra/hammock.png',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b10', name: 'Head over Heels',
-      description: 'Fall deeply into passion.',
-      imageUrl: 'assets/images/drama_sutra/head-over-heels.png',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b11', name: 'Helicopter',
-      description: 'Spin into ecstasy.',
-      imageUrl: 'assets/images/drama_sutra/helicopter.png',
-      difficulty: 5, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b12', name: 'Missionary',
-      description: 'Face to face, heart to heart.',
-      imageUrl: 'assets/images/drama_sutra/missionary.png',
-      difficulty: 1, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b13', name: 'Octopus',
-      description: 'Eight limbs, infinite pleasure.',
-      imageUrl: 'assets/images/drama_sutra/octopus.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b14', name: 'Power Pump',
-      description: 'Maximum thrust, maximum passion.',
-      imageUrl: 'assets/images/drama_sutra/power-pump.png',
-      difficulty: 3, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b15', name: 'Pretzel',
-      description: 'Twisted together deliciously.',
-      imageUrl: 'assets/images/drama_sutra/pretzel.png',
-      difficulty: 4, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b16', name: 'Pump & Grind',
-      description: 'Rhythm and motion in harmony.',
-      imageUrl: 'assets/images/drama_sutra/pump-and-grind.png',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b17', name: 'Reverse Cowgirl',
-      description: 'Saddle up backwards.',
-      imageUrl: 'assets/images/drama_sutra/reverse-cowgirl.png',
-      difficulty: 2, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b18', name: 'Sixty-Nine',
-      description: 'Mutual pleasure, head to tail.',
-      imageUrl: 'assets/images/drama_sutra/sixty-nine.png',
-      difficulty: 2, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b19', name: 'Superman',
-      description: 'Fly into pleasure.',
-      imageUrl: 'assets/images/drama_sutra/superman.png',
-      difficulty: 4, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b20', name: 'Table Delight',
-      description: 'Dinner is served.',
-      imageUrl: 'assets/images/drama_sutra/table-delight.png',
-      difficulty: 2, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b21', name: 'Threesome',
-      description: 'Three is company.',
-      imageUrl: 'assets/images/drama_sutra/threesome.png',
-      difficulty: 3, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b22', name: 'Treasure Hunt',
-      description: 'X marks the spot.',
-      imageUrl: 'assets/images/drama_sutra/treasure-hunt.png',
-      difficulty: 2, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b23', name: 'Tree Hugger',
-      description: 'Wrap around tight.',
-      imageUrl: 'assets/images/drama_sutra/tree-hugger.png',
-      difficulty: 3, intensity: PositionIntensity.romantic,
-    ),
-    DramaPosition(
-      id: 'b24', name: 'Wall Hug',
-      description: 'Against the wall passion.',
-      imageUrl: 'assets/images/drama_sutra/wall-hug.png',
-      difficulty: 3, intensity: PositionIntensity.acrobatic,
-    ),
-    DramaPosition(
-      id: 'b25', name: 'Web of Desire',
-      description: 'Tangled in the web.',
-      imageUrl: 'assets/images/drama_sutra/web-of-desire.png',
-      difficulty: 4, intensity: PositionIntensity.intimate,
-    ),
-    DramaPosition(
-      id: 'b26', name: 'Zombie',
-      description: 'The undead rise.',
-      imageUrl: 'assets/images/drama_sutra/zombie.png',
-      difficulty: 2, intensity: PositionIntensity.acrobatic,
-    ),
+  // 2 PEOPLE POSITIONS (28 images)
+  static const List<DramaPosition> _twoPersonPositions = [
+    DramaPosition(id: '2p1', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172305.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p2', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172312.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p3', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172317.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p4', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172323.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p5', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172328.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p6', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172333.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p7', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172339.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p8', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172344.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p9', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172348.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p10', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172400.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p11', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172410.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p12', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172423.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p13', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172437.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p14', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172444.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p15', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172449.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p16', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172458.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p17', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172503.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p18', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172508.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p19', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172514.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p20', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172521.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p21', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172526.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p22', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172537.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p23', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172545.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p24', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172552.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p25', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172600.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p26', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172605.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p27', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172620.png', difficulty: 2, intensity: PositionIntensity.romantic),
+    DramaPosition(id: '2p28', name: '', imageUrl: 'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172631.png', difficulty: 2, intensity: PositionIntensity.romantic),
+  ];
+  
+  // 3 PEOPLE POSITIONS (12 images)
+  static const List<DramaPosition> _threePersonPositions = [
+    DramaPosition(id: '3p1', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172734.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p2', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172754.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p3', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172806.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p4', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172817.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p5', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172829.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p6', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172840.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p7', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172851.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p8', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172904.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p9', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172913.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p10', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172930.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p11', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172940.png', difficulty: 3, intensity: PositionIntensity.intimate),
+    DramaPosition(id: '3p12', name: '', imageUrl: 'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172950.png', difficulty: 3, intensity: PositionIntensity.intimate),
   ];
 }
 
