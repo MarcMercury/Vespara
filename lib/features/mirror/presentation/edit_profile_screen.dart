@@ -115,7 +115,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   
   static const List<String> _hardLimitOptions = [
     'no_smokers', 'no_drugs', 'no_pain', 'no_blood', 'no_humiliation',
-    'no_anal', 'no_choking', 'protection_required', 'no_bareback',
+    'no_anal', 'no_choking', 'no_bareback',
     'no_age_gaps', 'no_couples', 'no_singles', 'no_public', 'no_filming',
     'must_verify', 'no_strangers', 'sti_tested_only'
   ];

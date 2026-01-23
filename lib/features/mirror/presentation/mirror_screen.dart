@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/analytics.dart';
+import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/providers/profile_photos_provider.dart';
 import '../widgets/qr_connect_modal.dart';
 import 'edit_profile_screen.dart';
 
@@ -1444,6 +1447,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
             ],
           ),
         ),
+        
+        const SizedBox(height: 24),
+        
+        // PHOTOS SECTION - NEW
+        _buildPhotosSection(),
         
         const SizedBox(height: 24),
         
@@ -3239,5 +3247,482 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
         ],
       ),
     );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // PHOTOS SECTION - Upload, view, and get AI recommendations
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildPhotosSection() {
+    final photosState = ref.watch(profilePhotosProvider);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.photo_library, color: VesparaColors.glow, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'YOUR PHOTOS',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '${photosState.photos.length}/5',
+                style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Upload up to 5 photos. Other users will rank them to help AI recommend your best profile picture.',
+            style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+          ),
+          const SizedBox(height: 16),
+          
+          // Photo Grid (5 slots)
+          _buildPhotoGrid(photosState),
+          
+          // AI Recommendation Card
+          if (photosState.recommendation != null && photosState.photos.isNotEmpty)
+            _buildAIRecommendationCard(photosState),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoGrid(ProfilePhotosState photosState) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 5,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.75,
+      ),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        final position = index + 1;
+        final photo = photosState.photoAtPosition(position);
+        final isUploading = photosState.isUploading && photosState.uploadingPosition == position;
+        
+        return _buildPhotoSlot(position, photo, isUploading);
+      },
+    );
+  }
+
+  Widget _buildPhotoSlot(int position, ProfilePhoto? photo, bool isUploading) {
+    if (isUploading) {
+      return Container(
+        decoration: BoxDecoration(
+          color: VesparaColors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: VesparaColors.glow.withOpacity(0.5)),
+        ),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation(VesparaColors.glow),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (photo != null) {
+      return GestureDetector(
+        onTap: () => _showProfilePhotoOptions(photo),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                photo.photoUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: VesparaColors.background,
+                  child: Icon(Icons.broken_image, color: VesparaColors.secondary),
+                ),
+              ),
+            ),
+            // Primary badge
+            if (photo.isPrimary)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.glow,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(Icons.star, color: Colors.white, size: 12),
+                ),
+              ),
+            // AI recommended badge
+            if (photo.score?.aiRecommendedPosition == 1 && !photo.isPrimary)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(Icons.auto_awesome, color: Colors.white, size: 12),
+                ),
+              ),
+            // Ranking count
+            if (photo.score != null && photo.score!.totalRankings > 0)
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${photo.score!.totalRankings}',
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    
+    // Empty slot - add photo
+    return GestureDetector(
+      onTap: () => _pickAndUploadPhoto(position),
+      child: Container(
+        decoration: BoxDecoration(
+          color: VesparaColors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: VesparaColors.glow.withOpacity(0.3),
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate, color: VesparaColors.glow, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              '#$position',
+              style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAIRecommendationCard(ProfilePhotosState photosState) {
+    final recommendation = photosState.recommendation!;
+    final hasRec = recommendation.hasRecommendation;
+    
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: hasRec 
+              ? [Colors.amber.withOpacity(0.2), VesparaColors.surface]
+              : [VesparaColors.glow.withOpacity(0.1), VesparaColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: hasRec ? Colors.amber.withOpacity(0.3) : VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasRec ? Icons.auto_awesome : Icons.insights,
+                color: hasRec ? Colors.amber : VesparaColors.glow,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                hasRec ? 'AI RECOMMENDATION' : 'PHOTO INSIGHTS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: hasRec ? Colors.amber : VesparaColors.glow,
+                ),
+              ),
+              const Spacer(),
+              if (hasRec)
+                Text(
+                  recommendation.confidenceLabel,
+                  style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          
+          // Insights
+          ...recommendation.insights.map((insight) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                const Text('💡 ', style: TextStyle(fontSize: 12)),
+                Expanded(
+                  child: Text(
+                    insight,
+                    style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+                  ),
+                ),
+              ],
+            ),
+          )),
+          
+          if (hasRec) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Based on ${recommendation.totalRankings} rankings from other users',
+              style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _applyAIRecommendation(),
+                    icon: const Icon(Icons.auto_fix_high, size: 16),
+                    label: const Text('Apply AI Order'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.amber,
+                      side: const BorderSide(color: Colors.amber),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadPhoto(int position) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1080,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
+    
+    if (picked == null) return;
+    
+    final bytes = await picked.readAsBytes();
+    final extension = picked.path.split('.').last.toLowerCase();
+    
+    final success = await ref.read(profilePhotosProvider.notifier).uploadPhoto(
+      bytes,
+      position,
+      extension: extension == 'png' ? 'png' : 'jpg',
+    );
+    
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Photo uploaded!'),
+          backgroundColor: VesparaColors.glow,
+        ),
+      );
+    }
+  }
+
+  void _showProfilePhotoOptions(ProfilePhoto photo) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: VesparaColors.secondary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Photo preview
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                photo.photoUrl,
+                height: 150,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Stats
+            if (photo.score != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          '${photo.score!.totalRankings}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        Text('Rankings', style: TextStyle(fontSize: 10, color: VesparaColors.secondary)),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          photo.score!.averageRank.toStringAsFixed(1),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        Text('Avg Rank', style: TextStyle(fontSize: 10, color: VesparaColors.secondary)),
+                      ],
+                    ),
+                    if (photo.score!.aiRecommendedPosition != null)
+                      Column(
+                        children: [
+                          Text(
+                            '#${photo.score!.aiRecommendedPosition}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber,
+                            ),
+                          ),
+                          Text('AI Rank', style: TextStyle(fontSize: 10, color: VesparaColors.secondary)),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            
+            const SizedBox(height: 24),
+            
+            // Actions
+            if (!photo.isPrimary)
+              ListTile(
+                leading: Icon(Icons.star, color: VesparaColors.glow),
+                title: const Text('Set as Primary'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(profilePhotosProvider.notifier).setAsPrimary(photo.id);
+                },
+              ),
+            ListTile(
+              leading: Icon(Icons.swap_horiz, color: VesparaColors.secondary),
+              title: const Text('Replace Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadPhoto(photo.position);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete, color: VesparaColors.error),
+              title: Text('Delete', style: TextStyle(color: VesparaColors.error)),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDeletePhoto(photo);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeletePhoto(ProfilePhoto photo) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete Photo?', style: TextStyle(color: VesparaColors.primary)),
+        content: Text(
+          'This will delete the photo and all its rankings. This cannot be undone.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(profilePhotosProvider.notifier).deletePhoto(photo.id);
+            },
+            child: Text('Delete', style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _applyAIRecommendation() async {
+    final success = await ref.read(profilePhotosProvider.notifier).applyAIRecommendation();
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('AI recommendation applied!'),
+          backgroundColor: Colors.amber,
+        ),
+      );
+    }
   }
 }

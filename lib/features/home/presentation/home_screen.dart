@@ -415,13 +415,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
           child: Stack(
             children: [
-              // Full tile icon image
+              // Full tile icon image (scaled down slightly to prevent overflow)
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(19),
-                  child: Image.asset(
-                    _getModuleIconPath(moduleName),
-                    fit: BoxFit.cover,
+                  child: Transform.scale(
+                    scale: 0.85,
+                    child: Image.asset(
+                      _getModuleIconPath(moduleName),
+                      fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback to text if image not found
                       return Container(
@@ -439,29 +441,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       );
                     },
                   ),
+                  ),
                 ),
               ),
               
-              // Notification badge (example for some modules)
-              if (_hasNotification(index))
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: color,
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.5),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              // Notification badges removed per design request
             ],
           ),
         ),

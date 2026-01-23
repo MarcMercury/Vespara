@@ -323,7 +323,6 @@ class _ExclusiveOnboardingScreenState extends ConsumerState<ExclusiveOnboardingS
     {'id': 'no_filming', 'label': 'No Photos/Videos'},
     {'id': 'no_couples', 'label': 'No Couples'},
     {'id': 'no_groups', 'label': 'No Groups'},
-    {'id': 'protection_required', 'label': 'Protection Required'},
     {'id': 'no_bareback', 'label': 'No Bareback'},
     {'id': 'no_fluids', 'label': 'No Fluid Exchange'},
     {'id': 'no_public', 'label': 'Nothing Public'},

@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/group.dart';
+import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/groups_provider.dart';
+import '../../../core/widgets/photo_ranking_sheet.dart';
 import '../../wire/presentation/wire_screen.dart';
 import '../../planner/presentation/planner_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
@@ -969,7 +971,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                   
                   const SizedBox(height: 32),
                   
-                  // Quick actions
+                  // Quick actions - Row 1
                   Row(
                     children: [
                       Expanded(
@@ -1022,6 +1024,26 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           },
                         ),
                       ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Quick actions - Row 2 (Rank Photos)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickAction(
+                          icon: Icons.photo_library,
+                          label: 'Rank Photos',
+                          color: Colors.amber,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _openPhotoRankingForMatch(match);
+                          },
+                        ),
+                      ),
+                      const Expanded(flex: 2, child: SizedBox()),
                     ],
                   ),
                   
@@ -1342,5 +1364,38 @@ class _NestScreenState extends ConsumerState<NestScreen>
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     if (diff.inDays < 30) return '${diff.inDays ~/ 7} weeks ago';
     return '${diff.inDays ~/ 30} months ago';
+  }
+
+  void _openPhotoRankingForMatch(Match match) {
+    // Convert match photos to ProfilePhoto objects for ranking
+    // Use avatar photo if available
+    final photos = <ProfilePhoto>[];
+    
+    if (match.matchedUserAvatar != null) {
+      photos.add(ProfilePhoto.fromUrl(
+        id: '${match.matchedUserId}_photo_0',
+        userId: match.matchedUserId,
+        photoUrl: match.matchedUserAvatar!,
+        position: 1,
+        isPrimary: true,
+      ));
+    }
+    
+    if (photos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('This user has no photos to rank'),
+          backgroundColor: VesparaColors.surface,
+        ),
+      );
+      return;
+    }
+    
+    PhotoRankingSheet.show(
+      context,
+      userId: match.matchedUserId,
+      userName: match.matchedUserName ?? 'This person',
+      photos: photos,
+    );
   }
 }

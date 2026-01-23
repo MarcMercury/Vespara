@@ -4,9 +4,11 @@ import 'dart:math' as math;
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/discoverable_profile.dart';
+import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/connection_state_provider.dart' 
     show connectionStateProvider, metAtEventsProvider, VesparaConnectionState, EventAttendee;
+import '../../../core/widgets/photo_ranking_sheet.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DISCOVER SCREEN - Module 2
@@ -788,6 +790,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             onTap: () => _onSwipe(SwipeDirection.left),
           ),
           
+          // Rank Photos button
+          _buildActionButton(
+            icon: Icons.photo_library,
+            color: Colors.amber,
+            size: 44,
+            onTap: _openPhotoRanking,
+          ),
+          
           // Super Like button
           _buildActionButton(
             icon: Icons.star,
@@ -805,6 +815,39 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ),
         ],
       ),
+    );
+  }
+  
+  void _openPhotoRanking() {
+    if (_currentIndex >= _profiles.length) return;
+    
+    final profile = _profiles[_currentIndex];
+    if (profile.photos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('This user has no photos to rank'),
+          backgroundColor: VesparaColors.surface,
+        ),
+      );
+      return;
+    }
+    
+    // Convert profile photos to ProfilePhoto objects for ranking
+    final photos = profile.photos.asMap().entries.map((entry) {
+      return ProfilePhoto.fromUrl(
+        id: '${profile.id}_photo_${entry.key}',
+        userId: profile.id,
+        photoUrl: entry.value,
+        position: entry.key + 1,
+        isPrimary: entry.key == 0,
+      );
+    }).toList();
+    
+    PhotoRankingSheet.show(
+      context,
+      userId: profile.id,
+      userName: profile.displayName ?? 'This person',
+      photos: photos,
     );
   }
 
