@@ -465,6 +465,51 @@ class VelvetRopeNotifier extends StateNotifier<VelvetRopeState> {
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'Share who you\'d choose for a no-consequences night here—and why them.', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Blindfold yourself and guess who is touching your neck.', heatLevel: HeatLevel.r, category: VelvetCategory.physical),
         VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.dare, text: 'Sit on the lap of the person the wheel spins to next (if consenting).', heatLevel: HeatLevel.r, category: VelvetCategory.physical),
+        // New explicit SHARE questions
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most adventurous sex act you\'ve ever tried?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intimate thing you\'ve ever shared with a partner?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the biggest sex-related lie you\'ve ever told?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most spontaneous sex you\'ve ever had?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most embarrassing sex-related story you\'ve shared with someone?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the biggest turn-on for you?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense orgasm you\'ve ever had?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most unusual place you\'ve ever had sex?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the biggest sex-related fantasy you\'ve ever had?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most memorable sex-related dream you\'ve ever had?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s your favorite BDSM role (dom, sub, switch)?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most creative way you\'ve ever seduced someone?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intimate thing you\'ve ever shared with a stranger?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense emotional connection you\'ve felt with someone?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s your favorite sex position?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most memorable sex-related experience you\'ve ever had?', heatLevel: HeatLevel.r, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intimate conversation with a partner about sex?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense moment of trust with a partner?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense vulnerability with a partner?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense emotional connection with a partner?', heatLevel: HeatLevel.r, category: VelvetCategory.deep),
+      ]);
+    }
+    
+    // X-rated (extreme) questions
+    if (maxHeat.index >= HeatLevel.x.index) {
+      cards.addAll([
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most extreme BDSM experience you\'ve ever had?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense pain you\'ve experienced during sex?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most creative way you\'ve ever used bondage?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense sensory experience during sex?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most extreme fetish you\'ve ever explored?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense breathplay experience you\'ve ever had?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense sensory deprivation experience during sex?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense impact play experience you\'ve ever had?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense rope bondage experience you\'ve ever had?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense sex-related experience with a stranger?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense sex-related experience with a group?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense sex experience in a public place?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s your favorite BDSM toy or prop?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense BDSM scene you\'ve participated in?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense BDSM experience with a partner?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense BDSM experience with a group?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most intense BDSM experience with a stranger?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
+        VelvetRopeCard(id: '${random.nextInt(99999)}', type: CardType.share, text: 'What\'s the most unusual thing you\'ve done to get someone to agree to sex?', heatLevel: HeatLevel.x, category: VelvetCategory.kinky),
       ]);
     }
     
