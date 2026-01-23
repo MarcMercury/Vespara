@@ -234,8 +234,6 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   }
 
   Widget _buildGameCard(TagsGame game) {
-    final categoryColor = _getCategoryColor(game.category);
-    
     return GestureDetector(
       onTap: () => _showGameDetails(game),
       child: Container(
@@ -244,44 +242,36 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Game Title
-              Text(
-                game.title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: VesparaColors.primary,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: Image.asset(
+            _getGameIconPath(game.title),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback if image not found
+              return Center(
+                child: Text(
+                  game.title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: VesparaColors.primary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Subtitle (category description)
-              Text(
-                game.category.description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VesparaColors.secondary,
-                  height: 1.3,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
     );
+  }
+
+  String _getGameIconPath(String gameTitle) {
+    // Map game titles to their icon file names
+    // Handle special case: Drama-Sutra -> Drama Sutra
+    final fileName = gameTitle.replaceAll('-', ' ');
+    return 'assets/images/GAME ICONS/$fileName.png';
   }
 
   Widget _buildEmptyState() {
