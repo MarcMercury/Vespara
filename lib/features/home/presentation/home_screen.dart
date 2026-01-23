@@ -382,6 +382,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _buildModuleTile(int index, double height) {
     final module = _modules[index];
     final color = module['color'] as Color;
+    final moduleName = module['name'] as String;
     
     return AnimatedBuilder(
       animation: _tileAnimations[index],
@@ -402,7 +403,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: Container(
           height: height,
           decoration: BoxDecoration(
-            color: VesparaColors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: color.withOpacity(0.3)),
             boxShadow: [
@@ -415,69 +415,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
           child: Stack(
             children: [
-              // Background gradient
+              // Full tile icon image
               Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withOpacity(0.15),
-                        Colors.transparent,
-                      ],
-                    ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(19),
+                  child: Image.asset(
+                    _getModuleIconPath(moduleName),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to text if image not found
+                      return Container(
+                        color: VesparaColors.surface,
+                        child: Center(
+                          child: Text(
+                            moduleName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ),
-              
-              // Content
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Icon
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        module['icon'] as IconData,
-                        color: color,
-                        size: 22,
-                      ),
-                    ),
-                    
-                    // Text
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          module['name'] as String,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                            color: VesparaColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          module['subtitle'] as String,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: VesparaColors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
               ),
               
@@ -506,6 +467,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
     );
+  }
+  
+  String _getModuleIconPath(String moduleName) {
+    // Map module names to their icon file names
+    switch (moduleName) {
+      case 'MIRROR':
+        return 'assets/Main Page Tile Icons/Mirror.png';
+      case 'DISCOVER':
+        return 'assets/Main Page Tile Icons/Discover.png';
+      case 'SANCTUM':
+        return 'assets/Main Page Tile Icons/Sanctum.png';
+      case 'WIRE':
+        return 'assets/Main Page Tile Icons/Wire.png';
+      case 'PLANNER':
+        return 'assets/Main Page Tile Icons/Plan.png';
+      case 'EXPERIENCES':
+        return 'assets/Main Page Tile Icons/Experience.png';
+      case 'SHREDDER':
+        return 'assets/Main Page Tile Icons/Shredder.png';
+      case 'TAG':
+        return 'assets/Main Page Tile Icons/T.A.G..png';
+      default:
+        return 'assets/Main Page Tile Icons/Mirror.png';
+    }
   }
   
   bool _hasNotification(int index) {
