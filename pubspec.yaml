@@ -78,5 +78,8 @@ flutter:
   assets:
     - assets/images/
     - assets/images/GAME ICONS/
+    - assets/images/drama_sutra/
+    - assets/images/drama_sutra/2 People/
+    - assets/images/drama_sutra/3 people/
     - assets/Main Page Tile Icons/
     - assets/icons/
