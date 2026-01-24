@@ -1212,13 +1212,13 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          if (showBack)
-            IconButton(
-              icon: const Icon(VesparaIcons.back, color: Colors.white70),
-              onPressed: onBack ?? () => context.pop(),
-            )
-          else
-            const SizedBox(width: 48),
+          IconButton(
+            icon: const Icon(VesparaIcons.back, color: Colors.white70),
+            onPressed: onBack ?? () {
+              ref.read(pathOfPleasureProvider.notifier).reset();
+              context.pop();
+            },
+          ),
           const Spacer(),
           Text(
             'PATH OF PLEASURE',
@@ -1228,13 +1228,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             ),
           ),
           const Spacer(),
-          IconButton(
-            icon: const Icon(VesparaIcons.close, color: Colors.white70),
-            onPressed: () {
-              ref.read(pathOfPleasureProvider.notifier).reset();
-              context.pop();
-            },
-          ),
+          const SizedBox(width: 48),
         ],
       ),
     );

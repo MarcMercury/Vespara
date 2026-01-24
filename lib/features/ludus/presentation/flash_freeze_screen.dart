@@ -809,23 +809,6 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
   Widget _buildStartSection() {
     return Column(
       children: [
-        // Sexy silhouette hint
-        Container(
-          height: 120,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              colors: [
-                FlashColors.red.withOpacity(0.2),
-                FlashColors.background,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        
-        const SizedBox(height: 20),
-        
         // Play Button - Navigate to Game
         GestureDetector(
           onTap: () {
