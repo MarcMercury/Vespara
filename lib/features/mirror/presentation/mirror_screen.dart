@@ -1066,15 +1066,28 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
   }
   
   void _showPhotoOptions() {
+    // Photo management is handled inline - no modal needed
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Photo editing coming soon!'), backgroundColor: VesparaColors.glow),
+      SnackBar(content: Text('Tap on a photo slot to upload or replace'), backgroundColor: VesparaColors.glow),
     );
   }
   
   void _showFieldEditor(String fieldName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Editing $fieldName coming soon!'), backgroundColor: VesparaColors.glow),
-    );
+    // Navigate to full edit profile screen
+    final profileAsync = ref.read(userProfileProvider);
+    final profile = profileAsync.valueOrNull;
+    if (profile == null) return;
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(profile: profile),
+      ),
+    ).then((updated) {
+      if (updated == true) {
+        ref.invalidate(userProfileProvider);
+        _profileInitialized = false; // Force reinit on return
+      }
+    });
   }
   
   Future<void> _generateAiBio() async {
@@ -1101,8 +1114,23 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
     setState(() => _isSaving = true);
     
     try {
-      // TODO: Implement actual save to Supabase
-      await Future.delayed(const Duration(seconds: 1));
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw Exception('Not logged in');
+      
+      // Build update map from form fields
+      final updates = {
+        'display_name': _displayNameController.text.trim(),
+        'headline': _headlineController.text.trim(),
+        'bio': _bioController.text.trim(),
+        'looking_for': _selectedVibes.toList(),
+        'interest_tags': _selectedInterests.toList(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      
+      await Supabase.instance.client
+          .from('profiles')
+          .update(updates)
+          .eq('id', user.id);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Profile saved successfully!'), backgroundColor: VesparaColors.success),
@@ -1111,7 +1139,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
       ref.invalidate(userProfileProvider);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save profile'), backgroundColor: VesparaColors.error),
+        SnackBar(content: Text('Failed to save profile: $e'), backgroundColor: VesparaColors.error),
       );
     } finally {
       setState(() => _isSaving = false);
