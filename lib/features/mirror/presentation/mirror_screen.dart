@@ -910,137 +910,144 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> with SingleTickerPr
       key: key,
       width: 100,
       margin: const EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isFirst ? VesparaColors.glow : VesparaColors.border,
-          width: isFirst ? 2 : 1,
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Photo
-          ClipRRect(
-            borderRadius: BorderRadius.circular(11),
-            child: Image.network(
-              photo.photoUrl,
-              width: 100,
-              height: 140,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: VesparaColors.surface,
-                child: Icon(Icons.broken_image, color: VesparaColors.secondary),
-              ),
+      child: GestureDetector(
+        onTap: () => _uploadPhoto(position),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isFirst ? VesparaColors.glow : VesparaColors.border,
+              width: isFirst ? 2 : 1,
             ),
           ),
-          
-          // Position badge
-          Positioned(
-            top: 6,
-            left: 6,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: isFirst ? VesparaColors.glow : VesparaColors.background.withOpacity(0.8),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: Center(
-                child: Text(
-                  '$position',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isFirst ? VesparaColors.background : VesparaColors.primary,
+          child: Stack(
+            children: [
+              // Photo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: Image.network(
+                  photo.photoUrl,
+                  width: 100,
+                  height: 140,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: VesparaColors.surface,
+                    child: Icon(Icons.broken_image, color: VesparaColors.secondary),
                   ),
                 ),
               ),
-            ),
-          ),
-          
-          // Score indicator
-          if (score != null && score.totalRankings > 0)
-            Positioned(
-              bottom: 6,
-              left: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: VesparaColors.background.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      score.averageRank <= 2 ? Icons.thumb_up : Icons.trending_flat,
-                      size: 10,
-                      color: score.averageRank <= 2 ? VesparaColors.success : VesparaColors.secondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '#${score.averageRank.toStringAsFixed(1)}',
+              
+              // Position badge
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: isFirst ? VesparaColors.glow : VesparaColors.background.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$position',
                       style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isFirst ? VesparaColors.background : VesparaColors.primary,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          
-          // Primary badge
-          if (isFirst)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'MAIN',
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                    color: VesparaColors.background,
                   ),
                 ),
               ),
-            ),
-        ],
+              
+              // Score indicator
+              if (score != null && score.totalRankings > 0)
+                Positioned(
+                  bottom: 6,
+                  left: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.background.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          score.averageRank <= 2 ? Icons.thumb_up : Icons.trending_flat,
+                          size: 10,
+                          color: score.averageRank <= 2 ? VesparaColors.success : VesparaColors.secondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '#${score.averageRank.toStringAsFixed(1)}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              
+              // Primary badge
+              if (isFirst)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'MAIN',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        color: VesparaColors.background,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
   
   Widget _buildEmptyPhotoSlot({required Key key, required int position}) {
-    return GestureDetector(
-      onTap: () => _uploadPhoto(position),
-      child: Container(
-        key: key,
-        width: 100,
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: VesparaColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: VesparaColors.border, style: BorderStyle.solid),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate_outlined, color: VesparaColors.glow, size: 28),
-            const SizedBox(height: 6),
-            Text(
-              'Add Photo',
-              style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
-            ),
-          ],
+    return Container(
+      key: key,
+      child: GestureDetector(
+        onTap: () => _uploadPhoto(position),
+        child: Container(
+          width: 100,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: VesparaColors.border, style: BorderStyle.solid),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_photo_alternate_outlined, color: VesparaColors.glow, size: 28),
+              const SizedBox(height: 6),
+              Text(
+                'Add Photo',
+                style: TextStyle(fontSize: 10, color: VesparaColors.secondary),
+              ),
+            ],
+          ),
         ),
       ),
     );
