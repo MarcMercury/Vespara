@@ -253,8 +253,8 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       }
     }
     
-    // Random duration: 2-8 seconds for each signal
-    final durationSeconds = 2 + _random.nextInt(7);
+    // Random duration: 3-6 seconds for each signal
+    final durationSeconds = 3 + _random.nextInt(4);
     
     _signalTimer = Timer(Duration(seconds: durationSeconds), () {
       if (_phase == GamePhase.playing) {

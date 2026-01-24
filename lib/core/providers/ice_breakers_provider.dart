@@ -618,6 +618,9 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
       "Show the last meme you sent to someone.",
       "Demonstrate your signature dance move.",
       "Show us your best 'flirty face' on command.",
+      // ACTION cards
+      "ACTION: Perform your most realistic orgasm right now.",
+      "ACTION: Demonstrate your favorite sexual position by posing in it right now.",
       // Explicit questions
       "What's the most adventurous sex act you've ever tried?",
       "What's the most intimate thing you've ever shared with a partner?",
@@ -698,6 +701,7 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
       ("You have 20 seconds to make the person on your right laugh.", 20),
       ("Describe your type in exactly 3 words. You have 10 seconds.", 10),
       ("Pass your phone to the right. They have 30 seconds to find an embarrassing photo.", 30),
+      ("Hold another player's hand and stare them in the eye for 15 seconds without laughing.", 15),
     ];
     
     final wildPrompts = [
@@ -711,6 +715,8 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
       "Everyone share their most-used emoji. Explain why.",
       "Everyone point to who here is secretly the biggest flirt.",
       "Everyone share one thing they're grateful for today.",
+      "On the count of three, everyone point to the person they most want to kiss in the group. No cheating!",
+      "On the count of 3, everyone put their hands on the part of their body they love being sexually touched the most.",
     ];
     
     // Shuffle standard and timed prompts

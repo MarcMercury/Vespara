@@ -822,44 +822,6 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Pulsing glow
-              AnimatedBuilder(
-                animation: _pulseController,
-                builder: (context, child) {
-                  return Container(
-                    width: 80 + _pulseController.value * 20,
-                    height: 80 + _pulseController.value * 20,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          FlashColors.electric.withOpacity(0.3),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('👀', style: TextStyle(fontSize: 40)),
-                  SizedBox(height: 8),
-                  Text(
-                    'Ready to play?',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white54,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
         
         const SizedBox(height: 20),

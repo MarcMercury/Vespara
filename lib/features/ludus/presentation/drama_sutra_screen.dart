@@ -395,42 +395,6 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             
             const SizedBox(height: 24),
             
-            // Rules reminder
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: DramaColors.crimson.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: DramaColors.crimson.withOpacity(0.3)),
-              ),
-              child: const Column(
-                children: [
-                  Text(
-                    '📜 RULES',
-                    style: TextStyle(
-                      color: DramaColors.crimson,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '• Director has 1 MINUTE to direct the actors\n'
-                    '• Show the image to the Director only\n'
-                    '• Director describes without showing the image\n'
-                    '• Photo is snapped when timer runs out!',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
             // ACTION button
             GestureDetector(
               onTap: _onActionPressed,
@@ -564,12 +528,13 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
               ),
             ),
             const SizedBox(height: 24),
-            _buildHowToRow('🎬', 'One player is the Director'),
-            _buildHowToRow('🧘', 'Card shows a position/scene'),
-            _buildHowToRow('🗣️', 'Director describes without naming'),
-            _buildHowToRow('👥', 'Others act it out'),
-            _buildHowToRow('📸', 'Freeze and capture the moment'),
-            _buildHowToRow('⏱️', '30 seconds per pose'),
+            _buildHowToRow('1️⃣', 'One player is the Director'),
+            _buildHowToRow('2️⃣', 'Director chooses to work with 2 or 3 actors'),
+            _buildHowToRow('3️⃣', 'Director presses ACTION'),
+            _buildHowToRow('4️⃣', 'Without using the name of sexual positions, body parts, touching players, or demonstrating the image - get your actors into the pose displayed'),
+            _buildHowToRow('5️⃣', 'When you believe they are in the correct position, aim your phone at the actors and press CUT'),
+            _buildHowToRow('', 'Alternately, point your camera at the actors as time expires'),
+            _buildHowToRow('6️⃣', 'The camera will capture your masterpiece - as a group, rate the Director\'s skills using the thumbs up and down buttons'),
             const SizedBox(height: 24),
           ],
         ),
@@ -742,6 +707,53 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             ),
           ),
           
+          // CUT button - instantly stops timer and captures photo
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GestureDetector(
+              onTap: _onCutPressed,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red.shade700,
+                      Colors.red.shade900,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.red.shade400, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.4),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.cut, color: Colors.white, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'CUT!',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
           // Instructions
           Padding(
             padding: const EdgeInsets.all(16),
@@ -764,6 +776,25 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
         ],
       ),
     );
+  }
+  
+  /// Called when the CUT button is pressed - instantly stops timer and captures photo
+  Future<void> _onCutPressed() async {
+    HapticFeedback.heavyImpact();
+    
+    // Cancel the timer immediately
+    _gameTimer?.cancel();
+    
+    // Take the photo
+    final photoData = await _capturePhoto();
+    if (photoData != null) {
+      ref.read(dramaSutraProvider.notifier).setPhoto(photoData);
+    } else {
+      ref.read(dramaSutraProvider.notifier).skipToReview();
+    }
+    
+    // Dispose camera
+    _disposeCamera();
   }
   
   // ═══════════════════════════════════════════════════════════════════════════
