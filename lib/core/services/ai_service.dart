@@ -19,10 +19,9 @@ import '../utils/retry.dart';
 /// - Fallback strategies
 
 class AIService {
+  AIService._();
   static AIService? _instance;
   static AIService get instance => _instance ??= AIService._();
-
-  AIService._();
 
   // Configuration
   final String _baseUrl = 'https://api.openai.com/v1';
@@ -64,17 +63,21 @@ class AIService {
   }) async {
     // Check rate limit
     if (!_rateLimiter.allowRequest()) {
-      return Failure(AppError.rateLimited(
-        message: 'AI request rate limit exceeded. Please wait.',
-      ));
+      return Failure(
+        AppError.rateLimited(
+          message: 'AI request rate limit exceeded. Please wait.',
+        ),
+      );
     }
 
     // Check token budget
     if (remainingBudget <= 0) {
-      return Failure(AppError(
-        message: 'Daily AI token budget exceeded.',
-        type: ErrorType.rateLimited,
-      ));
+      return const Failure(
+        AppError(
+          message: 'Daily AI token budget exceeded.',
+          type: ErrorType.rateLimited,
+        ),
+      );
     }
 
     // Check cache
@@ -113,10 +116,9 @@ class AIService {
           if (maxTokens != null) 'max_tokens': maxTokens,
         },
       ),
-      config: RetryConfig.api,
       errorTransformer: _transformError,
-    ).then((result) {
-      return result.map((json) {
+    ).then(
+      (result) => result.map((json) {
         final response = AIResponse.fromJson(json);
 
         // Track tokens
@@ -128,8 +130,8 @@ class AIService {
         }
 
         return response;
-      });
-    });
+      }),
+    );
   }
 
   /// Stream a chat completion response
@@ -201,12 +203,12 @@ class AIService {
     required String style,
   }) async {
     final result = await chat(
-      systemPrompt: '''You are a creative writer helping users craft engaging bios.
+      systemPrompt:
+          '''You are a creative writer helping users craft engaging bios.
 Style: $style
 Keep it concise (2-3 sentences max), authentic, and engaging.
 Don't use clichés or overused phrases.''',
       prompt: 'Create a bio based on: $userContext',
-      model: AIModel.gpt4oMini,
       maxTokens: 150,
     );
 
@@ -220,7 +222,8 @@ Don't use clichés or overused phrases.''',
     int count = 3,
   }) async {
     final result = await chat(
-      systemPrompt: '''You are a dating coach helping create genuine conversation starters.
+      systemPrompt:
+          '''You are a dating coach helping create genuine conversation starters.
 Generate unique, thoughtful openers based on shared interests or profile details.
 Avoid generic pickup lines. Be creative and authentic.
 Return exactly $count options, one per line.''',
@@ -229,18 +232,17 @@ Person 1: $profile1Context
 Person 2: $profile2Context
 
 Generate $count conversation starters.''',
-      model: AIModel.gpt4oMini,
       maxTokens: 200,
     );
 
-    return result.map((r) {
-      return r.content
+    return result.map(
+      (r) => r.content
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
           .map((line) => line.replaceAll(RegExp(r'^\d+[\.\)]\s*'), '').trim())
           .take(count)
-          .toList();
-    });
+          .toList(),
+    );
   }
 
   /// Analyze message sentiment/toxicity
@@ -256,7 +258,6 @@ Generate $count conversation starters.''',
 Respond in JSON format:
 {"sentiment": "...", "toxicity": 0.0, "flags": ["..."]}''',
       prompt: message,
-      model: AIModel.gpt4oMini,
       maxTokens: 100,
       temperature: 0.1,
     );
@@ -292,7 +293,6 @@ Rating: $contentRating
 Keep content appropriate for the rating level.
 Be creative, fun, and engaging.''',
       prompt: context,
-      model: AIModel.gpt4oMini,
       maxTokens: 200,
     );
 
@@ -406,14 +406,13 @@ Be creative, fun, and engaging.''',
 // ═══════════════════════════════════════════════════════════════════════════
 
 class RateLimiter {
-  final int maxRequests;
-  final Duration window;
-  final List<DateTime> _requests = [];
-
   RateLimiter({
     required this.maxRequests,
     required this.window,
   });
+  final int maxRequests;
+  final Duration window;
+  final List<DateTime> _requests = [];
 
   bool allowRequest() {
     final now = DateTime.now();
@@ -430,7 +429,8 @@ class RateLimiter {
     return true;
   }
 
-  int get remainingRequests => (maxRequests - _requests.length).clamp(0, maxRequests);
+  int get remainingRequests =>
+      (maxRequests - _requests.length).clamp(0, maxRequests);
 
   Duration? get timeUntilReset {
     if (_requests.isEmpty) return null;
@@ -456,7 +456,8 @@ enum AIModel {
   final double inputPricePer1M;
   final double outputPricePer1M;
 
-  const AIModel(this.id, this.displayName, this.inputPricePer1M, this.outputPricePer1M);
+  const AIModel(
+      this.id, this.displayName, this.inputPricePer1M, this.outputPricePer1M);
 }
 
 enum AIRole {
@@ -469,19 +470,12 @@ enum AIRole {
 }
 
 class AIMessage {
+  const AIMessage({required this.role, required this.content});
   final AIRole role;
   final String content;
-
-  const AIMessage({required this.role, required this.content});
 }
 
 class AIResponse {
-  final String content;
-  final int promptTokens;
-  final int completionTokens;
-  final int totalTokens;
-  final String? finishReason;
-
   AIResponse({
     required this.content,
     required this.promptTokens,
@@ -502,18 +496,22 @@ class AIResponse {
       finishReason: choice['finish_reason'],
     );
   }
+  final String content;
+  final int promptTokens;
+  final int completionTokens;
+  final int totalTokens;
+  final String? finishReason;
 }
 
 class MessageAnalysis {
-  final String sentiment;
-  final double toxicity;
-  final List<String> flags;
-
   MessageAnalysis({
     required this.sentiment,
     required this.toxicity,
     required this.flags,
   });
+  final String sentiment;
+  final double toxicity;
+  final List<String> flags;
 
   bool get isAppropriate => toxicity < 0.5 && !flags.contains('inappropriate');
   bool get isSpam => flags.contains('spam');
@@ -521,8 +519,7 @@ class MessageAnalysis {
 }
 
 class _CachedResponse {
+  _CachedResponse({required this.response, required this.expiresAt});
   final AIResponse response;
   final DateTime expiresAt;
-
-  _CachedResponse({required this.response, required this.expiresAt});
 }

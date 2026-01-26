@@ -11,11 +11,10 @@ import 'prefetch_service.dart';
 /// Runs silently in the background - users never wait for AI.
 
 class BackgroundPregenerationService {
+  BackgroundPregenerationService._();
   static BackgroundPregenerationService? _instance;
   static BackgroundPregenerationService get instance =>
       _instance ??= BackgroundPregenerationService._();
-
-  BackgroundPregenerationService._();
 
   final AIService _aiService = AIService.instance;
   final PrefetchService _prefetchService = PrefetchService.instance;
@@ -123,7 +122,8 @@ class BackgroundPregenerationService {
       }
 
       final result = await _aiService.chat(
-        systemPrompt: '''Generate 5 unique conversation starters for a $scenario dating scenario.
+        systemPrompt:
+            '''Generate 5 unique conversation starters for a $scenario dating scenario.
 Be creative, genuine, and engaging. Avoid clichés.
 Return one starter per line, no numbering.''',
         prompt: 'Generate conversation starters for: $scenario',
@@ -138,10 +138,12 @@ Return one starter per line, no numbering.''',
               .where((line) => line.trim().isNotEmpty)
               .map((line) => line.trim())
               .toList();
-          debugPrint('BackgroundPregeneration: Generated ${_iceBreakersCache[scenario]!.length} ice breakers for $scenario');
+          debugPrint(
+              'BackgroundPregeneration: Generated ${_iceBreakersCache[scenario]!.length} ice breakers for $scenario');
         },
         onFailure: (error) {
-          debugPrint('BackgroundPregeneration: Failed to generate ice breakers - $error');
+          debugPrint(
+              'BackgroundPregeneration: Failed to generate ice breakers - $error');
         },
       );
 
@@ -184,10 +186,12 @@ Return one per line.''',
               .where((line) => line.trim().isNotEmpty)
               .map((line) => line.trim())
               .toList();
-          debugPrint('BackgroundPregeneration: Generated ${_bioSuggestionsCache[style]!.length} bio starters for $style');
+          debugPrint(
+              'BackgroundPregeneration: Generated ${_bioSuggestionsCache[style]!.length} bio starters for $style');
         },
         onFailure: (error) {
-          debugPrint('BackgroundPregeneration: Failed to generate bios - $error');
+          debugPrint(
+              'BackgroundPregeneration: Failed to generate bios - $error');
         },
       );
 
@@ -228,10 +232,12 @@ Return one per line.''',
               .where((line) => line.trim().isNotEmpty)
               .map((line) => line.trim())
               .toList();
-          debugPrint('BackgroundPregeneration: Generated ${_conversationStartersCache[situation]!.length} templates for $situation');
+          debugPrint(
+              'BackgroundPregeneration: Generated ${_conversationStartersCache[situation]!.length} templates for $situation');
         },
         onFailure: (error) {
-          debugPrint('BackgroundPregeneration: Failed to generate templates - $error');
+          debugPrint(
+              'BackgroundPregeneration: Failed to generate templates - $error');
         },
       );
 
@@ -253,29 +259,26 @@ Return one per line.''',
   }
 
   /// Get all ice breakers for a scenario
-  List<String> getIceBreakers(String scenario) {
-    return _iceBreakersCache[scenario] ?? [];
-  }
+  List<String> getIceBreakers(String scenario) =>
+      _iceBreakersCache[scenario] ?? [];
 
   /// Get bio suggestions for a style
-  List<String> getBioSuggestions(String style) {
-    return _bioSuggestionsCache[style] ?? [];
-  }
+  List<String> getBioSuggestions(String style) =>
+      _bioSuggestionsCache[style] ?? [];
 
   /// Get conversation templates for a situation
-  List<String> getConversationTemplates(String situation) {
-    return _conversationStartersCache[situation] ?? [];
-  }
+  List<String> getConversationTemplates(String situation) =>
+      _conversationStartersCache[situation] ?? [];
 
   /// Check if content is available
   bool hasContent(ContentType type, String key) {
     switch (type) {
       case ContentType.iceBreaker:
-        return (_iceBreakersCache[key]?.isNotEmpty ?? false);
+        return _iceBreakersCache[key]?.isNotEmpty ?? false;
       case ContentType.bio:
-        return (_bioSuggestionsCache[key]?.isNotEmpty ?? false);
+        return _bioSuggestionsCache[key]?.isNotEmpty ?? false;
       case ContentType.conversation:
-        return (_conversationStartersCache[key]?.isNotEmpty ?? false);
+        return _conversationStartersCache[key]?.isNotEmpty ?? false;
       case ContentType.game:
         return _gameContentCache.containsKey(key);
     }
@@ -296,9 +299,12 @@ Return one per line.''',
 
   /// Get cache statistics
   Map<String, int> get stats => {
-        'iceBreakers': _iceBreakersCache.values.fold(0, (sum, list) => sum + list.length),
-        'bioSuggestions': _bioSuggestionsCache.values.fold(0, (sum, list) => sum + list.length),
-        'conversationTemplates': _conversationStartersCache.values.fold(0, (sum, list) => sum + list.length),
+        'iceBreakers':
+            _iceBreakersCache.values.fold(0, (sum, list) => sum + list.length),
+        'bioSuggestions': _bioSuggestionsCache.values
+            .fold(0, (sum, list) => sum + list.length),
+        'conversationTemplates': _conversationStartersCache.values
+            .fold(0, (sum, list) => sum + list.length),
         'gameContent': _gameContentCache.length,
       };
 }

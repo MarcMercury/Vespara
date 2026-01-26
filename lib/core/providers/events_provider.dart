@@ -12,13 +12,6 @@ import '../domain/models/vespara_event.dart';
 // ============================================================================
 
 class EventsState {
-  final List<CalendarEvent> calendarEvents;
-  final List<VesparaEvent> hostedEvents;
-  final List<VesparaEvent> invitedEvents;
-  final List<VesparaEvent> allEvents;
-  final bool isLoading;
-  final String? error;
-
   const EventsState({
     this.calendarEvents = const [],
     this.hostedEvents = const [],
@@ -27,34 +20,45 @@ class EventsState {
     this.isLoading = false,
     this.error,
   });
+  final List<CalendarEvent> calendarEvents;
+  final List<VesparaEvent> hostedEvents;
+  final List<VesparaEvent> invitedEvents;
+  final List<VesparaEvent> allEvents;
+  final bool isLoading;
+  final String? error;
 
   /// Get all events for a specific date
-  List<CalendarEvent> eventsForDate(DateTime date) {
-    return calendarEvents.where((e) =>
-      e.startTime.year == date.year &&
-      e.startTime.month == date.month &&
-      e.startTime.day == date.day
-    ).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
+  List<CalendarEvent> eventsForDate(DateTime date) => calendarEvents
+      .where(
+        (e) =>
+            e.startTime.year == date.year &&
+            e.startTime.month == date.month &&
+            e.startTime.day == date.day,
+      )
+      .toList()
+    ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
   /// Get events for this week
   List<CalendarEvent> get thisWeekEvents {
     final now = DateTime.now();
     final weekEnd = now.add(const Duration(days: 7));
-    return calendarEvents.where((e) =>
-      e.startTime.isAfter(now) && e.startTime.isBefore(weekEnd)
-    ).toList();
+    return calendarEvents
+        .where(
+          (e) => e.startTime.isAfter(now) && e.startTime.isBefore(weekEnd),
+        )
+        .toList();
   }
 
   /// Get events with conflicts
-  List<CalendarEvent> get conflictEvents {
-    return calendarEvents.where((e) => e.aiConflictDetected).toList();
-  }
+  List<CalendarEvent> get conflictEvents =>
+      calendarEvents.where((e) => e.aiConflictDetected).toList();
 
   /// Get upcoming VesparaEvents
   List<VesparaEvent> get upcomingEvents {
     final now = DateTime.now();
-    return allEvents.where((e) => e.startTime.isAfter(now) && !e.isDraft).toList()
+    return allEvents
+        .where((e) => e.startTime.isAfter(now) && !e.isDraft)
+        .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
@@ -72,16 +76,15 @@ class EventsState {
     List<VesparaEvent>? allEvents,
     bool? isLoading,
     String? error,
-  }) {
-    return EventsState(
-      calendarEvents: calendarEvents ?? this.calendarEvents,
-      hostedEvents: hostedEvents ?? this.hostedEvents,
-      invitedEvents: invitedEvents ?? this.invitedEvents,
-      allEvents: allEvents ?? this.allEvents,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
-  }
+  }) =>
+      EventsState(
+        calendarEvents: calendarEvents ?? this.calendarEvents,
+        hostedEvents: hostedEvents ?? this.hostedEvents,
+        invitedEvents: invitedEvents ?? this.invitedEvents,
+        allEvents: allEvents ?? this.allEvents,
+        isLoading: isLoading ?? this.isLoading,
+        error: error,
+      );
 }
 
 // ============================================================================
@@ -89,13 +92,12 @@ class EventsState {
 // ============================================================================
 
 class EventsNotifier extends StateNotifier<EventsState> {
-  final SupabaseClient _supabase;
-  final String _currentUserId;
-
-  EventsNotifier(this._supabase, this._currentUserId) 
+  EventsNotifier(this._supabase, this._currentUserId)
       : super(const EventsState()) {
     _initialize();
   }
+  final SupabaseClient _supabase;
+  final String _currentUserId;
 
   Future<void> _initialize() async {
     await Future.wait([
@@ -110,7 +112,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
   /// Load all Vespara events (hosted + invited)
   Future<void> loadAllVesparaEvents() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
 
     // If no user, return empty
     if (_currentUserId.isEmpty) {
@@ -138,17 +140,17 @@ class EventsNotifier extends StateNotifier<EventsState> {
           .eq('user_id', _currentUserId);
 
       final hostedEvents = (hostedResponse as List<dynamic>)
-          .map((json) => _vesparaEventFromJson(json as Map<String, dynamic>, isHost: true))
+          .map((json) =>
+              _vesparaEventFromJson(json as Map<String, dynamic>, isHost: true))
           .toList();
 
       final invitedEvents = (invitedResponse as List<dynamic>)
           .where((json) => json['group_events'] != null)
           .map((json) {
-            final eventData = json['group_events'] as Map<String, dynamic>;
-            final status = json['status'] as String? ?? 'invited';
-            return _vesparaEventFromJson(eventData, inviteStatus: status);
-          })
-          .toList();
+        final eventData = json['group_events'] as Map<String, dynamic>;
+        final status = json['status'] as String? ?? 'invited';
+        return _vesparaEventFromJson(eventData, inviteStatus: status);
+      }).toList();
 
       final allEvents = [...hostedEvents, ...invitedEvents];
       allEvents.sort((a, b) => a.startTime.compareTo(b.startTime));
@@ -175,12 +177,11 @@ class EventsNotifier extends StateNotifier<EventsState> {
   /// Create a new Vespara event (full-featured event)
   Future<VesparaEvent?> createVesparaEvent(VesparaEvent event) async {
     debugPrint('Creating event: ${event.title}');
-    
+
     // Generate proper ID if needed
-    final eventId = event.id.startsWith('event-') 
-        ? const Uuid().v4() 
-        : event.id;
-    
+    final eventId =
+        event.id.startsWith('event-') ? const Uuid().v4() : event.id;
+
     final newEvent = event.copyWith(
       id: eventId,
       hostId: _currentUserId.isEmpty ? 'current-user' : _currentUserId,
@@ -192,7 +193,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
       allEvents: [...state.allEvents, newEvent],
     );
 
-    debugPrint('Event added to state. Total hosted: ${state.hostedEvents.length}');
+    debugPrint(
+        'Event added to state. Total hosted: ${state.hostedEvents.length}');
 
     if (_currentUserId.isEmpty) {
       debugPrint('No user - event saved locally only');
@@ -239,13 +241,17 @@ class EventsNotifier extends StateNotifier<EventsState> {
   /// Update an existing Vespara event
   Future<bool> updateVesparaEvent(VesparaEvent event) async {
     // Update locally first
-    final updatedHosted = state.hostedEvents.map((e) => 
-      e.id == event.id ? event : e
-    ).toList();
-    
-    final updatedAll = state.allEvents.map((e) => 
-      e.id == event.id ? event : e
-    ).toList();
+    final updatedHosted = state.hostedEvents
+        .map(
+          (e) => e.id == event.id ? event : e,
+        )
+        .toList();
+
+    final updatedAll = state.allEvents
+        .map(
+          (e) => e.id == event.id ? event : e,
+        )
+        .toList();
 
     state = state.copyWith(
       hostedEvents: updatedHosted,
@@ -397,28 +403,36 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
   String _mapContentRatingToType(String rating) {
     switch (rating.toLowerCase()) {
-      case 'pg': return 'social';
-      case 'flirty': return 'social';
-      case 'spicy': return 'intimate';
-      case 'explicit': return 'intimate';
-      default: return 'social';
+      case 'pg':
+        return 'social';
+      case 'flirty':
+        return 'social';
+      case 'spicy':
+        return 'intimate';
+      case 'explicit':
+        return 'intimate';
+      default:
+        return 'social';
     }
   }
 
-  VesparaEvent _vesparaEventFromJson(Map<String, dynamic> json, {
+  VesparaEvent _vesparaEventFromJson(
+    Map<String, dynamic> json, {
     bool isHost = false,
     String? inviteStatus,
   }) {
     final rsvps = <EventRsvp>[];
     if (inviteStatus != null) {
-      rsvps.add(EventRsvp(
-        id: 'rsvp-${json['id']}',
-        eventId: json['id'] as String,
-        userId: _currentUserId.isEmpty ? 'current-user' : _currentUserId,
-        userName: 'You',
-        status: inviteStatus,
-        createdAt: DateTime.now(),
-      ));
+      rsvps.add(
+        EventRsvp(
+          id: 'rsvp-${json['id']}',
+          eventId: json['id'] as String,
+          userId: _currentUserId.isEmpty ? 'current-user' : _currentUserId,
+          userName: 'You',
+          status: inviteStatus,
+          createdAt: DateTime.now(),
+        ),
+      );
     }
 
     return VesparaEvent(
@@ -429,8 +443,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
       description: json['description'] as String?,
       coverImageUrl: json['cover_image_url'] as String?,
       startTime: DateTime.parse(json['start_time'] as String),
-      endTime: json['end_time'] != null 
-          ? DateTime.parse(json['end_time'] as String) 
+      endTime: json['end_time'] != null
+          ? DateTime.parse(json['end_time'] as String)
           : null,
       venueName: json['venue_name'] as String?,
       venueAddress: json['venue_address'] as String?,
@@ -440,16 +454,16 @@ class EventsNotifier extends StateNotifier<EventsState> {
       virtualLink: json['virtual_link'] as String?,
       maxSpots: json['max_attendees'] as int?,
       currentAttendees: json['current_attendees'] as int? ?? 0,
-      visibility: (json['is_private'] as bool? ?? true) 
-          ? EventVisibility.private 
+      visibility: (json['is_private'] as bool? ?? true)
+          ? EventVisibility.private
           : EventVisibility.public,
       requiresApproval: json['requires_approval'] as bool? ?? false,
       ageRestriction: json['age_restriction'] as int? ?? 18,
       contentRating: json['content_rating'] as String? ?? 'PG',
       rsvps: rsvps,
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at'] as String) 
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
           : null,
     );
   }
@@ -466,7 +480,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
   /// Load all calendar events for the current user
   Future<void> loadCalendarEvents() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
 
     // Return empty if no user
     if (_currentUserId.isEmpty) {
@@ -569,7 +583,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
           .select()
           .single();
 
-      return CalendarEvent.fromJson(response as Map<String, dynamic>);
+      return CalendarEvent.fromJson(response);
     } catch (e) {
       debugPrint('Error creating calendar event: $e');
       // Keep the optimistic update even if DB fails in demo mode
@@ -627,7 +641,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
     try {
       final updateData = <String, dynamic>{};
       if (title != null) updateData['title'] = title;
-      if (startTime != null) updateData['start_time'] = startTime.toIso8601String();
+      if (startTime != null)
+        updateData['start_time'] = startTime.toIso8601String();
       if (endTime != null) updateData['end_time'] = endTime.toIso8601String();
       if (matchId != null) updateData['match_id'] = matchId;
       if (matchName != null) updateData['match_name'] = matchName;
@@ -652,7 +667,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
   Future<bool> deleteCalendarEvent(String eventId) async {
     // Remove from state first
     state = state.copyWith(
-      calendarEvents: state.calendarEvents.where((e) => e.id != eventId).toList(),
+      calendarEvents:
+          state.calendarEvents.where((e) => e.id != eventId).toList(),
     );
 
     if (_currentUserId.isEmpty) {
@@ -685,14 +701,13 @@ class EventsNotifier extends StateNotifier<EventsState> {
     String? location,
   }) async {
     final endTime = dateTime.add(const Duration(hours: 2));
-    
+
     return createCalendarEvent(
       title: type,
       startTime: dateTime,
       endTime: endTime,
       matchName: matchName ?? 'Someone Special',
       location: location ?? 'TBD',
-      status: EventStatus.tentative,
     );
   }
 }
@@ -702,53 +717,45 @@ class EventsNotifier extends StateNotifier<EventsState> {
 // ============================================================================
 
 /// Main events provider
-final eventsProvider = StateNotifierProvider<EventsNotifier, EventsState>((ref) {
+final eventsProvider =
+    StateNotifierProvider<EventsNotifier, EventsState>((ref) {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id ?? '';
   return EventsNotifier(supabase, userId);
 });
 
 /// Calendar events for a specific date
-final eventsForDateProvider = Provider.family<List<CalendarEvent>, DateTime>((ref, date) {
-  return ref.watch(eventsProvider).eventsForDate(date);
-});
+final eventsForDateProvider = Provider.family<List<CalendarEvent>, DateTime>(
+    (ref, date) => ref.watch(eventsProvider).eventsForDate(date));
 
 /// This week's events
-final thisWeekEventsProvider = Provider<List<CalendarEvent>>((ref) {
-  return ref.watch(eventsProvider).thisWeekEvents;
-});
+final thisWeekEventsProvider = Provider<List<CalendarEvent>>(
+    (ref) => ref.watch(eventsProvider).thisWeekEvents);
 
 /// Events with conflicts
-final conflictEventsProvider = Provider<List<CalendarEvent>>((ref) {
-  return ref.watch(eventsProvider).conflictEvents;
-});
+final conflictEventsProvider = Provider<List<CalendarEvent>>(
+    (ref) => ref.watch(eventsProvider).conflictEvents);
 
 /// All calendar events
-final calendarEventsProvider = Provider<List<CalendarEvent>>((ref) {
-  return ref.watch(eventsProvider).calendarEvents;
-});
+final calendarEventsProvider = Provider<List<CalendarEvent>>(
+    (ref) => ref.watch(eventsProvider).calendarEvents);
 
 /// All VesparaEvents (hosted + invited)
-final allVesparaEventsProvider = Provider<List<VesparaEvent>>((ref) {
-  return ref.watch(eventsProvider).allEvents;
-});
+final allVesparaEventsProvider =
+    Provider<List<VesparaEvent>>((ref) => ref.watch(eventsProvider).allEvents);
 
 /// Hosted events only
-final hostedEventsProvider = Provider<List<VesparaEvent>>((ref) {
-  return ref.watch(eventsProvider).hostedEvents;
-});
+final hostedEventsProvider = Provider<List<VesparaEvent>>(
+    (ref) => ref.watch(eventsProvider).hostedEvents);
 
 /// Invited events only
-final invitedEventsProvider = Provider<List<VesparaEvent>>((ref) {
-  return ref.watch(eventsProvider).invitedEvents;
-});
+final invitedEventsProvider = Provider<List<VesparaEvent>>(
+    (ref) => ref.watch(eventsProvider).invitedEvents);
 
 /// Upcoming VesparaEvents
-final upcomingVesparaEventsProvider = Provider<List<VesparaEvent>>((ref) {
-  return ref.watch(eventsProvider).upcomingEvents;
-});
+final upcomingVesparaEventsProvider = Provider<List<VesparaEvent>>(
+    (ref) => ref.watch(eventsProvider).upcomingEvents);
 
 /// Past VesparaEvents
-final pastVesparaEventsProvider = Provider<List<VesparaEvent>>((ref) {
-  return ref.watch(eventsProvider).pastEvents;
-});
+final pastVesparaEventsProvider =
+    Provider<List<VesparaEvent>>((ref) => ref.watch(eventsProvider).pastEvents);

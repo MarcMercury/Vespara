@@ -14,14 +14,14 @@ import 'background_pregeneration_service.dart';
 /// - No forms, no typing, no thinking required
 
 class AIProfileCoach {
+  AIProfileCoach._();
   static AIProfileCoach? _instance;
   static AIProfileCoach get instance => _instance ??= AIProfileCoach._();
 
-  AIProfileCoach._();
-
   final SupabaseClient _supabase = Supabase.instance.client;
   final AIService _aiService = AIService.instance;
-  final BackgroundPregenerationService _pregen = BackgroundPregenerationService.instance;
+  final BackgroundPregenerationService _pregen =
+      BackgroundPregenerationService.instance;
 
   // Cache generated content for instant display
   final Map<String, List<String>> _bioOptionsCache = {};
@@ -38,10 +38,14 @@ class AIProfileCoach {
   Future<List<BioOption>> getImprovedBios() async {
     // Check cache first for instant display
     if (_bioOptionsCache.containsKey(_userId)) {
-      return _bioOptionsCache[_userId]!.map((bio) => BioOption(
-        text: bio,
-        style: _detectStyle(bio),
-      )).toList();
+      return _bioOptionsCache[_userId]!
+          .map(
+            (bio) => BioOption(
+              text: bio,
+              style: _detectStyle(bio),
+            ),
+          )
+          .toList();
     }
 
     // Get current bio for context
@@ -56,10 +60,12 @@ class AIProfileCoach {
       // Try pregenerated content first
       final pregen = _pregen.getBioSuggestions(style);
       if (pregen.isNotEmpty) {
-        options.add(BioOption(
-          text: _personalize(pregen.first, profile),
-          style: style,
-        ));
+        options.add(
+          BioOption(
+            text: _personalize(pregen.first, profile),
+            style: style,
+          ),
+        );
         continue;
       }
 
@@ -94,8 +100,7 @@ class AIProfileCoach {
     try {
       await _supabase
           .from('profiles')
-          .update({'bio': newBio})
-          .eq('id', _userId!);
+          .update({'bio': newBio}).eq('id', _userId!);
 
       // Clear cache so next improvement is fresh
       _bioOptionsCache.remove(_userId);
@@ -123,7 +128,8 @@ class AIProfileCoach {
     final profile = await _getProfileContext();
 
     final result = await _aiService.chat(
-      systemPrompt: '''Generate 3 short, authentic answers for a dating profile prompt.
+      systemPrompt:
+          '''Generate 3 short, authentic answers for a dating profile prompt.
 Each answer should be:
 - Different in tone (witty, sincere, playful)
 - Under 100 characters
@@ -186,9 +192,12 @@ Generate 3 answers:''',
 
     try {
       // Get popular interests
-      final popular = await _supabase.rpc('get_popular_interests', params: {
-        'p_limit': 20,
-      }).catchError((_) => <dynamic>[]);
+      final popular = await _supabase.rpc(
+        'get_popular_interests',
+        params: {
+          'p_limit': 20,
+        },
+      ).catchError((_) => <dynamic>[]);
 
       // Filter out ones user already has
       final suggestions = (popular as List)
@@ -216,8 +225,7 @@ Generate 3 answers:''',
 
         await _supabase
             .from('profiles')
-            .update({'interests': interests})
-            .eq('id', _userId!);
+            .update({'interests': interests}).eq('id', _userId!);
       }
 
       return true;
@@ -301,7 +309,9 @@ Generate 3 answers:''',
     if (lower.contains('!') || lower.contains('😂') || lower.contains('lol')) {
       return 'witty';
     }
-    if (lower.contains('love') || lower.contains('genuine') || lower.contains('looking for')) {
+    if (lower.contains('love') ||
+        lower.contains('genuine') ||
+        lower.contains('looking for')) {
       return 'sincere';
     }
     return 'adventurous';
@@ -319,10 +329,9 @@ Generate 3 answers:''',
 // ═══════════════════════════════════════════════════════════════════════════
 
 class BioOption {
+  BioOption({required this.text, required this.style});
   final String text;
   final String style;
-
-  BioOption({required this.text, required this.style});
 
   String get styleEmoji {
     switch (style) {

@@ -15,11 +15,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// User perception: "This app just gets me"
 
 class AmbientIntelligence {
+  AmbientIntelligence._();
   static AmbientIntelligence? _instance;
   static AmbientIntelligence get instance =>
       _instance ??= AmbientIntelligence._();
-
-  AmbientIntelligence._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -46,9 +45,8 @@ class AmbientIntelligence {
 
     final usage = patterns.featureUsage[featureId] ?? 0;
     final lastUsed = patterns.lastUsed[featureId];
-    final daysSinceUse = lastUsed != null
-        ? DateTime.now().difference(lastUsed).inDays
-        : 999;
+    final daysSinceUse =
+        lastUsed != null ? DateTime.now().difference(lastUsed).inDays : 999;
 
     // Frequently used features stay prominent
     if (usage > 10 && daysSinceUse < 7) {
@@ -113,22 +111,26 @@ class AmbientIntelligence {
     if (hour >= 18 && hour <= 22) {
       if (patterns.featureUsage['games'] != null &&
           patterns.featureUsage['games']! > 3) {
-        suggestions.add(ContextualSuggestion(
-          type: SuggestionType.playGame,
-          reason: 'Perfect time for a game',
-          priority: 0.8,
-        ));
+        suggestions.add(
+          ContextualSuggestion(
+            type: SuggestionType.playGame,
+            reason: 'Perfect time for a game',
+            priority: 0.8,
+          ),
+        );
       }
     }
 
     // Weekend suggestions
     if (_isWeekend()) {
       if (patterns.featureUsage['date_planner'] != null) {
-        suggestions.add(ContextualSuggestion(
-          type: SuggestionType.planDate,
-          reason: 'Weekend plans?',
-          priority: 0.9,
-        ));
+        suggestions.add(
+          ContextualSuggestion(
+            type: SuggestionType.planDate,
+            reason: 'Weekend plans?',
+            priority: 0.9,
+          ),
+        );
       }
     }
 
@@ -139,22 +141,26 @@ class AmbientIntelligence {
       if (matchContext != null) {
         // Haven't messaged in a while
         if (matchContext.daysSinceLastMessage > 2) {
-          suggestions.add(ContextualSuggestion(
-            type: SuggestionType.reachOut,
-            reason: "Haven't talked in a bit",
-            priority: 0.85,
-            matchId: currentMatchId,
-          ));
+          suggestions.add(
+            ContextualSuggestion(
+              type: SuggestionType.reachOut,
+              reason: "Haven't talked in a bit",
+              priority: 0.85,
+              matchId: currentMatchId,
+            ),
+          );
         }
 
         // High engagement, suggest escalation
         if (matchContext.messageCount > 50 && !matchContext.hasPlannedDate) {
-          suggestions.add(ContextualSuggestion(
-            type: SuggestionType.suggestDate,
-            reason: 'Time to meet up?',
-            priority: 0.9,
-            matchId: currentMatchId,
-          ));
+          suggestions.add(
+            ContextualSuggestion(
+              type: SuggestionType.suggestDate,
+              reason: 'Time to meet up?',
+              priority: 0.9,
+              matchId: currentMatchId,
+            ),
+          );
         }
       }
     }
@@ -238,13 +244,11 @@ class AmbientIntelligence {
   }
 
   /// Common smart defaults
-  Future<int> getPreferredHeatLevel() async {
-    return await getSmartDefault<int>('preferred_heat_level', 2);
-  }
+  Future<int> getPreferredHeatLevel() async =>
+      getSmartDefault<int>('preferred_heat_level', 2);
 
-  Future<String> getPreferredGameType() async {
-    return await getSmartDefault<String>('preferred_game_type', 'truthOrDare');
-  }
+  Future<String> getPreferredGameType() async =>
+      getSmartDefault<String>('preferred_game_type', 'truthOrDare');
 
   Future<bool> getShouldShowMessageCoach() async {
     final patterns = await _getUserPatterns();
@@ -291,13 +295,15 @@ class AmbientIntelligence {
   QuickAction? _featureToQuickAction(String featureId) {
     switch (featureId) {
       case 'games':
-        return QuickAction(id: 'games', label: 'Play', icon: '🎮');
+        return const QuickAction(id: 'games', label: 'Play', icon: '🎮');
       case 'date_planner':
-        return QuickAction(id: 'date_planner', label: 'Plan Date', icon: '📅');
+        return const QuickAction(
+            id: 'date_planner', label: 'Plan Date', icon: '📅');
       case 'conversation_starters':
-        return QuickAction(id: 'starters', label: 'Start Chat', icon: '💬');
+        return const QuickAction(
+            id: 'starters', label: 'Start Chat', icon: '💬');
       case 'profile_coach':
-        return QuickAction(id: 'profile', label: 'Profile', icon: '✨');
+        return const QuickAction(id: 'profile', label: 'Profile', icon: '✨');
       default:
         return null;
     }
@@ -327,7 +333,13 @@ class AmbientIntelligence {
     return sorted.map((e) => e.key).toList();
   }
 
-  static const _defaultTabOrder = ['home', 'discover', 'matches', 'games', 'profile'];
+  static const _defaultTabOrder = [
+    'home',
+    'discover',
+    'matches',
+    'games',
+    'profile'
+  ];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // EVENT TRACKING
@@ -335,11 +347,13 @@ class AmbientIntelligence {
 
   /// Track a feature usage event
   void trackFeatureUsage(String featureId, {Map<String, dynamic>? metadata}) {
-    _eventBuffer.add(UsageEvent(
-      featureId: featureId,
-      timestamp: DateTime.now(),
-      metadata: metadata,
-    ));
+    _eventBuffer.add(
+      UsageEvent(
+        featureId: featureId,
+        timestamp: DateTime.now(),
+        metadata: metadata,
+      ),
+    );
 
     // Update local cache immediately
     _updateLocalPatterns(featureId);
@@ -354,11 +368,13 @@ class AmbientIntelligence {
 
   /// Track setting change (to learn preferences)
   void trackSettingChange(String settingKey, dynamic value) {
-    _eventBuffer.add(UsageEvent(
-      featureId: 'setting_change',
-      timestamp: DateTime.now(),
-      metadata: {'key': settingKey, 'value': value},
-    ));
+    _eventBuffer.add(
+      UsageEvent(
+        featureId: 'setting_change',
+        timestamp: DateTime.now(),
+        metadata: {'key': settingKey, 'value': value},
+      ),
+    );
 
     // Update learned default immediately
     if (_cachedPatterns != null) {
@@ -398,12 +414,16 @@ class AmbientIntelligence {
 
     try {
       // Batch insert events
-      final rows = eventsToSync.map((e) => {
-        'user_id': _userId,
-        'feature_id': e.featureId,
-        'timestamp': e.timestamp.toIso8601String(),
-        'metadata': e.metadata,
-      }).toList();
+      final rows = eventsToSync
+          .map(
+            (e) => {
+              'user_id': _userId,
+              'feature_id': e.featureId,
+              'timestamp': e.timestamp.toIso8601String(),
+              'metadata': e.metadata,
+            },
+          )
+          .toList();
 
       await _supabase.from('usage_events').insert(rows);
     } catch (e) {
@@ -423,7 +443,8 @@ class AmbientIntelligence {
     // Return cached if fresh
     if (_cachedPatterns != null &&
         _lastPatternRefresh != null &&
-        DateTime.now().difference(_lastPatternRefresh!) < _patternRefreshInterval) {
+        DateTime.now().difference(_lastPatternRefresh!) <
+            _patternRefreshInterval) {
       return _cachedPatterns;
     }
 
@@ -493,9 +514,9 @@ class AmbientIntelligence {
 
 enum FeatureVisibility {
   prominent, // Show prominently, maybe with animation
-  normal,    // Standard visibility
+  normal, // Standard visibility
   minimized, // Show but smaller/collapsed
-  hidden,    // Don't show at all
+  hidden, // Don't show at all
 }
 
 enum SuggestionType {
@@ -508,17 +529,16 @@ enum SuggestionType {
 }
 
 class ContextualSuggestion {
-  final SuggestionType type;
-  final String reason;
-  final double priority;
-  final String? matchId;
-
   ContextualSuggestion({
     required this.type,
     required this.reason,
     required this.priority,
     this.matchId,
   });
+  final SuggestionType type;
+  final String reason;
+  final double priority;
+  final String? matchId;
 
   String get actionLabel {
     switch (type) {
@@ -556,57 +576,47 @@ class ContextualSuggestion {
 }
 
 class QuickAction {
-  final String id;
-  final String label;
-  final String icon;
-
   const QuickAction({
     required this.id,
     required this.label,
     required this.icon,
   });
+  final String id;
+  final String label;
+  final String icon;
 }
 
 class TimeOfDay {
+  TimeOfDay({required this.hour, required this.minute});
   final int hour;
   final int minute;
-
-  TimeOfDay({required this.hour, required this.minute});
 }
 
 class MatchContext {
-  final String matchId;
-  final int messageCount;
-  final int daysSinceLastMessage;
-  final bool hasPlannedDate;
-
   MatchContext({
     required this.matchId,
     required this.messageCount,
     required this.daysSinceLastMessage,
     required this.hasPlannedDate,
   });
+  final String matchId;
+  final int messageCount;
+  final int daysSinceLastMessage;
+  final bool hasPlannedDate;
 }
 
 class UsageEvent {
-  final String featureId;
-  final DateTime timestamp;
-  final Map<String, dynamic>? metadata;
-
   UsageEvent({
     required this.featureId,
     required this.timestamp,
     this.metadata,
   });
+  final String featureId;
+  final DateTime timestamp;
+  final Map<String, dynamic>? metadata;
 }
 
 class UserPatterns {
-  final String userId;
-  final Map<String, int> featureUsage;
-  final Map<String, DateTime> lastUsed;
-  final Map<String, dynamic> learnedDefaults;
-  final int daysActive;
-
   UserPatterns({
     required this.userId,
     required this.featureUsage,
@@ -627,8 +637,14 @@ class UserPatterns {
       userId: json['user_id'] as String,
       featureUsage: Map<String, int>.from(json['feature_usage'] ?? {}),
       lastUsed: lastUsedMap,
-      learnedDefaults: Map<String, dynamic>.from(json['learned_defaults'] ?? {}),
+      learnedDefaults:
+          Map<String, dynamic>.from(json['learned_defaults'] ?? {}),
       daysActive: json['days_active'] as int? ?? 0,
     );
   }
+  final String userId;
+  final Map<String, int> featureUsage;
+  final Map<String, DateTime> lastUsed;
+  final Map<String, dynamic> learnedDefaults;
+  final int daysActive;
 }

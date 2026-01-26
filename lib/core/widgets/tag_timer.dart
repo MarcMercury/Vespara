@@ -9,6 +9,24 @@ import '../utils/haptic_patterns.dart';
 /// A reusable animated timer widget for timed game phases, rounds, and actions.
 
 class TagTimer extends StatefulWidget {
+  const TagTimer({
+    super.key,
+    required this.duration,
+    this.onComplete,
+    this.onTick,
+    this.color = Colors.blue,
+    this.secondaryColor,
+    this.backgroundColor,
+    this.size = 120,
+    this.style = TagTimerStyle.circular,
+    this.autoStart = false,
+    this.showMilliseconds = false,
+    this.hapticOnComplete = true,
+    this.pulseWhenLow = true,
+    this.lowTimeThreshold = const Duration(seconds: 5),
+    this.formatDuration,
+  });
+
   /// Total duration for the timer
   final Duration duration;
 
@@ -51,30 +69,11 @@ class TagTimer extends StatefulWidget {
   /// Custom format function for display
   final String Function(Duration)? formatDuration;
 
-  const TagTimer({
-    super.key,
-    required this.duration,
-    this.onComplete,
-    this.onTick,
-    this.color = Colors.blue,
-    this.secondaryColor,
-    this.backgroundColor,
-    this.size = 120,
-    this.style = TagTimerStyle.circular,
-    this.autoStart = false,
-    this.showMilliseconds = false,
-    this.hapticOnComplete = true,
-    this.pulseWhenLow = true,
-    this.lowTimeThreshold = const Duration(seconds: 5),
-    this.formatDuration,
-  });
-
   @override
   State<TagTimer> createState() => TagTimerState();
 }
 
-class TagTimerState extends State<TagTimer>
-    with TickerProviderStateMixin {
+class TagTimerState extends State<TagTimer> with TickerProviderStateMixin {
   late AnimationController _controller;
   late AnimationController _pulseController;
   Timer? _tickTimer;
@@ -117,7 +116,8 @@ class TagTimerState extends State<TagTimer>
 
   void _onAnimationTick() {
     final newRemaining = Duration(
-      milliseconds: ((1 - _controller.value) * widget.duration.inMilliseconds).round(),
+      milliseconds:
+          ((1 - _controller.value) * widget.duration.inMilliseconds).round(),
     );
 
     if (newRemaining != _remaining) {
@@ -125,7 +125,9 @@ class TagTimerState extends State<TagTimer>
       widget.onTick?.call(_remaining);
 
       // Check for low time
-      if (widget.pulseWhenLow && _remaining <= widget.lowTimeThreshold && !_pulseController.isAnimating) {
+      if (widget.pulseWhenLow &&
+          _remaining <= widget.lowTimeThreshold &&
+          !_pulseController.isAnimating) {
         _pulseController.repeat(reverse: true);
       }
     }
@@ -188,7 +190,8 @@ class TagTimerState extends State<TagTimer>
   void addTime(Duration extra) {
     // This requires recalculating the controller
     final newDuration = _remaining + extra;
-    final progress = 1 - (newDuration.inMilliseconds / widget.duration.inMilliseconds);
+    final progress =
+        1 - (newDuration.inMilliseconds / widget.duration.inMilliseconds);
     _controller.value = progress.clamp(0.0, 1.0);
     setState(() => _remaining = newDuration);
   }
@@ -226,81 +229,79 @@ class TagTimerState extends State<TagTimer>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return switch (widget.style) {
-      TagTimerStyle.circular => _buildCircularTimer(),
-      TagTimerStyle.linear => _buildLinearTimer(),
-      TagTimerStyle.text => _buildTextTimer(),
-      TagTimerStyle.compact => _buildCompactTimer(),
-    };
-  }
+  Widget build(BuildContext context) => switch (widget.style) {
+        TagTimerStyle.circular => _buildCircularTimer(),
+        TagTimerStyle.linear => _buildLinearTimer(),
+        TagTimerStyle.text => _buildTextTimer(),
+        TagTimerStyle.compact => _buildCompactTimer(),
+      };
 
-  Widget _buildCircularTimer() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_controller, _pulseController]),
-      builder: (context, child) {
-        final scale = widget.pulseWhenLow && _remaining <= widget.lowTimeThreshold
-            ? 1.0 + (_pulseController.value * 0.05)
-            : 1.0;
+  Widget _buildCircularTimer() => AnimatedBuilder(
+        animation: Listenable.merge([_controller, _pulseController]),
+        builder: (context, child) {
+          final scale =
+              widget.pulseWhenLow && _remaining <= widget.lowTimeThreshold
+                  ? 1.0 + (_pulseController.value * 0.05)
+                  : 1.0;
 
-        return Transform.scale(
-          scale: scale,
-          child: SizedBox(
-            width: widget.size,
-            height: widget.size,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Background circle
-                SizedBox(
-                  width: widget.size,
-                  height: widget.size,
-                  child: CircularProgressIndicator(
-                    value: 1,
-                    strokeWidth: widget.size * 0.08,
-                    backgroundColor: widget.backgroundColor ?? widget.color.withOpacity(0.2),
-                    valueColor: AlwaysStoppedAnimation(Colors.transparent),
-                  ),
-                ),
-                // Progress circle
-                SizedBox(
-                  width: widget.size,
-                  height: widget.size,
-                  child: CircularProgressIndicator(
-                    value: 1 - _controller.value,
-                    strokeWidth: widget.size * 0.08,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation(
-                      _remaining <= widget.lowTimeThreshold
-                          ? Color.lerp(widget.color, Colors.red, _pulseController.value)!
-                          : widget.color,
+          return Transform.scale(
+            scale: scale,
+            child: SizedBox(
+              width: widget.size,
+              height: widget.size,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Background circle
+                  SizedBox(
+                    width: widget.size,
+                    height: widget.size,
+                    child: CircularProgressIndicator(
+                      value: 1,
+                      strokeWidth: widget.size * 0.08,
+                      backgroundColor: widget.backgroundColor ??
+                          widget.color.withOpacity(0.2),
+                      valueColor:
+                          const AlwaysStoppedAnimation(Colors.transparent),
                     ),
-                    strokeCap: StrokeCap.round,
                   ),
-                ),
-                // Time display
-                Text(
-                  _formatDuration(_remaining),
-                  style: TextStyle(
-                    color: widget.color,
-                    fontSize: widget.size * 0.25,
-                    fontWeight: FontWeight.bold,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                  // Progress circle
+                  SizedBox(
+                    width: widget.size,
+                    height: widget.size,
+                    child: CircularProgressIndicator(
+                      value: 1 - _controller.value,
+                      strokeWidth: widget.size * 0.08,
+                      backgroundColor: Colors.transparent,
+                      valueColor: AlwaysStoppedAnimation(
+                        _remaining <= widget.lowTimeThreshold
+                            ? Color.lerp(widget.color, Colors.red,
+                                _pulseController.value)!
+                            : widget.color,
+                      ),
+                      strokeCap: StrokeCap.round,
+                    ),
                   ),
-                ),
-              ],
+                  // Time display
+                  Text(
+                    _formatDuration(_remaining),
+                    style: TextStyle(
+                      color: widget.color,
+                      fontSize: widget.size * 0.25,
+                      fontWeight: FontWeight.bold,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
 
-  Widget _buildLinearTimer() {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Column(
+  Widget _buildLinearTimer() => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -330,37 +331,31 @@ class TagTimerState extends State<TagTimer>
               ),
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+      );
 
-  Widget _buildTextTimer() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_controller, _pulseController]),
-      builder: (context, child) {
-        final color = _remaining <= widget.lowTimeThreshold
-            ? Color.lerp(widget.color, Colors.red, _pulseController.value)!
-            : widget.color;
+  Widget _buildTextTimer() => AnimatedBuilder(
+        animation: Listenable.merge([_controller, _pulseController]),
+        builder: (context, child) {
+          final color = _remaining <= widget.lowTimeThreshold
+              ? Color.lerp(widget.color, Colors.red, _pulseController.value)!
+              : widget.color;
 
-        return Text(
-          _formatDuration(_remaining),
-          style: TextStyle(
-            color: color,
-            fontSize: widget.size,
-            fontWeight: FontWeight.bold,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        );
-      },
-    );
-  }
+          return Text(
+            _formatDuration(_remaining),
+            style: TextStyle(
+              color: color,
+              fontSize: widget.size,
+              fontWeight: FontWeight.bold,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          );
+        },
+      );
 
-  Widget _buildCompactTimer() {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
+  Widget _buildCompactTimer() => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: widget.backgroundColor ?? widget.color.withOpacity(0.2),
@@ -390,10 +385,8 @@ class TagTimerState extends State<TagTimer>
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
 }
 
 /// Timer display styles

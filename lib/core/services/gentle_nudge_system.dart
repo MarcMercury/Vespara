@@ -17,12 +17,12 @@ import 'smart_defaults_service.dart';
 /// All nudges are dismissible and respect user preferences.
 
 class GentleNudgeSystem {
+  GentleNudgeSystem._();
   static GentleNudgeSystem? _instance;
   static GentleNudgeSystem get instance => _instance ??= GentleNudgeSystem._();
 
-  GentleNudgeSystem._();
-
-  final ConversationHealthMonitor _conversationMonitor = ConversationHealthMonitor.instance;
+  final ConversationHealthMonitor _conversationMonitor =
+      ConversationHealthMonitor.instance;
   final SmartDefaultsService _smartDefaults = SmartDefaultsService.instance;
 
   // Nudge preferences
@@ -66,22 +66,26 @@ class GentleNudgeSystem {
     }
 
     try {
-      final matchesNeedingAttention = await _conversationMonitor.getMatchesNeedingAttention();
-      
-      return matchesNeedingAttention.take(3).map((match) {
-        return Nudge(
-          id: 'conversation_${match.matchId}',
-          type: NudgeCategory.conversation,
-          title: match.otherUserName,
-          message: match.message,
-          action: NudgeAction(
-            label: 'Message',
-            route: '/chat/${match.matchId}',
-          ),
-          imageUrl: match.otherUserPhoto,
-          priority: _nudgeTypePriority(match.nudgeType),
-        );
-      }).toList();
+      final matchesNeedingAttention =
+          await _conversationMonitor.getMatchesNeedingAttention();
+
+      return matchesNeedingAttention
+          .take(3)
+          .map(
+            (match) => Nudge(
+              id: 'conversation_${match.matchId}',
+              type: NudgeCategory.conversation,
+              title: match.otherUserName,
+              message: match.message,
+              action: NudgeAction(
+                label: 'Message',
+                route: '/chat/${match.matchId}',
+              ),
+              imageUrl: match.otherUserPhoto,
+              priority: _nudgeTypePriority(match.nudgeType),
+            ),
+          )
+          .toList();
     } catch (e) {
       return [];
     }
@@ -94,20 +98,23 @@ class GentleNudgeSystem {
 
     try {
       final suggestions = await _smartDefaults.getProfileSuggestions();
-      
-      return suggestions.take(2).map((suggestion) {
-        return Nudge(
-          id: 'profile_${suggestion.field}',
-          type: NudgeCategory.profile,
-          title: 'Improve your profile',
-          message: suggestion.message,
-          action: NudgeAction(
-            label: 'Update',
-            route: '/profile/edit',
-          ),
-          priority: suggestion.priority,
-        );
-      }).toList();
+
+      return suggestions
+          .take(2)
+          .map(
+            (suggestion) => Nudge(
+              id: 'profile_${suggestion.field}',
+              type: NudgeCategory.profile,
+              title: 'Improve your profile',
+              message: suggestion.message,
+              action: NudgeAction(
+                label: 'Update',
+                route: '/profile/edit',
+              ),
+              priority: suggestion.priority,
+            ),
+          )
+          .toList();
     } catch (e) {
       return [];
     }
@@ -140,7 +147,7 @@ class GentleNudgeSystem {
 
     try {
       final suggestion = await _smartDefaults.suggestGame(matchId: matchId);
-      
+
       _markNudgeShown('game_$matchId');
 
       return Nudge(
@@ -193,38 +200,35 @@ class GentleNudgeSystem {
   }
 
   /// Create a "good time to message" nudge
-  Nudge? createGoodTimeNudge(String matchName, String matchId) {
-    return Nudge(
-      id: 'good_time_$matchId',
-      type: NudgeCategory.timing,
-      title: 'Good time to message $matchName',
-      message: 'They\'re usually active now',
-      action: NudgeAction(
-        label: 'Message',
-        route: '/chat/$matchId',
-      ),
-      priority: 4,
-    );
-  }
+  Nudge? createGoodTimeNudge(String matchName, String matchId) => Nudge(
+        id: 'good_time_$matchId',
+        type: NudgeCategory.timing,
+        title: 'Good time to message $matchName',
+        message: 'They\'re usually active now',
+        action: NudgeAction(
+          label: 'Message',
+          route: '/chat/$matchId',
+        ),
+        priority: 4,
+      );
 
   /// Create a milestone celebration nudge
   Nudge createMilestoneNudge({
     required String matchName,
     required String milestone,
     required String matchId,
-  }) {
-    return Nudge(
-      id: 'milestone_${matchId}_$milestone',
-      type: NudgeCategory.celebration,
-      title: '🎉 $milestone with $matchName!',
-      message: 'You\'re building something special',
-      action: NudgeAction(
-        label: 'Celebrate',
-        route: '/chat/$matchId',
-      ),
-      priority: 2,
-    );
-  }
+  }) =>
+      Nudge(
+        id: 'milestone_${matchId}_$milestone',
+        type: NudgeCategory.celebration,
+        title: '🎉 $milestone with $matchName!',
+        message: 'You\'re building something special',
+        action: NudgeAction(
+          label: 'Celebrate',
+          route: '/chat/$matchId',
+        ),
+        priority: 2,
+      );
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NUDGE MANAGEMENT
@@ -282,13 +286,7 @@ enum NudgeCategory {
 }
 
 class Nudge {
-  final String id;
-  final NudgeCategory type;
-  final String title;
-  final String message;
-  final NudgeAction? action;
-  final String? imageUrl;
-  final int priority; // Lower = more important
+  // Lower = more important
 
   Nudge({
     required this.id,
@@ -299,18 +297,24 @@ class Nudge {
     this.imageUrl,
     this.priority = 5,
   });
+  final String id;
+  final NudgeCategory type;
+  final String title;
+  final String message;
+  final NudgeAction? action;
+  final String? imageUrl;
+  final int priority;
 }
 
 class NudgeAction {
-  final String label;
-  final String route;
-  final Map<String, dynamic>? data;
-
   NudgeAction({
     required this.label,
     required this.route,
     this.data,
   });
+  final String label;
+  final String route;
+  final Map<String, dynamic>? data;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -319,73 +323,71 @@ class NudgeAction {
 
 /// Subtle nudge card widget
 class NudgeCard extends StatelessWidget {
-  final Nudge nudge;
-  final VoidCallback? onAction;
-  final VoidCallback? onDismiss;
-
   const NudgeCard({
     super.key,
     required this.nudge,
     this.onAction,
     this.onDismiss,
   });
+  final Nudge nudge;
+  final VoidCallback? onAction;
+  final VoidCallback? onDismiss;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            if (nudge.imageUrl != null)
-              CircleAvatar(
-                backgroundImage: NetworkImage(nudge.imageUrl!),
-                radius: 24,
-              )
-            else
-              CircleAvatar(
-                backgroundColor: _getCategoryColor(nudge.type).withOpacity(0.2),
-                radius: 24,
-                child: Icon(
-                  _getCategoryIcon(nudge.type),
-                  color: _getCategoryColor(nudge.type),
+  Widget build(BuildContext context) => Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              if (nudge.imageUrl != null)
+                CircleAvatar(
+                  backgroundImage: NetworkImage(nudge.imageUrl!),
+                  radius: 24,
+                )
+              else
+                CircleAvatar(
+                  backgroundColor:
+                      _getCategoryColor(nudge.type).withOpacity(0.2),
+                  radius: 24,
+                  child: Icon(
+                    _getCategoryIcon(nudge.type),
+                    color: _getCategoryColor(nudge.type),
+                  ),
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nudge.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      nudge.message,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
                 ),
               ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nudge.title,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    nudge.message,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                ],
+              if (nudge.action != null)
+                TextButton(
+                  onPressed: onAction,
+                  child: Text(nudge.action!.label),
+                ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: onDismiss,
+                color: Colors.grey[400],
               ),
-            ),
-            if (nudge.action != null)
-              TextButton(
-                onPressed: onAction,
-                child: Text(nudge.action!.label),
-              ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 18),
-              onPressed: onDismiss,
-              color: Colors.grey[400],
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   Color _getCategoryColor(NudgeCategory type) {
     switch (type) {
@@ -424,14 +426,13 @@ class NudgeCard extends StatelessWidget {
 
 /// Nudge listener widget - shows nudges as they arrive
 class NudgeListener extends ConsumerStatefulWidget {
-  final Widget child;
-  final void Function(BuildContext, Nudge)? onNudge;
-
   const NudgeListener({
     super.key,
     required this.child,
     this.onNudge,
   });
+  final Widget child;
+  final void Function(BuildContext, Nudge)? onNudge;
 
   @override
   ConsumerState<NudgeListener> createState() => _NudgeListenerState();
@@ -466,7 +467,6 @@ class _NudgeListenerState extends ConsumerState<NudgeListener> {
                 },
               )
             : null,
-        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -478,7 +478,5 @@ class _NudgeListenerState extends ConsumerState<NudgeListener> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return widget.child;
-  }
+  Widget build(BuildContext context) => widget.child;
 }

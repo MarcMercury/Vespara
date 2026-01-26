@@ -15,9 +15,8 @@ import '../domain/models/content_rating.dart';
 /// This integrates with the unified analytics tables in migration 023.
 
 class TagAnalyticsService {
-  final SupabaseClient _supabase;
-
   TagAnalyticsService(this._supabase);
+  final SupabaseClient _supabase;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SESSION MANAGEMENT
@@ -60,13 +59,10 @@ class TagAnalyticsService {
   /// Start a game session
   Future<void> startSession(String sessionId) async {
     try {
-      await _supabase
-          .from('tag_game_sessions')
-          .update({
-            'status': 'active',
-            'started_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', sessionId);
+      await _supabase.from('tag_game_sessions').update({
+        'status': 'active',
+        'started_at': DateTime.now().toIso8601String(),
+      }).eq('id', sessionId);
 
       await trackEvent(
         sessionId: sessionId,
@@ -82,8 +78,7 @@ class TagAnalyticsService {
     try {
       await _supabase
           .from('tag_game_sessions')
-          .update({'status': 'paused'})
-          .eq('id', sessionId);
+          .update({'status': 'paused'}).eq('id', sessionId);
 
       await trackEvent(
         sessionId: sessionId,
@@ -99,8 +94,7 @@ class TagAnalyticsService {
     try {
       await _supabase
           .from('tag_game_sessions')
-          .update({'status': 'active'})
-          .eq('id', sessionId);
+          .update({'status': 'active'}).eq('id', sessionId);
 
       await trackEvent(
         sessionId: sessionId,
@@ -120,17 +114,14 @@ class TagAnalyticsService {
     required int totalCompletions,
   }) async {
     try {
-      await _supabase
-          .from('tag_game_sessions')
-          .update({
-            'status': 'completed',
-            'ended_at': DateTime.now().toIso8601String(),
-            'total_rounds': totalRounds,
-            'total_cards_shown': totalCardsShown,
-            'total_skips': totalSkips,
-            'total_completions': totalCompletions,
-          })
-          .eq('id', sessionId);
+      await _supabase.from('tag_game_sessions').update({
+        'status': 'completed',
+        'ended_at': DateTime.now().toIso8601String(),
+        'total_rounds': totalRounds,
+        'total_cards_shown': totalCardsShown,
+        'total_skips': totalSkips,
+        'total_completions': totalCompletions,
+      }).eq('id', sessionId);
 
       await trackEvent(
         sessionId: sessionId,
@@ -138,9 +129,8 @@ class TagAnalyticsService {
         eventData: {
           'total_rounds': totalRounds,
           'total_cards_shown': totalCardsShown,
-          'completion_rate': totalCardsShown > 0
-              ? (totalCompletions / totalCardsShown)
-              : 0,
+          'completion_rate':
+              totalCardsShown > 0 ? (totalCompletions / totalCardsShown) : 0,
         },
       );
     } catch (e) {
@@ -151,13 +141,10 @@ class TagAnalyticsService {
   /// Mark session as abandoned
   Future<void> abandonSession(String sessionId) async {
     try {
-      await _supabase
-          .from('tag_game_sessions')
-          .update({
-            'status': 'abandoned',
-            'ended_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', sessionId);
+      await _supabase.from('tag_game_sessions').update({
+        'status': 'abandoned',
+        'ended_at': DateTime.now().toIso8601String(),
+      }).eq('id', sessionId);
     } catch (e) {
       debugPrint('TagAnalytics: Failed to abandon session - $e');
     }
@@ -269,12 +256,15 @@ class TagAnalyticsService {
     int? rating,
   }) async {
     try {
-      await _supabase.rpc('track_card_engagement', params: {
-        'p_card_table': cardTable,
-        'p_card_id': cardId,
-        'p_was_completed': wasCompleted,
-        'p_rating': rating,
-      });
+      await _supabase.rpc(
+        'track_card_engagement',
+        params: {
+          'p_card_table': cardTable,
+          'p_card_id': cardId,
+          'p_was_completed': wasCompleted,
+          'p_rating': rating,
+        },
+      );
     } catch (e) {
       debugPrint('TagAnalytics: Failed to track card engagement - $e');
     }
@@ -286,10 +276,13 @@ class TagAnalyticsService {
     int limit = 10,
   }) async {
     try {
-      final response = await _supabase.rpc('get_popular_cards', params: {
-        'p_card_table': cardTable,
-        'p_limit': limit,
-      });
+      final response = await _supabase.rpc(
+        'get_popular_cards',
+        params: {
+          'p_card_table': cardTable,
+          'p_limit': limit,
+        },
+      );
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugPrint('TagAnalytics: Failed to get popular cards - $e');
@@ -312,13 +305,16 @@ class TagAnalyticsService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      await _supabase.rpc('update_user_game_stats', params: {
-        'p_user_id': userId,
-        'p_game_type': gameType.dbValue,
-        'p_play_time_seconds': playTimeSeconds,
-        'p_cards_completed': cardsCompleted,
-        'p_cards_skipped': cardsSkipped,
-      });
+      await _supabase.rpc(
+        'update_user_game_stats',
+        params: {
+          'p_user_id': userId,
+          'p_game_type': gameType.dbValue,
+          'p_play_time_seconds': playTimeSeconds,
+          'p_cards_completed': cardsCompleted,
+          'p_cards_skipped': cardsSkipped,
+        },
+      );
     } catch (e) {
       debugPrint('TagAnalytics: Failed to update user stats - $e');
     }
@@ -407,9 +403,8 @@ enum TagGameType {
   const TagGameType(this.dbValue, this.displayName);
 
   /// Get game type from database value
-  static TagGameType? fromDbValue(String value) {
-    return TagGameType.values.where((t) => t.dbValue == value).firstOrNull;
-  }
+  static TagGameType? fromDbValue(String value) =>
+      TagGameType.values.where((t) => t.dbValue == value).firstOrNull;
 }
 
 /// Event types for analytics tracking

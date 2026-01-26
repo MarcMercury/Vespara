@@ -13,6 +13,7 @@
 ///   case Failure(:final error): showError(error);
 /// }
 /// ```
+library;
 
 sealed class Result<T> {
   const Result();
@@ -42,12 +43,11 @@ sealed class Result<T> {
       };
 
   /// Maps the success value with an async function
-  Future<Result<R>> mapAsync<R>(Future<R> Function(T data) transform) async {
-    return switch (this) {
-      Success(:final data) => Success(await transform(data)),
-      Failure(:final error) => Failure(error),
-    };
-  }
+  Future<Result<R>> mapAsync<R>(Future<R> Function(T data) transform) async =>
+      switch (this) {
+        Success(:final data) => Success(await transform(data)),
+        Failure(:final error) => Failure(error),
+      };
 
   /// Executes the appropriate callback based on result type
   R when<R>({
@@ -90,8 +90,8 @@ sealed class Result<T> {
 
 /// Success case containing the result data
 class Success<T> extends Result<T> {
-  final T data;
   const Success(this.data);
+  final T data;
 
   @override
   String toString() => 'Success($data)';
@@ -99,7 +99,9 @@ class Success<T> extends Result<T> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Success<T> && runtimeType == other.runtimeType && data == other.data;
+      other is Success<T> &&
+          runtimeType == other.runtimeType &&
+          data == other.data;
 
   @override
   int get hashCode => data.hashCode;
@@ -107,8 +109,8 @@ class Success<T> extends Result<T> {
 
 /// Failure case containing the error
 class Failure<T> extends Result<T> {
-  final AppError error;
   const Failure(this.error);
+  final AppError error;
 
   @override
   String toString() => 'Failure($error)';
@@ -116,7 +118,9 @@ class Failure<T> extends Result<T> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Failure<T> && runtimeType == other.runtimeType && error == other.error;
+      other is Failure<T> &&
+          runtimeType == other.runtimeType &&
+          error == other.error;
 
   @override
   int get hashCode => error.hashCode;
@@ -128,30 +132,6 @@ class Failure<T> extends Result<T> {
 
 /// Unified error type for the entire application
 class AppError implements Exception {
-  /// Human-readable error message
-  final String message;
-
-  /// Error category for handling decisions
-  final ErrorType type;
-
-  /// Error code for specific identification
-  final String? code;
-
-  /// Original exception (for debugging)
-  final dynamic originalError;
-
-  /// Stack trace (for debugging)
-  final StackTrace? stackTrace;
-
-  /// HTTP status code (if applicable)
-  final int? statusCode;
-
-  /// Whether this error is recoverable by retry
-  final bool isRetryable;
-
-  /// Context data for debugging
-  final Map<String, dynamic>? context;
-
   const AppError({
     required this.message,
     required this.type,
@@ -165,7 +145,8 @@ class AppError implements Exception {
 
   /// Network connectivity error
   factory AppError.network({
-    String message = 'Unable to connect. Please check your internet connection.',
+    String message =
+        'Unable to connect. Please check your internet connection.',
     dynamic originalError,
     StackTrace? stackTrace,
   }) =>
@@ -188,7 +169,6 @@ class AppError implements Exception {
         type: ErrorType.authentication,
         code: code,
         originalError: originalError,
-        isRetryable: false,
       );
 
   /// Validation error (invalid input)
@@ -202,7 +182,6 @@ class AppError implements Exception {
         type: ErrorType.validation,
         code: code,
         context: context,
-        isRetryable: false,
       );
 
   /// Server error (500s)
@@ -228,7 +207,6 @@ class AppError implements Exception {
         message: message,
         type: ErrorType.notFound,
         code: code,
-        isRetryable: false,
       );
 
   /// Rate limited (429)
@@ -240,7 +218,8 @@ class AppError implements Exception {
         message: message,
         type: ErrorType.rateLimited,
         isRetryable: true,
-        context: retryAfter != null ? {'retryAfter': retryAfter.inSeconds} : null,
+        context:
+            retryAfter != null ? {'retryAfter': retryAfter.inSeconds} : null,
       );
 
   /// Permission denied
@@ -250,7 +229,6 @@ class AppError implements Exception {
       AppError(
         message: message,
         type: ErrorType.forbidden,
-        isRetryable: false,
       );
 
   /// Timeout
@@ -276,8 +254,31 @@ class AppError implements Exception {
         type: ErrorType.unknown,
         originalError: originalError,
         stackTrace: stackTrace,
-        isRetryable: false,
       );
+
+  /// Human-readable error message
+  final String message;
+
+  /// Error category for handling decisions
+  final ErrorType type;
+
+  /// Error code for specific identification
+  final String? code;
+
+  /// Original exception (for debugging)
+  final dynamic originalError;
+
+  /// Stack trace (for debugging)
+  final StackTrace? stackTrace;
+
+  /// HTTP status code (if applicable)
+  final int? statusCode;
+
+  /// Whether this error is recoverable by retry
+  final bool isRetryable;
+
+  /// Context data for debugging
+  final Map<String, dynamic>? context;
 
   @override
   String toString() => 'AppError(type: $type, message: $message, code: $code)';
@@ -342,15 +343,13 @@ extension ResultListExtension<T> on Iterable<Result<T>> {
 
 extension FutureResultExtension<T> on Future<Result<T>> {
   /// Maps the success value of a Future<Result<T>>
-  Future<Result<R>> mapResult<R>(R Function(T data) transform) async {
-    return (await this).map(transform);
-  }
+  Future<Result<R>> mapResult<R>(R Function(T data) transform) async =>
+      (await this).map(transform);
 
   /// Executes when callback on Future<Result<T>>
   Future<R> whenResult<R>({
     required R Function(T data) success,
     required R Function(AppError error) failure,
-  }) async {
-    return (await this).when(success: success, failure: failure);
-  }
+  }) async =>
+      (await this).when(success: success, failure: failure);
 }

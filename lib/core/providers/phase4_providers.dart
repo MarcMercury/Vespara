@@ -17,32 +17,32 @@ import '../services/relationship_progress_service.dart';
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Date Planner - Instant date suggestions
-final datePlannerProvider = Provider<DatePlannerService>((ref) {
-  return DatePlannerService.instance;
-});
+final datePlannerProvider =
+    Provider<DatePlannerService>((ref) => DatePlannerService.instance);
 
 /// Message Coach - Real-time suggestions
-final messageCoachProvider = Provider<MessageCoachService>((ref) {
-  return MessageCoachService.instance;
-});
+final messageCoachProvider =
+    Provider<MessageCoachService>((ref) => MessageCoachService.instance);
 
 /// Relationship Progress - Auto-tracked milestones
-final relationshipProgressProvider = Provider<RelationshipProgressService>((ref) {
-  return RelationshipProgressService.instance;
-});
+final relationshipProgressProvider = Provider<RelationshipProgressService>(
+    (ref) => RelationshipProgressService.instance);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ASYNC DATA PROVIDERS
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Get date ideas for a match
-final dateIdeasProvider = FutureProvider.family<List<DateIdea>, String>((ref, matchId) async {
+final dateIdeasProvider =
+    FutureProvider.family<List<DateIdea>, String>((ref, matchId) async {
   final service = ref.watch(datePlannerProvider);
   return service.getDateIdeas(matchId);
 });
 
 /// Get date ideas by vibe
-final dateIdeasByVibeProvider = FutureProvider.family<List<DateIdea>, DateVibeRequest>((ref, request) async {
+final dateIdeasByVibeProvider =
+    FutureProvider.family<List<DateIdea>, DateVibeRequest>(
+        (ref, request) async {
   final service = ref.watch(datePlannerProvider);
   return service.getDateIdeasByVibe(
     matchId: request.matchId,
@@ -51,19 +51,22 @@ final dateIdeasByVibeProvider = FutureProvider.family<List<DateIdea>, DateVibeRe
 });
 
 /// Get relationship progress for a match
-final matchProgressProvider = FutureProvider.family<RelationshipProgress, String>((ref, matchId) async {
+final matchProgressProvider =
+    FutureProvider.family<RelationshipProgress, String>((ref, matchId) async {
   final service = ref.watch(relationshipProgressProvider);
   return service.getProgress(matchId);
 });
 
 /// Get just the stage (lighter weight)
-final matchStageProvider = FutureProvider.family<RelationshipStage, String>((ref, matchId) async {
+final matchStageProvider =
+    FutureProvider.family<RelationshipStage, String>((ref, matchId) async {
   final service = ref.watch(relationshipProgressProvider);
   return service.getStage(matchId);
 });
 
 /// Get suggested next step
-final nextStepProvider = FutureProvider.family<NextStep?, String>((ref, matchId) async {
+final nextStepProvider =
+    FutureProvider.family<NextStep?, String>((ref, matchId) async {
   final service = ref.watch(relationshipProgressProvider);
   return service.getNextStep(matchId);
 });
@@ -79,9 +82,7 @@ final messageCoachEnabledProvider = StateProvider<bool>((ref) {
 });
 
 /// Current message analysis
-final messageAnalysisProvider = StateProvider<MessageAnalysis?>((ref) {
-  return null;
-});
+final messageAnalysisProvider = StateProvider<MessageAnalysis?>((ref) => null);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NOTIFIERS
@@ -89,9 +90,8 @@ final messageAnalysisProvider = StateProvider<MessageAnalysis?>((ref) {
 
 /// Manages date planning state
 class DatePlannerNotifier extends StateNotifier<DatePlannerState> {
-  final DatePlannerService _service;
-
   DatePlannerNotifier(this._service) : super(const DatePlannerState());
+  final DatePlannerService _service;
 
   Future<void> loadIdeas(String matchId) async {
     state = state.copyWith(isLoading: true, matchId: matchId);
@@ -142,13 +142,6 @@ class DatePlannerNotifier extends StateNotifier<DatePlannerState> {
 }
 
 class DatePlannerState {
-  final bool isLoading;
-  final String? matchId;
-  final DateVibe? selectedVibe;
-  final List<DateIdea> ideas;
-  final DateIdea? selectedIdea;
-  final bool saved;
-
   const DatePlannerState({
     this.isLoading = false,
     this.matchId,
@@ -157,6 +150,12 @@ class DatePlannerState {
     this.selectedIdea,
     this.saved = false,
   });
+  final bool isLoading;
+  final String? matchId;
+  final DateVibe? selectedVibe;
+  final List<DateIdea> ideas;
+  final DateIdea? selectedIdea;
+  final bool saved;
 
   DatePlannerState copyWith({
     bool? isLoading,
@@ -165,27 +164,25 @@ class DatePlannerState {
     List<DateIdea>? ideas,
     DateIdea? selectedIdea,
     bool? saved,
-  }) {
-    return DatePlannerState(
-      isLoading: isLoading ?? this.isLoading,
-      matchId: matchId ?? this.matchId,
-      selectedVibe: selectedVibe ?? this.selectedVibe,
-      ideas: ideas ?? this.ideas,
-      selectedIdea: selectedIdea ?? this.selectedIdea,
-      saved: saved ?? this.saved,
-    );
-  }
+  }) =>
+      DatePlannerState(
+        isLoading: isLoading ?? this.isLoading,
+        matchId: matchId ?? this.matchId,
+        selectedVibe: selectedVibe ?? this.selectedVibe,
+        ideas: ideas ?? this.ideas,
+        selectedIdea: selectedIdea ?? this.selectedIdea,
+        saved: saved ?? this.saved,
+      );
 }
 
-final datePlannerStateProvider = StateNotifierProvider<DatePlannerNotifier, DatePlannerState>((ref) {
-  return DatePlannerNotifier(ref.watch(datePlannerProvider));
-});
+final datePlannerStateProvider =
+    StateNotifierProvider<DatePlannerNotifier, DatePlannerState>(
+        (ref) => DatePlannerNotifier(ref.watch(datePlannerProvider)));
 
 /// Manages message coaching state
 class MessageCoachNotifier extends StateNotifier<MessageCoachState> {
-  final MessageCoachService _service;
-
   MessageCoachNotifier(this._service) : super(const MessageCoachState());
+  final MessageCoachService _service;
 
   void toggleEnabled() {
     _service.isEnabled = !_service.isEnabled;
@@ -199,51 +196,46 @@ class MessageCoachNotifier extends StateNotifier<MessageCoachState> {
   }
 
   void clearAnalysis() {
-    state = state.copyWith(currentAnalysis: null);
+    state = state.copyWith();
   }
 
-  List<String> getEmojiSuggestions(String text) {
-    return _service.getEmojiSuggestions(text);
-  }
+  List<String> getEmojiSuggestions(String text) =>
+      _service.getEmojiSuggestions(text);
 
-  List<String> getQuickResponses(String receivedMessage) {
-    return _service.getQuickResponses(receivedMessage);
-  }
+  List<String> getQuickResponses(String receivedMessage) =>
+      _service.getQuickResponses(receivedMessage);
 }
 
 class MessageCoachState {
-  final bool isEnabled;
-  final MessageAnalysis? currentAnalysis;
-
   const MessageCoachState({
     this.isEnabled = true,
     this.currentAnalysis,
   });
+  final bool isEnabled;
+  final MessageAnalysis? currentAnalysis;
 
   MessageCoachState copyWith({
     bool? isEnabled,
     MessageAnalysis? currentAnalysis,
-  }) {
-    return MessageCoachState(
-      isEnabled: isEnabled ?? this.isEnabled,
-      currentAnalysis: currentAnalysis,
-    );
-  }
+  }) =>
+      MessageCoachState(
+        isEnabled: isEnabled ?? this.isEnabled,
+        currentAnalysis: currentAnalysis,
+      );
 }
 
-final messageCoachStateProvider = StateNotifierProvider<MessageCoachNotifier, MessageCoachState>((ref) {
-  return MessageCoachNotifier(ref.watch(messageCoachProvider));
-});
+final messageCoachStateProvider =
+    StateNotifierProvider<MessageCoachNotifier, MessageCoachState>(
+        (ref) => MessageCoachNotifier(ref.watch(messageCoachProvider)));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER CLASSES
 // ═══════════════════════════════════════════════════════════════════════════
 
 class DateVibeRequest {
+  DateVibeRequest({required this.matchId, required this.vibe});
   final String matchId;
   final DateVibe vibe;
-
-  DateVibeRequest({required this.matchId, required this.vibe});
 
   @override
   bool operator ==(Object other) =>
@@ -269,6 +261,5 @@ Future<void> initializePhase4Services() async {
 }
 
 /// Get all categories for quick date picker
-List<DateCategory> getDateCategories() {
-  return DatePlannerService.instance.getCategories();
-}
+List<DateCategory> getDateCategories() =>
+    DatePlannerService.instance.getCategories();

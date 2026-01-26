@@ -14,11 +14,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// All suggestions are optional - users can ignore them.
 
 class ConversationHealthMonitor {
+  ConversationHealthMonitor._();
   static ConversationHealthMonitor? _instance;
   static ConversationHealthMonitor get instance =>
       _instance ??= ConversationHealthMonitor._();
-
-  ConversationHealthMonitor._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -166,9 +165,10 @@ class ConversationHealthMonitor {
         ? Duration.zero
         : Duration(
             milliseconds: responseTimes
-                .map((d) => d.inMilliseconds)
-                .reduce((a, b) => a + b) ~/
-            responseTimes.length);
+                    .map((d) => d.inMilliseconds)
+                    .reduce((a, b) => a + b) ~/
+                responseTimes.length,
+          );
 
     return ConversationMetrics(
       totalMessages: messages.length,
@@ -210,7 +210,7 @@ class ConversationHealthMonitor {
 
       for (final match in matches as List) {
         final matchId = match['id'] as String;
-        
+
         // Get last message
         final lastMessage = await _supabase
             .from('messages')
@@ -220,9 +220,8 @@ class ConversationHealthMonitor {
             .limit(1)
             .maybeSingle();
 
-        final otherUser = match['user1_id'] == _userId
-            ? match['user2']
-            : match['user1'];
+        final otherUser =
+            match['user1_id'] == _userId ? match['user2'] : match['user1'];
 
         NudgeType? nudgeType;
         String? message;
@@ -254,13 +253,15 @@ class ConversationHealthMonitor {
         }
 
         if (nudgeType != null) {
-          nudges.add(MatchNudge(
-            matchId: matchId,
-            otherUserName: otherUser['display_name'] ?? 'Your match',
-            otherUserPhoto: (otherUser['photos'] as List?)?.firstOrNull,
-            nudgeType: nudgeType,
-            message: message!,
-          ));
+          nudges.add(
+            MatchNudge(
+              matchId: matchId,
+              otherUserName: otherUser['display_name'] ?? 'Your match',
+              otherUserPhoto: (otherUser['photos'] as List?)?.firstOrNull,
+              nudgeType: nudgeType,
+              message: message!,
+            ),
+          );
         }
       }
 
@@ -360,12 +361,6 @@ enum NudgeType {
 }
 
 class ConversationHealth {
-  final HealthStatus status;
-  final double score;
-  final List<ConversationInsight> insights;
-  final List<String> suggestions;
-  final ConversationMetrics? metrics;
-
   ConversationHealth({
     required this.status,
     required this.score,
@@ -380,20 +375,17 @@ class ConversationHealth {
         insights: [],
         suggestions: [],
       );
+  final HealthStatus status;
+  final double score;
+  final List<ConversationInsight> insights;
+  final List<String> suggestions;
+  final ConversationMetrics? metrics;
 
   bool get needsAttention =>
       status == HealthStatus.critical || status == HealthStatus.needsAttention;
 }
 
 class ConversationMetrics {
-  final int totalMessages;
-  final int userMessages;
-  final double userMessageRatio;
-  final double oneWordRatio;
-  final double avgWordsPerMessage;
-  final double avgResponseTimeHours;
-  final double hoursSinceLastMessage;
-
   ConversationMetrics({
     required this.totalMessages,
     required this.userMessages,
@@ -413,15 +405,16 @@ class ConversationMetrics {
         avgResponseTimeHours: 0.0,
         hoursSinceLastMessage: 0.0,
       );
+  final int totalMessages;
+  final int userMessages;
+  final double userMessageRatio;
+  final double oneWordRatio;
+  final double avgWordsPerMessage;
+  final double avgResponseTimeHours;
+  final double hoursSinceLastMessage;
 }
 
 class MatchNudge {
-  final String matchId;
-  final String otherUserName;
-  final String? otherUserPhoto;
-  final NudgeType nudgeType;
-  final String message;
-
   MatchNudge({
     required this.matchId,
     required this.otherUserName,
@@ -429,4 +422,9 @@ class MatchNudge {
     required this.nudgeType,
     required this.message,
   });
+  final String matchId;
+  final String otherUserName;
+  final String? otherUserPhoto;
+  final NudgeType nudgeType;
+  final String message;
 }

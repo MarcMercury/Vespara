@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../core/domain/models/tag_rating.dart';
+import '../../../core/providers/path_of_pleasure_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/motion.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../../../core/utils/haptics.dart';
-import '../../../core/providers/path_of_pleasure_provider.dart';
-import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
 
 /// Path of Pleasure - 1v1 Kinkiness Sorting Game (Family Feud Style)
@@ -17,14 +17,15 @@ class PathOfPleasureScreen extends ConsumerStatefulWidget {
   const PathOfPleasureScreen({super.key});
 
   @override
-  ConsumerState<PathOfPleasureScreen> createState() => _PathOfPleasureScreenState();
+  ConsumerState<PathOfPleasureScreen> createState() =>
+      _PathOfPleasureScreenState();
 }
 
 class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +33,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    
+
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -47,7 +48,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pathOfPleasureProvider);
-    
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       body: SafeArea(
@@ -61,7 +62,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     if (state.showHandoffScreen) {
       return _buildHandoffScreen(state);
     }
-    
+
     switch (state.phase) {
       case GamePhase.idle:
         return _buildEntryScreen();
@@ -86,185 +87,190 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   // ════════════════════════════════════════════════════════════════════════
   // ENTRY SCREEN
   // ════════════════════════════════════════════════════════════════════════
-  Widget _buildEntryScreen() {
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 32),
-                
-                // Game icon
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFFF6B6B), Color(0xFF4ECDC4)],
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFF6B6B).withOpacity(0.4),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    VesparaIcons.fire,
-                    size: 60,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                Text(
-                  'Path of Pleasure',
-                  style: AppTheme.headlineLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                Text(
-                  '1v1 Kinkiness Sorting Battle',
-                  style: AppTheme.bodyLarge.copyWith(color: Colors.white70),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sort 8 cards from Vanilla to Hardcore\nFirst to 20 points wins!',
-                  style: AppTheme.bodyMedium.copyWith(color: Colors.white54),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 24),
-                const TagRatingDisplay(rating: TagRating.pathOfPleasure),
-                const SizedBox(height: 32),
-                
-                _buildPrimaryButton(
-                  label: 'Play Now',
-                  icon: VesparaIcons.play,
-                  onTap: () {
-                    Haptics.light();
-                    ref.read(pathOfPleasureProvider.notifier).showModeSelect();
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // How It Works button
-                GestureDetector(
-                  onTap: () => _showHowToPlay(context),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+  Widget _buildEntryScreen() => Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32),
+
+                  // Game icon
+                  Container(
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white24),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFFF6B6B), Color(0xFF4ECDC4)],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B6B).withOpacity(0.4),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ],
                     ),
-                    child: Center(
-                      child: Text(
-                        'How It Works',
-                        style: AppTheme.labelLarge.copyWith(color: Colors.white70),
+                    child: const Icon(
+                      VesparaIcons.fire,
+                      size: 60,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  Text(
+                    'Path of Pleasure',
+                    style: AppTheme.headlineLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Text(
+                    '1v1 Kinkiness Sorting Battle',
+                    style: AppTheme.bodyLarge.copyWith(color: Colors.white70),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sort 8 cards from Vanilla to Hardcore\nFirst to 20 points wins!',
+                    style: AppTheme.bodyMedium.copyWith(color: Colors.white54),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 24),
+                  const TagRatingDisplay(rating: TagRating.pathOfPleasure),
+                  const SizedBox(height: 32),
+
+                  _buildPrimaryButton(
+                    label: 'Play Now',
+                    icon: VesparaIcons.play,
+                    onTap: () {
+                      Haptics.light();
+                      ref
+                          .read(pathOfPleasureProvider.notifier)
+                          .showModeSelect();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // How It Works button
+                  GestureDetector(
+                    onTap: () => _showHowToPlay(context),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'How It Works',
+                          style: AppTheme.labelLarge
+                              .copyWith(color: Colors.white70),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                
-                // TAG Rating info
-                GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (_) => const TagRatingInfoSheet(),
-                    );
-                  },
-                  child: const Text(
-                    'About TAG Ratings \u2192',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white38,
-                      decoration: TextDecoration.underline,
+                  const SizedBox(height: 12),
+
+                  // TAG Rating info
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        builder: (_) => const TagRatingInfoSheet(),
+                      );
+                    },
+                    child: const Text(
+                      'About TAG Ratings \u2192',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white38,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
 
   // ════════════════════════════════════════════════════════════════════════
   // MODE SELECT SCREEN
   // ════════════════════════════════════════════════════════════════════════
-  Widget _buildModeSelectScreen() {
-    return Column(
-      children: [
-        _buildHeader(showBack: true, onBack: () {
-          ref.read(pathOfPleasureProvider.notifier).reset();
-        }),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Choose Game Mode',
-                  style: AppTheme.headlineMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+  Widget _buildModeSelectScreen() => Column(
+        children: [
+          _buildHeader(
+            showBack: true,
+            onBack: () {
+              ref.read(pathOfPleasureProvider.notifier).reset();
+            },
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Choose Game Mode',
+                    style: AppTheme.headlineMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 40),
-                
-                // Pass & Play
-                _buildModeCard(
-                  title: 'Pass & Play',
-                  subtitle: 'Share one device between teams',
-                  icon: VesparaIcons.users,
-                  color: const Color(0xFFFF6B6B),
-                  onTap: () {
-                    Haptics.medium();
-                    ref.read(pathOfPleasureProvider.notifier)
-                        .selectMode(ConnectionMode.passAndPlay);
-                  },
-                ),
-                const SizedBox(height: 20),
-                
-                // Multi-Screen
-                _buildModeCard(
-                  title: 'Multi-Screen',
-                  subtitle: 'Each team uses their own device',
-                  icon: VesparaIcons.wifi,
-                  color: const Color(0xFF4ECDC4),
-                  onTap: () {
-                    Haptics.medium();
-                    ref.read(pathOfPleasureProvider.notifier).hostMultiScreenGame();
-                  },
-                ),
-              ],
+                  const SizedBox(height: 40),
+
+                  // Pass & Play
+                  _buildModeCard(
+                    title: 'Pass & Play',
+                    subtitle: 'Share one device between teams',
+                    icon: VesparaIcons.users,
+                    color: const Color(0xFFFF6B6B),
+                    onTap: () {
+                      Haptics.medium();
+                      ref
+                          .read(pathOfPleasureProvider.notifier)
+                          .selectMode(ConnectionMode.passAndPlay);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Multi-Screen
+                  _buildModeCard(
+                    title: 'Multi-Screen',
+                    subtitle: 'Each team uses their own device',
+                    icon: VesparaIcons.wifi,
+                    color: const Color(0xFF4ECDC4),
+                    onTap: () {
+                      Haptics.medium();
+                      ref
+                          .read(pathOfPleasureProvider.notifier)
+                          .hostMultiScreenGame();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
 
   Widget _buildModeCard({
     required String title,
@@ -272,267 +278,274 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: color, size: 32),
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
             ),
-            const SizedBox(width: 20),
-            Expanded(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.5)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 32),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTheme.titleLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style:
+                          AppTheme.bodyMedium.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(VesparaIcons.forward, color: color),
+            ],
+          ),
+        ),
+      );
+
+  // ════════════════════════════════════════════════════════════════════════
+  // LOBBY SCREEN
+  // ════════════════════════════════════════════════════════════════════════
+  Widget _buildLobbyScreen(PathOfPleasureState state) => Column(
+        children: [
+          _buildHeader(
+            showBack: true,
+            onBack: () {
+              ref.read(pathOfPleasureProvider.notifier).reset();
+            },
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Room code (if multi-screen)
+                  if (state.connectionMode == ConnectionMode.multiScreen) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.tag_rounded, color: Colors.white70),
+                          const SizedBox(width: 12),
+                          Text(
+                            state.roomCode ?? '',
+                            style: AppTheme.headlineMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 4,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(VesparaIcons.copy,
+                                color: Colors.white70),
+                            onPressed: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: state.roomCode ?? ''));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Code copied!')),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+
+                  // Team setup
                   Text(
-                    title,
+                    'Team Setup',
                     style: AppTheme.titleLarge.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
+                  const SizedBox(height: 24),
+
+                  // Team A
+                  _buildTeamSetupCard(
+                    team: state.teamA,
+                    teamTurn: TeamTurn.teamA,
+                    isEditable: true,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // VS
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'VS',
+                      style: AppTheme.titleMedium.copyWith(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Team B
+                  _buildTeamSetupCard(
+                    team: state.teamB,
+                    teamTurn: TeamTurn.teamB,
+                    isEditable: true,
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Game settings
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSettingRow('Cards per round', '8'),
+                        const Divider(color: Colors.white12),
+                        _buildSettingRow(
+                            'Points to win', '${state.winningScore}'),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Start Game
+                  _buildPrimaryButton(
+                    label: 'Start Game',
+                    icon: VesparaIcons.play,
+                    onTap: () {
+                      Haptics.medium();
+                      ref.read(pathOfPleasureProvider.notifier).startGame();
+                    },
                   ),
                 ],
               ),
             ),
-            Icon(VesparaIcons.forward, color: color),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // LOBBY SCREEN
-  // ════════════════════════════════════════════════════════════════════════
-  Widget _buildLobbyScreen(PathOfPleasureState state) {
-    return Column(
-      children: [
-        _buildHeader(showBack: true, onBack: () {
-          ref.read(pathOfPleasureProvider.notifier).reset();
-        }),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Room code (if multi-screen)
-                if (state.connectionMode == ConnectionMode.multiScreen) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.tag_rounded, color: Colors.white70),
-                        const SizedBox(width: 12),
-                        Text(
-                          state.roomCode ?? '',
-                          style: AppTheme.headlineMedium.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 4,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(VesparaIcons.copy, color: Colors.white70),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: state.roomCode ?? ''));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Code copied!')),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-                
-                // Team setup
-                Text(
-                  'Team Setup',
-                  style: AppTheme.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Team A
-                _buildTeamSetupCard(
-                  team: state.teamA,
-                  teamTurn: TeamTurn.teamA,
-                  isEditable: true,
-                ),
-                const SizedBox(height: 16),
-                
-                // VS
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'VS',
-                    style: AppTheme.titleMedium.copyWith(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Team B
-                _buildTeamSetupCard(
-                  team: state.teamB,
-                  teamTurn: TeamTurn.teamB,
-                  isEditable: true,
-                ),
-                
-                const SizedBox(height: 40),
-                
-                // Game settings
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildSettingRow('Cards per round', '8'),
-                      const Divider(color: Colors.white12),
-                      _buildSettingRow('Points to win', '${state.winningScore}'),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 40),
-                
-                // Start Game
-                _buildPrimaryButton(
-                  label: 'Start Game',
-                  icon: VesparaIcons.play,
-                  onTap: () {
-                    Haptics.medium();
-                    ref.read(pathOfPleasureProvider.notifier).startGame();
-                  },
-                ),
-              ],
-            ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
 
   Widget _buildTeamSetupCard({
     required Team team,
     required TeamTurn teamTurn,
     required bool isEditable,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            team.color.withOpacity(0.3),
-            team.color.withOpacity(0.1),
-          ],
+  }) =>
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              team.color.withOpacity(0.3),
+              team.color.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: team.color.withOpacity(0.5)),
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: team.color.withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: team.color,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: Text(
-                team.name[0],
-                style: AppTheme.headlineMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+        child: Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: team.color,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  team.name[0],
+                  style: AppTheme.headlineMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: isEditable
-                ? TextField(
-                    controller: TextEditingController(text: team.name),
-                    style: AppTheme.titleLarge.copyWith(color: Colors.white),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Team name',
-                      hintStyle: AppTheme.titleLarge.copyWith(color: Colors.white30),
+            const SizedBox(width: 16),
+            Expanded(
+              child: isEditable
+                  ? TextField(
+                      controller: TextEditingController(text: team.name),
+                      style: AppTheme.titleLarge.copyWith(color: Colors.white),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Team name',
+                        hintStyle:
+                            AppTheme.titleLarge.copyWith(color: Colors.white30),
+                      ),
+                      onChanged: (value) {
+                        ref
+                            .read(pathOfPleasureProvider.notifier)
+                            .setTeamName(teamTurn, value);
+                      },
+                    )
+                  : Text(
+                      team.name,
+                      style: AppTheme.titleLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    onChanged: (value) {
-                      ref.read(pathOfPleasureProvider.notifier)
-                          .setTeamName(teamTurn, value);
-                    },
-                  )
-                : Text(
-                    team.name,
-                    style: AppTheme.titleLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      );
 
-  Widget _buildSettingRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTheme.bodyMedium.copyWith(color: Colors.white70)),
-          Text(value, style: AppTheme.bodyLarge.copyWith(color: Colors.white)),
-        ],
-      ),
-    );
-  }
+  Widget _buildSettingRow(String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: AppTheme.bodyMedium.copyWith(color: Colors.white70)),
+            Text(value,
+                style: AppTheme.bodyLarge.copyWith(color: Colors.white)),
+          ],
+        ),
+      );
 
   // ════════════════════════════════════════════════════════════════════════
   // HANDOFF SCREEN (Pass & Play)
@@ -540,8 +553,8 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   Widget _buildHandoffScreen(PathOfPleasureState state) {
     final activeTeam = state.activeTeam;
     final isStealing = state.phase == GamePhase.stealing;
-    
-    return Container(
+
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -557,39 +570,36 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
         children: [
           AnimatedBuilder(
             animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: activeTeam.color,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: activeTeam.color.withOpacity(0.5),
-                        blurRadius: 30,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      activeTeam.name[0],
-                      style: AppTheme.headlineLarge.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 48,
-                      ),
+            builder: (context, child) => Transform.scale(
+              scale: _pulseAnimation.value,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: activeTeam.color,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: activeTeam.color.withOpacity(0.5),
+                      blurRadius: 30,
+                      spreadRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    activeTeam.name[0],
+                    style: AppTheme.headlineLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 48,
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
           const SizedBox(height: 32),
-          
           Text(
             isStealing ? 'STEAL ATTEMPT!' : 'Your Turn!',
             style: AppTheme.headlineSmall.copyWith(
@@ -597,7 +607,6 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             ),
           ),
           const SizedBox(height: 8),
-          
           Text(
             activeTeam.name,
             style: AppTheme.headlineLarge.copyWith(
@@ -606,17 +615,14 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             ),
           ),
           const SizedBox(height: 16),
-          
           Text(
-            isStealing 
+            isStealing
                 ? 'Beat their score to steal the points!'
                 : 'Sort cards from Vanilla to Hardcore',
             style: AppTheme.bodyLarge.copyWith(color: Colors.white54),
             textAlign: TextAlign.center,
           ),
-          
           const SizedBox(height: 48),
-          
           _buildPrimaryButton(
             label: 'Ready',
             icon: VesparaIcons.check,
@@ -638,12 +644,12 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     final activeTeam = state.activeTeam;
     final isStealing = state.phase == GamePhase.stealing;
     final isSecondAttempt = state.currentRound?.teamAChosePlay == true;
-    
+
     return Column(
       children: [
         // Game header with scores
         _buildGameHeader(state),
-        
+
         // Round info
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -656,17 +662,19 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           child: Row(
             children: [
               Icon(
-                isStealing 
-                    ? VesparaIcons.alert 
-                    : (isSecondAttempt ? VesparaIcons.refresh : VesparaIcons.trending),
+                isStealing
+                    ? VesparaIcons.alert
+                    : (isSecondAttempt
+                        ? VesparaIcons.refresh
+                        : VesparaIcons.trending),
                 color: activeTeam.color,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  isStealing 
+                  isStealing
                       ? '${activeTeam.name}: Beat their score to steal!'
-                      : (isSecondAttempt 
+                      : (isSecondAttempt
                           ? '${activeTeam.name}: Improve your score!'
                           : '${activeTeam.name}: Sort Vanilla → Hardcore'),
                   style: AppTheme.bodyMedium.copyWith(color: Colors.white),
@@ -675,7 +683,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             ],
           ),
         ),
-        
+
         // Position labels
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -687,7 +695,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             ],
           ),
         ),
-        
+
         // Sortable cards
         Expanded(
           child: ReorderableListView.builder(
@@ -695,23 +703,22 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             itemCount: state.playerSorting.length,
             onReorder: (oldIndex, newIndex) {
               Haptics.light();
-              ref.read(pathOfPleasureProvider.notifier)
+              ref
+                  .read(pathOfPleasureProvider.notifier)
                   .reorderCard(oldIndex, newIndex);
             },
-            proxyDecorator: (child, index, animation) {
-              return AnimatedBuilder(
-                animation: animation,
-                builder: (context, child) {
-                  final animValue = Curves.easeInOut.transform(animation.value);
-                  final scale = 1.0 + (animValue * 0.05);
-                  return Transform.scale(
-                    scale: scale,
-                    child: child,
-                  );
-                },
-                child: child,
-              );
-            },
+            proxyDecorator: (child, index, animation) => AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                final animValue = Curves.easeInOut.transform(animation.value);
+                final scale = 1.0 + (animValue * 0.05);
+                return Transform.scale(
+                  scale: scale,
+                  child: child,
+                );
+              },
+              child: child,
+            ),
             itemBuilder: (context, index) {
               final card = state.playerSorting[index];
               return _buildSortableCard(
@@ -723,7 +730,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             },
           ),
         ),
-        
+
         // Submit button
         Padding(
           padding: const EdgeInsets.all(24),
@@ -741,19 +748,17 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     );
   }
 
-  Widget _buildPositionLabel(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: AppTheme.labelMedium.copyWith(color: color),
-      ),
-    );
-  }
+  Widget _buildPositionLabel(String text, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          text,
+          style: AppTheme.labelMedium.copyWith(color: color),
+        ),
+      );
 
   Widget _buildSortableCard({
     required Key key,
@@ -763,7 +768,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   }) {
     final position = index + 1;
     final gradientStart = position / total;
-    
+
     return Container(
       key: key,
       margin: const EdgeInsets.only(bottom: 8),
@@ -773,10 +778,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
               colors: [
-                Color.lerp(Colors.pink.shade200, Colors.red.shade400, gradientStart)!
+                Color.lerp(Colors.pink.shade200, Colors.red.shade400,
+                        gradientStart)!
                     .withOpacity(0.2),
                 Colors.white.withOpacity(0.05),
               ],
@@ -805,7 +809,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // Card text
               Expanded(
                 child: Text(
@@ -813,7 +817,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   style: AppTheme.bodyLarge.copyWith(color: Colors.white),
                 ),
               ),
-              
+
               // Drag handle
               const Icon(VesparaIcons.menu, color: Colors.white38),
             ],
@@ -830,7 +834,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     final round = state.currentRound;
     final result = round?.teamAFirstAttempt;
     if (round == null || result == null) return const SizedBox();
-    
+
     return Column(
       children: [
         _buildGameHeader(state),
@@ -853,16 +857,16 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   'Correct Positions',
                   style: AppTheme.bodyLarge.copyWith(color: Colors.white70),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Decision prompt
                 Text(
                   'What will you do?',
                   style: AppTheme.headlineSmall.copyWith(color: Colors.white),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // PASS or PLAY buttons
                 Row(
                   children: [
@@ -874,7 +878,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         icon: VesparaIcons.forward,
                         onTap: () {
                           Haptics.medium();
-                          ref.read(pathOfPleasureProvider.notifier).choosePass();
+                          ref
+                              .read(pathOfPleasureProvider.notifier)
+                              .choosePass();
                         },
                       ),
                     ),
@@ -887,7 +893,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         icon: VesparaIcons.refresh,
                         onTap: () {
                           Haptics.medium();
-                          ref.read(pathOfPleasureProvider.notifier).choosePlay();
+                          ref
+                              .read(pathOfPleasureProvider.notifier)
+                              .choosePlay();
                         },
                       ),
                     ),
@@ -907,49 +915,47 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     required Color color,
     required IconData icon,
     required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.5)),
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 40),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: AppTheme.headlineSmall.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 40),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: AppTheme.headlineSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: AppTheme.bodySmall.copyWith(color: Colors.white54),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: AppTheme.bodySmall.copyWith(color: Colors.white54),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   // ════════════════════════════════════════════════════════════════════════
   // DECISION SCREEN (Legacy - now using scored screen)
   // ════════════════════════════════════════════════════════════════════════
-  Widget _buildDecisionScreen(PathOfPleasureState state) {
-    return _buildScoredScreen(state);
-  }
+  Widget _buildDecisionScreen(PathOfPleasureState state) =>
+      _buildScoredScreen(state);
 
   // ════════════════════════════════════════════════════════════════════════
   // ROUND RESULT SCREEN
@@ -957,15 +963,14 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   Widget _buildRoundResultScreen(PathOfPleasureState state) {
     final round = state.currentRound;
     if (round == null) return const SizedBox();
-    
-    final pointsTeam = round.pointsAwardedTo == TeamTurn.teamA 
-        ? state.teamA 
-        : state.teamB;
-    
+
+    final pointsTeam =
+        round.pointsAwardedTo == TeamTurn.teamA ? state.teamA : state.teamB;
+
     String outcomeText;
     IconData outcomeIcon;
     Color outcomeColor;
-    
+
     switch (round.outcome) {
       case RoundOutcome.perfectScore:
         outcomeText = 'PERFECT SCORE!';
@@ -997,7 +1002,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
         outcomeIcon = VesparaIcons.check;
         outcomeColor = Colors.white;
     }
-    
+
     return Column(
       children: [
         _buildGameHeader(state),
@@ -1009,7 +1014,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
               children: [
                 Icon(outcomeIcon, color: outcomeColor, size: 80),
                 const SizedBox(height: 16),
-                
+
                 Text(
                   outcomeText,
                   style: AppTheme.headlineMedium.copyWith(
@@ -1018,7 +1023,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 if (round.pointsAwarded > 0) ...[
                   Text(
                     '+${round.pointsAwarded}',
@@ -1037,9 +1042,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     'No points awarded',
                     style: AppTheme.bodyLarge.copyWith(color: Colors.white54),
                   ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Show correct order
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -1052,30 +1057,34 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     children: [
                       Text(
                         'Correct Order:',
-                        style: AppTheme.labelLarge.copyWith(color: Colors.white54),
+                        style:
+                            AppTheme.labelLarge.copyWith(color: Colors.white54),
                       ),
                       const SizedBox(height: 8),
-                      ...round.correctOrder.asMap().entries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Text(
-                            '${entry.key + 1}. ${entry.value.text}',
-                            style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
+                      ...round.correctOrder.asMap().entries.map(
+                            (entry) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Text(
+                                '${entry.key + 1}. ${entry.value.text}',
+                                style: AppTheme.bodyMedium
+                                    .copyWith(color: Colors.white70),
+                              ),
+                            ),
                           ),
-                        );
-                      }),
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 _buildPrimaryButton(
                   label: 'Continue',
                   icon: VesparaIcons.forward,
                   onTap: () {
                     Haptics.medium();
-                    ref.read(pathOfPleasureProvider.notifier).continueToNextRound();
+                    ref
+                        .read(pathOfPleasureProvider.notifier)
+                        .continueToNextRound();
                   },
                 ),
               ],
@@ -1092,8 +1101,8 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
   Widget _buildGameOverScreen(PathOfPleasureState state) {
     final winner = state.winner;
     if (winner == null) return const SizedBox();
-    
-    return Container(
+
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -1113,9 +1122,10 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(VesparaIcons.trophy, color: Colors.amber, size: 80),
+                  const Icon(VesparaIcons.trophy,
+                      color: Colors.amber, size: 80),
                   const SizedBox(height: 24),
-                  
+
                   Text(
                     'WINNER!',
                     style: AppTheme.headlineSmall.copyWith(
@@ -1124,7 +1134,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   Text(
                     winner.name,
                     style: AppTheme.headlineLarge.copyWith(
@@ -1133,9 +1143,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       fontSize: 48,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Final scores
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1144,9 +1154,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                       _buildFinalScoreCard(state.teamB),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   _buildPrimaryButton(
                     label: 'Play Again',
                     icon: VesparaIcons.refresh,
@@ -1156,7 +1166,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   TextButton(
                     onPressed: () {
                       ref.read(pathOfPleasureProvider.notifier).reset();
@@ -1164,7 +1174,8 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                     },
                     child: Text(
                       'Exit',
-                      style: AppTheme.labelLarge.copyWith(color: Colors.white54),
+                      style:
+                          AppTheme.labelLarge.copyWith(color: Colors.white54),
                     ),
                   ),
                 ],
@@ -1176,177 +1187,170 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     );
   }
 
-  Widget _buildFinalScoreCard(Team team) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: team.color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: team.color.withOpacity(0.5)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            team.name,
-            style: AppTheme.labelLarge.copyWith(color: Colors.white70),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${team.score}',
-            style: AppTheme.headlineLarge.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // COMMON WIDGETS
-  // ════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildHeader({bool showBack = false, VoidCallback? onBack}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(VesparaIcons.back, color: Colors.white70),
-            onPressed: onBack ?? () {
-              ref.read(pathOfPleasureProvider.notifier).reset();
-              context.pop();
-            },
-          ),
-          const Spacer(),
-          Text(
-            'PATH OF PLEASURE',
-            style: AppTheme.labelLarge.copyWith(
-              color: Colors.white54,
-              letterSpacing: 2,
-            ),
-          ),
-          const Spacer(),
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGameHeader(PathOfPleasureState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Team A score
-          _buildTeamScore(state.teamA, state.currentTurn == TeamTurn.teamA),
-          
-          const Spacer(),
-          
-          // Round info
-          Column(
-            children: [
-              Text(
-                'Round ${state.roundNumber}',
-                style: AppTheme.labelMedium.copyWith(color: Colors.white54),
-              ),
-              Text(
-                'First to ${state.winningScore}',
-                style: AppTheme.labelSmall.copyWith(color: Colors.white38),
-              ),
-            ],
-          ),
-          
-          const Spacer(),
-          
-          // Team B score
-          _buildTeamScore(state.teamB, state.currentTurn == TeamTurn.teamB),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTeamScore(Team team, bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? team.color.withOpacity(0.3) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? team.color : Colors.white24,
-          width: isActive ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            team.name,
-            style: AppTheme.labelSmall.copyWith(
-              color: isActive ? Colors.white : Colors.white54,
-            ),
-          ),
-          Text(
-            '${team.score}',
-            style: AppTheme.headlineSmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrimaryButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+  Widget _buildFinalScoreCard(Team team) => Container(
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: color != null 
-                ? [color, color.withOpacity(0.7)]
-                : [const Color(0xFFFF6B6B), const Color(0xFF4ECDC4)],
-          ),
+          color: team.color.withOpacity(0.2),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: (color ?? const Color(0xFFFF6B6B)).withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          border: Border.all(color: team.color.withOpacity(0.5)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(width: 12),
             Text(
-              label,
-              style: AppTheme.titleMedium.copyWith(
+              team.name,
+              style: AppTheme.labelLarge.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${team.score}',
+              style: AppTheme.headlineLarge.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+
+  // ════════════════════════════════════════════════════════════════════════
+  // COMMON WIDGETS
+  // ════════════════════════════════════════════════════════════════════════
+
+  Widget _buildHeader({bool showBack = false, VoidCallback? onBack}) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(VesparaIcons.back, color: Colors.white70),
+              onPressed: onBack ??
+                  () {
+                    ref.read(pathOfPleasureProvider.notifier).reset();
+                    context.pop();
+                  },
+            ),
+            const Spacer(),
+            Text(
+              'PATH OF PLEASURE',
+              style: AppTheme.labelLarge.copyWith(
+                color: Colors.white54,
+                letterSpacing: 2,
+              ),
+            ),
+            const Spacer(),
+            const SizedBox(width: 48),
+          ],
+        ),
+      );
+
+  Widget _buildGameHeader(PathOfPleasureState state) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          border: Border(
+            bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Team A score
+            _buildTeamScore(state.teamA, state.currentTurn == TeamTurn.teamA),
+
+            const Spacer(),
+
+            // Round info
+            Column(
+              children: [
+                Text(
+                  'Round ${state.roundNumber}',
+                  style: AppTheme.labelMedium.copyWith(color: Colors.white54),
+                ),
+                Text(
+                  'First to ${state.winningScore}',
+                  style: AppTheme.labelSmall.copyWith(color: Colors.white38),
+                ),
+              ],
+            ),
+
+            const Spacer(),
+
+            // Team B score
+            _buildTeamScore(state.teamB, state.currentTurn == TeamTurn.teamB),
+          ],
+        ),
+      );
+
+  Widget _buildTeamScore(Team team, bool isActive) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? team.color.withOpacity(0.3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? team.color : Colors.white24,
+            width: isActive ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              team.name,
+              style: AppTheme.labelSmall.copyWith(
+                color: isActive ? Colors.white : Colors.white54,
+              ),
+            ),
+            Text(
+              '${team.score}',
+              style: AppTheme.headlineSmall.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildPrimaryButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    Color? color,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: color != null
+                  ? [color, color.withOpacity(0.7)]
+                  : [const Color(0xFFFF6B6B), const Color(0xFF4ECDC4)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: (color ?? const Color(0xFFFF6B6B)).withOpacity(0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: AppTheme.titleMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   void _showHowToPlay(BuildContext context) {
     showModalBottomSheet(
@@ -1379,28 +1383,26 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
     );
   }
 
-  Widget _buildHowToItem(String number, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            number,
-            style: AppTheme.bodyLarge.copyWith(
-              color: const Color(0xFFFF6B6B),
-              fontWeight: FontWeight.bold,
+  Widget _buildHowToItem(String number, String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              number,
+              style: AppTheme.bodyLarge.copyWith(
+                color: const Color(0xFFFF6B6B),
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 }

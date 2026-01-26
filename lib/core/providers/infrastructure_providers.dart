@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/connection_manager.dart';
+
 import '../services/ai_service.dart';
+import '../services/connection_manager.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// INFRASTRUCTURE PROVIDERS
@@ -13,9 +14,8 @@ import '../services/ai_service.dart';
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Connection manager singleton
-final connectionManagerProvider = Provider<ConnectionManager>((ref) {
-  return ConnectionManager.instance;
-});
+final connectionManagerProvider =
+    Provider<ConnectionManager>((ref) => ConnectionManager.instance);
 
 /// Current connection status stream
 final connectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
@@ -24,9 +24,8 @@ final connectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
 });
 
 /// Offline queue singleton
-final offlineQueueProvider = Provider<OfflineQueue>((ref) {
-  return OfflineQueue.instance;
-});
+final offlineQueueProvider =
+    Provider<OfflineQueue>((ref) => OfflineQueue.instance);
 
 /// Pending offline operations count
 final pendingOperationsProvider = Provider<int>((ref) {
@@ -48,9 +47,7 @@ final isConnectedProvider = Provider<bool>((ref) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// AI service singleton
-final aiServiceProvider = Provider<AIService>((ref) {
-  return AIService.instance;
-});
+final aiServiceProvider = Provider<AIService>((ref) => AIService.instance);
 
 /// Remaining AI token budget
 final aiTokenBudgetProvider = Provider<int>((ref) {
@@ -83,26 +80,27 @@ final systemHealthProvider = Provider<SystemHealth>((ref) {
     isConnected: isConnected,
     pendingOperations: pendingOps,
     aiTokensRemaining: tokenBudget,
-    connectionStatus: connectionStatus.valueOrNull ?? ConnectionStatus.connected,
+    connectionStatus:
+        connectionStatus.valueOrNull ?? ConnectionStatus.connected,
   );
 });
 
 /// System health data class
 class SystemHealth {
-  final bool isConnected;
-  final int pendingOperations;
-  final int aiTokensRemaining;
-  final ConnectionStatus connectionStatus;
-
   const SystemHealth({
     required this.isConnected,
     required this.pendingOperations,
     required this.aiTokensRemaining,
     required this.connectionStatus,
   });
+  final bool isConnected;
+  final int pendingOperations;
+  final int aiTokensRemaining;
+  final ConnectionStatus connectionStatus;
 
   bool get isHealthy => isConnected && pendingOperations == 0;
-  bool get hasWarnings => !isConnected || pendingOperations > 0 || aiTokensRemaining < 10000;
+  bool get hasWarnings =>
+      !isConnected || pendingOperations > 0 || aiTokensRemaining < 10000;
 
   String get statusMessage {
     if (!isConnected) return 'No connection';

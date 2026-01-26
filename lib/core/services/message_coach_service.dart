@@ -15,11 +15,10 @@ import 'ai_service.dart';
 /// User can toggle on/off globally
 
 class MessageCoachService {
+  MessageCoachService._();
   static MessageCoachService? _instance;
   static MessageCoachService get instance =>
       _instance ??= MessageCoachService._();
-
-  MessageCoachService._();
 
   final AIService _aiService = AIService.instance;
 
@@ -98,56 +97,68 @@ class MessageCoachService {
 
     // Check for all caps (shouting)
     if (_isAllCaps(text) && text.length > 5) {
-      checks.add(CoachingTip(
-        type: TipType.warning,
-        message: 'All caps can feel like shouting �',
-        suggestion: text[0] + text.substring(1).toLowerCase(),
-      ));
+      checks.add(
+        CoachingTip(
+          type: TipType.warning,
+          message: 'All caps can feel like shouting �',
+          suggestion: text[0] + text.substring(1).toLowerCase(),
+        ),
+      );
     }
 
     // Check for too many exclamation marks
     final exclamationCount = '!'.allMatches(text).length;
     if (exclamationCount > 2) {
-      checks.add(CoachingTip(
-        type: TipType.gentle,
-        message: 'Easy on the exclamation marks 🤭',
-      ));
+      checks.add(
+        CoachingTip(
+          type: TipType.gentle,
+          message: 'Easy on the exclamation marks 🤭',
+        ),
+      );
     }
 
     // Check for overly short response
     if (text.length < 20 && !text.contains('?')) {
-      checks.add(CoachingTip(
-        type: TipType.suggestion,
-        message: 'Maybe add a question to keep the intrigue going?',
-      ));
+      checks.add(
+        CoachingTip(
+          type: TipType.suggestion,
+          message: 'Maybe add a question to keep the intrigue going?',
+        ),
+      );
     }
 
     // Check for double/triple texting (multiple question marks)
     if (text.contains('???') || text.contains('...?')) {
-      checks.add(CoachingTip(
-        type: TipType.gentle,
-        message: 'One question mark is enough 😏',
-        suggestion: text.replaceAll(RegExp(r'\?+'), '?'),
-      ));
+      checks.add(
+        CoachingTip(
+          type: TipType.gentle,
+          message: 'One question mark is enough 😏',
+          suggestion: text.replaceAll(RegExp(r'\?+'), '?'),
+        ),
+      );
     }
 
     // Check for "k" or "ok" as full response
     final trimmed = text.trim().toLowerCase();
     if (trimmed == 'k' || trimmed == 'ok' || trimmed == 'kk') {
-      checks.add(CoachingTip(
-        type: TipType.warning,
-        message: 'This might seem cold - add some warmth? 🥀',
-        suggestion: 'Okay, sounds good!',
-      ));
+      checks.add(
+        CoachingTip(
+          type: TipType.warning,
+          message: 'This might seem cold - add some warmth? 🥀',
+          suggestion: 'Okay, sounds good!',
+        ),
+      );
     }
 
     // Check for excessive emojis
     final emojiCount = _countEmojis(text);
     if (emojiCount > 5) {
-      checks.add(CoachingTip(
-        type: TipType.gentle,
-        message: 'Less is more with emojis ✧',
-      ));
+      checks.add(
+        CoachingTip(
+          type: TipType.gentle,
+          message: 'Less is more with emojis ✧',
+        ),
+      );
     }
 
     if (checks.isEmpty) return null;
@@ -166,11 +177,11 @@ class MessageCoachService {
 
   int _countEmojis(String text) {
     final emojiRegex = RegExp(
-      r'[\u{1F600}-\u{1F64F}]|'  // Emoticons
-      r'[\u{1F300}-\u{1F5FF}]|'  // Symbols & Pictographs
-      r'[\u{1F680}-\u{1F6FF}]|'  // Transport & Map
-      r'[\u{2600}-\u{26FF}]|'    // Misc symbols
-      r'[\u{2700}-\u{27BF}]',    // Dingbats
+      r'[\u{1F600}-\u{1F64F}]|' // Emoticons
+      r'[\u{1F300}-\u{1F5FF}]|' // Symbols & Pictographs
+      r'[\u{1F680}-\u{1F6FF}]|' // Transport & Map
+      r'[\u{2600}-\u{26FF}]|' // Misc symbols
+      r'[\u{2700}-\u{27BF}]', // Dingbats
       unicode: true,
     );
     return emojiRegex.allMatches(text).length;
@@ -180,9 +191,12 @@ class MessageCoachService {
     final lower = text.toLowerCase();
 
     if (_isAllCaps(text)) return MessageTone.intense;
-    if (lower.contains('sorry') || lower.contains('my bad')) return MessageTone.apologetic;
-    if (text.contains('!') && text.contains('?')) return MessageTone.enthusiastic;
-    if (lower.contains('lol') || lower.contains('haha')) return MessageTone.playful;
+    if (lower.contains('sorry') || lower.contains('my bad'))
+      return MessageTone.apologetic;
+    if (text.contains('!') && text.contains('?'))
+      return MessageTone.enthusiastic;
+    if (lower.contains('lol') || lower.contains('haha'))
+      return MessageTone.playful;
     if (text.length < 10) return MessageTone.brief;
 
     return MessageTone.neutral;
@@ -194,7 +208,8 @@ class MessageCoachService {
 
   Future<MessageAnalysis?> _performAIAnalysis(String text) async {
     final result = await _aiService.chat(
-      systemPrompt: '''Analyze this dating app message for tone and effectiveness.
+      systemPrompt:
+          '''Analyze this dating app message for tone and effectiveness.
 Return a JSON object with:
 - tone: one of [warm, cold, playful, serious, nervous, confident, neutral]
 - score: 1-10 (how likely to get positive response)
@@ -223,10 +238,14 @@ Analyze:''',
       String? alternative;
 
       // Parse tone
-      if (response.contains('warm')) tone = MessageTone.warm;
-      else if (response.contains('cold')) tone = MessageTone.cold;
-      else if (response.contains('playful')) tone = MessageTone.playful;
-      else if (response.contains('nervous')) tone = MessageTone.nervous;
+      if (response.contains('warm')) {
+        tone = MessageTone.warm;
+      } else if (response.contains('cold'))
+        tone = MessageTone.cold;
+      else if (response.contains('playful'))
+        tone = MessageTone.playful;
+      else if (response.contains('nervous'))
+        tone = MessageTone.nervous;
       else if (response.contains('confident')) tone = MessageTone.confident;
 
       // Parse score
@@ -238,21 +257,26 @@ Analyze:''',
       // Parse tip
       final tipMatch = RegExp(r'"tip"\s*:\s*"([^"]+)"').firstMatch(response);
       if (tipMatch != null && score < 8) {
-        tips.add(CoachingTip(
-          type: TipType.suggestion,
-          message: tipMatch.group(1)!,
-        ));
+        tips.add(
+          CoachingTip(
+            type: TipType.suggestion,
+            message: tipMatch.group(1)!,
+          ),
+        );
       }
 
       // Parse alternative
-      final altMatch = RegExp(r'"alternative"\s*:\s*"([^"]+)"').firstMatch(response);
+      final altMatch =
+          RegExp(r'"alternative"\s*:\s*"([^"]+)"').firstMatch(response);
       if (altMatch != null && score < 7) {
         alternative = altMatch.group(1);
-        tips.add(CoachingTip(
-          type: TipType.suggestion,
-          message: 'Try this instead?',
-          suggestion: alternative,
-        ));
+        tips.add(
+          CoachingTip(
+            type: TipType.suggestion,
+            message: 'Try this instead?',
+            suggestion: alternative,
+          ),
+        );
       }
 
       // Don't show anything if message is good
@@ -292,10 +316,14 @@ Analyze:''',
     if (lower.contains('love') || lower.contains('like')) {
       suggestions.addAll(['❤️', '😍', '💕']);
     }
-    if (lower.contains('food') || lower.contains('eat') || lower.contains('dinner')) {
+    if (lower.contains('food') ||
+        lower.contains('eat') ||
+        lower.contains('dinner')) {
       suggestions.addAll(['🍕', '🍜', '😋']);
     }
-    if (lower.contains('drink') || lower.contains('coffee') || lower.contains('bar')) {
+    if (lower.contains('drink') ||
+        lower.contains('coffee') ||
+        lower.contains('bar')) {
       suggestions.addAll(['☕', '🍷', '🍻']);
     }
 
@@ -310,24 +338,25 @@ Analyze:''',
     if (lower.contains('how are you') || lower.contains("how's it going")) {
       return [
         "I'm good! How about you?",
-        "Pretty great actually! You?",
-        "Living my best life 😎 You?",
+        'Pretty great actually! You?',
+        'Living my best life 😎 You?',
       ];
     }
 
-    if (lower.contains('what are you up to') || lower.contains('what are you doing')) {
+    if (lower.contains('what are you up to') ||
+        lower.contains('what are you doing')) {
       return [
-        "Just relaxing, thinking about you 😊",
-        "Nothing much, wishing I was hanging with you",
-        "Procrastinating... the usual 😅",
+        'Just relaxing, thinking about you 😊',
+        'Nothing much, wishing I was hanging with you',
+        'Procrastinating... the usual 😅',
       ];
     }
 
     if (lower.contains('lol') || lower.contains('haha')) {
       return [
-        "😂",
-        "Glad I could make you laugh!",
-        "I try 😎",
+        '😂',
+        'Glad I could make you laugh!',
+        'I try 😎',
       ];
     }
 
@@ -373,18 +402,12 @@ enum MessageTone {
 }
 
 enum TipType {
-  suggestion,  // Helpful idea
-  gentle,      // Soft nudge
-  warning,     // Might want to reconsider
+  suggestion, // Helpful idea
+  gentle, // Soft nudge
+  warning, // Might want to reconsider
 }
 
 class MessageAnalysis {
-  final String originalText;
-  final MessageTone tone;
-  final int score;
-  final List<CoachingTip> tips;
-  final String? suggestedRewrite;
-
   MessageAnalysis({
     required this.originalText,
     required this.tone,
@@ -392,6 +415,11 @@ class MessageAnalysis {
     this.tips = const [],
     this.suggestedRewrite,
   });
+  final String originalText;
+  final MessageTone tone;
+  final int score;
+  final List<CoachingTip> tips;
+  final String? suggestedRewrite;
 
   bool get hasIssues => tips.isNotEmpty;
   bool get needsWork => score < 6;
@@ -453,15 +481,14 @@ class MessageAnalysis {
 }
 
 class CoachingTip {
-  final TipType type;
-  final String message;
-  final String? suggestion;
-
   CoachingTip({
     required this.type,
     required this.message,
     this.suggestion,
   });
+  final TipType type;
+  final String message;
+  final String? suggestion;
 
   String get typeEmoji {
     switch (type) {

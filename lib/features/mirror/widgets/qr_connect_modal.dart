@@ -1,11 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:math' as math;
 
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/connection_state_provider.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// QR CONNECT MODAL
@@ -20,7 +20,7 @@ class QrConnectModal extends ConsumerStatefulWidget {
   ConsumerState<QrConnectModal> createState() => _QrConnectModalState();
 }
 
-class _QrConnectModalState extends ConsumerState<QrConnectModal> 
+class _QrConnectModalState extends ConsumerState<QrConnectModal>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isScanning = false;
@@ -40,293 +40,289 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: VesparaColors.background,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      child: Column(
-        children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: VesparaColors.secondary.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
+  Widget build(BuildContext context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(
+          color: VesparaColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: VesparaColors.secondary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            VesparaColors.glow,
-                            VesparaColors.primary,
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              VesparaColors.glow,
+                              VesparaColors.primary,
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: VesparaColors.glow.withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
                           ],
                         ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: VesparaColors.glow.withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 2,
+                        child: const Icon(
+                          Icons.qr_code_scanner,
+                          color: VesparaColors.background,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'INSTANT CONNECT',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                          Text(
+                            'Scan to connect in person',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: VesparaColors.secondary,
+                            ),
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.qr_code_scanner,
-                        color: VesparaColors.background,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'INSTANT CONNECT',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                            color: VesparaColors.primary,
-                          ),
-                        ),
-                        Text(
-                          'Scan to connect in person',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: VesparaColors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Tab bar
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            decoration: BoxDecoration(
-              color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [VesparaColors.glow, VesparaColors.primary],
-                ),
-                borderRadius: BorderRadius.circular(12),
+                    ],
+                  ),
+                ],
               ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: VesparaColors.background,
-              unselectedLabelColor: VesparaColors.secondary,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-              dividerHeight: 0,
-              tabs: const [
-                Tab(text: 'MY CODE'),
-                Tab(text: 'SCAN'),
-              ],
             ),
-          ),
 
-          const SizedBox(height: 24),
-
-          // Tab content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildMyCodeTab(),
-                _buildScanTab(),
-              ],
+            // Tab bar
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [VesparaColors.glow, VesparaColors.primary],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: VesparaColors.background,
+                unselectedLabelColor: VesparaColors.secondary,
+                labelStyle:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                dividerHeight: 0,
+                tabs: const [
+                  Tab(text: 'MY CODE'),
+                  Tab(text: 'SCAN'),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+
+            const SizedBox(height: 24),
+
+            // Tab content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildMyCodeTab(),
+                  _buildScanTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
 
   /// My QR Code tab - shows your code for others to scan
-  Widget _buildMyCodeTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          // QR Code display
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: VesparaColors.glow.withOpacity(0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: VesparaColors.glow.withOpacity(0.1),
-                  blurRadius: 30,
-                  spreadRadius: 5,
+  Widget _buildMyCodeTab() => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          children: [
+            // QR Code display
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: VesparaColors.glow.withOpacity(0.3),
+                  width: 2,
                 ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Simulated QR Code (in production, use qr_flutter package)
-                _buildQrCodeDisplay(),
-                
-                const SizedBox(height: 20),
-                
-                Text(
-                  'YOUR PROFILE',
-                  style: TextStyle(
-                    fontSize: 12,
-                    letterSpacing: 2,
-                    color: VesparaColors.secondary,
-                    fontWeight: FontWeight.w500,
+                boxShadow: [
+                  BoxShadow(
+                    color: VesparaColors.glow.withOpacity(0.1),
+                    blurRadius: 30,
+                    spreadRadius: 5,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final profile = ref.watch(userProfileProvider).valueOrNull;
-                    return Text(
-                      profile?.displayName ?? 'Your Name',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: VesparaColors.primary,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final user = ref.watch(currentUserProvider);
-                    final username = user?.email?.split('@').first ?? 'user';
-                    return Text(
-                      '@$username',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: VesparaColors.secondary,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Simulated QR Code (in production, use qr_flutter package)
+                  _buildQrCodeDisplay(),
 
-          const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-          // Instructions
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: VesparaColors.surface.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  color: VesparaColors.glow,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Show this code to someone you meet. They scan it with their Vespara app to instantly connect.',
+                  const Text(
+                    'YOUR PROFILE',
                     style: TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 2,
                       color: VesparaColors.secondary,
-                      fontSize: 13,
-                      height: 1.4,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final profile =
+                          ref.watch(userProfileProvider).valueOrNull;
+                      return Text(
+                        profile?.displayName ?? 'Your Name',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: VesparaColors.primary,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final user = ref.watch(currentUserProvider).valueOrNull;
+                      final username = user?.email?.split('@').first ?? 'user';
+                      return Text(
+                        '@$username',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: VesparaColors.secondary,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-          // Share button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.link, color: VesparaColors.glow),
-                        const SizedBox(width: 12),
-                        Text('Profile link copied!'),
-                      ],
-                    ),
-                    backgroundColor: VesparaColors.surface,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            // Instructions
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: VesparaColors.glow,
+                    size: 24,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Show this code to someone you meet. They scan it with their Vespara app to instantly connect.',
+                      style: TextStyle(
+                        color: VesparaColors.secondary,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
                     ),
                   ),
-                );
-              },
-              icon: const Icon(Icons.share),
-              label: const Text('SHARE LINK'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VesparaColors.surface,
-                foregroundColor: VesparaColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Share button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.link, color: VesparaColors.glow),
+                          SizedBox(width: 12),
+                          Text('Profile link copied!'),
+                        ],
+                      ),
+                      backgroundColor: VesparaColors.surface,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.share),
+                label: const Text('SHARE LINK'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.surface,
+                  foregroundColor: VesparaColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: 40),
+          ],
+        ),
+      );
 
   /// Simulated QR code display
-  Widget _buildQrCodeDisplay() {
-    return Container(
-      width: 200,
-      height: 200,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: CustomPaint(
-        size: const Size(168, 168),
-        painter: QrCodePainter(),
-      ),
-    );
-  }
+  Widget _buildQrCodeDisplay() => Container(
+        width: 200,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: CustomPaint(
+          size: const Size(168, 168),
+          painter: QrCodePainter(),
+        ),
+      );
 
   /// Scan tab - camera view to scan others' codes
   Widget _buildScanTab() {
@@ -348,8 +344,8 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                   color: VesparaColors.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: _isScanning 
-                        ? VesparaColors.glow 
+                    color: _isScanning
+                        ? VesparaColors.glow
                         : VesparaColors.secondary.withOpacity(0.3),
                     width: 2,
                   ),
@@ -362,14 +358,18 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          _isScanning ? Icons.qr_code_scanner : Icons.camera_alt,
+                          _isScanning
+                              ? Icons.qr_code_scanner
+                              : Icons.camera_alt,
                           size: 64,
                           color: VesparaColors.glow.withOpacity(0.6),
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          _isScanning ? 'Scanning...' : 'Tap to activate camera',
-                          style: TextStyle(
+                          _isScanning
+                              ? 'Scanning...'
+                              : 'Tap to activate camera',
+                          style: const TextStyle(
                             color: VesparaColors.secondary,
                             fontSize: 16,
                           ),
@@ -397,8 +397,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                       ),
 
                     // Scanning animation
-                    if (_isScanning)
-                      _ScanningLine(),
+                    if (_isScanning) _ScanningLine(),
                   ],
                 ),
               ),
@@ -412,14 +411,14 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
               color: VesparaColors.surface.withOpacity(0.5),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Row(
+            child: const Row(
               children: [
                 Icon(
                   Icons.qr_code,
                   color: VesparaColors.glow,
                   size: 24,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Point your camera at someone\'s Vespara QR code to instantly connect.',
@@ -441,7 +440,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
   }
 
   /// Simulate a QR scan (for demo purposes - remove in production)
-  void _simulateScan() async {
+  Future<void> _simulateScan() async {
     if (_isScanning) return;
 
     HapticFeedback.mediumImpact();
@@ -452,11 +451,11 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
 
     if (mounted) {
       HapticFeedback.heavyImpact();
-      
+
       // In production, this would decode the scanned QR to get real user data
       // For now, show a message that real scanning requires camera permission
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('QR scanning requires camera integration'),
           backgroundColor: VesparaColors.surface,
         ),
@@ -469,24 +468,22 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
   }
 
   /// Success view after scanning
-  Widget _buildSuccessView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Success animation
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
+  Widget _buildSuccessView() => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Success animation
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) => Transform.scale(
                 scale: value,
                 child: Container(
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [VesparaColors.glow, VesparaColors.primary],
@@ -500,92 +497,93 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.check,
                     color: VesparaColors.background,
                     size: 60,
                   ),
                 ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 32),
-
-          Text(
-            'CONNECTED!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3,
-              color: VesparaColors.glow,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 32),
 
-          Text(
-            'You\'re now connected with',
-            style: TextStyle(
-              fontSize: 16,
-              color: VesparaColors.secondary,
+            const Text(
+              'CONNECTED!',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 3,
+                color: VesparaColors.glow,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
-          Text(
-            _scannedResult ?? 'New Connection',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.primary,
+            const Text(
+              'You\'re now connected with',
+              style: TextStyle(
+                fontSize: 16,
+                color: VesparaColors.secondary,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 40),
+            const SizedBox(height: 8),
 
-          // Actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // TODO: Navigate to chat
-                },
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('MESSAGE'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VesparaColors.glow,
-                  foregroundColor: VesparaColors.background,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            Text(
+              _scannedResult ?? 'New Connection',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Actions
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // TODO: Navigate to chat
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('MESSAGE'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VesparaColors.glow,
+                    foregroundColor: VesparaColors.background,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              OutlinedButton(
-                onPressed: () {
-                  setState(() => _showSuccess = false);
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: VesparaColors.primary,
-                  side: BorderSide(color: VesparaColors.secondary.withOpacity(0.3)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                const SizedBox(width: 16),
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() => _showSuccess = false);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: VesparaColors.primary,
+                    side: BorderSide(
+                        color: VesparaColors.secondary.withOpacity(0.3)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
+                  child: const Text('SCAN MORE'),
                 ),
-                child: const Text('SCAN MORE'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+              ],
+            ),
+          ],
+        ),
+      );
 }
 
 /// Custom painter for QR code simulation
@@ -602,7 +600,8 @@ class QrCodePainter extends CustomPainter {
     // Draw position patterns (corners)
     _drawPositionPattern(canvas, paint, 0, 0, cellSize);
     _drawPositionPattern(canvas, paint, size.width - 7 * cellSize, 0, cellSize);
-    _drawPositionPattern(canvas, paint, 0, size.height - 7 * cellSize, cellSize);
+    _drawPositionPattern(
+        canvas, paint, 0, size.height - 7 * cellSize, cellSize);
 
     // Draw random data pattern
     for (int i = 0; i < 21; i++) {
@@ -611,10 +610,11 @@ class QrCodePainter extends CustomPainter {
         if ((i < 8 && j < 8) || (i < 8 && j > 12) || (i > 12 && j < 8)) {
           continue;
         }
-        
+
         if (random.nextBool()) {
           canvas.drawRect(
-            Rect.fromLTWH(j * cellSize, i * cellSize, cellSize * 0.9, cellSize * 0.9),
+            Rect.fromLTWH(
+                j * cellSize, i * cellSize, cellSize * 0.9, cellSize * 0.9),
             paint,
           );
         }
@@ -622,17 +622,23 @@ class QrCodePainter extends CustomPainter {
     }
   }
 
-  void _drawPositionPattern(Canvas canvas, Paint paint, double x, double y, double cellSize) {
+  void _drawPositionPattern(
+      Canvas canvas, Paint paint, double x, double y, double cellSize) {
     // Outer square
     canvas.drawRect(Rect.fromLTWH(x, y, 7 * cellSize, 7 * cellSize), paint);
-    
+
     // White inner
     paint.color = Colors.white;
-    canvas.drawRect(Rect.fromLTWH(x + cellSize, y + cellSize, 5 * cellSize, 5 * cellSize), paint);
-    
+    canvas.drawRect(
+        Rect.fromLTWH(x + cellSize, y + cellSize, 5 * cellSize, 5 * cellSize),
+        paint);
+
     // Black center
     paint.color = Colors.black;
-    canvas.drawRect(Rect.fromLTWH(x + 2 * cellSize, y + 2 * cellSize, 3 * cellSize, 3 * cellSize), paint);
+    canvas.drawRect(
+        Rect.fromLTWH(
+            x + 2 * cellSize, y + 2 * cellSize, 3 * cellSize, 3 * cellSize),
+        paint);
   }
 
   @override
@@ -648,18 +654,18 @@ class ScanFramePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
-    final cornerLength = 40.0;
-    final margin = 40.0;
+    const cornerLength = 40.0;
+    const margin = 40.0;
 
     // Top left corner
     canvas.drawLine(
-      Offset(margin, margin),
-      Offset(margin + cornerLength, margin),
+      const Offset(margin, margin),
+      const Offset(margin + cornerLength, margin),
       paint,
     );
     canvas.drawLine(
-      Offset(margin, margin),
-      Offset(margin, margin + cornerLength),
+      const Offset(margin, margin),
+      const Offset(margin, margin + cornerLength),
       paint,
     );
 
@@ -710,7 +716,7 @@ class _ScanningLine extends StatefulWidget {
   State<_ScanningLine> createState() => _ScanningLineState();
 }
 
-class _ScanningLineState extends State<_ScanningLine> 
+class _ScanningLineState extends State<_ScanningLine>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
@@ -730,25 +736,23 @@ class _ScanningLineState extends State<_ScanningLine>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Positioned(
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Positioned(
           top: 60 + (_controller.value * 280),
           left: 40,
           right: 40,
           child: Container(
             height: 2,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [
                   Colors.transparent,
                   VesparaColors.glow,
                   VesparaColors.glow,
                   Colors.transparent,
                 ],
-                stops: const [0, 0.3, 0.7, 1],
+                stops: [0, 0.3, 0.7, 1],
               ),
               boxShadow: [
                 BoxShadow(
@@ -759,10 +763,8 @@ class _ScanningLineState extends State<_ScanningLine>
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
 }
 
 /// Show the QR Connect modal

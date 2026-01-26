@@ -15,12 +15,6 @@ const int maxGroupsPerUser = 10;
 
 /// State class for groups
 class GroupsState {
-  final List<VesparaGroup> groups;
-  final List<GroupInvitation> pendingInvitations;
-  final List<VesparaNotification> notifications;
-  final bool isLoading;
-  final String? error;
-
   const GroupsState({
     this.groups = const [],
     this.pendingInvitations = const [],
@@ -28,6 +22,11 @@ class GroupsState {
     this.isLoading = false,
     this.error,
   });
+  final List<VesparaGroup> groups;
+  final List<GroupInvitation> pendingInvitations;
+  final List<VesparaNotification> notifications;
+  final bool isLoading;
+  final String? error;
 
   GroupsState copyWith({
     List<VesparaGroup>? groups,
@@ -35,48 +34,46 @@ class GroupsState {
     List<VesparaNotification>? notifications,
     bool? isLoading,
     String? error,
-  }) {
-    return GroupsState(
-      groups: groups ?? this.groups,
-      pendingInvitations: pendingInvitations ?? this.pendingInvitations,
-      notifications: notifications ?? this.notifications,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
-  }
+  }) =>
+      GroupsState(
+        groups: groups ?? this.groups,
+        pendingInvitations: pendingInvitations ?? this.pendingInvitations,
+        notifications: notifications ?? this.notifications,
+        isLoading: isLoading ?? this.isLoading,
+        error: error,
+      );
 
   int get groupCount => groups.length;
   bool get canCreateGroup => groupCount < maxGroupsPerUser;
   int get remainingSlots => maxGroupsPerUser - groupCount;
-  
-  List<VesparaGroup> get createdGroups => 
+
+  List<VesparaGroup> get createdGroups =>
       groups.where((g) => g.isCreator).toList();
-  
-  List<VesparaGroup> get joinedGroups => 
+
+  List<VesparaGroup> get joinedGroups =>
       groups.where((g) => !g.isCreator).toList();
-  
-  int get unreadNotificationCount => 
+
+  int get unreadNotificationCount =>
       notifications.where((n) => !n.isRead).length;
-  
+
   int get pendingInvitationCount => pendingInvitations.length;
 }
 
 /// Groups state notifier
 class GroupsNotifier extends StateNotifier<GroupsState> {
-  final SupabaseClient? _supabase;
-  
-  GroupsNotifier({SupabaseClient? supabase}) 
+  GroupsNotifier({SupabaseClient? supabase})
       : _supabase = supabase,
         super(const GroupsState()) {
     _initialize();
   }
+  final SupabaseClient? _supabase;
 
   void _initialize() {
     // Load initial data
     loadGroups();
     loadPendingInvitations();
     loadNotifications();
-    
+
     // Subscribe to realtime updates
     _subscribeToUpdates();
   }
@@ -86,7 +83,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     if (userId == null || _supabase == null) return;
 
     // Subscribe to group changes
-    _supabase!
+    _supabase
         .from('group_members')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
@@ -95,7 +92,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
         });
 
     // Subscribe to invitation changes
-    _supabase!
+    _supabase
         .from('group_invitations')
         .stream(primaryKey: ['id'])
         .eq('invitee_id', userId)
@@ -104,7 +101,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
         });
 
     // Subscribe to notifications
-    _supabase!
+    _supabase
         .from('notifications')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
@@ -121,13 +118,13 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
       return;
     }
 
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
 
     try {
-      final userId = _supabase!.auth.currentUser?.id;
+      final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Not authenticated');
 
-      final response = await _supabase!
+      final response = await _supabase
           .from('user_groups_summary')
           .select()
           .eq('user_id', userId)
@@ -159,10 +156,10 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      final userId = _supabase!.auth.currentUser?.id;
+      final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final response = await _supabase!
+      final response = await _supabase
           .from('pending_group_invitations')
           .select()
           .eq('invitee_id', userId)
@@ -186,10 +183,10 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      final userId = _supabase!.auth.currentUser?.id;
+      final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final response = await _supabase!
+      final response = await _supabase
           .from('notifications')
           .select()
           .eq('user_id', userId)
@@ -227,7 +224,6 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
         creatorId: 'current-user',
         conversationId: 'conv-${DateTime.now().millisecondsSinceEpoch}',
         createdAt: DateTime.now(),
-        memberCount: 1,
         currentUserRole: GroupRole.creator,
         currentUserJoinedAt: DateTime.now(),
       );
@@ -235,10 +231,10 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
       return newGroup;
     }
 
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
 
     try {
-      final response = await _supabase!.rpc(
+      final response = await _supabase.rpc(
         'create_vespara_group',
         params: {
           'p_name': name,
@@ -249,7 +245,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
 
       final groupId = response as String;
       await loadGroups();
-      
+
       return state.groups.firstWhere((g) => g.id == groupId);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -270,7 +266,8 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     );
 
     if (!group.isCreator) {
-      state = state.copyWith(error: 'Only the group creator can send invitations');
+      state =
+          state.copyWith(error: 'Only the group creator can send invitations');
       return false;
     }
 
@@ -280,7 +277,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      await _supabase!.rpc(
+      await _supabase.rpc(
         'send_group_invitation',
         params: {
           'p_group_id': groupId,
@@ -308,12 +305,11 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
         (i) => i.id == invitationId,
         orElse: () => throw Exception('Invitation not found'),
       );
-      
+
       // Remove from pending
-      final newInvitations = state.pendingInvitations
-          .where((i) => i.id != invitationId)
-          .toList();
-      
+      final newInvitations =
+          state.pendingInvitations.where((i) => i.id != invitationId).toList();
+
       // Add mock group
       final newGroup = VesparaGroup(
         id: invitation.groupId,
@@ -326,7 +322,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
         currentUserRole: GroupRole.member,
         currentUserJoinedAt: DateTime.now(),
       );
-      
+
       state = state.copyWith(
         groups: [newGroup, ...state.groups],
         pendingInvitations: newInvitations,
@@ -335,11 +331,11 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      await _supabase!.rpc(
+      await _supabase.rpc(
         'accept_group_invitation',
         params: {'p_invitation_id': invitationId},
       );
-      
+
       await loadGroups();
       await loadPendingInvitations();
       return true;
@@ -353,19 +349,18 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
   Future<bool> declineInvitation(String invitationId) async {
     if (_supabase == null) {
       // Mock decline
-      final newInvitations = state.pendingInvitations
-          .where((i) => i.id != invitationId)
-          .toList();
+      final newInvitations =
+          state.pendingInvitations.where((i) => i.id != invitationId).toList();
       state = state.copyWith(pendingInvitations: newInvitations);
       return true;
     }
 
     try {
-      await _supabase!.rpc(
+      await _supabase.rpc(
         'decline_group_invitation',
         params: {'p_invitation_id': invitationId},
       );
-      
+
       await loadPendingInvitations();
       return true;
     } catch (e) {
@@ -389,11 +384,11 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      await _supabase!.rpc(
+      await _supabase.rpc(
         'leave_vespara_group',
         params: {'p_group_id': groupId},
       );
-      
+
       await loadGroups();
       return true;
     } catch (e) {
@@ -410,7 +405,8 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     );
 
     if (!group.isCreator) {
-      state = state.copyWith(error: 'Only the group creator can delete the group');
+      state =
+          state.copyWith(error: 'Only the group creator can delete the group');
       return false;
     }
 
@@ -422,11 +418,11 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      await _supabase!.rpc(
+      await _supabase.rpc(
         'delete_vespara_group',
         params: {'p_group_id': groupId},
       );
-      
+
       await loadGroups();
       return true;
     } catch (e) {
@@ -443,7 +439,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      final response = await _supabase!
+      final response = await _supabase
           .from('group_members')
           .select('''
             *,
@@ -493,11 +489,11 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     }
 
     try {
-      await _supabase!
-          .from('notifications')
-          .update({'is_read': true, 'read_at': DateTime.now().toIso8601String()})
-          .eq('id', notificationId);
-      
+      await _supabase.from('notifications').update({
+        'is_read': true,
+        'read_at': DateTime.now().toIso8601String()
+      }).eq('id', notificationId);
+
       await loadNotifications();
     } catch (e) {
       // Silently fail
@@ -506,7 +502,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
 
   /// Clear error
   void clearError() {
-    state = state.copyWith(error: null);
+    state = state.copyWith();
   }
 }
 
@@ -515,7 +511,8 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
 // ════════════════════════════════════════════════════════════════════════════
 
 /// Main groups state provider
-final groupsProvider = StateNotifierProvider<GroupsNotifier, GroupsState>((ref) {
+final groupsProvider =
+    StateNotifierProvider<GroupsNotifier, GroupsState>((ref) {
   SupabaseClient? supabase;
   try {
     supabase = Supabase.instance.client;
@@ -536,19 +533,16 @@ final groupProvider = Provider.family<VesparaGroup?, String>((ref, groupId) {
 });
 
 /// Provider for pending invitations count
-final pendingInvitationsCountProvider = Provider<int>((ref) {
-  return ref.watch(groupsProvider).pendingInvitationCount;
-});
+final pendingInvitationsCountProvider =
+    Provider<int>((ref) => ref.watch(groupsProvider).pendingInvitationCount);
 
 /// Provider for unread notifications count
-final unreadNotificationsCountProvider = Provider<int>((ref) {
-  return ref.watch(groupsProvider).unreadNotificationCount;
-});
+final unreadNotificationsCountProvider =
+    Provider<int>((ref) => ref.watch(groupsProvider).unreadNotificationCount);
 
 /// Provider to check if user can create more groups
-final canCreateGroupProvider = Provider<bool>((ref) {
-  return ref.watch(groupsProvider).canCreateGroup;
-});
+final canCreateGroupProvider =
+    Provider<bool>((ref) => ref.watch(groupsProvider).canCreateGroup);
 
 // ════════════════════════════════════════════════════════════════════════════
 // MOCK DATA FOR DEMO
@@ -563,7 +557,7 @@ final List<VesparaGroup> _mockGroups = [
     conversationId: 'conv-group-1',
     createdAt: DateTime.now().subtract(const Duration(days: 30)),
     memberCount: 5,
-    memberAvatars: [
+    memberAvatars: const [
       'https://i.pravatar.cc/150?img=1',
       'https://i.pravatar.cc/150?img=2',
       'https://i.pravatar.cc/150?img=3',
@@ -579,7 +573,7 @@ final List<VesparaGroup> _mockGroups = [
     conversationId: 'conv-group-2',
     createdAt: DateTime.now().subtract(const Duration(days: 15)),
     memberCount: 8,
-    memberAvatars: [
+    memberAvatars: const [
       'https://i.pravatar.cc/150?img=4',
       'https://i.pravatar.cc/150?img=5',
       'https://i.pravatar.cc/150?img=6',
@@ -612,7 +606,7 @@ final List<VesparaNotification> _mockNotifications = [
     type: 'group_invitation',
     title: 'Group Invitation',
     message: 'Alex Morgan invited you to join Book Club Elite',
-    data: {
+    data: const {
       'invitation_id': 'inv-1',
       'group_id': 'group-pending-1',
       'group_name': 'Book Club Elite',
@@ -636,7 +630,6 @@ final List<GroupMember> _mockMembers = [
     id: 'member-2',
     groupId: 'group-1',
     userId: 'user-2',
-    role: GroupRole.member,
     joinedAt: DateTime.now().subtract(const Duration(days: 25)),
     userName: 'Sarah Chen',
     userAvatar: 'https://i.pravatar.cc/150?img=2',
@@ -645,7 +638,6 @@ final List<GroupMember> _mockMembers = [
     id: 'member-3',
     groupId: 'group-1',
     userId: 'user-3',
-    role: GroupRole.member,
     joinedAt: DateTime.now().subtract(const Duration(days: 20)),
     userName: 'Marcus Lee',
     userAvatar: 'https://i.pravatar.cc/150?img=3',

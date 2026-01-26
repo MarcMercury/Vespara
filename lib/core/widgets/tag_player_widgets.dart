@@ -9,6 +9,19 @@ import '../utils/player_colors.dart';
 /// A reusable widget for displaying player information across TAG games.
 
 class TagPlayerChip extends StatelessWidget {
+  const TagPlayerChip({
+    super.key,
+    required this.name,
+    required this.color,
+    this.score,
+    this.isActive = true,
+    this.showRemove = false,
+    this.onRemove,
+    this.onTap,
+    this.size = TagPlayerChipSize.medium,
+    this.isTurn = false,
+  });
+
   /// Player name
   final String name;
 
@@ -36,19 +49,6 @@ class TagPlayerChip extends StatelessWidget {
   /// Whether chip is in "turn" state (highlighted)
   final bool isTurn;
 
-  const TagPlayerChip({
-    super.key,
-    required this.name,
-    required this.color,
-    this.score,
-    this.isActive = true,
-    this.showRemove = false,
-    this.onRemove,
-    this.onTap,
-    this.size = TagPlayerChipSize.medium,
-    this.isTurn = false,
-  });
-
   double get _height => switch (size) {
         TagPlayerChipSize.small => 32,
         TagPlayerChipSize.medium => 44,
@@ -68,114 +68,113 @@ class TagPlayerChip extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: _height,
-        padding: EdgeInsets.only(
-          left: 4,
-          right: showRemove ? 4 : 12,
-        ),
-        decoration: BoxDecoration(
-          color: isTurn
-              ? color.withOpacity(0.3)
-              : color.withOpacity(isActive ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(_height / 2),
-          border: Border.all(
-            color: isTurn ? color : color.withOpacity(isActive ? 0.5 : 0.2),
-            width: isTurn ? 2 : 1,
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: _height,
+          padding: EdgeInsets.only(
+            left: 4,
+            right: showRemove ? 4 : 12,
           ),
-          boxShadow: isTurn
-              ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Avatar
-            Container(
-              width: _avatarSize,
-              height: _avatarSize,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: TextStyle(
-                    color: color.contrastingText,
-                    fontSize: _fontSize,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+          decoration: BoxDecoration(
+            color: isTurn
+                ? color.withOpacity(0.3)
+                : color.withOpacity(isActive ? 0.15 : 0.08),
+            borderRadius: BorderRadius.circular(_height / 2),
+            border: Border.all(
+              color: isTurn ? color : color.withOpacity(isActive ? 0.5 : 0.2),
+              width: isTurn ? 2 : 1,
             ),
-            SizedBox(width: 8),
-            // Name
-            Text(
-              name,
-              style: TextStyle(
-                color: isActive ? Colors.white : Colors.white38,
-                fontSize: _fontSize,
-                fontWeight: isTurn ? FontWeight.bold : FontWeight.w500,
-              ),
-            ),
-            // Score
-            if (score != null) ...[
-              SizedBox(width: 8),
+            boxShadow: isTurn
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Avatar
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                width: _avatarSize,
+                height: _avatarSize,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(10),
+                  color: color,
+                  shape: BoxShape.circle,
                 ),
-                child: Text(
-                  score.toString(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: _fontSize - 2,
-                    fontWeight: FontWeight.bold,
+                child: Center(
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      color: color.contrastingText,
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ],
-            // Remove button
-            if (showRemove) ...[
-              SizedBox(width: 4),
-              GestureDetector(
-                onTap: () {
-                  TagHaptics.selection();
-                  onRemove?.call();
-                },
-                child: Container(
-                  width: _avatarSize - 4,
-                  height: _avatarSize - 4,
+              const SizedBox(width: 8),
+              // Name
+              Text(
+                name,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.white38,
+                  fontSize: _fontSize,
+                  fontWeight: isTurn ? FontWeight.bold : FontWeight.w500,
+                ),
+              ),
+              // Score
+              if (score != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    color: color.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    Icons.close,
-                    size: _fontSize,
-                    color: Colors.white54,
+                  child: Text(
+                    score.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: _fontSize - 2,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
+              ],
+              // Remove button
+              if (showRemove) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    TagHaptics.selection();
+                    onRemove?.call();
+                  },
+                  child: Container(
+                    width: _avatarSize - 4,
+                    height: _avatarSize - 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      size: _fontSize,
+                      color: Colors.white54,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 enum TagPlayerChipSize { small, medium, large }
@@ -185,6 +184,18 @@ enum TagPlayerChipSize { small, medium, large }
 /// ════════════════════════════════════════════════════════════════════════════
 
 class TagPlayerList extends StatelessWidget {
+  const TagPlayerList({
+    super.key,
+    required this.players,
+    this.activeIndex = -1,
+    this.onPlayerTap,
+    this.onRemove,
+    this.allowRemoval = false,
+    this.scores,
+    this.direction = Axis.horizontal,
+    this.chipSize = TagPlayerChipSize.medium,
+  });
+
   /// List of player names
   final List<String> players;
 
@@ -209,18 +220,6 @@ class TagPlayerList extends StatelessWidget {
   /// Chip size
   final TagPlayerChipSize chipSize;
 
-  const TagPlayerList({
-    super.key,
-    required this.players,
-    this.activeIndex = -1,
-    this.onPlayerTap,
-    this.onRemove,
-    this.allowRemoval = false,
-    this.scores,
-    this.direction = Axis.horizontal,
-    this.chipSize = TagPlayerChipSize.medium,
-  });
-
   @override
   Widget build(BuildContext context) {
     if (players.isEmpty) {
@@ -231,7 +230,7 @@ class TagPlayerList extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white12),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.person_add_outlined, color: Colors.white38, size: 20),
@@ -245,8 +244,9 @@ class TagPlayerList extends StatelessWidget {
       );
     }
 
-    final chips = List.generate(players.length, (i) {
-      return Padding(
+    final chips = List.generate(
+      players.length,
+      (i) => Padding(
         padding: EdgeInsets.only(
           right: direction == Axis.horizontal ? 8 : 0,
           bottom: direction == Axis.vertical ? 8 : 0,
@@ -255,15 +255,14 @@ class TagPlayerList extends StatelessWidget {
           name: players[i],
           color: PlayerColors.forIndex(i),
           score: scores != null && i < scores!.length ? scores![i] : null,
-          isActive: true,
           isTurn: i == activeIndex,
           showRemove: allowRemoval,
           onTap: () => onPlayerTap?.call(i),
           onRemove: () => onRemove?.call(i),
           size: chipSize,
         ),
-      );
-    });
+      ),
+    );
 
     if (direction == Axis.horizontal) {
       return SingleChildScrollView(
@@ -286,6 +285,15 @@ class TagPlayerList extends StatelessWidget {
 /// ════════════════════════════════════════════════════════════════════════════
 
 class TagAddPlayerInput extends StatefulWidget {
+  const TagAddPlayerInput({
+    super.key,
+    required this.onAdd,
+    this.maxPlayers = 8,
+    this.currentPlayerCount = 0,
+    this.placeholder = 'Enter player name',
+    this.autoFocus = false,
+  });
+
   /// Called when player is added
   final ValueChanged<String> onAdd;
 
@@ -300,15 +308,6 @@ class TagAddPlayerInput extends StatefulWidget {
 
   /// Auto-focus on mount
   final bool autoFocus;
-
-  const TagAddPlayerInput({
-    super.key,
-    required this.onAdd,
-    this.maxPlayers = 8,
-    this.currentPlayerCount = 0,
-    this.placeholder = 'Enter player name',
-    this.autoFocus = false,
-  });
 
   @override
   State<TagAddPlayerInput> createState() => _TagAddPlayerInputState();
@@ -345,7 +344,7 @@ class _TagAddPlayerInputState extends State<TagAddPlayerInput> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        DecoratedBox(
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(16),
@@ -361,8 +360,9 @@ class _TagAddPlayerInputState extends State<TagAddPlayerInput> {
                   enabled: !isAtMax,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: isAtMax ? 'Max players reached' : widget.placeholder,
-                    hintStyle: TextStyle(color: Colors.white38),
+                    hintText:
+                        isAtMax ? 'Max players reached' : widget.placeholder,
+                    hintStyle: const TextStyle(color: Colors.white38),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -401,7 +401,7 @@ class _TagAddPlayerInputState extends State<TagAddPlayerInput> {
           const SizedBox(height: 8),
           Text(
             '$remaining player${remaining == 1 ? '' : 's'} remaining',
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white38,
               fontSize: 12,
             ),

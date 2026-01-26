@@ -7,16 +7,15 @@ import '../theme/app_theme.dart';
 /// Shows a bottom sheet for ranking another user's photos
 /// Users drag photos to reorder them from 1 (best) to N (least preferred)
 class PhotoRankingSheet extends ConsumerStatefulWidget {
-  final String userId;
-  final String userName;
-  final List<ProfilePhoto> photos;
-
   const PhotoRankingSheet({
     super.key,
     required this.userId,
     required this.userName,
     required this.photos,
   });
+  final String userId;
+  final String userName;
+  final List<ProfilePhoto> photos;
 
   /// Show the photo ranking sheet and return true if ranking was submitted
   static Future<bool> show(
@@ -63,13 +62,14 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
   }
 
   Future<void> _loadExistingRanking() async {
-    final existing = await ref.read(existingRankingProvider(widget.userId).future);
+    final existing =
+        await ref.read(existingRankingProvider(widget.userId).future);
     if (existing != null && mounted) {
       // Reorder photos based on existing ranking
       final rankings = Map.fromEntries(
         existing.rankings.entries.map((e) => MapEntry(e.key, e.value)),
       );
-      
+
       setState(() {
         _rankedPhotos.sort((a, b) {
           final rankA = rankings[a.id] ?? 99;
@@ -81,146 +81,145 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: VesparaColors.secondary.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
+  Widget build(BuildContext context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: VesparaColors.secondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Text(
-                  'Rank ${widget.userName}\'s Photos',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: VesparaColors.primary,
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Text(
+                    'Rank ${widget.userName}\'s Photos',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Drag to reorder from best (1) to least preferred',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: VesparaColors.secondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          
-          // Ranking instructions
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: VesparaColors.glow.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.tips_and_updates, color: VesparaColors.glow, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Your ranking helps ${widget.userName} choose their best profile photo!',
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Drag to reorder from best (1) to least preferred',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: VesparaColors.secondary,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Reorderable photo list
-          Expanded(
-            child: ReorderableListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _rankedPhotos.length,
-              onReorder: _onReorder,
-              proxyDecorator: (child, index, animation) {
-                return _AnimatedProxy(
-                  animation: animation,
-                  child: child,
-                );
-              },
-              itemBuilder: (context, index) {
-                final photo = _rankedPhotos[index];
-                final rank = index + 1;
-                
-                return _buildRankablePhotoTile(photo, rank, key: ValueKey(photo.id));
-              },
-            ),
-          ),
-          
-          // Submit button
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: SafeArea(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitRanking,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VesparaColors.glow,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+
+            // Ranking instructions
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.tips_and_updates,
+                      color: VesparaColors.glow, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Your ranking helps ${widget.userName} choose their best profile photo!',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: VesparaColors.secondary,
+                      ),
                     ),
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Reorderable photo list
+            Expanded(
+              child: ReorderableListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _rankedPhotos.length,
+                onReorder: _onReorder,
+                proxyDecorator: (child, index, animation) => _AnimatedProxy(
+                  animation: animation,
+                  child: child,
+                ),
+                itemBuilder: (context, index) {
+                  final photo = _rankedPhotos[index];
+                  final rank = index + 1;
+
+                  return _buildRankablePhotoTile(photo, rank,
+                      key: ValueKey(photo.id));
+                },
+              ),
+            ),
+
+            // Submit button
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitRanking,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VesparaColors.glow,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Submit Ranking',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Submit Ranking',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 
-  Widget _buildRankablePhotoTile(ProfilePhoto photo, int rank, {required Key key}) {
+  Widget _buildRankablePhotoTile(ProfilePhoto photo, int rank,
+      {required Key key}) {
     final color = _getRankColor(rank);
-    
+
     return Container(
       key: key,
       margin: const EdgeInsets.only(bottom: 12),
@@ -237,7 +236,8 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
             height: 100,
             decoration: BoxDecoration(
               color: color.withOpacity(0.2),
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(16)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -251,14 +251,16 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
                   ),
                 ),
                 Icon(
-                  rank == 1 ? Icons.emoji_events : (rank <= 3 ? Icons.thumb_up : Icons.thumbs_up_down),
+                  rank == 1
+                      ? Icons.emoji_events
+                      : (rank <= 3 ? Icons.thumb_up : Icons.thumbs_up_down),
                   color: color,
                   size: 16,
                 ),
               ],
             ),
           ),
-          
+
           // Photo
           Padding(
             padding: const EdgeInsets.all(8),
@@ -273,26 +275,27 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
                   width: 80,
                   height: 84,
                   color: VesparaColors.surface,
-                  child: Icon(Icons.broken_image, color: VesparaColors.secondary),
+                  child: const Icon(Icons.broken_image,
+                      color: VesparaColors.secondary),
                 ),
               ),
             ),
           ),
-          
+
           // Drag handle
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 _getRankLabel(rank),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   color: VesparaColors.secondary,
                 ),
               ),
             ),
           ),
-          
+
           // Drag indicator
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -356,18 +359,19 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
       photoVersions[photo.id] = photo.version;
     }
 
-    final success = await ref.read(profilePhotosProvider.notifier).submitRanking(
-      rankedUserId: widget.userId,
-      rankedPhotoIds: _rankedPhotos.map((p) => p.id).toList(),
-      photoVersions: photoVersions,
-    );
+    final success =
+        await ref.read(profilePhotosProvider.notifier).submitRanking(
+              rankedUserId: widget.userId,
+              rankedPhotoIds: _rankedPhotos.map((p) => p.id).toList(),
+              photoVersions: photoVersions,
+            );
 
     if (!mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Ranking submitted! Thanks for helping.'),
+        const SnackBar(
+          content: Text('Ranking submitted! Thanks for helping.'),
           backgroundColor: VesparaColors.glow,
         ),
       );
@@ -375,8 +379,8 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
     } else {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to submit ranking. Please try again.'),
+        const SnackBar(
+          content: Text('Failed to submit ranking. Please try again.'),
           backgroundColor: VesparaColors.error,
         ),
       );
@@ -386,13 +390,12 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
 
 /// Helper widget for animated proxy decorator
 class _AnimatedProxy extends StatelessWidget {
-  final Animation<double> animation;
-  final Widget? child;
-
   const _AnimatedProxy({
     required this.animation,
     this.child,
   });
+  final Animation<double> animation;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {

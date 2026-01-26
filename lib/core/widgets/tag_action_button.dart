@@ -8,6 +8,75 @@ import '../utils/haptic_patterns.dart';
 /// A reusable animated button for game actions like "Start", "Next", "Skip", etc.
 
 class TagActionButton extends StatefulWidget {
+  const TagActionButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.color = Colors.blue,
+    this.icon,
+    this.iconLeft = true,
+    this.size = TagActionButtonSize.medium,
+    this.isLoading = false,
+    this.disabled = false,
+    this.style = TagActionButtonStyle.filled,
+    this.width,
+    this.hapticPattern = TagHapticPattern.selection,
+  });
+
+  /// Primary action button (filled, prominent)
+  factory TagActionButton.primary({
+    required String label,
+    required VoidCallback? onPressed,
+    Color color = Colors.blue,
+    IconData? icon,
+    bool isLoading = false,
+    bool disabled = false,
+  }) =>
+      TagActionButton(
+        label: label,
+        onPressed: onPressed,
+        color: color,
+        icon: icon,
+        size: TagActionButtonSize.large,
+        isLoading: isLoading,
+        disabled: disabled,
+        hapticPattern: TagHapticPattern.success,
+      );
+
+  /// Secondary action button (outlined)
+  factory TagActionButton.secondary({
+    required String label,
+    required VoidCallback? onPressed,
+    Color color = Colors.white,
+    IconData? icon,
+    bool disabled = false,
+  }) =>
+      TagActionButton(
+        label: label,
+        onPressed: onPressed,
+        color: color,
+        icon: icon,
+        style: TagActionButtonStyle.outlined,
+        disabled: disabled,
+      );
+
+  /// Destructive action button (red, for skip/quit)
+  factory TagActionButton.destructive({
+    required String label,
+    required VoidCallback? onPressed,
+    IconData? icon,
+    bool disabled = false,
+  }) =>
+      TagActionButton(
+        label: label,
+        onPressed: onPressed,
+        color: Colors.red,
+        icon: icon,
+        style: TagActionButtonStyle.outlined,
+        disabled: disabled,
+        hapticPattern: TagHapticPattern.warning,
+      );
+
   /// Button label
   final String label;
 
@@ -41,81 +110,6 @@ class TagActionButton extends StatefulWidget {
   /// Haptic pattern to play on tap
   final TagHapticPattern hapticPattern;
 
-  const TagActionButton({
-    super.key,
-    required this.label,
-    this.onPressed,
-    this.color = Colors.blue,
-    this.icon,
-    this.iconLeft = true,
-    this.size = TagActionButtonSize.medium,
-    this.isLoading = false,
-    this.disabled = false,
-    this.style = TagActionButtonStyle.filled,
-    this.width,
-    this.hapticPattern = TagHapticPattern.selection,
-  });
-
-  /// Primary action button (filled, prominent)
-  factory TagActionButton.primary({
-    required String label,
-    required VoidCallback? onPressed,
-    Color color = Colors.blue,
-    IconData? icon,
-    bool isLoading = false,
-    bool disabled = false,
-  }) {
-    return TagActionButton(
-      label: label,
-      onPressed: onPressed,
-      color: color,
-      icon: icon,
-      size: TagActionButtonSize.large,
-      style: TagActionButtonStyle.filled,
-      isLoading: isLoading,
-      disabled: disabled,
-      hapticPattern: TagHapticPattern.success,
-    );
-  }
-
-  /// Secondary action button (outlined)
-  factory TagActionButton.secondary({
-    required String label,
-    required VoidCallback? onPressed,
-    Color color = Colors.white,
-    IconData? icon,
-    bool disabled = false,
-  }) {
-    return TagActionButton(
-      label: label,
-      onPressed: onPressed,
-      color: color,
-      icon: icon,
-      size: TagActionButtonSize.medium,
-      style: TagActionButtonStyle.outlined,
-      disabled: disabled,
-    );
-  }
-
-  /// Destructive action button (red, for skip/quit)
-  factory TagActionButton.destructive({
-    required String label,
-    required VoidCallback? onPressed,
-    IconData? icon,
-    bool disabled = false,
-  }) {
-    return TagActionButton(
-      label: label,
-      onPressed: onPressed,
-      color: Colors.red,
-      icon: icon,
-      size: TagActionButtonSize.medium,
-      style: TagActionButtonStyle.outlined,
-      disabled: disabled,
-      hapticPattern: TagHapticPattern.warning,
-    );
-  }
-
   @override
   State<TagActionButton> createState() => _TagActionButtonState();
 }
@@ -145,7 +139,8 @@ class _TagActionButtonState extends State<TagActionButton>
 
   EdgeInsets get _padding => switch (widget.size) {
         TagActionButtonSize.small => const EdgeInsets.symmetric(horizontal: 16),
-        TagActionButtonSize.medium => const EdgeInsets.symmetric(horizontal: 24),
+        TagActionButtonSize.medium =>
+          const EdgeInsets.symmetric(horizontal: 24),
         TagActionButtonSize.large => const EdgeInsets.symmetric(horizontal: 32),
       };
 
@@ -264,7 +259,8 @@ class _TagActionButtonState extends State<TagActionButton>
         );
       case TagActionButtonStyle.outlined:
         return BoxDecoration(
-          color: _isPressed ? widget.color.withOpacity(0.1) : Colors.transparent,
+          color:
+              _isPressed ? widget.color.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(_height / 2),
           border: Border.all(
             color: widget.color,
@@ -273,7 +269,8 @@ class _TagActionButtonState extends State<TagActionButton>
         );
       case TagActionButtonStyle.ghost:
         return BoxDecoration(
-          color: _isPressed ? widget.color.withOpacity(0.1) : Colors.transparent,
+          color:
+              _isPressed ? widget.color.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(_height / 2),
         );
     }
@@ -320,14 +317,14 @@ class _TagActionButtonState extends State<TagActionButton>
     if (widget.iconLeft) {
       return [
         icon,
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         label,
       ];
     }
 
     return [
       label,
-      SizedBox(width: 8),
+      const SizedBox(width: 8),
       icon,
     ];
   }
@@ -349,13 +346,6 @@ enum TagHapticPattern { selection, success, warning, error, impact }
 /// ════════════════════════════════════════════════════════════════════════════
 
 class TagIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final Color color;
-  final double size;
-  final bool filled;
-  final String? tooltip;
-
   const TagIconButton({
     super.key,
     required this.icon,
@@ -365,6 +355,12 @@ class TagIconButton extends StatelessWidget {
     this.filled = false,
     this.tooltip,
   });
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color color;
+  final double size;
+  final bool filled;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -390,7 +386,7 @@ class TagIconButton extends StatelessWidget {
     );
 
     if (tooltip != null) {
-      return Tooltip(message: tooltip!, child: button);
+      return Tooltip(message: tooltip, child: button);
     }
 
     return button;

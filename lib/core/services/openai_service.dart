@@ -7,7 +7,7 @@ import '../constants/app_constants.dart';
 /// OpenAI Service for Strategist and Ghost Protocol features
 class OpenAIService {
   static const String _baseUrl = 'https://api.openai.com/v1';
-  
+
   /// Generate a polite closure message for Ghost Protocol
   static Future<String> generateClosureMessage({
     required String matchName,
@@ -29,9 +29,9 @@ ${reason != null ? 'Reason for ending: $reason' : ''}
 Generate ONLY the message text, no quotes or explanation.
 ''';
 
-    return await _chat(prompt);
+    return _chat(prompt);
   }
-  
+
   /// Generate conversation resuscitator prompt
   static Future<String> generateResuscitator({
     required String matchName,
@@ -53,9 +53,9 @@ Match interests: $matchInterests
 Generate ONLY the message text, no quotes or explanation.
 ''';
 
-    return await _chat(prompt);
+    return _chat(prompt);
   }
-  
+
   /// Generate strategic advice for The Strategist
   static Future<String> generateStrategicAdvice({
     required double optimizationScore,
@@ -75,9 +75,9 @@ Response Rate: ${(responseRate * 100).toStringAsFixed(1)}%
 Keep it under 50 words. Be direct and practical.
 ''';
 
-    return await _chat(prompt);
+    return _chat(prompt);
   }
-  
+
   /// Generate Ghost Protocol closure message
   static Future<String> generateGhostProtocol({
     required String matchName,
@@ -85,11 +85,14 @@ Keep it under 50 words. Be direct and practical.
     required int duration,
   }) async {
     final toneDescriptions = {
-      'kind': 'Be warm, appreciative, and wish them well. Focus on positive memories.',
-      'honest': 'Be direct but respectful. Acknowledge the situation honestly without being harsh.',
-      'brief': 'Keep it short and simple. One or two sentences maximum. No fluff.',
+      'kind':
+          'Be warm, appreciative, and wish them well. Focus on positive memories.',
+      'honest':
+          'Be direct but respectful. Acknowledge the situation honestly without being harsh.',
+      'brief':
+          'Keep it short and simple. One or two sentences maximum. No fluff.',
     };
-    
+
     final prompt = '''
 Write a closure message for $matchName.
 We haven't spoken in $duration days.
@@ -105,9 +108,9 @@ Guidelines:
 Generate ONLY the message text, no quotes or explanation.
 ''';
 
-    return await _chat(prompt);
+    return _chat(prompt);
   }
-  
+
   /// Generate Truth or Dare prompts for TAGS
   static Future<List<String>> generateGamePrompts({
     required String consentLevel,
@@ -136,7 +139,7 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
       return [response];
     }
   }
-  
+
   /// Core chat completion method
   static Future<String> _chat(String prompt) async {
     final response = await http.post(
@@ -150,7 +153,8 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
         'messages': [
           {
             'role': 'system',
-            'content': 'You are a sophisticated dating and relationship advisor. Be direct, mature, and helpful.'
+            'content':
+                'You are a sophisticated dating and relationship advisor. Be direct, mature, and helpful.',
           },
           {
             'role': 'user',
@@ -161,7 +165,7 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
         'temperature': 0.7,
       }),
     );
-    
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['choices'][0]['message']['content'].toString().trim();

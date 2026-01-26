@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ai_service.dart';
-import 'background_pregeneration_service.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// MATCH INSIGHTS - AI-Powered Compatibility at a Glance
@@ -14,11 +13,10 @@ import 'background_pregeneration_service.dart';
 /// - No clicks needed - insights are always visible
 
 class MatchInsightsService {
+  MatchInsightsService._();
   static MatchInsightsService? _instance;
   static MatchInsightsService get instance =>
       _instance ??= MatchInsightsService._();
-
-  MatchInsightsService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
   final AIService _aiService = AIService.instance;
@@ -51,12 +49,15 @@ class MatchInsightsService {
     final insight = _generateLocalInsight(myProfile, otherProfile);
 
     // Cache it
-    _cacheInsight(otherUserId, MatchInsight(
-      quickInsight: insight.quickInsight,
-      compatibility: insight.compatibility,
-      sharedInterests: insight.sharedInterests,
-      uniqueTraits: insight.uniqueTraits,
-    ));
+    _cacheInsight(
+      otherUserId,
+      MatchInsight(
+        quickInsight: insight.quickInsight,
+        compatibility: insight.compatibility,
+        sharedInterests: insight.sharedInterests,
+        uniqueTraits: insight.uniqueTraits,
+      ),
+    );
 
     return insight.quickInsight;
   }
@@ -265,7 +266,8 @@ Compatibility insight:''',
       systemPrompt: '''Suggest 3 conversation topics based on these profiles.
 Each should be specific and actionable.
 Keep each under 50 characters. One per line, no numbering.''',
-      prompt: '''Profile 1 interests: ${(myProfile['interests'] as List?)?.join(', ') ?? 'not listed'}
+      prompt:
+          '''Profile 1 interests: ${(myProfile['interests'] as List?)?.join(', ') ?? 'not listed'}
 Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not listed'}
 
 3 conversation topics:''',
@@ -316,12 +318,15 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
       if (_getCachedInsight(userId) != null) continue;
 
       final insight = _generateLocalInsight(myProfile, profile);
-      _cacheInsight(userId, MatchInsight(
-        quickInsight: insight.quickInsight,
-        compatibility: insight.compatibility,
-        sharedInterests: insight.sharedInterests,
-        uniqueTraits: insight.uniqueTraits,
-      ));
+      _cacheInsight(
+        userId,
+        MatchInsight(
+          quickInsight: insight.quickInsight,
+          compatibility: insight.compatibility,
+          sharedInterests: insight.sharedInterests,
+          uniqueTraits: insight.uniqueTraits,
+        ),
+      );
     }
   }
 
@@ -353,7 +358,8 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
     try {
       final otherProfile = await _supabase
           .from('profiles')
-          .select('id, display_name, bio, interests, occupation, looking_for, photos')
+          .select(
+              'id, display_name, bio, interests, occupation, looking_for, photos')
           .eq('id', otherUserId)
           .maybeSingle();
 
@@ -400,13 +406,6 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
 // ═══════════════════════════════════════════════════════════════════════════
 
 class MatchInsight {
-  final String quickInsight;
-  final double compatibility;
-  final List<String> sharedInterests;
-  final List<String> uniqueTraits;
-  final String? aiInsight;
-  final List<String> conversationTopics;
-
   MatchInsight({
     required this.quickInsight,
     required this.compatibility,
@@ -422,6 +421,12 @@ class MatchInsight {
         sharedInterests: [],
         uniqueTraits: [],
       );
+  final String quickInsight;
+  final double compatibility;
+  final List<String> sharedInterests;
+  final List<String> uniqueTraits;
+  final String? aiInsight;
+  final List<String> conversationTopics;
 
   bool get hasSharedInterests => sharedInterests.isNotEmpty;
   bool get hasAIInsight => aiInsight != null && aiInsight!.isNotEmpty;
@@ -442,15 +447,14 @@ class MatchInsight {
 }
 
 class LocalInsight {
-  final String quickInsight;
-  final double compatibility;
-  final List<String> sharedInterests;
-  final List<String> uniqueTraits;
-
   LocalInsight({
     required this.quickInsight,
     required this.compatibility,
     required this.sharedInterests,
     required this.uniqueTraits,
   });
+  final String quickInsight;
+  final double compatibility;
+  final List<String> sharedInterests;
+  final List<String> uniqueTraits;
 }

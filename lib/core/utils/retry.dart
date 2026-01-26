@@ -12,6 +12,16 @@ import 'result.dart';
 
 /// Configuration for retry behavior
 class RetryConfig {
+  const RetryConfig({
+    this.maxAttempts = 3,
+    this.initialDelay = const Duration(milliseconds: 500),
+    this.maxDelay = const Duration(seconds: 30),
+    this.backoffMultiplier = 2.0,
+    this.jitterFactor = 0.1,
+    this.isRetryable,
+    this.onRetry,
+  });
+
   /// Maximum number of retry attempts
   final int maxAttempts;
 
@@ -33,20 +43,8 @@ class RetryConfig {
   /// Callback when a retry occurs
   final void Function(int attempt, Duration delay, dynamic error)? onRetry;
 
-  const RetryConfig({
-    this.maxAttempts = 3,
-    this.initialDelay = const Duration(milliseconds: 500),
-    this.maxDelay = const Duration(seconds: 30),
-    this.backoffMultiplier = 2.0,
-    this.jitterFactor = 0.1,
-    this.isRetryable,
-    this.onRetry,
-  });
-
   /// Default config for API calls
   static const api = RetryConfig(
-    maxAttempts: 3,
-    initialDelay: Duration(milliseconds: 500),
     maxDelay: Duration(seconds: 10),
   );
 
@@ -80,9 +78,10 @@ Future<T> withRetry<T>(
     attempt++;
     try {
       return await operation();
-    } catch (error, stackTrace) {
+    } catch (error) {
       // Check if we should retry
-      final shouldRetry = attempt < config.maxAttempts && _isRetryableError(error, config);
+      final shouldRetry =
+          attempt < config.maxAttempts && _isRetryableError(error, config);
 
       if (!shouldRetry) {
         // Log final failure
@@ -92,15 +91,20 @@ Future<T> withRetry<T>(
 
       // Calculate delay with jitter
       final jitter = config.jitterFactor > 0
-          ? (delay.inMilliseconds * config.jitterFactor * (0.5 - _random.nextDouble() * 2))
+          ? (delay.inMilliseconds *
+              config.jitterFactor *
+              (0.5 - _random.nextDouble() * 2))
           : 0;
       final actualDelay = Duration(
-        milliseconds: (delay.inMilliseconds + jitter).clamp(0, config.maxDelay.inMilliseconds).toInt(),
+        milliseconds: (delay.inMilliseconds + jitter)
+            .clamp(0, config.maxDelay.inMilliseconds)
+            .toInt(),
       );
 
       // Notify retry callback
       config.onRetry?.call(attempt, actualDelay, error);
-      debugPrint('Retry: Attempt $attempt failed, retrying in ${actualDelay.inMilliseconds}ms - $error');
+      debugPrint(
+          'Retry: Attempt $attempt failed, retrying in ${actualDelay.inMilliseconds}ms - $error');
 
       // Wait before retry
       await Future.delayed(actualDelay);
@@ -141,6 +145,12 @@ enum CircuitState { closed, open, halfOpen }
 
 /// Circuit breaker to prevent cascading failures
 class CircuitBreaker {
+  CircuitBreaker({
+    required this.name,
+    this.failureThreshold = 5,
+    this.resetTimeout = const Duration(seconds: 30),
+    this.halfOpenTimeout = const Duration(seconds: 5),
+  });
   final String name;
   final int failureThreshold;
   final Duration resetTimeout;
@@ -150,13 +160,6 @@ class CircuitBreaker {
   int _failureCount = 0;
   DateTime? _lastFailureTime;
   DateTime? _openedAt;
-
-  CircuitBreaker({
-    required this.name,
-    this.failureThreshold = 5,
-    this.resetTimeout = const Duration(seconds: 30),
-    this.halfOpenTimeout = const Duration(seconds: 5),
-  });
 
   /// Current state of the circuit
   CircuitState get state {
@@ -209,7 +212,8 @@ class CircuitBreaker {
     if (_failureCount >= failureThreshold) {
       _state = CircuitState.open;
       _openedAt = DateTime.now();
-      debugPrint('CircuitBreaker[$name]: OPENED after $failureThreshold failures');
+      debugPrint(
+          'CircuitBreaker[$name]: OPENED after $failureThreshold failures');
     }
   }
 
@@ -223,8 +227,8 @@ class CircuitBreaker {
 }
 
 class CircuitOpenException implements Exception {
-  final String circuitName;
   const CircuitOpenException(this.circuitName);
+  final String circuitName;
 
   @override
   String toString() => 'Circuit breaker [$circuitName] is open';
@@ -266,7 +270,9 @@ AppError _defaultErrorTransformer(dynamic error, StackTrace? stackTrace) {
   final errorString = error.toString().toLowerCase();
 
   // Network errors
-  if (error is SocketException || errorString.contains('socket') || errorString.contains('network')) {
+  if (error is SocketException ||
+      errorString.contains('socket') ||
+      errorString.contains('network')) {
     return AppError.network(originalError: error, stackTrace: stackTrace);
   }
 

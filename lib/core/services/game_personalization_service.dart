@@ -14,11 +14,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// - Remembers couple history across sessions
 
 class GamePersonalizationService {
+  GamePersonalizationService._();
   static GamePersonalizationService? _instance;
   static GamePersonalizationService get instance =>
       _instance ??= GamePersonalizationService._();
-
-  GamePersonalizationService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
   final Random _random = Random();
@@ -46,10 +45,8 @@ class GamePersonalizationService {
       final tableName = _getGameTable(gameType);
       if (tableName == null) return null;
 
-      var query = _supabase
-          .from(tableName)
-          .select()
-          .eq('heat_level', heatLevel);
+      var query =
+          _supabase.from(tableName).select().eq('heat_level', heatLevel);
 
       if (excludeCategories != null && excludeCategories.isNotEmpty) {
         for (final cat in excludeCategories) {
@@ -83,7 +80,10 @@ class GamePersonalizationService {
 
       return PersonalizedPrompt(
         id: selected['id'].toString(),
-        content: selected['prompt'] ?? selected['content'] ?? selected['question'] ?? '',
+        content: selected['prompt'] ??
+            selected['content'] ??
+            selected['question'] ??
+            '',
         category: selected['category'] as String?,
         heatLevel: heatLevel,
         personalizedReason: _getPersonalizationReason(selected),
@@ -109,7 +109,7 @@ class GamePersonalizationService {
 
     for (final prompt in prompts) {
       final id = prompt['id'].toString();
-      
+
       // Base score from effectiveness
       double score = _promptScores[id] ?? 0.5;
 
@@ -139,11 +139,13 @@ class GamePersonalizationService {
     if (scored.isEmpty) return null;
 
     // Sort by score
-    scored.sort((a, b) => (b['_score'] as double).compareTo(a['_score'] as double));
+    scored.sort(
+        (a, b) => (b['_score'] as double).compareTo(a['_score'] as double));
 
     // Weighted random from top 10
     final top = scored.take(10).toList();
-    final totalScore = top.fold<double>(0, (sum, p) => sum + (p['_score'] as double));
+    final totalScore =
+        top.fold<double>(0, (sum, p) => sum + (p['_score'] as double));
 
     if (totalScore == 0) return top.first;
 
@@ -176,7 +178,7 @@ class GamePersonalizationService {
           .eq('game_type', gameType);
 
       for (final row in response as List) {
-        _promptScores[row['prompt_id'].toString()] = 
+        _promptScores[row['prompt_id'].toString()] =
             (row['effectiveness_score'] as num).toDouble();
       }
     } catch (e) {
@@ -256,12 +258,14 @@ class GamePersonalizationService {
     _promptScores[promptId] = (currentScore + delta).clamp(0.0, 1.0);
 
     // Queue for batch update
-    _pendingReactions.add(_ReactionRecord(
-      promptId: promptId,
-      gameType: gameType,
-      reaction: reaction,
-      timeSpent: timeSpent,
-    ));
+    _pendingReactions.add(
+      _ReactionRecord(
+        promptId: promptId,
+        gameType: gameType,
+        reaction: reaction,
+        timeSpent: timeSpent,
+      ),
+    );
 
     // Flush if batch is full
     if (_pendingReactions.length >= 10) {
@@ -304,19 +308,30 @@ class GamePersonalizationService {
         final promptId = entry.key;
         final records = entry.value;
 
-        final completedCount = records.where((r) => 
-            r.reaction == PromptReaction.completed || 
-            r.reaction == PromptReaction.loved).length;
-        final skippedCount = records.where((r) => 
-            r.reaction == PromptReaction.skipped ||
-            r.reaction == PromptReaction.disliked).length;
+        final completedCount = records
+            .where(
+              (r) =>
+                  r.reaction == PromptReaction.completed ||
+                  r.reaction == PromptReaction.loved,
+            )
+            .length;
+        final skippedCount = records
+            .where(
+              (r) =>
+                  r.reaction == PromptReaction.skipped ||
+                  r.reaction == PromptReaction.disliked,
+            )
+            .length;
 
-        await _supabase.rpc('update_prompt_effectiveness', params: {
-          'p_prompt_id': promptId,
-          'p_game_type': records.first.gameType,
-          'p_completed': completedCount,
-          'p_skipped': skippedCount,
-        }).catchError((_) => null);
+        await _supabase.rpc(
+          'update_prompt_effectiveness',
+          params: {
+            'p_prompt_id': promptId,
+            'p_game_type': records.first.gameType,
+            'p_completed': completedCount,
+            'p_skipped': skippedCount,
+          },
+        ).catchError((_) => null);
       }
     } catch (e) {
       debugPrint('GamePersonalization: Failed to flush reactions - $e');
@@ -330,15 +345,21 @@ class GamePersonalizationService {
   /// Get suggested intensity adjustment based on session engagement
   IntensityAdjustment getIntensityAdjustment() {
     final recentReactions = _pendingReactions.takeLast(10).toList();
-    
+
     if (recentReactions.length < 5) {
       return IntensityAdjustment.maintain;
     }
 
-    final lovedCount = recentReactions.where((r) => 
-        r.reaction == PromptReaction.loved).length;
-    final skippedCount = recentReactions.where((r) => 
-        r.reaction == PromptReaction.skipped).length;
+    final lovedCount = recentReactions
+        .where(
+          (r) => r.reaction == PromptReaction.loved,
+        )
+        .length;
+    final skippedCount = recentReactions
+        .where(
+          (r) => r.reaction == PromptReaction.skipped,
+        )
+        .length;
 
     if (lovedCount > 6) {
       return IntensityAdjustment.increase;
@@ -352,10 +373,10 @@ class GamePersonalizationService {
   /// Suggest heat level change based on engagement
   String? suggestHeatChange(String currentHeat) {
     final adjustment = getIntensityAdjustment();
-    
+
     final levels = ['PG', 'PG-13', 'R', 'X', 'XXX'];
     final currentIndex = levels.indexOf(currentHeat);
-    
+
     if (currentIndex == -1) return null;
 
     switch (adjustment) {
@@ -429,12 +450,6 @@ class GamePersonalizationService {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class PersonalizedPrompt {
-  final String id;
-  final String content;
-  final String? category;
-  final String heatLevel;
-  final String? personalizedReason;
-
   PersonalizedPrompt({
     required this.id,
     required this.content,
@@ -442,6 +457,11 @@ class PersonalizedPrompt {
     required this.heatLevel,
     this.personalizedReason,
   });
+  final String id;
+  final String content;
+  final String? category;
+  final String heatLevel;
+  final String? personalizedReason;
 }
 
 enum PromptReaction {
@@ -458,15 +478,14 @@ enum IntensityAdjustment {
 }
 
 class _ReactionRecord {
-  final String promptId;
-  final String gameType;
-  final PromptReaction reaction;
-  final Duration? timeSpent;
-
   _ReactionRecord({
     required this.promptId,
     required this.gameType,
     required this.reaction,
     this.timeSpent,
   });
+  final String promptId;
+  final String gameType;
+  final PromptReaction reaction;
+  final Duration? timeSpent;
 }

@@ -14,15 +14,15 @@ import 'background_pregeneration_service.dart';
 /// - No thinking about what to say
 
 class InstantConversationStarters {
+  InstantConversationStarters._();
   static InstantConversationStarters? _instance;
   static InstantConversationStarters get instance =>
       _instance ??= InstantConversationStarters._();
 
-  InstantConversationStarters._();
-
   final SupabaseClient _supabase = Supabase.instance.client;
   final AIService _aiService = AIService.instance;
-  final BackgroundPregenerationService _pregen = BackgroundPregenerationService.instance;
+  final BackgroundPregenerationService _pregen =
+      BackgroundPregenerationService.instance;
 
   // Cache starters per match for instant display
   final Map<String, List<ConversationStarter>> _startersCache = {};
@@ -57,23 +57,29 @@ class InstantConversationStarters {
     }
 
     // Generate personalized starters
-    final starters = await _generatePersonalizedStarters(myProfile, otherProfile);
+    final starters =
+        await _generatePersonalizedStarters(myProfile, otherProfile);
     _cacheStarters(matchId, starters);
 
     return starters;
   }
 
   /// Get starters for first message (when chat is empty)
-  Future<List<ConversationStarter>> getFirstMessageStarters(String matchId) async {
+  Future<List<ConversationStarter>> getFirstMessageStarters(
+      String matchId) async {
     final starters = await getStarters(matchId);
 
     // Mark as first message type
-    return starters.map((s) => ConversationStarter(
-      text: s.text,
-      type: StarterType.firstMessage,
-      reason: s.reason,
-      basedOn: s.basedOn,
-    )).toList();
+    return starters
+        .map(
+          (s) => ConversationStarter(
+            text: s.text,
+            type: StarterType.firstMessage,
+            reason: s.reason,
+            basedOn: s.basedOn,
+          ),
+        )
+        .toList();
   }
 
   /// Get starters to revive a dying conversation
@@ -84,7 +90,8 @@ class InstantConversationStarters {
     final otherProfile = match['other_profile'] as Map<String, dynamic>;
 
     final result = await _aiService.chat(
-      systemPrompt: '''Generate 3 messages to naturally restart a conversation that's gone quiet.
+      systemPrompt:
+          '''Generate 3 messages to naturally restart a conversation that's gone quiet.
 Be casual, not desperate. Reference something from their profile if possible.
 Keep each under 80 characters. One per line, no numbering.''',
       prompt: '''Their profile:
@@ -96,18 +103,18 @@ Generate 3 revival messages:''',
     );
 
     return result.fold(
-      onSuccess: (response) {
-        return response.content
-            .split('\n')
-            .where((line) => line.trim().isNotEmpty)
-            .take(3)
-            .map((text) => ConversationStarter(
-                  text: text.trim(),
-                  type: StarterType.revival,
-                  reason: 'Restart the conversation',
-                ))
-            .toList();
-      },
+      onSuccess: (response) => response.content
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .take(3)
+          .map(
+            (text) => ConversationStarter(
+              text: text.trim(),
+              type: StarterType.revival,
+              reason: 'Restart the conversation',
+            ),
+          )
+          .toList(),
       onFailure: (_) => _getGenericRevivalStarters(),
     );
   }
@@ -118,7 +125,8 @@ Generate 3 revival messages:''',
     required String lastMessage,
   }) async {
     final result = await _aiService.chat(
-      systemPrompt: '''Generate 3 natural follow-up responses to continue this conversation.
+      systemPrompt:
+          '''Generate 3 natural follow-up responses to continue this conversation.
 Be engaging and ask questions when appropriate.
 Keep each under 100 characters. One per line, no numbering.''',
       prompt: '''Last message received: "$lastMessage"
@@ -128,18 +136,18 @@ Generate 3 follow-up responses:''',
     );
 
     return result.fold(
-      onSuccess: (response) {
-        return response.content
-            .split('\n')
-            .where((line) => line.trim().isNotEmpty)
-            .take(3)
-            .map((text) => ConversationStarter(
-                  text: text.trim(),
-                  type: StarterType.followUp,
-                  reason: 'Continue the conversation',
-                ))
-            .toList();
-      },
+      onSuccess: (response) => response.content
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .take(3)
+          .map(
+            (text) => ConversationStarter(
+              text: text.trim(),
+              type: StarterType.followUp,
+              reason: 'Continue the conversation',
+            ),
+          )
+          .toList(),
       onFailure: (_) => [],
     );
   }
@@ -160,35 +168,32 @@ Generate 3 follow-up responses:''',
     final result = await _aiService.generateIceBreakers(
       profile1Context: _buildProfileContext(myProfile),
       profile2Context: _buildProfileContext(otherProfile),
-      count: 3,
     );
 
     return result.fold(
-      onSuccess: (iceBreakers) {
-        return iceBreakers.asMap().entries.map((entry) {
-          final index = entry.key;
-          final text = entry.value;
+      onSuccess: (iceBreakers) => iceBreakers.asMap().entries.map((entry) {
+        final index = entry.key;
+        final text = entry.value;
 
-          String? basedOn;
-          String reason;
+        String? basedOn;
+        String reason;
 
-          if (index == 0 && sharedInterests.isNotEmpty) {
-            basedOn = sharedInterests.first;
-            reason = 'You both like ${sharedInterests.first}';
-          } else if (index == 1) {
-            reason = 'Based on their profile';
-          } else {
-            reason = 'Fun and engaging';
-          }
+        if (index == 0 && sharedInterests.isNotEmpty) {
+          basedOn = sharedInterests.first;
+          reason = 'You both like ${sharedInterests.first}';
+        } else if (index == 1) {
+          reason = 'Based on their profile';
+        } else {
+          reason = 'Fun and engaging';
+        }
 
-          return ConversationStarter(
-            text: text,
-            type: StarterType.firstMessage,
-            reason: reason,
-            basedOn: basedOn,
-          );
-        }).toList();
-      },
+        return ConversationStarter(
+          text: text,
+          type: StarterType.firstMessage,
+          reason: reason,
+          basedOn: basedOn,
+        );
+      }).toList(),
       onFailure: (_) => _getFallbackStarters(),
     );
   }
@@ -205,24 +210,28 @@ Generate 3 follow-up responses:''',
       if (interest.contains('travel') || interest.contains('adventure')) {
         final pregen = _pregen.getIceBreaker('adventurous');
         if (pregen != null) {
-          starters.add(ConversationStarter(
-            text: pregen,
-            type: StarterType.firstMessage,
-            reason: 'You both seem adventurous',
-            basedOn: interest,
-          ));
+          starters.add(
+            ConversationStarter(
+              text: pregen,
+              type: StarterType.firstMessage,
+              reason: 'You both seem adventurous',
+              basedOn: interest,
+            ),
+          );
         }
       }
 
       if (interest.contains('book') || interest.contains('read')) {
         final pregen = _pregen.getIceBreaker('intellectual');
         if (pregen != null) {
-          starters.add(ConversationStarter(
-            text: pregen,
-            type: StarterType.firstMessage,
-            reason: 'Based on shared interests',
-            basedOn: interest,
-          ));
+          starters.add(
+            ConversationStarter(
+              text: pregen,
+              type: StarterType.firstMessage,
+              reason: 'Based on shared interests',
+              basedOn: interest,
+            ),
+          );
         }
       }
     }
@@ -231,11 +240,13 @@ Generate 3 follow-up responses:''',
     if (starters.length < 3) {
       final casual = _pregen.getIceBreaker('casual');
       if (casual != null) {
-        starters.add(ConversationStarter(
-          text: casual,
-          type: StarterType.firstMessage,
-          reason: 'Great conversation starter',
-        ));
+        starters.add(
+          ConversationStarter(
+            text: casual,
+            type: StarterType.firstMessage,
+            reason: 'Great conversation starter',
+          ),
+        );
       }
     }
 
@@ -274,45 +285,42 @@ Generate 3 follow-up responses:''',
   // FALLBACKS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  List<ConversationStarter> _getFallbackStarters() {
-    return [
-      ConversationStarter(
-        text: "Hey! What's been the highlight of your week so far?",
-        type: StarterType.firstMessage,
-        reason: 'Great conversation starter',
-      ),
-      ConversationStarter(
-        text: "Hi! I'm curious - what made you swipe right? 😊",
-        type: StarterType.firstMessage,
-        reason: 'Fun and engaging',
-      ),
-      ConversationStarter(
-        text: "Hey! If you could be anywhere in the world right now, where would you go?",
-        type: StarterType.firstMessage,
-        reason: 'Opens up interesting conversation',
-      ),
-    ];
-  }
+  List<ConversationStarter> _getFallbackStarters() => [
+        ConversationStarter(
+          text: "Hey! What's been the highlight of your week so far?",
+          type: StarterType.firstMessage,
+          reason: 'Great conversation starter',
+        ),
+        ConversationStarter(
+          text: "Hi! I'm curious - what made you swipe right? 😊",
+          type: StarterType.firstMessage,
+          reason: 'Fun and engaging',
+        ),
+        ConversationStarter(
+          text:
+              'Hey! If you could be anywhere in the world right now, where would you go?',
+          type: StarterType.firstMessage,
+          reason: 'Opens up interesting conversation',
+        ),
+      ];
 
-  List<ConversationStarter> _getGenericRevivalStarters() {
-    return [
-      ConversationStarter(
-        text: "Hey! How's your week been going?",
-        type: StarterType.revival,
-        reason: 'Casual check-in',
-      ),
-      ConversationStarter(
-        text: "Just thought of you - what have you been up to?",
-        type: StarterType.revival,
-        reason: 'Warm and friendly',
-      ),
-      ConversationStarter(
-        text: "Any fun plans for the weekend?",
-        type: StarterType.revival,
-        reason: 'Easy conversation starter',
-      ),
-    ];
-  }
+  List<ConversationStarter> _getGenericRevivalStarters() => [
+        ConversationStarter(
+          text: "Hey! How's your week been going?",
+          type: StarterType.revival,
+          reason: 'Casual check-in',
+        ),
+        ConversationStarter(
+          text: 'Just thought of you - what have you been up to?',
+          type: StarterType.revival,
+          reason: 'Warm and friendly',
+        ),
+        ConversationStarter(
+          text: 'Any fun plans for the weekend?',
+          type: StarterType.revival,
+          reason: 'Easy conversation starter',
+        ),
+      ];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPERS
@@ -322,17 +330,13 @@ Generate 3 follow-up responses:''',
     if (_userId == null) return null;
 
     try {
-      final match = await _supabase
-          .from('matches')
-          .select('''
+      final match = await _supabase.from('matches').select('''
             id,
             user1_id,
             user2_id,
             user1:profiles!matches_user1_id_fkey(id, display_name, bio, interests, occupation, photos),
             user2:profiles!matches_user2_id_fkey(id, display_name, bio, interests, occupation, photos)
-          ''')
-          .eq('id', matchId)
-          .maybeSingle();
+          ''').eq('id', matchId).maybeSingle();
 
       if (match == null) return null;
 
@@ -387,17 +391,16 @@ enum StarterType {
 }
 
 class ConversationStarter {
-  final String text;
-  final StarterType type;
-  final String? reason;
-  final String? basedOn;
-
   ConversationStarter({
     required this.text,
     required this.type,
     this.reason,
     this.basedOn,
   });
+  final String text;
+  final StarterType type;
+  final String? reason;
+  final String? basedOn;
 
   String get typeLabel {
     switch (type) {

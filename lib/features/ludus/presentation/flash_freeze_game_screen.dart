@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:camera/camera.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 import '../../../core/theme/vespara_icons.dart';
@@ -20,9 +20,9 @@ import '../../../core/theme/vespara_icons.dart';
 class FlashColors {
   static const background = Color(0xFF0D0D0D);
   static const surface = Color(0xFF1A1A1A);
-  static const green = Color(0xFF00FF7F);    // FLASH - Move!
-  static const red = Color(0xFFFF3366);       // FREEZE - Stop!
-  static const yellow = Color(0xFFFFD93D);    // COVER - Reverse!
+  static const green = Color(0xFF00FF7F); // FLASH - Move!
+  static const red = Color(0xFFFF3366); // FREEZE - Stop!
+  static const yellow = Color(0xFFFFD93D); // COVER - Reverse!
   static const electric = Color(0xFF00D4FF);
   static const white = Color(0xFFF5F5F5);
 }
@@ -36,33 +36,45 @@ enum SignalType { green, red, yellow }
 extension SignalTypeExtension on SignalType {
   Color get color {
     switch (this) {
-      case SignalType.green: return FlashColors.green;
-      case SignalType.red: return FlashColors.red;
-      case SignalType.yellow: return FlashColors.yellow;
+      case SignalType.green:
+        return FlashColors.green;
+      case SignalType.red:
+        return FlashColors.red;
+      case SignalType.yellow:
+        return FlashColors.yellow;
     }
   }
-  
+
   String get label {
     switch (this) {
-      case SignalType.green: return 'FLASH';
-      case SignalType.red: return 'FREEZE';
-      case SignalType.yellow: return 'COVER';
+      case SignalType.green:
+        return 'FLASH';
+      case SignalType.red:
+        return 'FREEZE';
+      case SignalType.yellow:
+        return 'COVER';
     }
   }
-  
+
   String get emoji {
     switch (this) {
-      case SignalType.green: return '⚡';
-      case SignalType.red: return '🧊';
-      case SignalType.yellow: return '↩️';
+      case SignalType.green:
+        return '⚡';
+      case SignalType.red:
+        return '🧊';
+      case SignalType.yellow:
+        return '↩️';
     }
   }
-  
+
   String get instruction {
     switch (this) {
-      case SignalType.green: return 'MOVE! Remove a layer!';
-      case SignalType.red: return 'STOP! Don\'t move!';
-      case SignalType.yellow: return 'PUT ONE BACK ON!';
+      case SignalType.green:
+        return 'MOVE! Remove a layer!';
+      case SignalType.red:
+        return 'STOP! Don\'t move!';
+      case SignalType.yellow:
+        return 'PUT ONE BACK ON!';
     }
   }
 }
@@ -72,15 +84,14 @@ extension SignalTypeExtension on SignalType {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class FreezeCapture {
-  final Uint8List imageData;
-  final DateTime timestamp;
-  final int roundNumber;
-  
   FreezeCapture({
     required this.imageData,
     required this.timestamp,
     required this.roundNumber,
   });
+  final Uint8List imageData;
+  final DateTime timestamp;
+  final int roundNumber;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -102,51 +113,50 @@ class FlashFreezeGameScreen extends StatefulWidget {
 
 class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
     with TickerProviderStateMixin {
-  
   // Game state
   GamePhase _phase = GamePhase.setup;
   SignalType _currentSignal = SignalType.green;
   int _roundNumber = 0;
   bool _isTransitioning = false;
-  
+
   // Camera
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
   bool _hasCameraPermission = false;
   bool _isTakingPhoto = false;
-  
+
   // Captured photos
   final List<FreezeCapture> _captures = [];
-  
+
   // Timers
   Timer? _signalTimer;
   Timer? _photoTimer;
   final Random _random = Random();
-  
+
   // Animation controllers
   late AnimationController _pulseController;
   late AnimationController _flashController;
-  
+
   // Game settings
   int _gameDurationMinutes = 3;
   DateTime? _gameStartTime;
   int _totalRounds = 0;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..repeat(reverse: true);
-    
+
     _flashController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
   }
-  
+
   @override
   void dispose() {
     _signalTimer?.cancel();
@@ -156,30 +166,30 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
     _flashController.dispose();
     super.dispose();
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // CAMERA SETUP
   // ═══════════════════════════════════════════════════════════════════════════
-  
+
   Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
-      
+
       // Find front-facing camera
       final frontCamera = cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.front,
         orElse: () => cameras.first,
       );
-      
+
       _cameraController = CameraController(
         frontCamera,
         ResolutionPreset.medium,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
-      
+
       await _cameraController!.initialize();
-      
+
       if (mounted) {
         setState(() {
           _isCameraInitialized = true;
@@ -195,7 +205,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       }
     }
   }
-  
+
   void _showCameraError() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -204,46 +214,46 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
             Icon(VesparaIcons.camera, color: Colors.white),
             SizedBox(width: 8),
             Expanded(
-              child: Text('Camera access needed for freeze photos. Game will continue without photo capture.'),
+              child: Text(
+                  'Camera access needed for freeze photos. Game will continue without photo capture.'),
             ),
           ],
         ),
         backgroundColor: FlashColors.red.withOpacity(0.8),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
       ),
     );
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // GAME CONTROL
   // ═══════════════════════════════════════════════════════════════════════════
-  
+
   Future<void> _startGame() async {
     setState(() {
       _phase = GamePhase.setup;
     });
-    
+
     // Initialize camera
     await _initializeCamera();
-    
+
     setState(() {
       _phase = GamePhase.playing;
       _gameStartTime = DateTime.now();
       _roundNumber = 0;
       _captures.clear();
     });
-    
+
     // Start the signal sequence
     _scheduleNextSignal();
-    
+
     // Haptic feedback for game start
     HapticFeedback.heavyImpact();
   }
-  
+
   void _scheduleNextSignal() {
     if (_phase != GamePhase.playing) return;
-    
+
     // Check if game time is up
     if (_gameStartTime != null) {
       final elapsed = DateTime.now().difference(_gameStartTime!);
@@ -252,36 +262,36 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
         return;
       }
     }
-    
+
     // Random duration: 3-6 seconds for each signal
     final durationSeconds = 3 + _random.nextInt(4);
-    
+
     _signalTimer = Timer(Duration(seconds: durationSeconds), () {
       if (_phase == GamePhase.playing) {
         _transitionToNextSignal();
       }
     });
   }
-  
+
   void _transitionToNextSignal() {
     if (_isTransitioning) return;
     _isTransitioning = true;
-    
+
     // Flash transition effect
     _flashController.forward().then((_) {
       _flashController.reverse();
     });
-    
+
     setState(() {
       _totalRounds++;
-      
+
       // Weighted random selection:
       // - Green: 50% chance
       // - Red: 35% chance
       // - Yellow: 15% chance
       final roll = _random.nextDouble();
       SignalType newSignal;
-      
+
       if (roll < 0.50) {
         newSignal = SignalType.green;
       } else if (roll < 0.85) {
@@ -289,64 +299,62 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       } else {
         newSignal = SignalType.yellow;
       }
-      
+
       // Avoid same signal twice in a row (except green)
       if (newSignal == _currentSignal && newSignal != SignalType.green) {
         newSignal = SignalType.green;
       }
-      
+
       _currentSignal = newSignal;
       _roundNumber++;
     });
-    
+
     // Haptic feedback for signal change
     HapticFeedback.heavyImpact();
-    
+
     // If RED signal, schedule photo capture after 1 second delay
     if (_currentSignal == SignalType.red && _isCameraInitialized) {
       _photoTimer?.cancel();
-      _photoTimer = Timer(const Duration(milliseconds: 1000), () {
-        _captureFreeze();
-      });
+      _photoTimer = Timer(const Duration(milliseconds: 1000), _captureFreeze);
     }
-    
+
     _isTransitioning = false;
     _scheduleNextSignal();
   }
-  
+
   Future<void> _captureFreeze() async {
-    if (!_isCameraInitialized || _cameraController == null || _isTakingPhoto) return;
+    if (!_isCameraInitialized || _cameraController == null || _isTakingPhoto)
+      return;
     if (_phase != GamePhase.playing) return;
-    
+
     _isTakingPhoto = true;
-    
+
     try {
       // Visual feedback - flash effect
       _flashController.forward().then((_) => _flashController.reverse());
-      
+
       final XFile imageFile = await _cameraController!.takePicture();
       final Uint8List imageBytes = await imageFile.readAsBytes();
-      
+
       final capture = FreezeCapture(
         imageData: imageBytes,
         timestamp: DateTime.now(),
         roundNumber: _roundNumber,
       );
-      
+
       setState(() {
         _captures.add(capture);
       });
-      
+
       // Light haptic to indicate photo taken
       HapticFeedback.lightImpact();
-      
     } catch (e) {
       debugPrint('Error capturing photo: $e');
     } finally {
       _isTakingPhoto = false;
     }
   }
-  
+
   void _pauseGame() {
     _signalTimer?.cancel();
     _photoTimer?.cancel();
@@ -354,31 +362,31 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       _phase = GamePhase.paused;
     });
   }
-  
+
   void _resumeGame() {
     setState(() {
       _phase = GamePhase.playing;
     });
     _scheduleNextSignal();
   }
-  
+
   void _endGame() {
     _signalTimer?.cancel();
     _photoTimer?.cancel();
-    
+
     setState(() {
       _phase = _captures.isNotEmpty ? GamePhase.gallery : GamePhase.ended;
     });
-    
+
     HapticFeedback.heavyImpact();
   }
-  
+
   void _viewGallery() {
     setState(() {
       _phase = GamePhase.gallery;
     });
   }
-  
+
   Future<void> _savePhoto(FreezeCapture capture) async {
     try {
       final result = await ImageGallerySaver.saveImage(
@@ -386,14 +394,14 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
         quality: 90,
         name: 'flash_freeze_${capture.timestamp.millisecondsSinceEpoch}',
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Row(
               children: [
-                const Icon(VesparaIcons.confirm, color: FlashColors.green),
-                const SizedBox(width: 8),
+                Icon(VesparaIcons.confirm, color: FlashColors.green),
+                SizedBox(width: 8),
                 Text('Photo saved! 📸'),
               ],
             ),
@@ -405,15 +413,15 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to save photo'),
+          const SnackBar(
+            content: Text('Failed to save photo'),
             backgroundColor: FlashColors.red,
           ),
         );
       }
     }
   }
-  
+
   Future<void> _saveAllPhotos() async {
     for (final capture in _captures) {
       await ImageGallerySaver.saveImage(
@@ -422,7 +430,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
         name: 'flash_freeze_${capture.timestamp.millisecondsSinceEpoch}',
       );
     }
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -439,11 +447,11 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       );
     }
   }
-  
+
   void _resetGame() {
     _cameraController?.dispose();
     _cameraController = null;
-    
+
     setState(() {
       _phase = GamePhase.setup;
       _currentSignal = SignalType.green;
@@ -454,24 +462,22 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       _totalRounds = 0;
     });
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // BUILD
   // ═══════════════════════════════════════════════════════════════════════════
-  
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: FlashColors.background,
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: _buildPhase(),
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: FlashColors.background,
+        body: SafeArea(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _buildPhase(),
+          ),
         ),
-      ),
-    );
-  }
-  
+      );
+
   Widget _buildPhase() {
     switch (_phase) {
       case GamePhase.setup:
@@ -486,31 +492,28 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
         return _buildEndScreen();
     }
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // SETUP SCREEN
   // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildSetupScreen() {
-    return Container(
-      key: const ValueKey('setup'),
-      child: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    
-                    // Game icon
-                    AnimatedBuilder(
-                      animation: _pulseController,
-                      builder: (context, child) {
-                        return Container(
+
+  Widget _buildSetupScreen() => Container(
+        key: const ValueKey('setup'),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+
+                      // Game icon
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, child) => Container(
                           width: 140,
                           height: 140,
                           decoration: BoxDecoration(
@@ -523,7 +526,8 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: FlashColors.green.withOpacity(0.2 + _pulseController.value * 0.2),
+                                color: FlashColors.green.withOpacity(
+                                    0.2 + _pulseController.value * 0.2),
                                 blurRadius: 40 + _pulseController.value * 20,
                                 spreadRadius: 10,
                               ),
@@ -532,150 +536,150 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                           child: const Center(
                             child: Text('⚡', style: TextStyle(fontSize: 60)),
                           ),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        colors: [FlashColors.green, FlashColors.electric],
-                      ).createShader(bounds),
-                      child: const Text(
-                        'FLASH & FREEZE',
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [FlashColors.green, FlashColors.electric],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'FLASH & FREEZE',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 4,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      const Text(
+                        'Signal Controller Mode',
                         style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 4,
-                          color: Colors.white,
+                          fontSize: 16,
+                          color: FlashColors.electric,
                         ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    const Text(
-                      'Signal Controller Mode',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: FlashColors.electric,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Duration selector
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: FlashColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white12),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'GAME DURATION',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white54,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildDurationOption(2),
-                              const SizedBox(width: 12),
-                              _buildDurationOption(3),
-                              const SizedBox(width: 12),
-                              _buildDurationOption(4),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Camera permission note
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: FlashColors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: FlashColors.red.withOpacity(0.3)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(VesparaIcons.camera, color: FlashColors.red, size: 24),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Camera will capture freeze moments automatically during RED lights!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Start button
-                    GestureDetector(
-                      onTap: _startGame,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
+
+                      const SizedBox(height: 40),
+
+                      // Duration selector
+                      Container(
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [FlashColors.green, FlashColors.electric],
-                          ),
+                          color: FlashColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: FlashColors.green.withOpacity(0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+                          border: Border.all(color: Colors.white12),
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Column(
                           children: [
-                            Text('⚡', style: TextStyle(fontSize: 24)),
-                            SizedBox(width: 10),
-                            Text(
-                              'START GAME',
+                            const Text(
+                              'GAME DURATION',
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.black,
+                                fontSize: 12,
+                                color: Colors.white54,
                                 letterSpacing: 2,
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildDurationOption(2),
+                                const SizedBox(width: 12),
+                                _buildDurationOption(3),
+                                const SizedBox(width: 12),
+                                _buildDurationOption(4),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                  ],
+
+                      const SizedBox(height: 20),
+
+                      // Camera permission note
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: FlashColors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: FlashColors.red.withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(VesparaIcons.camera,
+                                color: FlashColors.red, size: 24),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Camera will capture freeze moments automatically during RED lights!',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Start button
+                      GestureDetector(
+                        onTap: _startGame,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [FlashColors.green, FlashColors.electric],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: FlashColors.green.withOpacity(0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('⚡', style: TextStyle(fontSize: 24)),
+                              SizedBox(width: 10),
+                              Text(
+                                'START GAME',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
-  
+      );
+
   Widget _buildDurationOption(int minutes) {
     final isSelected = _gameDurationMinutes == minutes;
     return GestureDetector(
@@ -717,18 +721,16 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       ),
     );
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // GAME SCREEN - FULLSCREEN SIGNAL
   // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildGameScreen() {
-    return GestureDetector(
-      onTap: _pauseGame,
-      child: AnimatedBuilder(
-        animation: _flashController,
-        builder: (context, child) {
-          return AnimatedContainer(
+
+  Widget _buildGameScreen() => GestureDetector(
+        onTap: _pauseGame,
+        child: AnimatedBuilder(
+          animation: _flashController,
+          builder: (context, child) => AnimatedContainer(
             key: const ValueKey('playing'),
             duration: const Duration(milliseconds: 150),
             decoration: BoxDecoration(
@@ -750,9 +752,9 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                         _currentSignal.emoji,
                         style: const TextStyle(fontSize: 120),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Signal label
                       Text(
                         _currentSignal.label,
@@ -763,12 +765,13 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                           color: _getContrastColor(),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Instruction
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
                         decoration: BoxDecoration(
                           color: _getContrastColor().withOpacity(0.2),
                           borderRadius: BorderRadius.circular(30),
@@ -785,7 +788,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                     ],
                   ),
                 ),
-                
+
                 // Top bar with stats
                 Positioned(
                   top: 0,
@@ -798,7 +801,8 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                       children: [
                         // Round counter
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: _getContrastColor().withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
@@ -812,11 +816,12 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                             ),
                           ),
                         ),
-                        
+
                         // Photo counter
                         if (_captures.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
                               color: _getContrastColor().withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
@@ -844,7 +849,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                     ),
                   ),
                 ),
-                
+
                 // Camera preview (small, in corner)
                 if (_isCameraInitialized && _cameraController != null)
                   Positioned(
@@ -866,7 +871,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                       ),
                     ),
                   ),
-                
+
                 // Tap to pause hint
                 Positioned(
                   bottom: 40,
@@ -874,7 +879,8 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                   right: 0,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
                         color: _getContrastColor().withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -891,12 +897,10 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                 ),
               ],
             ),
-          );
-        },
-      ),
-    );
-  }
-  
+          ),
+        ),
+      );
+
   Color _getContrastColor() {
     switch (_currentSignal) {
       case SignalType.green:
@@ -906,230 +910,323 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
         return Colors.white;
     }
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // PAUSED SCREEN
   // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildPausedScreen() {
-    return Container(
-      key: const ValueKey('paused'),
-      padding: const EdgeInsets.all(24),
-      color: FlashColors.background,
-      child: Column(
-        children: [
-          _buildHeader(),
-          const Spacer(),
-          
-          const Text('⏸️', style: TextStyle(fontSize: 80)),
-          
-          const SizedBox(height: 24),
-          
-          const Text(
-            'GAME PAUSED',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 4,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          Text(
-            'Round $_roundNumber • ${_captures.length} photos captured',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white54,
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // Resume button
-          GestureDetector(
-            onTap: _resumeGame,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [FlashColors.green, FlashColors.electric],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: Text(
-                  'RESUME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                    letterSpacing: 2,
-                  ),
-                ),
+
+  Widget _buildPausedScreen() => Container(
+        key: const ValueKey('paused'),
+        padding: const EdgeInsets.all(24),
+        color: FlashColors.background,
+        child: Column(
+          children: [
+            _buildHeader(),
+            const Spacer(),
+
+            const Text('⏸️', style: TextStyle(fontSize: 80)),
+
+            const SizedBox(height: 24),
+
+            const Text(
+              'GAME PAUSED',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 4,
               ),
             ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // End game button
-          GestureDetector(
-            onTap: _endGame,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                color: FlashColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: FlashColors.red.withOpacity(0.5)),
-              ),
-              child: const Center(
-                child: Text(
-                  'END GAME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: FlashColors.red,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // GALLERY SCREEN
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildGalleryScreen() {
-    return Container(
-      key: const ValueKey('gallery'),
-      color: FlashColors.background,
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => setState(() => _phase = GamePhase.ended),
-                  icon: const Icon(VesparaIcons.back, color: Colors.white70),
-                ),
-                const Expanded(
-                  child: Text(
-                    'FREEZE MOMENTS',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                IconButton(
-                  onPressed: _saveAllPhotos,
-                  icon: const Icon(VesparaIcons.download, color: FlashColors.green),
-                  tooltip: 'Save All',
-                ),
-              ],
-            ),
-          ),
-          
-          // Photo count
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              '${_captures.length} hilarious freeze captures',
+
+            const SizedBox(height: 16),
+
+            Text(
+              'Round $_roundNumber • ${_captures.length} photos captured',
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 color: Colors.white54,
               ),
             ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Photo grid
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.75,
-              ),
-              itemCount: _captures.length,
-              itemBuilder: (context, index) {
-                final capture = _captures[index];
-                return _buildPhotoCard(capture, index);
-              },
-            ),
-          ),
-          
-          // Bottom actions
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _saveAllPhotos,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [FlashColors.green, FlashColors.electric],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(VesparaIcons.download, color: Colors.black),
-                          SizedBox(width: 8),
-                          Text(
-                            'SAVE ALL',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
+
+            const Spacer(),
+
+            // Resume button
+            GestureDetector(
+              onTap: _resumeGame,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [FlashColors.green, FlashColors.electric],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: Text(
+                    'RESUME',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                      letterSpacing: 2,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _phase = GamePhase.ended),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: FlashColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white24),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // End game button
+            GestureDetector(
+              onTap: _endGame,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  color: FlashColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FlashColors.red.withOpacity(0.5)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'END GAME',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: FlashColors.red,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GALLERY SCREEN
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildGalleryScreen() => ColoredBox(
+        key: const ValueKey('gallery'),
+        color: FlashColors.background,
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => setState(() => _phase = GamePhase.ended),
+                    icon: const Icon(VesparaIcons.back, color: Colors.white70),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'FREEZE MOMENTS',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 2,
                       ),
-                      child: const Center(
-                        child: Text(
-                          'DONE',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _saveAllPhotos,
+                    icon: const Icon(VesparaIcons.download,
+                        color: FlashColors.green),
+                    tooltip: 'Save All',
+                  ),
+                ],
+              ),
+            ),
+
+            // Photo count
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                '${_captures.length} hilarious freeze captures',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white54,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Photo grid
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.75,
+                ),
+                itemCount: _captures.length,
+                itemBuilder: (context, index) {
+                  final capture = _captures[index];
+                  return _buildPhotoCard(capture, index);
+                },
+              ),
+            ),
+
+            // Bottom actions
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _saveAllPhotos,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [FlashColors.green, FlashColors.electric],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(VesparaIcons.download, color: Colors.black),
+                            SizedBox(width: 8),
+                            Text(
+                              'SAVE ALL',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _phase = GamePhase.ended),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: FlashColors.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'DONE',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildPhotoCard(FreezeCapture capture, int index) => GestureDetector(
+        onTap: () => _showPhotoDetail(capture),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border:
+                Border.all(color: FlashColors.red.withOpacity(0.5), width: 2),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Photo
+                Image.memory(
+                  capture.imageData,
+                  fit: BoxFit.cover,
+                ),
+
+                // Gradient overlay
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.8),
+                        ],
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Round ${capture.roundNumber}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
+                        GestureDetector(
+                          onTap: () => _savePhoto(capture),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: FlashColors.green.withOpacity(0.8),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              VesparaIcons.download,
+                              size: 16,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Freeze badge
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: FlashColors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '🧊 FREEZE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -1137,105 +1234,9 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPhotoCard(FreezeCapture capture, int index) {
-    return GestureDetector(
-      onTap: () => _showPhotoDetail(capture),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: FlashColors.red.withOpacity(0.5), width: 2),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Photo
-              Image.memory(
-                capture.imageData,
-                fit: BoxFit.cover,
-              ),
-              
-              // Gradient overlay
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.8),
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Round ${capture.roundNumber}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => _savePhoto(capture),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: FlashColors.green.withOpacity(0.8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            VesparaIcons.download,
-                            size: 16,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              // Freeze badge
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: FlashColors.red,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    '🧊 FREEZE',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
+      );
+
   void _showPhotoDetail(FreezeCapture capture) {
     showDialog(
       context: context,
@@ -1261,7 +1262,8 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                     Navigator.pop(context);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
                       color: FlashColors.green,
                       borderRadius: BorderRadius.circular(30),
@@ -1285,7 +1287,8 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(30),
@@ -1306,201 +1309,198 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       ),
     );
   }
-  
+
   // ═══════════════════════════════════════════════════════════════════════════
   // END SCREEN
   // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildEndScreen() {
-    return Container(
-      key: const ValueKey('ended'),
-      padding: const EdgeInsets.all(24),
-      color: FlashColors.background,
-      child: Column(
-        children: [
-          _buildHeader(),
-          const Spacer(),
-          
-          const Text('🎮', style: TextStyle(fontSize: 80)),
-          
-          const SizedBox(height: 24),
-          
-          const Text(
-            'GAME OVER!',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 4,
+
+  Widget _buildEndScreen() => Container(
+        key: const ValueKey('ended'),
+        padding: const EdgeInsets.all(24),
+        color: FlashColors.background,
+        child: Column(
+          children: [
+            _buildHeader(),
+            const Spacer(),
+
+            const Text('🎮', style: TextStyle(fontSize: 80)),
+
+            const SizedBox(height: 24),
+
+            const Text(
+              'GAME OVER!',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 4,
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 32),
-          
-          // Stats
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: FlashColors.surface,
-              borderRadius: BorderRadius.circular(16),
+
+            const SizedBox(height: 32),
+
+            // Stats
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: FlashColors.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem('🔄', 'Rounds', _totalRounds),
+                  _buildStatItem('📸', 'Photos', _captures.length),
+                  _buildStatItem('⏱️', 'Duration', _gameDurationMinutes,
+                      suffix: 'min'),
+                ],
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem('🔄', 'Rounds', _totalRounds),
-                _buildStatItem('📸', 'Photos', _captures.length),
-                _buildStatItem('⏱️', 'Duration', _gameDurationMinutes, suffix: 'min'),
-              ],
-            ),
-          ),
-          
-          const Spacer(),
-          
-          // View photos button (if any)
-          if (_captures.isNotEmpty) ...[
+
+            const Spacer(),
+
+            // View photos button (if any)
+            if (_captures.isNotEmpty) ...[
+              GestureDetector(
+                onTap: _viewGallery,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [FlashColors.red, FlashColors.yellow],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(VesparaIcons.gallery, color: Colors.white),
+                      const SizedBox(width: 10),
+                      Text(
+                        'VIEW ${_captures.length} FREEZE PHOTOS',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Play again button
             GestureDetector(
-              onTap: _viewGallery,
+              onTap: _resetGame,
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [FlashColors.red, FlashColors.yellow],
+                  gradient: const LinearGradient(
+                    colors: [FlashColors.green, FlashColors.electric],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(VesparaIcons.gallery, color: Colors.white),
-                    const SizedBox(width: 10),
-                    Text(
-                      'VIEW ${_captures.length} FREEZE PHOTOS',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 1,
-                      ),
+                child: const Center(
+                  child: Text(
+                    'PLAY AGAIN',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                      letterSpacing: 2,
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
+
             const SizedBox(height: 12),
+
+            // Exit button
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  color: FlashColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Center(
+                  child: Text(
+                    'EXIT',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white70,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
-          
-          // Play again button
-          GestureDetector(
-            onTap: _resetGame,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [FlashColors.green, FlashColors.electric],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: Text(
-                  'PLAY AGAIN',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Exit button
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                color: FlashColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: const Center(
-                child: Text(
-                  'EXIT',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white70,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildStatItem(String emoji, String label, int value, {String? suffix}) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 28)),
-        const SizedBox(height: 8),
-        Text(
-          suffix != null ? '$value $suffix' : '$value',
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-          ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.white54,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // COMMON WIDGETS
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(VesparaIcons.back, color: Colors.white70),
-        ),
-        const Spacer(),
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [FlashColors.green, FlashColors.electric],
-          ).createShader(bounds),
-          child: const Text(
-            'FLASH & FREEZE',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
+      );
+
+  Widget _buildStatItem(String emoji, String label, int value,
+          {String? suffix}) =>
+      Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 28)),
+          const SizedBox(height: 8),
+          Text(
+            suffix != null ? '$value $suffix' : '$value',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
               color: Colors.white,
             ),
           ),
-        ),
-        const Spacer(),
-        const SizedBox(width: 48),
-      ],
-    );
-  }
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white54,
+            ),
+          ),
+        ],
+      );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMMON WIDGETS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildHeader() => Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(VesparaIcons.back, color: Colors.white70),
+          ),
+          const Spacer(),
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [FlashColors.green, FlashColors.electric],
+            ).createShader(bounds),
+            child: const Text(
+              'FLASH & FREEZE',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(width: 48),
+        ],
+      );
 }

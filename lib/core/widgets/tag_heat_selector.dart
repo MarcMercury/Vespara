@@ -10,6 +10,19 @@ import '../utils/haptic_patterns.dart';
 /// Supports different display modes and animations.
 
 class TagHeatSelector extends StatefulWidget {
+  const TagHeatSelector({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+    this.availableRatings,
+    this.style = TagHeatSelectorStyle.chips,
+    this.showDescriptions = false,
+    this.showIcons = true,
+    this.enabled = true,
+    this.label,
+    this.scale = 1.0,
+  });
+
   /// Currently selected rating
   final ContentRating selected;
 
@@ -36,19 +49,6 @@ class TagHeatSelector extends StatefulWidget {
 
   /// Size multiplier
   final double scale;
-
-  const TagHeatSelector({
-    super.key,
-    required this.selected,
-    required this.onChanged,
-    this.availableRatings,
-    this.style = TagHeatSelectorStyle.chips,
-    this.showDescriptions = false,
-    this.showIcons = true,
-    this.enabled = true,
-    this.label,
-    this.scale = 1.0,
-  });
 
   @override
   State<TagHeatSelector> createState() => _TagHeatSelectorState();
@@ -83,101 +83,91 @@ class _TagHeatSelectorState extends State<TagHeatSelector>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.label != null) ...[
-          Text(
-            widget.label!,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14 * widget.scale,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 12 * widget.scale),
-        ],
-        switch (widget.style) {
-          TagHeatSelectorStyle.chips => _buildChips(),
-          TagHeatSelectorStyle.slider => _buildSlider(),
-          TagHeatSelectorStyle.thermometer => _buildThermometer(),
-          TagHeatSelectorStyle.grid => _buildGrid(),
-        },
-        if (widget.showDescriptions) ...[
-          SizedBox(height: 12 * widget.scale),
-          _buildDescription(),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildChips() {
-    return Wrap(
-      spacing: 8 * widget.scale,
-      runSpacing: 8 * widget.scale,
-      children: ratings.map((rating) {
-        final isSelected = rating == widget.selected;
-        return GestureDetector(
-          onTap: () => _onSelect(rating),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(
-              horizontal: 16 * widget.scale,
-              vertical: 10 * widget.scale,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? rating.color
-                  : rating.color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20 * widget.scale),
-              border: Border.all(
-                color: isSelected
-                    ? rating.color
-                    : rating.color.withOpacity(0.3),
-                width: 2,
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.label != null) ...[
+            Text(
+              widget.label!,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14 * widget.scale,
+                fontWeight: FontWeight.w500,
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: rating.color.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.showIcons) ...[
-                  Icon(
-                    _getIcon(rating),
-                    size: 18 * widget.scale,
-                    color: isSelected
-                        ? Colors.white
-                        : rating.color,
-                  ),
-                  SizedBox(width: 6 * widget.scale),
-                ],
-                Text(
-                  rating.displayName,
-                  style: TextStyle(
-                    color: isSelected
-                        ? Colors.white
-                        : rating.color,
-                    fontSize: 14 * widget.scale,
-                    fontWeight: FontWeight.w600,
-                  ),
+            SizedBox(height: 12 * widget.scale),
+          ],
+          switch (widget.style) {
+            TagHeatSelectorStyle.chips => _buildChips(),
+            TagHeatSelectorStyle.slider => _buildSlider(),
+            TagHeatSelectorStyle.thermometer => _buildThermometer(),
+            TagHeatSelectorStyle.grid => _buildGrid(),
+          },
+          if (widget.showDescriptions) ...[
+            SizedBox(height: 12 * widget.scale),
+            _buildDescription(),
+          ],
+        ],
+      );
+
+  Widget _buildChips() => Wrap(
+        spacing: 8 * widget.scale,
+        runSpacing: 8 * widget.scale,
+        children: ratings.map((rating) {
+          final isSelected = rating == widget.selected;
+          return GestureDetector(
+            onTap: () => _onSelect(rating),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.symmetric(
+                horizontal: 16 * widget.scale,
+                vertical: 10 * widget.scale,
+              ),
+              decoration: BoxDecoration(
+                color:
+                    isSelected ? rating.color : rating.color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20 * widget.scale),
+                border: Border.all(
+                  color:
+                      isSelected ? rating.color : rating.color.withOpacity(0.3),
+                  width: 2,
                 ),
-              ],
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: rating.color.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.showIcons) ...[
+                    Icon(
+                      _getIcon(rating),
+                      size: 18 * widget.scale,
+                      color: isSelected ? Colors.white : rating.color,
+                    ),
+                    SizedBox(width: 6 * widget.scale),
+                  ],
+                  Text(
+                    rating.displayName,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : rating.color,
+                      fontSize: 14 * widget.scale,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+          );
+        }).toList(),
+      );
 
   Widget _buildSlider() {
     final selectedIndex = ratings.indexOf(widget.selected);
@@ -200,7 +190,9 @@ class _TagHeatSelectorState extends State<TagHeatSelector>
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
                 left: (selectedIndex / (ratings.length - 1)) *
-                    (MediaQuery.of(context).size.width - 80 - 60 * widget.scale),
+                    (MediaQuery.of(context).size.width -
+                        80 -
+                        60 * widget.scale),
                 child: Container(
                   width: 60 * widget.scale,
                   height: 40 * widget.scale,
@@ -228,17 +220,19 @@ class _TagHeatSelectorState extends State<TagHeatSelector>
               ),
               // Touch targets
               Row(
-                children: ratings.map((rating) {
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => _onSelect(rating),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        height: 40 * widget.scale,
+                children: ratings
+                    .map(
+                      (rating) => Expanded(
+                        child: GestureDetector(
+                          onTap: () => _onSelect(rating),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            height: 40 * widget.scale,
+                          ),
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    )
+                    .toList(),
               ),
             ],
           ),
@@ -266,7 +260,7 @@ class _TagHeatSelectorState extends State<TagHeatSelector>
   Widget _buildThermometer() {
     final selectedIndex = ratings.indexOf(widget.selected);
 
-    return Container(
+    return SizedBox(
       height: 200 * widget.scale,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -344,7 +338,8 @@ class _TagHeatSelectorState extends State<TagHeatSelector>
                       style: TextStyle(
                         color: isSelected ? rating.color : Colors.white38,
                         fontSize: 14 * widget.scale,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -357,101 +352,94 @@ class _TagHeatSelectorState extends State<TagHeatSelector>
     );
   }
 
-  Widget _buildGrid() {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      mainAxisSpacing: 8 * widget.scale,
-      crossAxisSpacing: 8 * widget.scale,
-      childAspectRatio: 1.5,
-      physics: const NeverScrollableScrollPhysics(),
-      children: ratings.map((rating) {
-        final isSelected = rating == widget.selected;
-        return GestureDetector(
-          onTap: () => _onSelect(rating),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? rating.color
-                  : rating.color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12 * widget.scale),
-              border: Border.all(
-                color: rating.color.withOpacity(isSelected ? 1 : 0.3),
-                width: 2,
+  Widget _buildGrid() => GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        mainAxisSpacing: 8 * widget.scale,
+        crossAxisSpacing: 8 * widget.scale,
+        childAspectRatio: 1.5,
+        physics: const NeverScrollableScrollPhysics(),
+        children: ratings.map((rating) {
+          final isSelected = rating == widget.selected;
+          return GestureDetector(
+            onTap: () => _onSelect(rating),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color:
+                    isSelected ? rating.color : rating.color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12 * widget.scale),
+                border: Border.all(
+                  color: rating.color.withOpacity(isSelected ? 1 : 0.3),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.showIcons)
+                    Icon(
+                      _getIcon(rating),
+                      size: 24 * widget.scale,
+                      color: isSelected ? Colors.white : rating.color,
+                    ),
+                  SizedBox(height: 4 * widget.scale),
+                  Text(
+                    rating.displayName,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : rating.color,
+                      fontSize: 12 * widget.scale,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (widget.showIcons)
-                  Icon(
-                    _getIcon(rating),
-                    size: 24 * widget.scale,
-                    color: isSelected ? Colors.white : rating.color,
-                  ),
-                SizedBox(height: 4 * widget.scale),
-                Text(
-                  rating.displayName,
+          );
+        }).toList(),
+      );
+
+  Widget _buildDescription() => AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          key: ValueKey(widget.selected),
+          padding: EdgeInsets.all(12 * widget.scale),
+          decoration: BoxDecoration(
+            color: widget.selected.color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12 * widget.scale),
+            border: Border.all(
+              color: widget.selected.color.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _getIcon(widget.selected),
+                color: widget.selected.color,
+                size: 24 * widget.scale,
+              ),
+              SizedBox(width: 12 * widget.scale),
+              Expanded(
+                child: Text(
+                  widget.selected.description,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : rating.color,
-                    fontSize: 12 * widget.scale,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
+                    fontSize: 13 * widget.scale,
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildDescription() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      child: Container(
-        key: ValueKey(widget.selected),
-        padding: EdgeInsets.all(12 * widget.scale),
-        decoration: BoxDecoration(
-          color: widget.selected.color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12 * widget.scale),
-          border: Border.all(
-            color: widget.selected.color.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              _getIcon(widget.selected),
-              color: widget.selected.color,
-              size: 24 * widget.scale,
-            ),
-            SizedBox(width: 12 * widget.scale),
-            Expanded(
-              child: Text(
-                widget.selected.description,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13 * widget.scale,
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
-  IconData _getIcon(ContentRating rating) {
-    return switch (rating) {
-      ContentRating.pg => Icons.sentiment_satisfied_outlined,
-      ContentRating.pg13 => Icons.local_fire_department_outlined,
-      ContentRating.r => Icons.whatshot_outlined,
-      ContentRating.x => Icons.whatshot_rounded,
-      ContentRating.xxx => Icons.local_fire_department_rounded,
-    };
-  }
+  IconData _getIcon(ContentRating rating) => switch (rating) {
+        ContentRating.pg => Icons.sentiment_satisfied_outlined,
+        ContentRating.pg13 => Icons.local_fire_department_outlined,
+        ContentRating.r => Icons.whatshot_outlined,
+        ContentRating.x => Icons.whatshot_rounded,
+        ContentRating.xxx => Icons.local_fire_department_rounded,
+      };
 }
 
 /// Heat selector display styles

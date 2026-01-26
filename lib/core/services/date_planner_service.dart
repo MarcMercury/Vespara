@@ -12,11 +12,10 @@ import 'ai_service.dart';
 /// One tap to share a date idea with match
 
 class DatePlannerService {
+  DatePlannerService._();
   static DatePlannerService? _instance;
   static DatePlannerService get instance =>
       _instance ??= DatePlannerService._();
-
-  DatePlannerService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
   final AIService _aiService = AIService.instance;
@@ -77,46 +76,44 @@ class DatePlannerService {
   }
 
   /// Quick date idea categories (no AI needed - instant)
-  List<DateCategory> getCategories() {
-    return [
-      DateCategory(
-        id: 'adventure',
-        name: 'Adventure',
-        emoji: '🎢',
-        description: 'Get the adrenaline pumping',
-      ),
-      DateCategory(
-        id: 'chill',
-        name: 'Chill',
-        emoji: '☕',
-        description: 'Low-key and relaxed',
-      ),
-      DateCategory(
-        id: 'foodie',
-        name: 'Foodie',
-        emoji: '🍕',
-        description: 'Great food, great vibes',
-      ),
-      DateCategory(
-        id: 'creative',
-        name: 'Creative',
-        emoji: '🎨',
-        description: 'Make something together',
-      ),
-      DateCategory(
-        id: 'outdoors',
-        name: 'Outdoors',
-        emoji: '🌲',
-        description: 'Fresh air and nature',
-      ),
-      DateCategory(
-        id: 'nightlife',
-        name: 'Nightlife',
-        emoji: '🌃',
-        description: 'After dark adventures',
-      ),
-    ];
-  }
+  List<DateCategory> getCategories() => [
+        DateCategory(
+          id: 'adventure',
+          name: 'Adventure',
+          emoji: '🎢',
+          description: 'Get the adrenaline pumping',
+        ),
+        DateCategory(
+          id: 'chill',
+          name: 'Chill',
+          emoji: '☕',
+          description: 'Low-key and relaxed',
+        ),
+        DateCategory(
+          id: 'foodie',
+          name: 'Foodie',
+          emoji: '🍕',
+          description: 'Great food, great vibes',
+        ),
+        DateCategory(
+          id: 'creative',
+          name: 'Creative',
+          emoji: '🎨',
+          description: 'Make something together',
+        ),
+        DateCategory(
+          id: 'outdoors',
+          name: 'Outdoors',
+          emoji: '🌲',
+          description: 'Fresh air and nature',
+        ),
+        DateCategory(
+          id: 'nightlife',
+          name: 'Nightlife',
+          emoji: '🌃',
+          description: 'After dark adventures',
+        ),
+      ];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AI GENERATION
@@ -128,7 +125,8 @@ class DatePlannerService {
     required List previousDates,
   }) async {
     final myInterests = (myProfile['interests'] as List?)?.join(', ') ?? '';
-    final theirInterests = (otherProfile['interests'] as List?)?.join(', ') ?? '';
+    final theirInterests =
+        (otherProfile['interests'] as List?)?.join(', ') ?? '';
     final previousActivities = previousDates
         .map((d) => d['activity'] as String?)
         .where((a) => a != null)
@@ -140,7 +138,7 @@ For each idea, provide:
 1. A catchy title (under 30 chars)
 2. One sentence description (under 100 chars)
 3. Category: adventure/chill/foodie/creative/outdoors/nightlife
-4. Estimated cost: $ (cheap), $$ (moderate), $$$ (fancy)
+4. Estimated cost: \$ (cheap), \$\$ (moderate), \$\$\$ (fancy)
 5. Time of day: morning/afternoon/evening/night
 
 Format each idea on separate lines as:
@@ -169,7 +167,8 @@ Generate 3 personalized date ideas:''',
     final vibeDescription = _getVibeDescription(vibe);
 
     final result = await _aiService.chat(
-      systemPrompt: '''Generate 3 date ideas matching this vibe: $vibeDescription
+      systemPrompt:
+          '''Generate 3 date ideas matching this vibe: $vibeDescription
 For each idea, provide:
 TITLE|DESCRIPTION|CATEGORY|COST|TIME
 
@@ -191,14 +190,16 @@ Keep titles under 30 chars, descriptions under 100 chars.''',
     for (final line in lines.take(3)) {
       final parts = line.split('|');
       if (parts.length >= 5) {
-        ideas.add(DateIdea(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: parts[0].trim(),
-          description: parts[1].trim(),
-          category: _parseCategory(parts[2].trim()),
-          cost: parts[3].trim(),
-          timeOfDay: parts[4].trim(),
-        ));
+        ideas.add(
+          DateIdea(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: parts[0].trim(),
+            description: parts[1].trim(),
+            category: _parseCategory(parts[2].trim()),
+            cost: parts[3].trim(),
+            timeOfDay: parts[4].trim(),
+          ),
+        );
       }
     }
 
@@ -239,14 +240,14 @@ Keep titles under 30 chars, descriptions under 100 chars.''',
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Generate a message to share the date idea with match
-  String getShareMessage(DateIdea idea) {
-    return "Hey! I had an idea - want to ${idea.title.toLowerCase()}? 🎉";
-  }
+  String getShareMessage(DateIdea idea) =>
+      'Hey! I had an idea - want to ${idea.title.toLowerCase()}? 🎉';
 
   /// Generate a more detailed pitch
   Future<String> getDetailedPitch(DateIdea idea) async {
     final result = await _aiService.chat(
-      systemPrompt: '''Write a casual, fun message inviting someone on this date.
+      systemPrompt:
+          '''Write a casual, fun message inviting someone on this date.
 Keep it under 100 characters. Be enthusiastic but not over the top.''',
       prompt: '''Date idea: ${idea.title} - ${idea.description}
 
@@ -310,34 +311,32 @@ Write an invite message:''',
   // FALLBACKS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  List<DateIdea> _getFallbackIdeas() {
-    return [
-      DateIdea(
-        id: '1',
-        title: 'Coffee & People Watching',
-        description: 'Find a cozy café and make up stories about strangers',
-        category: 'chill',
-        cost: '\$',
-        timeOfDay: 'afternoon',
-      ),
-      DateIdea(
-        id: '2',
-        title: 'Sunset Picnic',
-        description: 'Grab takeout and find a spot with a view',
-        category: 'outdoors',
-        cost: '\$\$',
-        timeOfDay: 'evening',
-      ),
-      DateIdea(
-        id: '3',
-        title: 'Arcade Throwback',
-        description: 'Challenge each other to classic games',
-        category: 'fun',
-        cost: '\$',
-        timeOfDay: 'evening',
-      ),
-    ];
-  }
+  List<DateIdea> _getFallbackIdeas() => [
+        DateIdea(
+          id: '1',
+          title: 'Coffee & People Watching',
+          description: 'Find a cozy café and make up stories about strangers',
+          category: 'chill',
+          cost: '\$',
+          timeOfDay: 'afternoon',
+        ),
+        DateIdea(
+          id: '2',
+          title: 'Sunset Picnic',
+          description: 'Grab takeout and find a spot with a view',
+          category: 'outdoors',
+          cost: '\$\$',
+          timeOfDay: 'evening',
+        ),
+        DateIdea(
+          id: '3',
+          title: 'Arcade Throwback',
+          description: 'Challenge each other to classic games',
+          category: 'fun',
+          cost: '\$',
+          timeOfDay: 'evening',
+        ),
+      ];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPERS
@@ -347,17 +346,13 @@ Write an invite message:''',
     if (_userId == null) return null;
 
     try {
-      final match = await _supabase
-          .from('matches')
-          .select('''
+      final match = await _supabase.from('matches').select('''
             id,
             user1_id,
             user2_id,
             user1:profiles!matches_user1_id_fkey(id, display_name, interests, location),
             user2:profiles!matches_user2_id_fkey(id, display_name, interests, location)
-          ''')
-          .eq('id', matchId)
-          .maybeSingle();
+          ''').eq('id', matchId).maybeSingle();
 
       if (match == null) return null;
 
@@ -424,13 +419,6 @@ enum DateVibe {
 }
 
 class DateIdea {
-  final String id;
-  final String title;
-  final String description;
-  final String category;
-  final String cost;
-  final String timeOfDay;
-
   DateIdea({
     required this.id,
     required this.title,
@@ -439,6 +427,12 @@ class DateIdea {
     required this.cost,
     required this.timeOfDay,
   });
+  final String id;
+  final String title;
+  final String description;
+  final String category;
+  final String cost;
+  final String timeOfDay;
 
   String get categoryEmoji {
     switch (category) {
@@ -476,15 +470,14 @@ class DateIdea {
 }
 
 class DateCategory {
-  final String id;
-  final String name;
-  final String emoji;
-  final String description;
-
   DateCategory({
     required this.id,
     required this.name,
     required this.emoji,
     required this.description,
   });
+  final String id;
+  final String name;
+  final String emoji;
+  final String description;
 }

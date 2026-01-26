@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../domain/models/user_profile.dart';
-import '../domain/models/roster_match.dart';
-import '../domain/models/conversation.dart';
 import '../domain/models/analytics.dart';
+import '../domain/models/conversation.dart';
+import '../domain/models/roster_match.dart';
 import '../domain/models/tags_game.dart';
+import '../domain/models/user_profile.dart';
 
 /// Global Supabase client accessor for providers
 SupabaseClient get _supabase => Supabase.instance.client;
@@ -15,36 +15,32 @@ SupabaseClient get _supabase => Supabase.instance.client;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Stream of authentication state changes
-final authStateProvider = StreamProvider<AuthState>((ref) {
-  return _supabase.auth.onAuthStateChange;
-});
+final authStateProvider =
+    StreamProvider<AuthState>((ref) => _supabase.auth.onAuthStateChange);
 
 /// Current user provider
-final currentUserProvider = Provider<User?>((ref) {
-  return _supabase.auth.currentUser;
-});
+final currentUserProvider =
+    Provider<User?>((ref) => _supabase.auth.currentUser);
 
 /// User profile provider - fetches real profile from Supabase
 final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final user = ref.watch(currentUserProvider);
   print('[userProfileProvider] Current user: ${user?.id ?? "null"}');
-  
+
   if (user == null) {
     // Not logged in - return null
     print('[userProfileProvider] No user, returning null');
     return null;
   }
-  
+
   try {
     print('[userProfileProvider] Fetching profile for user: ${user.id}');
-    final response = await _supabase
-        .from('profiles')
-        .select()
-        .eq('id', user.id)
-        .single();
+    final response =
+        await _supabase.from('profiles').select().eq('id', user.id).single();
     print('[userProfileProvider] Got response: ${response.keys.toList()}');
     print('[userProfileProvider] display_name: ${response['display_name']}');
-    print('[userProfileProvider] city: ${response['city']}, state: ${response['state']}');
+    print(
+        '[userProfileProvider] city: ${response['city']}, state: ${response['state']}');
     return UserProfile.fromJson(response);
   } catch (e) {
     // Log error and return null
@@ -70,10 +66,10 @@ final optimizationScoreProvider = FutureProvider<double>((ref) async {
 final nearbyMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
   final isTonightMode = ref.watch(tonightModeProvider);
   if (!isTonightMode) return [];
-  
+
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
-  
+
   try {
     final response = await _supabase
         .from('roster_matches')
@@ -93,7 +89,7 @@ final nearbyMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
 final strategicAdviceProvider = FutureProvider<String?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
-  
+
   try {
     // Try to get AI-generated advice from the database
     final response = await _supabase
@@ -117,13 +113,15 @@ final strategicAdviceProvider = FutureProvider<String?>((ref) async {
 final focusBatchProvider = FutureProvider<List<RosterMatch>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
-  
+
   try {
-    final response = await _supabase
-        .rpc('get_focus_batch', params: {
-          'user_id': user.id,
-          'batch_size': 5,
-        });
+    final response = await _supabase.rpc(
+      'get_focus_batch',
+      params: {
+        'user_id': user.id,
+        'batch_size': 5,
+      },
+    );
     return (response as List)
         .map((json) => RosterMatch.fromJson(json))
         .toList();
@@ -144,7 +142,7 @@ final currentFocusIndexProvider = StateProvider<int>((ref) => 0);
 final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
-  
+
   try {
     final response = await _supabase
         .from('roster_matches')
@@ -161,14 +159,19 @@ final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
 });
 
 /// Matches grouped by pipeline stage
-final pipelineMatchesProvider = Provider<Map<PipelineStage, List<RosterMatch>>>((ref) {
+final pipelineMatchesProvider =
+    Provider<Map<PipelineStage, List<RosterMatch>>>((ref) {
   final matches = ref.watch(rosterMatchesProvider).valueOrNull ?? [];
-  
+
   return {
-    PipelineStage.incoming: matches.where((m) => m.stage == PipelineStage.incoming).toList(),
-    PipelineStage.bench: matches.where((m) => m.stage == PipelineStage.bench).toList(),
-    PipelineStage.activeRotation: matches.where((m) => m.stage == PipelineStage.activeRotation).toList(),
-    PipelineStage.legacy: matches.where((m) => m.stage == PipelineStage.legacy).toList(),
+    PipelineStage.incoming:
+        matches.where((m) => m.stage == PipelineStage.incoming).toList(),
+    PipelineStage.bench:
+        matches.where((m) => m.stage == PipelineStage.bench).toList(),
+    PipelineStage.activeRotation:
+        matches.where((m) => m.stage == PipelineStage.activeRotation).toList(),
+    PipelineStage.legacy:
+        matches.where((m) => m.stage == PipelineStage.legacy).toList(),
   };
 });
 
@@ -180,7 +183,7 @@ final pipelineMatchesProvider = Provider<Map<PipelineStage, List<RosterMatch>>>(
 final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
-  
+
   try {
     final response = await _supabase
         .from('conversations')
@@ -226,24 +229,23 @@ final staleMatchesProvider = Provider<List<RosterMatch>>((ref) {
 final consentLevelProvider = StateProvider<String>((ref) => 'green');
 
 /// Current consent level for TAGS (enum version)
-final tagsConsentLevelProvider = StateProvider<ConsentLevel>((ref) {
-  return ConsentLevel.green;
-});
+final tagsConsentLevelProvider =
+    StateProvider<ConsentLevel>((ref) => ConsentLevel.green);
 
 /// Available games based on consent level - now returns all games that meet the consent level
 final availableGamesProvider = Provider<List<GameCategory>>((ref) {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
-  return GameCategory.values.where((game) {
-    return game.minimumConsentLevel.value <= consentLevel.value;
-  }).toList();
+  return GameCategory.values
+      .where((game) => game.minimumConsentLevel.value <= consentLevel.value)
+      .toList();
 });
 
 /// Filtered games based on consent level (for repository)
 final filteredGamesProvider = FutureProvider<List<GameCategory>>((ref) async {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
-  return GameCategory.values.where((game) {
-    return game.minimumConsentLevel.value <= consentLevel.value;
-  }).toList();
+  return GameCategory.values
+      .where((game) => game.minimumConsentLevel.value <= consentLevel.value)
+      .toList();
 });
 
 /// Active game session
@@ -253,17 +255,15 @@ final activeGameProvider = StateProvider<TagsGame?>((ref) => null);
 final gameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
   final consentLevel = ref.watch(tagsConsentLevelProvider);
   final user = ref.watch(currentUserProvider);
-  
+
   if (user == null) return [];
-  
+
   try {
     final response = await _supabase
         .from('game_cards')
         .select()
         .lte('consent_level', consentLevel.value);
-    return (response as List)
-        .map((json) => GameCard.fromJson(json))
-        .toList();
+    return (response as List).map((json) => GameCard.fromJson(json)).toList();
   } catch (e) {
     print('[gameCardsProvider] Error: $e');
     return [];
@@ -284,7 +284,7 @@ final trustScoreProvider = Provider<double>((ref) {
 final vouchLinkProvider = FutureProvider<String?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
-  
+
   try {
     final response = await _supabase
         .rpc('generate_vouch_link', params: {'user_id': user.id});
@@ -299,12 +299,10 @@ final vouchLinkProvider = FutureProvider<String?>((ref) async {
 final vouchesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
-  
+
   try {
-    final response = await _supabase
-        .from('vouches')
-        .select()
-        .eq('vouched_for_id', user.id);
+    final response =
+        await _supabase.from('vouches').select().eq('vouched_for_id', user.id);
     return List<Map<String, dynamic>>.from(response);
   } catch (e) {
     print('[vouchesProvider] Error: $e');
@@ -320,14 +318,14 @@ final vouchesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
 final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
-  
+
   try {
     final response = await _supabase
         .from('user_analytics')
         .select()
         .eq('user_id', user.id)
         .maybeSingle();
-    
+
     if (response == null) {
       // No analytics row exists yet - return null
       return null;
@@ -347,9 +345,7 @@ final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
 final selectedTileProvider = StateProvider<int?>((ref) => null);
 
 /// Loading state for tiles
-final tileLoadingProvider = StateProvider<Map<int, bool>>((ref) {
-  return {};
-});
+final tileLoadingProvider = StateProvider<Map<int, bool>>((ref) => {});
 
 extension IterableExtension<T> on Iterable<T> {
   int get count => length;

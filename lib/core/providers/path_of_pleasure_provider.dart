@@ -1,8 +1,9 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:async';
-import 'dart:math';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// PATH OF PLEASURE - 1v1 COMPETITIVE KINKINESS SORTING GAME
@@ -15,20 +16,20 @@ import 'dart:math';
 // ═══════════════════════════════════════════════════════════════════════════
 
 enum GamePhase {
-  idle,           // Entry screen
-  modeSelect,     // Choose Pass & Play or Multi-Screen
-  lobby,          // Waiting for players / team setup
-  sorting,        // Active player sorting 8 cards
-  scored,         // Show score feedback (X/8 correct)
-  decision,       // PASS or PLAY choice
-  stealing,       // Other team attempting to steal
-  roundResult,    // Show final round result
-  gameOver,       // Victory screen
+  idle, // Entry screen
+  modeSelect, // Choose Pass & Play or Multi-Screen
+  lobby, // Waiting for players / team setup
+  sorting, // Active player sorting 8 cards
+  scored, // Show score feedback (X/8 correct)
+  decision, // PASS or PLAY choice
+  stealing, // Other team attempting to steal
+  roundResult, // Show final round result
+  gameOver, // Victory screen
 }
 
 enum ConnectionMode {
-  passAndPlay,    // Single device, rotate between teams
-  multiScreen,    // Host/Client with room codes
+  passAndPlay, // Single device, rotate between teams
+  multiScreen, // Host/Client with room codes
 }
 
 enum TeamTurn {
@@ -37,11 +38,11 @@ enum TeamTurn {
 }
 
 enum RoundOutcome {
-  perfectScore,     // Team got 8/8
-  playSuccess,      // Team improved their score
-  playFail,         // Team failed to improve (0 points)
-  stealSuccess,     // Other team stole the points
-  stealFail,        // Original team keeps points
+  perfectScore, // Team got 8/8
+  playSuccess, // Team improved their score
+  playFail, // Team failed to improve (0 points)
+  stealSuccess, // Other team stole the points
+  stealFail, // Original team keeps points
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -50,12 +51,8 @@ enum RoundOutcome {
 
 /// A single card/item to be ranked by kinkiness
 class KinkCard {
-  final String id;
-  final String text;
-  final int trueRank;         // 1-200 (1 = most vanilla, 200 = most hardcore)
-  final double eloScore;      // Hidden Elo rating for crowd ranking
-  final int weeklyRankChange; // How much it moved this week
-  
+  // How much it moved this week
+
   const KinkCard({
     required this.id,
     required this.text,
@@ -63,79 +60,71 @@ class KinkCard {
     this.eloScore = 1000.0,
     this.weeklyRankChange = 0,
   });
-  
-  factory KinkCard.fromJson(Map<String, dynamic> json) {
-    return KinkCard(
-      id: json['id'] as String,
-      text: json['text'] as String,
-      trueRank: json['true_rank'] as int,
-      eloScore: (json['elo_score'] as num?)?.toDouble() ?? 1000.0,
-      weeklyRankChange: json['weekly_rank_change'] as int? ?? 0,
-    );
-  }
-  
+
+  factory KinkCard.fromJson(Map<String, dynamic> json) => KinkCard(
+        id: json['id'] as String,
+        text: json['text'] as String,
+        trueRank: json['true_rank'] as int,
+        eloScore: (json['elo_score'] as num?)?.toDouble() ?? 1000.0,
+        weeklyRankChange: json['weekly_rank_change'] as int? ?? 0,
+      );
+  final String id;
+  final String text;
+  final int trueRank; // 1-200 (1 = most vanilla, 200 = most hardcore)
+  final double eloScore; // Hidden Elo rating for crowd ranking
+  final int weeklyRankChange;
+
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'text': text,
-    'true_rank': trueRank,
-    'elo_score': eloScore,
-    'weekly_rank_change': weeklyRankChange,
-  };
+        'id': id,
+        'text': text,
+        'true_rank': trueRank,
+        'elo_score': eloScore,
+        'weekly_rank_change': weeklyRankChange,
+      };
 }
 
 /// Team data
 class Team {
-  final String name;
-  final Color color;
-  final int score;
-  final int roundsWon;
-  
   const Team({
     required this.name,
     required this.color,
     this.score = 0,
     this.roundsWon = 0,
   });
-  
-  Team copyWith({String? name, Color? color, int? score, int? roundsWon}) {
-    return Team(
-      name: name ?? this.name,
-      color: color ?? this.color,
-      score: score ?? this.score,
-      roundsWon: roundsWon ?? this.roundsWon,
-    );
-  }
+  final String name;
+  final Color color;
+  final int score;
+  final int roundsWon;
+
+  Team copyWith({String? name, Color? color, int? score, int? roundsWon}) =>
+      Team(
+        name: name ?? this.name,
+        color: color ?? this.color,
+        score: score ?? this.score,
+        roundsWon: roundsWon ?? this.roundsWon,
+      );
 }
 
 /// Result of a single sorting attempt
 class SortResult {
-  final List<KinkCard> submittedOrder;
-  final List<KinkCard> correctOrder;
-  final int correctCount;          // How many are in correct position
-  final List<bool> positionCorrect; // Which positions are correct
-  
+  // Which positions are correct
+
   const SortResult({
     required this.submittedOrder,
     required this.correctOrder,
     required this.correctCount,
     required this.positionCorrect,
   });
-  
+  final List<KinkCard> submittedOrder;
+  final List<KinkCard> correctOrder;
+  final int correctCount; // How many are in correct position
+  final List<bool> positionCorrect;
+
   bool get isPerfect => correctCount == 8;
 }
 
 /// Round data tracking the flow of a single round
 class RoundData {
-  final List<KinkCard> cards;           // The 8 cards for this round
-  final List<KinkCard> correctOrder;    // Cards sorted by true rank
-  SortResult? teamAFirstAttempt;
-  SortResult? teamASecondAttempt;       // If they chose PLAY
-  SortResult? teamBStealAttempt;        // If team A chose PASS
-  bool? teamAChosePlay;                 // true = PLAY, false = PASS
-  RoundOutcome? outcome;
-  int pointsAwarded;
-  TeamTurn? pointsAwardedTo;
-  
   RoundData({
     required this.cards,
     required this.correctOrder,
@@ -147,6 +136,15 @@ class RoundData {
     this.pointsAwarded = 0,
     this.pointsAwardedTo,
   });
+  final List<KinkCard> cards; // The 8 cards for this round
+  final List<KinkCard> correctOrder; // Cards sorted by true rank
+  SortResult? teamAFirstAttempt;
+  SortResult? teamASecondAttempt; // If they chose PLAY
+  SortResult? teamBStealAttempt; // If team A chose PASS
+  bool? teamAChosePlay; // true = PLAY, false = PASS
+  RoundOutcome? outcome;
+  int pointsAwarded;
+  TeamTurn? pointsAwardedTo;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -154,38 +152,6 @@ class RoundData {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class PathOfPleasureState {
-  final GamePhase phase;
-  final ConnectionMode connectionMode;
-  
-  // Session
-  final String? sessionId;
-  final String? roomCode;
-  final bool isHost;
-  
-  // Teams
-  final Team teamA;
-  final Team teamB;
-  final TeamTurn currentTurn;
-  final TeamTurn? startingTeam;  // Who started the current round
-  
-  // Game config
-  final int winningScore;
-  final int cardsPerRound;
-  
-  // Round state
-  final int roundNumber;
-  final RoundData? currentRound;
-  final List<KinkCard> playerSorting;  // Current player's sorting attempt
-  final List<RoundData> completedRounds;
-  
-  // UI
-  final bool isLoading;
-  final String? error;
-  final bool showHandoffScreen;  // For Pass & Play between teams
-  
-  // Master card list
-  final List<KinkCard> masterDeck;
-  
   const PathOfPleasureState({
     this.phase = GamePhase.idle,
     this.connectionMode = ConnectionMode.passAndPlay,
@@ -207,17 +173,49 @@ class PathOfPleasureState {
     this.showHandoffScreen = false,
     this.masterDeck = const [],
   });
-  
+  final GamePhase phase;
+  final ConnectionMode connectionMode;
+
+  // Session
+  final String? sessionId;
+  final String? roomCode;
+  final bool isHost;
+
+  // Teams
+  final Team teamA;
+  final Team teamB;
+  final TeamTurn currentTurn;
+  final TeamTurn? startingTeam; // Who started the current round
+
+  // Game config
+  final int winningScore;
+  final int cardsPerRound;
+
+  // Round state
+  final int roundNumber;
+  final RoundData? currentRound;
+  final List<KinkCard> playerSorting; // Current player's sorting attempt
+  final List<RoundData> completedRounds;
+
+  // UI
+  final bool isLoading;
+  final String? error;
+  final bool showHandoffScreen; // For Pass & Play between teams
+
+  // Master card list
+  final List<KinkCard> masterDeck;
+
   Team get activeTeam => currentTurn == TeamTurn.teamA ? teamA : teamB;
   Team get inactiveTeam => currentTurn == TeamTurn.teamA ? teamB : teamA;
-  
-  bool get isGameOver => teamA.score >= winningScore || teamB.score >= winningScore;
+
+  bool get isGameOver =>
+      teamA.score >= winningScore || teamB.score >= winningScore;
   Team? get winner {
     if (teamA.score >= winningScore) return teamA;
     if (teamB.score >= winningScore) return teamB;
     return null;
   }
-  
+
   PathOfPleasureState copyWith({
     GamePhase? phase,
     ConnectionMode? connectionMode,
@@ -242,29 +240,29 @@ class PathOfPleasureState {
     bool clearError = false,
     bool? showHandoffScreen,
     List<KinkCard>? masterDeck,
-  }) {
-    return PathOfPleasureState(
-      phase: phase ?? this.phase,
-      connectionMode: connectionMode ?? this.connectionMode,
-      sessionId: clearSessionId ? null : (sessionId ?? this.sessionId),
-      roomCode: clearRoomCode ? null : (roomCode ?? this.roomCode),
-      isHost: isHost ?? this.isHost,
-      teamA: teamA ?? this.teamA,
-      teamB: teamB ?? this.teamB,
-      currentTurn: currentTurn ?? this.currentTurn,
-      startingTeam: startingTeam ?? this.startingTeam,
-      winningScore: winningScore ?? this.winningScore,
-      cardsPerRound: cardsPerRound ?? this.cardsPerRound,
-      roundNumber: roundNumber ?? this.roundNumber,
-      currentRound: clearCurrentRound ? null : (currentRound ?? this.currentRound),
-      playerSorting: playerSorting ?? this.playerSorting,
-      completedRounds: completedRounds ?? this.completedRounds,
-      isLoading: isLoading ?? this.isLoading,
-      error: clearError ? null : error,
-      showHandoffScreen: showHandoffScreen ?? this.showHandoffScreen,
-      masterDeck: masterDeck ?? this.masterDeck,
-    );
-  }
+  }) =>
+      PathOfPleasureState(
+        phase: phase ?? this.phase,
+        connectionMode: connectionMode ?? this.connectionMode,
+        sessionId: clearSessionId ? null : (sessionId ?? this.sessionId),
+        roomCode: clearRoomCode ? null : (roomCode ?? this.roomCode),
+        isHost: isHost ?? this.isHost,
+        teamA: teamA ?? this.teamA,
+        teamB: teamB ?? this.teamB,
+        currentTurn: currentTurn ?? this.currentTurn,
+        startingTeam: startingTeam ?? this.startingTeam,
+        winningScore: winningScore ?? this.winningScore,
+        cardsPerRound: cardsPerRound ?? this.cardsPerRound,
+        roundNumber: roundNumber ?? this.roundNumber,
+        currentRound:
+            clearCurrentRound ? null : (currentRound ?? this.currentRound),
+        playerSorting: playerSorting ?? this.playerSorting,
+        completedRounds: completedRounds ?? this.completedRounds,
+        isLoading: isLoading ?? this.isLoading,
+        error: clearError ? null : error,
+        showHandoffScreen: showHandoffScreen ?? this.showHandoffScreen,
+        masterDeck: masterDeck ?? this.masterDeck,
+      );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -272,27 +270,29 @@ class PathOfPleasureState {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
+  PathOfPleasureNotifier([this._supabase])
+      : super(
+          const PathOfPleasureState(
+            masterDeck: _masterKinkCards,
+          ),
+        );
   final SupabaseClient? _supabase;
-  
-  PathOfPleasureNotifier([this._supabase]) : super(PathOfPleasureState(
-    masterDeck: _masterKinkCards,
-  ));
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // SETUP & MODE SELECTION
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void showModeSelect() {
     state = state.copyWith(phase: GamePhase.modeSelect);
   }
-  
+
   void selectMode(ConnectionMode mode) {
     state = state.copyWith(
       connectionMode: mode,
       phase: GamePhase.lobby,
     );
   }
-  
+
   void setTeamName(TeamTurn team, String name) {
     if (team == TeamTurn.teamA) {
       state = state.copyWith(teamA: state.teamA.copyWith(name: name));
@@ -300,11 +300,11 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       state = state.copyWith(teamB: state.teamB.copyWith(name: name));
     }
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // MULTIPLAYER (Room Codes)
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   Future<void> hostMultiScreenGame() async {
     final roomCode = _generateRoomCode();
     state = state.copyWith(
@@ -315,7 +315,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     );
     // In production: Create room in Supabase/Firebase realtime
   }
-  
+
   Future<bool> joinMultiScreenGame(String code) async {
     // In production: Validate code and join room
     state = state.copyWith(
@@ -326,21 +326,21 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     );
     return true;
   }
-  
+
   String _generateRoomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random();
     return List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // GAME START
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void startGame() {
     // Randomly decide who goes first
     final startingTeam = Random().nextBool() ? TeamTurn.teamA : TeamTurn.teamB;
-    
+
     state = state.copyWith(
       roundNumber: 1,
       currentTurn: startingTeam,
@@ -349,24 +349,24 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       teamB: state.teamB.copyWith(score: 0, roundsWon: 0),
       completedRounds: [],
     );
-    
+
     _startNewRound();
   }
-  
+
   void _startNewRound() {
     // Draw 8 random cards
     final shuffled = [...state.masterDeck]..shuffle();
     final roundCards = shuffled.take(8).toList();
-    
+
     // Sort by true rank to get correct order
     final correctOrder = [...roundCards]
       ..sort((a, b) => a.trueRank.compareTo(b.trueRank));
-    
+
     final round = RoundData(
       cards: roundCards,
       correctOrder: correctOrder,
     );
-    
+
     // For Pass & Play, show handoff screen
     if (state.connectionMode == ConnectionMode.passAndPlay) {
       state = state.copyWith(
@@ -383,47 +383,48 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       );
     }
   }
-  
+
   void dismissHandoff() {
     state = state.copyWith(showHandoffScreen: false);
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // SORTING (Drag & Drop)
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void reorderCard(int oldIndex, int newIndex) {
     final cards = [...state.playerSorting];
     final card = cards.removeAt(oldIndex);
     cards.insert(newIndex > oldIndex ? newIndex - 1 : newIndex, card);
     state = state.copyWith(playerSorting: cards);
   }
-  
+
   void moveCardUp(int index) {
     if (index <= 0) return;
     reorderCard(index, index - 1);
   }
-  
+
   void moveCardDown(int index) {
     if (index >= state.playerSorting.length - 1) return;
     reorderCard(index, index + 2);
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // SUBMISSION & SCORING
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void submitSort() {
     final round = state.currentRound;
     if (round == null) return;
-    
-    final result = _calculateSortResult(state.playerSorting, round.correctOrder);
-    
+
+    final result =
+        _calculateSortResult(state.playerSorting, round.correctOrder);
+
     // Determine which attempt this is
     if (round.teamAFirstAttempt == null) {
       // This is Team A's first attempt
       round.teamAFirstAttempt = result;
-      
+
       if (result.isPerfect) {
         // Perfect score! Award 8 points immediately
         _awardPoints(8, TeamTurn.teamA, RoundOutcome.perfectScore);
@@ -434,13 +435,14 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
           phase: GamePhase.scored,
         );
       }
-    } else if (round.teamAChosePlay == true && round.teamASecondAttempt == null) {
+    } else if (round.teamAChosePlay == true &&
+        round.teamASecondAttempt == null) {
       // Team A chose PLAY, this is their second attempt
       round.teamASecondAttempt = result;
-      
+
       final firstScore = round.teamAFirstAttempt!.correctCount;
       final secondScore = result.correctCount;
-      
+
       if (secondScore > firstScore) {
         // Improved! Keep the new score
         _awardPoints(secondScore, TeamTurn.teamA, RoundOutcome.playSuccess);
@@ -448,13 +450,14 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         // Failed to improve, 0 points
         _awardPoints(0, TeamTurn.teamA, RoundOutcome.playFail);
       }
-    } else if (round.teamAChosePlay == false && round.teamBStealAttempt == null) {
+    } else if (round.teamAChosePlay == false &&
+        round.teamBStealAttempt == null) {
       // Team A passed, Team B is attempting to steal
       round.teamBStealAttempt = result;
-      
+
       final teamAScore = round.teamAFirstAttempt!.correctCount;
       final teamBScore = result.correctCount;
-      
+
       if (teamBScore > teamAScore) {
         // Steal successful!
         _awardPoints(teamBScore, TeamTurn.teamB, RoundOutcome.stealSuccess);
@@ -464,17 +467,18 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       }
     }
   }
-  
-  SortResult _calculateSortResult(List<KinkCard> submitted, List<KinkCard> correct) {
+
+  SortResult _calculateSortResult(
+      List<KinkCard> submitted, List<KinkCard> correct) {
     final positionCorrect = <bool>[];
     int correctCount = 0;
-    
+
     for (int i = 0; i < submitted.length; i++) {
       final isCorrect = submitted[i].id == correct[i].id;
       positionCorrect.add(isCorrect);
       if (isCorrect) correctCount++;
     }
-    
+
     return SortResult(
       submittedOrder: submitted,
       correctOrder: correct,
@@ -482,16 +486,16 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       positionCorrect: positionCorrect,
     );
   }
-  
+
   void _awardPoints(int points, TeamTurn team, RoundOutcome outcome) {
     final round = state.currentRound!;
     round.outcome = outcome;
     round.pointsAwarded = points;
     round.pointsAwardedTo = team;
-    
+
     Team updatedTeamA = state.teamA;
     Team updatedTeamB = state.teamB;
-    
+
     if (team == TeamTurn.teamA) {
       updatedTeamA = state.teamA.copyWith(
         score: state.teamA.score + points,
@@ -503,10 +507,10 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         roundsWon: state.teamB.roundsWon + (points > 0 ? 1 : 0),
       );
     }
-    
+
     // Log matchups for Elo calculation (backend)
     _logMatchupsForElo(round);
-    
+
     state = state.copyWith(
       currentRound: round,
       teamA: updatedTeamA,
@@ -515,28 +519,30 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       phase: GamePhase.roundResult,
     );
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // DECISION PHASE (PASS or PLAY)
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void showDecision() {
     state = state.copyWith(phase: GamePhase.decision);
   }
-  
+
   void choosePass() {
     final round = state.currentRound;
     if (round == null) return;
-    
+
     round.teamAChosePlay = false;
-    
+
     // Switch to Team B for steal attempt
     // In Pass & Play, show handoff
     if (state.connectionMode == ConnectionMode.passAndPlay) {
       state = state.copyWith(
         currentRound: round,
         currentTurn: TeamTurn.teamB,
-        playerSorting: [...round.teamAFirstAttempt!.submittedOrder], // Start with Team A's order
+        playerSorting: [
+          ...round.teamAFirstAttempt!.submittedOrder
+        ], // Start with Team A's order
         showHandoffScreen: true,
         phase: GamePhase.stealing,
       );
@@ -549,37 +555,38 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       );
     }
   }
-  
+
   void choosePlay() {
     final round = state.currentRound;
     if (round == null) return;
-    
+
     round.teamAChosePlay = true;
-    
+
     // Team A gets another chance to sort
     state = state.copyWith(
       currentRound: round,
-      playerSorting: [...round.teamAFirstAttempt!.submittedOrder], // Start with their previous order
+      playerSorting: [
+        ...round.teamAFirstAttempt!.submittedOrder
+      ], // Start with their previous order
       phase: GamePhase.sorting,
     );
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // ROUND PROGRESSION
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void continueToNextRound() {
     // Check for game over
     if (state.isGameOver) {
       state = state.copyWith(phase: GamePhase.gameOver);
       return;
     }
-    
+
     // Alternate starting team
-    final nextStarting = state.startingTeam == TeamTurn.teamA 
-        ? TeamTurn.teamB 
-        : TeamTurn.teamA;
-    
+    final nextStarting =
+        state.startingTeam == TeamTurn.teamA ? TeamTurn.teamB : TeamTurn.teamA;
+
     // Clear previous round state and prepare for next round
     state = state.copyWith(
       roundNumber: state.roundNumber + 1,
@@ -588,31 +595,31 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
       showHandoffScreen: false, // Reset handoff state
       clearCurrentRound: true, // Clear previous round
     );
-    
+
     _startNewRound();
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // ELO RANKING SYSTEM (Backend Integration)
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void _logMatchupsForElo(RoundData round) {
     // Get the winning submission
     List<KinkCard>? winningOrder;
-    
+
     if (round.outcome == RoundOutcome.perfectScore ||
         round.outcome == RoundOutcome.playSuccess ||
         round.outcome == RoundOutcome.stealFail) {
       // Team A's submission was "correct"
-      winningOrder = round.teamASecondAttempt?.submittedOrder ?? 
-                     round.teamAFirstAttempt?.submittedOrder;
+      winningOrder = round.teamASecondAttempt?.submittedOrder ??
+          round.teamAFirstAttempt?.submittedOrder;
     } else if (round.outcome == RoundOutcome.stealSuccess) {
       // Team B's submission was "correct"
       winningOrder = round.teamBStealAttempt?.submittedOrder;
     }
-    
+
     if (winningOrder == null || _supabase == null) return;
-    
+
     // Extract pairwise matchups for Elo
     // Each adjacent pair is a "vote" that card[i] < card[i+1]
     final matchups = <Map<String, String>>[];
@@ -622,28 +629,31 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         'more_kinky_id': winningOrder[i + 1].id,
       });
     }
-    
+
     // Log to backend (async, fire and forget)
-    _supabase?.from('pop_elo_matchups').insert({
-      'session_id': state.sessionId,
-      'matchups': matchups,
-      'created_at': DateTime.now().toIso8601String(),
-    }).then((_) {}).catchError((_) {});
+    _supabase
+        .from('pop_elo_matchups')
+        .insert({
+          'session_id': state.sessionId,
+          'matchups': matchups,
+          'created_at': DateTime.now().toIso8601String(),
+        })
+        .then((_) {})
+        .catchError((_) {});
   }
-  
+
   // ═════════════════════════════════════════════════════════════════════════
   // RESET
   // ═════════════════════════════════════════════════════════════════════════
-  
+
   void reset() {
-    state = PathOfPleasureState(masterDeck: _masterKinkCards);
+    state = const PathOfPleasureState(masterDeck: _masterKinkCards);
   }
-  
+
   void backToLobby() {
     state = state.copyWith(
       phase: GamePhase.lobby,
       roundNumber: 0,
-      currentRound: null,
       completedRounds: [],
       teamA: state.teamA.copyWith(score: 0, roundsWon: 0),
       teamB: state.teamB.copyWith(score: 0, roundsWon: 0),
@@ -655,7 +665,8 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
 // PROVIDER
 // ═══════════════════════════════════════════════════════════════════════════
 
-final pathOfPleasureProvider = StateNotifierProvider<PathOfPleasureNotifier, PathOfPleasureState>(
+final pathOfPleasureProvider =
+    StateNotifierProvider<PathOfPleasureNotifier, PathOfPleasureState>(
   (ref) {
     try {
       return PathOfPleasureNotifier(Supabase.instance.client);
@@ -711,7 +722,7 @@ const List<KinkCard> _masterKinkCards = [
   KinkCard(id: 'k038', text: 'Video call striptease', trueRank: 38),
   KinkCard(id: 'k039', text: 'Sending nudes', trueRank: 39),
   KinkCard(id: 'k040', text: 'Receiving nudes', trueRank: 40),
-  
+
   // MILD (41-80) - Getting warmer, mainstream intimacy
   KinkCard(id: 'k041', text: 'Missionary', trueRank: 41),
   KinkCard(id: 'k042', text: 'Cowgirl', trueRank: 42),
@@ -753,7 +764,7 @@ const List<KinkCard> _masterKinkCards = [
   KinkCard(id: 'k078', text: 'Balcony/patio', trueRank: 78),
   KinkCard(id: 'k079', text: 'Hotel room adventure', trueRank: 79),
   KinkCard(id: 'k080', text: 'Car sex', trueRank: 80),
-  
+
   // SPICY (81-120) - Adventurous, requires communication
   KinkCard(id: 'k081', text: 'Deep throat', trueRank: 81),
   KinkCard(id: 'k082', text: 'Face sitting', trueRank: 82),
@@ -795,7 +806,7 @@ const List<KinkCard> _masterKinkCards = [
   KinkCard(id: 'k118', text: 'Safe words', trueRank: 118),
   KinkCard(id: 'k119', text: 'Role play (intense)', trueRank: 119),
   KinkCard(id: 'k120', text: 'Public teasing', trueRank: 120),
-  
+
   // HOT (121-160) - Advanced, requires trust & experience
   KinkCard(id: 'k121', text: 'Sex in public (risky)', trueRank: 121),
   KinkCard(id: 'k122', text: 'Mile high club', trueRank: 122),
@@ -837,7 +848,7 @@ const List<KinkCard> _masterKinkCards = [
   KinkCard(id: 'k158', text: 'Breeding kink', trueRank: 158),
   KinkCard(id: 'k159', text: 'Impregnation fantasy', trueRank: 159),
   KinkCard(id: 'k160', text: 'Lactation', trueRank: 160),
-  
+
   // HARDCORE (161-200) - Extreme, niche, requires expertise
   KinkCard(id: 'k161', text: 'Gang bang fantasy', trueRank: 161),
   KinkCard(id: 'k162', text: 'Bukkake', trueRank: 162),

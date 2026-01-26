@@ -6,13 +6,13 @@ class LocationService {
   static Future<Position?> getCurrentPosition() async {
     bool serviceEnabled;
     LocationPermission permission;
-    
+
     // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return null;
     }
-    
+
     // Check permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -21,17 +21,17 @@ class LocationService {
         return null;
       }
     }
-    
+
     if (permission == LocationPermission.deniedForever) {
       return null;
     }
-    
+
     // Get position
-    return await Geolocator.getCurrentPosition(
+    return Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
   }
-  
+
   /// Calculate distance between two points in kilometers
   static double calculateDistance(
     double startLat,
@@ -40,20 +40,19 @@ class LocationService {
     double endLng,
   ) {
     return Geolocator.distanceBetween(
-      startLat,
-      startLng,
-      endLat,
-      endLng,
-    ) / 1000; // Convert to km
+          startLat,
+          startLng,
+          endLat,
+          endLng,
+        ) /
+        1000; // Convert to km
   }
-  
+
   /// Stream position updates
-  static Stream<Position> getPositionStream() {
-    return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 100, // Update every 100 meters
-      ),
-    );
-  }
+  static Stream<Position> getPositionStream() => Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 100, // Update every 100 meters
+        ),
+      );
 }

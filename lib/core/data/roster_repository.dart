@@ -9,9 +9,8 @@ import '../domain/models/roster_match.dart';
 /// ════════════════════════════════════════════════════════════════════════════
 
 class RosterRepository {
-  final SupabaseClient _supabase;
-
   RosterRepository(this._supabase);
+  final SupabaseClient _supabase;
 
   String? get _userId => _supabase.auth.currentUser?.id;
 
@@ -28,8 +27,8 @@ class RosterRepository {
         .from('roster_matches')
         .stream(primaryKey: ['id'])
         .eq('user_id', _userId!)
-        .order('momentum_score', ascending: false)
-        .map((data) => data.map((json) => RosterMatch.fromJson(json)).toList());
+        .order('momentum_score')
+        .map((data) => data.map(RosterMatch.fromJson).toList());
   }
 
   /// Stream of matches filtered by pipeline stage
@@ -40,10 +39,13 @@ class RosterRepository {
         .from('roster_matches')
         .stream(primaryKey: ['id'])
         .eq('user_id', _userId!)
-        .map((data) => data
-            .where((json) => json['pipeline_stage'] == stage || json['stage'] == stage)
-            .map((json) => RosterMatch.fromJson(json))
-            .toList());
+        .map(
+          (data) => data
+              .where((json) =>
+                  json['pipeline_stage'] == stage || json['stage'] == stage)
+              .map(RosterMatch.fromJson)
+              .toList(),
+        );
   }
 
   /// Stream of nearby matches (for Tonight Mode)
@@ -54,10 +56,12 @@ class RosterRepository {
         .from('roster_matches')
         .stream(primaryKey: ['id'])
         .eq('user_id', _userId!)
-        .map((data) => data
-            .where((json) => json['is_nearby'] == true)
-            .map((json) => RosterMatch.fromJson(json))
-            .toList());
+        .map(
+          (data) => data
+              .where((json) => json['is_nearby'] == true)
+              .map(RosterMatch.fromJson)
+              .toList(),
+        );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -118,11 +122,8 @@ class RosterRepository {
       'momentum_score': 0.5,
     };
 
-    final response = await _supabase
-        .from('roster_matches')
-        .insert(data)
-        .select()
-        .single();
+    final response =
+        await _supabase.from('roster_matches').insert(data).select().single();
 
     return RosterMatch.fromJson(response);
   }
@@ -134,11 +135,14 @@ class RosterRepository {
 
     try {
       // Use the database function for atomic update
-      final result = await _supabase.rpc('update_match_stage', params: {
-        'p_match_id': matchId,
-        'p_new_stage': newStatus,
-        'p_user_id': _userId,
-      });
+      final result = await _supabase.rpc(
+        'update_match_stage',
+        params: {
+          'p_match_id': matchId,
+          'p_new_stage': newStatus,
+          'p_user_id': _userId,
+        },
+      );
 
       return result == true;
     } catch (e) {
@@ -159,45 +163,33 @@ class RosterRepository {
 
   /// Update match momentum score
   Future<void> updateMomentum(String matchId, double score) async {
-    await _supabase
-        .from('roster_matches')
-        .update({
-          'momentum_score': score,
-          'updated_at': DateTime.now().toIso8601String(),
-        })
-        .eq('id', matchId);
+    await _supabase.from('roster_matches').update({
+      'momentum_score': score,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', matchId);
   }
 
   /// Update match details
   Future<void> updateMatch(String matchId, Map<String, dynamic> data) async {
     data['updated_at'] = DateTime.now().toIso8601String();
-    
-    await _supabase
-        .from('roster_matches')
-        .update(data)
-        .eq('id', matchId);
+
+    await _supabase.from('roster_matches').update(data).eq('id', matchId);
   }
 
   /// Archive a match (move to Shredder)
   Future<void> archiveMatch(String matchId, {String? reason}) async {
-    await _supabase
-        .from('roster_matches')
-        .update({
-          'is_archived': true,
-          'archived_at': DateTime.now().toIso8601String(),
-          'archive_reason': reason,
-          'pipeline_stage': 'archived',
-          'updated_at': DateTime.now().toIso8601String(),
-        })
-        .eq('id', matchId);
+    await _supabase.from('roster_matches').update({
+      'is_archived': true,
+      'archived_at': DateTime.now().toIso8601String(),
+      'archive_reason': reason,
+      'pipeline_stage': 'archived',
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', matchId);
   }
 
   /// Delete a match permanently
   Future<void> deleteMatch(String matchId) async {
-    await _supabase
-        .from('roster_matches')
-        .delete()
-        .eq('id', matchId);
+    await _supabase.from('roster_matches').delete().eq('id', matchId);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -243,28 +235,42 @@ class RosterRepository {
 }
 
 /// Provider for RosterRepository
-final rosterRepositoryProvider = Provider<RosterRepository>((ref) {
-  return RosterRepository(Supabase.instance.client);
-});
+final rosterRepositoryProvider = Provider<RosterRepository>(
+    (ref) => RosterRepository(Supabase.instance.client));
 
 /// Real-time stream of all matches
-final matchesStreamProvider = StreamProvider<List<RosterMatch>>((ref) {
-  return ref.watch(rosterRepositoryProvider).watchMatches();
-});
+final matchesStreamProvider = StreamProvider<List<RosterMatch>>(
+    (ref) => ref.watch(rosterRepositoryProvider).watchMatches());
 
 /// Matches grouped by pipeline stage (derived from stream)
-final pipelineMatchesStreamProvider = Provider<Map<PipelineStage, List<RosterMatch>>>((ref) {
+final pipelineMatchesStreamProvider =
+    Provider<Map<PipelineStage, List<RosterMatch>>>((ref) {
   final matches = ref.watch(matchesStreamProvider).valueOrNull ?? [];
 
   return {
-    PipelineStage.incoming: matches.where((m) => 
-        m.stage == PipelineStage.incoming || _stageMatches(m, 'incoming')).toList(),
-    PipelineStage.bench: matches.where((m) => 
-        m.stage == PipelineStage.bench || _stageMatches(m, 'bench')).toList(),
-    PipelineStage.activeRotation: matches.where((m) => 
-        m.stage == PipelineStage.activeRotation || _stageMatches(m, 'active')).toList(),
-    PipelineStage.legacy: matches.where((m) => 
-        m.stage == PipelineStage.legacy || _stageMatches(m, 'legacy')).toList(),
+    PipelineStage.incoming: matches
+        .where(
+          (m) =>
+              m.stage == PipelineStage.incoming || _stageMatches(m, 'incoming'),
+        )
+        .toList(),
+    PipelineStage.bench: matches
+        .where(
+          (m) => m.stage == PipelineStage.bench || _stageMatches(m, 'bench'),
+        )
+        .toList(),
+    PipelineStage.activeRotation: matches
+        .where(
+          (m) =>
+              m.stage == PipelineStage.activeRotation ||
+              _stageMatches(m, 'active'),
+        )
+        .toList(),
+    PipelineStage.legacy: matches
+        .where(
+          (m) => m.stage == PipelineStage.legacy || _stageMatches(m, 'legacy'),
+        )
+        .toList(),
   };
 });
 
@@ -274,6 +280,5 @@ bool _stageMatches(RosterMatch match, String stageName) {
 }
 
 /// Stale matches stream for The Shredder
-final staleMatchesStreamProvider = FutureProvider<List<RosterMatch>>((ref) async {
-  return ref.watch(rosterRepositoryProvider).getStaleMatches();
-});
+final staleMatchesStreamProvider = FutureProvider<List<RosterMatch>>(
+    (ref) async => ref.watch(rosterRepositoryProvider).getStaleMatches());

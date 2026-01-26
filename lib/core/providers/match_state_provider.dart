@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/models/match.dart';
+
 import '../domain/models/chat.dart';
+import '../domain/models/match.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// MATCH STATE PROVIDER
@@ -10,13 +11,6 @@ import '../domain/models/chat.dart';
 
 /// State class holding all match-related data
 class MatchState {
-  final List<Match> matches;
-  final Set<String> likedProfiles; // Profiles the user has liked
-  final Set<String> superLikedProfiles; // Profiles the user has super-liked
-  final Set<String> passedProfiles; // Profiles the user has passed on
-  final Map<String, ChatConversation> conversations; // Active conversations by match ID
-  final int newMatchCount;
-
   const MatchState({
     this.matches = const [],
     this.likedProfiles = const {},
@@ -25,6 +19,13 @@ class MatchState {
     this.conversations = const {},
     this.newMatchCount = 0,
   });
+  final List<Match> matches;
+  final Set<String> likedProfiles; // Profiles the user has liked
+  final Set<String> superLikedProfiles; // Profiles the user has super-liked
+  final Set<String> passedProfiles; // Profiles the user has passed on
+  final Map<String, ChatConversation>
+      conversations; // Active conversations by match ID
+  final int newMatchCount;
 
   MatchState copyWith({
     List<Match>? matches,
@@ -33,21 +34,19 @@ class MatchState {
     Set<String>? passedProfiles,
     Map<String, ChatConversation>? conversations,
     int? newMatchCount,
-  }) {
-    return MatchState(
-      matches: matches ?? this.matches,
-      likedProfiles: likedProfiles ?? this.likedProfiles,
-      superLikedProfiles: superLikedProfiles ?? this.superLikedProfiles,
-      passedProfiles: passedProfiles ?? this.passedProfiles,
-      conversations: conversations ?? this.conversations,
-      newMatchCount: newMatchCount ?? this.newMatchCount,
-    );
-  }
+  }) =>
+      MatchState(
+        matches: matches ?? this.matches,
+        likedProfiles: likedProfiles ?? this.likedProfiles,
+        superLikedProfiles: superLikedProfiles ?? this.superLikedProfiles,
+        passedProfiles: passedProfiles ?? this.passedProfiles,
+        conversations: conversations ?? this.conversations,
+        newMatchCount: newMatchCount ?? this.newMatchCount,
+      );
 
   /// Get matches by priority
-  List<Match> getMatchesByPriority(MatchPriority priority) {
-    return matches.where((m) => m.priority == priority && !m.isArchived).toList();
-  }
+  List<Match> getMatchesByPriority(MatchPriority priority) =>
+      matches.where((m) => m.priority == priority && !m.isArchived).toList();
 
   /// Get new matches count
   int get newMatches => getMatchesByPriority(MatchPriority.new_).length;
@@ -55,21 +54,21 @@ class MatchState {
 
 /// Match state notifier for handling all match-related actions
 class MatchStateNotifier extends StateNotifier<MatchState> {
-  MatchStateNotifier() : super(const MatchState(
-    matches: [],
-    conversations: {},
-  ));
+  MatchStateNotifier()
+      : super(
+          const MatchState(),
+        );
 
   /// Like a profile from Discover
   /// If mutual like, creates a match in the "New" category
   void likeProfile(String profileId, String profileName, String? avatarUrl) {
     // Add to liked set
     final newLiked = {...state.likedProfiles, profileId};
-    
+
     // Simulate mutual match (50% chance for demo, or always match super-likes)
-    final isMutualMatch = state.superLikedProfiles.contains(profileId) || 
-                          (DateTime.now().millisecond % 2 == 0);
-    
+    final isMutualMatch = state.superLikedProfiles.contains(profileId) ||
+        (DateTime.now().millisecond % 2 == 0);
+
     if (isMutualMatch) {
       // Create a new match
       final newMatch = Match(
@@ -78,11 +77,10 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
         matchedUserName: profileName,
         matchedUserAvatar: avatarUrl,
         matchedAt: DateTime.now(),
-        priority: MatchPriority.new_,
         compatibilityScore: 0.7 + (DateTime.now().millisecond % 30) / 100,
         conversationId: 'conv-${DateTime.now().millisecondsSinceEpoch}',
       );
-      
+
       // Create conversation for the match
       final newConversation = ChatConversation(
         id: newMatch.conversationId!,
@@ -90,12 +88,8 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
         otherUserId: profileId,
         otherUserName: profileName,
         otherUserAvatar: avatarUrl,
-        lastMessage: null,
-        lastMessageAt: null,
-        unreadCount: 0,
-        momentumScore: 0.5,
       );
-      
+
       state = state.copyWith(
         likedProfiles: newLiked,
         matches: [...state.matches, newMatch],
@@ -108,9 +102,10 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
   }
 
   /// Super-like a profile (always creates a match for demo)
-  void superLikeProfile(String profileId, String profileName, String? avatarUrl) {
+  void superLikeProfile(
+      String profileId, String profileName, String? avatarUrl) {
     final newSuperLiked = {...state.superLikedProfiles, profileId};
-    
+
     // Super-likes always result in a match for demo purposes
     final newMatch = Match(
       id: 'match-${DateTime.now().millisecondsSinceEpoch}',
@@ -118,12 +113,11 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
       matchedUserName: profileName,
       matchedUserAvatar: avatarUrl,
       matchedAt: DateTime.now(),
-      priority: MatchPriority.new_,
       compatibilityScore: 0.85 + (DateTime.now().millisecond % 15) / 100,
       conversationId: 'conv-${DateTime.now().millisecondsSinceEpoch}',
       isSuperMatch: true,
     );
-    
+
     final newConversation = ChatConversation(
       id: newMatch.conversationId!,
       matchId: newMatch.id,
@@ -132,10 +126,9 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
       otherUserAvatar: avatarUrl,
       lastMessage: '✨ Super Like match!',
       lastMessageAt: DateTime.now(),
-      unreadCount: 0,
       momentumScore: 0.8,
     );
-    
+
     state = state.copyWith(
       superLikedProfiles: newSuperLiked,
       matches: [...state.matches, newMatch],
@@ -159,7 +152,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
       }
       return m;
     }).toList();
-    
+
     state = state.copyWith(matches: updatedMatches);
   }
 
@@ -171,7 +164,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
       }
       return m;
     }).toList();
-    
+
     state = state.copyWith(matches: updatedMatches);
   }
 
@@ -188,10 +181,10 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
         lastMessage: message,
         lastMessageAt: DateTime.now(),
         lastMessageBy: 'me',
-        unreadCount: 0,
-        momentumScore: (existingConversation.momentumScore + 0.1).clamp(0.0, 1.0),
+        momentumScore:
+            (existingConversation.momentumScore + 0.1).clamp(0.0, 1.0),
       );
-      
+
       state = state.copyWith(
         conversations: {...state.conversations, matchId: updatedConversation},
       );
@@ -204,25 +197,24 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
   }
 
   /// Get conversation for a match
-  ChatConversation? getConversation(String matchId) {
-    return state.conversations[matchId];
-  }
+  ChatConversation? getConversation(String matchId) =>
+      state.conversations[matchId];
 
   /// Check if profile was already swiped
-  bool hasSwipedProfile(String profileId) {
-    return state.likedProfiles.contains(profileId) ||
-           state.superLikedProfiles.contains(profileId) ||
-           state.passedProfiles.contains(profileId);
-  }
+  bool hasSwipedProfile(String profileId) =>
+      state.likedProfiles.contains(profileId) ||
+      state.superLikedProfiles.contains(profileId) ||
+      state.passedProfiles.contains(profileId);
 }
 
 /// Global match state provider
-final matchStateProvider = StateNotifierProvider<MatchStateNotifier, MatchState>((ref) {
-  return MatchStateNotifier();
-});
+final matchStateProvider =
+    StateNotifierProvider<MatchStateNotifier, MatchState>(
+        (ref) => MatchStateNotifier());
 
 /// Provider for matches by priority
-final matchesByPriorityProvider = Provider.family<List<Match>, MatchPriority>((ref, priority) {
+final matchesByPriorityProvider =
+    Provider.family<List<Match>, MatchPriority>((ref, priority) {
   final state = ref.watch(matchStateProvider);
   return state.getMatchesByPriority(priority);
 });
@@ -237,5 +229,6 @@ final newMatchCountProvider = Provider<int>((ref) {
 final allConversationsProvider = Provider<List<ChatConversation>>((ref) {
   final state = ref.watch(matchStateProvider);
   return state.conversations.values.toList()
-    ..sort((a, b) => (b.lastMessageAt ?? DateTime(1970)).compareTo(a.lastMessageAt ?? DateTime(1970)));
+    ..sort((a, b) => (b.lastMessageAt ?? DateTime(1970))
+        .compareTo(a.lastMessageAt ?? DateTime(1970)));
 });

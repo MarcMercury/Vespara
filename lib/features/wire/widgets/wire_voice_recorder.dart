@@ -11,16 +11,16 @@ import '../../../core/utils/haptics.dart';
 /// ════════════════════════════════════════════════════════════════════════════
 
 class WireVoiceRecorder extends ConsumerStatefulWidget {
-  final VoidCallback onCancel;
-  final Function(String path, int durationSeconds, List<double> waveform) onSend;
-  final VoidCallback? onLock;
-  
   const WireVoiceRecorder({
     super.key,
     required this.onCancel,
     required this.onSend,
     this.onLock,
   });
+  final VoidCallback onCancel;
+  final Function(String path, int durationSeconds, List<double> waveform)
+      onSend;
+  final VoidCallback? onLock;
 
   @override
   ConsumerState<WireVoiceRecorder> createState() => _WireVoiceRecorderState();
@@ -28,24 +28,23 @@ class WireVoiceRecorder extends ConsumerStatefulWidget {
 
 class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
     with TickerProviderStateMixin {
-  
   // Recording state
   bool _isRecording = false;
   bool _isLocked = false;
   bool _isPaused = false;
   int _recordingSeconds = 0;
   Timer? _timer;
-  
+
   // Waveform data
   final List<double> _waveformData = [];
   final Random _random = Random();
-  
+
   // Animation controllers
   late AnimationController _pulseController;
   late AnimationController _slideController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _slideAnimation;
-  
+
   // Gesture tracking
   double _dragOffset = 0;
   bool _slidToCancel = false;
@@ -53,25 +52,25 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
-    
+
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    
+
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    
+
     _slideAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _slideController, curve: Curves.easeOut),
     );
-    
+
     _startRecording();
   }
 
@@ -89,9 +88,9 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
       _recordingSeconds = 0;
       _waveformData.clear();
     });
-    
+
     VesparaHaptics.lightTap();
-    
+
     // Start timer
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused) {
@@ -102,7 +101,7 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
         });
       }
     });
-    
+
     // In production, you would start actual audio recording here
     // using audio_recorder or record package
   }
@@ -132,20 +131,21 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
 
   void _sendRecording() {
     _timer?.cancel();
-    
+
     if (_recordingSeconds < 1) {
       // Too short
       VesparaHaptics.error();
       widget.onCancel();
       return;
     }
-    
+
     VesparaHaptics.success();
-    
+
     // In production, stop recording and get the file path
     // For now, simulate with a mock path
-    final mockPath = '/recordings/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    
+    final mockPath =
+        '/recordings/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
     widget.onSend(mockPath, _recordingSeconds, _waveformData);
   }
 
@@ -162,7 +162,7 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
     if (_isLocked) {
       return _buildLockedRecorder();
     }
-    
+
     return _buildSlideRecorder();
   }
 
@@ -170,269 +170,261 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
   // SLIDE TO CANCEL MODE
   // ══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildSlideRecorder() {
-    return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        setState(() {
-          _dragOffset += details.delta.dx;
-          if (_dragOffset < -100) {
-            _slidToCancel = true;
-          }
-        });
-      },
-      onHorizontalDragEnd: (details) {
-        if (_slidToCancel) {
-          _cancelRecording();
-        } else {
+  Widget _buildSlideRecorder() => GestureDetector(
+        onHorizontalDragUpdate: (details) {
           setState(() {
-            _dragOffset = 0;
+            _dragOffset += details.delta.dx;
+            if (_dragOffset < -100) {
+              _slidToCancel = true;
+            }
           });
-        }
-      },
-      onVerticalDragUpdate: (details) {
-        if (details.delta.dy < -50 && !_isLocked) {
-          _lockRecording();
-        }
-      },
-      child: Container(
-        height: 56,
-        color: VesparaColors.surface,
-        child: Row(
-          children: [
-            // Slide to cancel indicator
-            Expanded(
-              child: Transform.translate(
-                offset: Offset(_dragOffset, 0),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    
-                    // Recording indicator
-                    AnimatedBuilder(
-                      animation: _pulseAnimation,
-                      builder: (context, child) {
-                        return Container(
+        },
+        onHorizontalDragEnd: (details) {
+          if (_slidToCancel) {
+            _cancelRecording();
+          } else {
+            setState(() {
+              _dragOffset = 0;
+            });
+          }
+        },
+        onVerticalDragUpdate: (details) {
+          if (details.delta.dy < -50 && !_isLocked) {
+            _lockRecording();
+          }
+        },
+        child: Container(
+          height: 56,
+          color: VesparaColors.surface,
+          child: Row(
+            children: [
+              // Slide to cancel indicator
+              Expanded(
+                child: Transform.translate(
+                  offset: Offset(_dragOffset, 0),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16),
+
+                      // Recording indicator
+                      AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, child) => Container(
                           width: 12 * _pulseAnimation.value,
                           height: 12 * _pulseAnimation.value,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: VesparaColors.tagsRed,
                             shape: BoxShape.circle,
                           ),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(width: 12),
-                    
-                    // Duration
-                    Text(
-                      _formatDuration(_recordingSeconds),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: VesparaColors.primary,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
-                    ),
-                    
-                    const Spacer(),
-                    
-                    // Slide to cancel
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.chevron_left,
-                          color: VesparaColors.secondary.withOpacity(
-                            _slidToCancel ? 1.0 : 0.5,
-                          ),
-                          size: 20,
+
+                      const SizedBox(width: 12),
+
+                      // Duration
+                      Text(
+                        _formatDuration(_recordingSeconds),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: VesparaColors.primary,
+                          fontFeatures: [FontFeature.tabularFigures()],
                         ),
-                        Text(
-                          _slidToCancel ? 'Release to cancel' : 'Slide to cancel',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: _slidToCancel 
-                                ? VesparaColors.tagsRed 
-                                : VesparaColors.secondary,
+                      ),
+
+                      const Spacer(),
+
+                      // Slide to cancel
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.chevron_left,
+                            color: VesparaColors.secondary.withOpacity(
+                              _slidToCancel ? 1.0 : 0.5,
+                            ),
+                            size: 20,
                           ),
-                        ),
-                      ],
+                          Text(
+                            _slidToCancel
+                                ? 'Release to cancel'
+                                : 'Slide to cancel',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: _slidToCancel
+                                  ? VesparaColors.tagsRed
+                                  : VesparaColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Lock indicator
+              Container(
+                width: 56,
+                alignment: Alignment.center,
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.lock_outline,
+                      color: VesparaColors.secondary,
+                      size: 16,
                     ),
-                    
-                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.keyboard_arrow_up,
+                      color: VesparaColors.secondary,
+                      size: 16,
+                    ),
                   ],
                 ),
               ),
-            ),
-            
-            // Lock indicator
-            Container(
-              width: 56,
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.lock_outline,
-                    color: VesparaColors.secondary,
-                    size: 16,
-                  ),
-                  Icon(
-                    Icons.keyboard_arrow_up,
-                    color: VesparaColors.secondary,
-                    size: 16,
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   // ══════════════════════════════════════════════════════════════════════════
   // LOCKED MODE
   // ══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildLockedRecorder() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: VesparaColors.surface,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Waveform visualization
-          Container(
-            height: 40,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                // Recording indicator
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Container(
+  Widget _buildLockedRecorder() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        color: VesparaColors.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Waveform visualization
+            Container(
+              height: 40,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  // Recording indicator
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) => Container(
                       width: 10,
                       height: 10,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: VesparaColors.tagsRed,
                         shape: BoxShape.circle,
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                
-                // Duration
-                Text(
-                  _formatDuration(_recordingSeconds),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: VesparaColors.primary,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Duration
+                  Text(
+                    _formatDuration(_recordingSeconds),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: VesparaColors.primary,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // Waveform bars
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: _buildWaveformBars(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Controls
+            Row(
+              children: [
+                // Delete button
+                GestureDetector(
+                  onTap: _cancelRecording,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: VesparaColors.tagsRed.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: VesparaColors.tagsRed,
+                      size: 22,
+                    ),
                   ),
                 ),
-                
+
+                const Spacer(),
+
+                // Pause/Resume button
+                GestureDetector(
+                  onTap: _isPaused ? _resumeRecording : _pauseRecording,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: VesparaColors.background,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isPaused ? Icons.play_arrow : Icons.pause,
+                      color: VesparaColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                ),
+
                 const SizedBox(width: 16),
-                
-                // Waveform bars
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: _buildWaveformBars(),
+
+                // Send button
+                GestureDetector(
+                  onTap: _sendRecording,
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                      color: VesparaColors.glow,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.send,
+                      color: VesparaColors.background,
+                      size: 24,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Controls
-          Row(
-            children: [
-              // Delete button
-              GestureDetector(
-                onTap: _cancelRecording,
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.tagsRed.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.delete_outline,
-                    color: VesparaColors.tagsRed,
-                    size: 22,
-                  ),
-                ),
-              ),
-              
-              const Spacer(),
-              
-              // Pause/Resume button
-              GestureDetector(
-                onTap: _isPaused ? _resumeRecording : _pauseRecording,
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isPaused ? Icons.play_arrow : Icons.pause,
-                    color: VesparaColors.primary,
-                    size: 24,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(width: 16),
-              
-              // Send button
-              GestureDetector(
-                onTap: _sendRecording,
-                child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.glow,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.send,
-                    color: VesparaColors.background,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 
   List<Widget> _buildWaveformBars() {
     final displayCount = min(_waveformData.length, 30);
     final startIndex = max(0, _waveformData.length - displayCount);
-    
+
     return List.generate(displayCount, (index) {
       final dataIndex = startIndex + index;
       final amplitude = _waveformData.elementAtOrNull(dataIndex) ?? 0.3;
-      
+
       return Container(
         width: 3,
         height: 4 + (amplitude * 28),
         margin: const EdgeInsets.symmetric(horizontal: 1),
         decoration: BoxDecoration(
-          color: _isPaused 
-              ? VesparaColors.secondary 
-              : VesparaColors.glow,
+          color: _isPaused ? VesparaColors.secondary : VesparaColors.glow,
           borderRadius: BorderRadius.circular(2),
         ),
       );
@@ -446,17 +438,11 @@ class _WireVoiceRecorderState extends ConsumerState<WireVoiceRecorder>
   }
 }
 
-
 /// ════════════════════════════════════════════════════════════════════════════
 /// VOICE MESSAGE PLAYER - For playing recorded voice messages
 /// ════════════════════════════════════════════════════════════════════════════
 
 class VoiceMessagePlayer extends ConsumerStatefulWidget {
-  final String audioUrl;
-  final int durationSeconds;
-  final List<double>? waveform;
-  final bool isMe;
-  
   const VoiceMessagePlayer({
     super.key,
     required this.audioUrl,
@@ -464,6 +450,10 @@ class VoiceMessagePlayer extends ConsumerStatefulWidget {
     this.waveform,
     this.isMe = false,
   });
+  final String audioUrl;
+  final int durationSeconds;
+  final List<double>? waveform;
+  final bool isMe;
 
   @override
   ConsumerState<VoiceMessagePlayer> createState() => _VoiceMessagePlayerState();
@@ -494,13 +484,13 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
     setState(() {
       _isPlaying = true;
     });
-    
+
     // Simulate playback progress
     _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       setState(() {
         _progress += 0.1 / widget.durationSeconds;
         _currentSeconds = (_progress * widget.durationSeconds).floor();
-        
+
         if (_progress >= 1.0) {
           _progress = 0;
           _currentSeconds = 0;
@@ -509,7 +499,7 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
         }
       });
     });
-    
+
     // In production, use audio player package to play the audio
   }
 
@@ -522,8 +512,9 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
 
   @override
   Widget build(BuildContext context) {
-    final waveformData = widget.waveform ?? List.generate(20, (i) => 0.3 + (i % 3) * 0.2);
-    
+    final waveformData =
+        widget.waveform ?? List.generate(20, (i) => 0.3 + (i % 3) * 0.2);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -533,7 +524,7 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
           child: Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: VesparaColors.glow,
               shape: BoxShape.circle,
             ),
@@ -544,9 +535,9 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
             ),
           ),
         ),
-        
+
         const SizedBox(width: 12),
-        
+
         // Waveform with progress
         Expanded(
           child: Column(
@@ -564,8 +555,8 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
                         height: 4 + (waveformData[index] * 16),
                         margin: const EdgeInsets.symmetric(horizontal: 1),
                         decoration: BoxDecoration(
-                          color: isPlayed 
-                              ? VesparaColors.glow 
+                          color: isPlayed
+                              ? VesparaColors.glow
                               : VesparaColors.glow.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
@@ -574,15 +565,15 @@ class _VoiceMessagePlayerState extends ConsumerState<VoiceMessagePlayer> {
                   }),
                 ),
               ),
-              
+
               const SizedBox(height: 4),
-              
+
               // Duration
               Text(
                 _isPlaying || _progress > 0
                     ? _formatDuration(_currentSeconds)
                     : _formatDuration(widget.durationSeconds),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 11,
                   color: VesparaColors.secondary,
                 ),

@@ -44,27 +44,23 @@ class PlayerColors {
   ];
 
   /// Get color for a player by index (wraps around if index > palette length)
-  static Color forIndex(int index) {
-    return palette[index % palette.length];
-  }
+  static Color forIndex(int index) => palette[index % palette.length];
 
   /// Get color from extended palette (for games with 9-16 players)
-  static Color forIndexExtended(int index) {
-    return extendedPalette[index % extendedPalette.length];
-  }
+  static Color forIndexExtended(int index) =>
+      extendedPalette[index % extendedPalette.length];
 
   /// Get a list of colors for N players
   static List<Color> forPlayerCount(int count) {
     if (count <= palette.length) {
       return palette.sublist(0, count);
     }
-    return List.generate(count, (i) => forIndexExtended(i));
+    return List.generate(count, forIndexExtended);
   }
 
   /// Get a random color from the palette
-  static Color random() {
-    return palette[DateTime.now().millisecondsSinceEpoch % palette.length];
-  }
+  static Color random() =>
+      palette[DateTime.now().millisecondsSinceEpoch % palette.length];
 
   /// Get contrasting text color (black or white) for a given background
   static Color contrastingTextColor(Color backgroundColor) {
@@ -74,47 +70,43 @@ class PlayerColors {
   }
 
   /// Get a muted version of a color (for backgrounds)
-  static Color muted(Color color, {double opacity = 0.2}) {
-    return color.withOpacity(opacity);
-  }
+  static Color muted(Color color, {double opacity = 0.2}) =>
+      color.withOpacity(opacity);
 
   /// Get a slightly darker version of a color (for pressed states)
-  static Color darker(Color color, {double factor = 0.8}) {
-    return HSLColor.fromColor(color)
-        .withLightness(
-            (HSLColor.fromColor(color).lightness * factor).clamp(0.0, 1.0))
-        .toColor();
-  }
+  static Color darker(Color color, {double factor = 0.8}) =>
+      HSLColor.fromColor(color)
+          .withLightness(
+            (HSLColor.fromColor(color).lightness * factor).clamp(0.0, 1.0),
+          )
+          .toColor();
 
   /// Get a slightly lighter version of a color (for hover states)
-  static Color lighter(Color color, {double factor = 1.2}) {
-    return HSLColor.fromColor(color)
-        .withLightness(
-            (HSLColor.fromColor(color).lightness * factor).clamp(0.0, 1.0))
-        .toColor();
-  }
+  static Color lighter(Color color, {double factor = 1.2}) =>
+      HSLColor.fromColor(color)
+          .withLightness(
+            (HSLColor.fromColor(color).lightness * factor).clamp(0.0, 1.0),
+          )
+          .toColor();
 
   /// Create a gradient from a player color
-  static LinearGradient gradientFrom(Color color) {
-    return LinearGradient(
-      colors: [
-        color,
-        lighter(color, factor: 1.3),
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
+  static LinearGradient gradientFrom(Color color) => LinearGradient(
+        colors: [
+          color,
+          lighter(color, factor: 1.3),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 
   /// Create a radial glow effect gradient
-  static RadialGradient glowFrom(Color color, {double opacity = 0.4}) {
-    return RadialGradient(
-      colors: [
-        color.withOpacity(opacity),
-        color.withOpacity(0),
-      ],
-    );
-  }
+  static RadialGradient glowFrom(Color color, {double opacity = 0.4}) =>
+      RadialGradient(
+        colors: [
+          color.withOpacity(opacity),
+          color.withOpacity(0),
+        ],
+      );
 }
 
 /// Extension to add player color functionality to Color
@@ -140,10 +132,6 @@ extension PlayerColorExtension on Color {
 
 /// Player model with assigned color
 class ColoredPlayer {
-  final String name;
-  final Color color;
-  final int index;
-
   const ColoredPlayer({
     required this.name,
     required this.color,
@@ -151,13 +139,14 @@ class ColoredPlayer {
   });
 
   /// Create a player with auto-assigned color based on index
-  factory ColoredPlayer.create(String name, int index) {
-    return ColoredPlayer(
-      name: name,
-      color: PlayerColors.forIndex(index),
-      index: index,
-    );
-  }
+  factory ColoredPlayer.create(String name, int index) => ColoredPlayer(
+        name: name,
+        color: PlayerColors.forIndex(index),
+        index: index,
+      );
+  final String name;
+  final Color color;
+  final int index;
 
   /// Get contrasting text color for this player's color
   Color get textColor => color.contrastingText;

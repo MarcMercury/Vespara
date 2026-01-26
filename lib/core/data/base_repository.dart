@@ -15,9 +15,8 @@ import '../utils/retry.dart';
 /// - Consistent patterns for all repositories
 
 abstract class BaseRepository {
-  final SupabaseClient supabase;
-
   BaseRepository(this.supabase);
+  final SupabaseClient supabase;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // AUTH HELPERS
@@ -36,7 +35,8 @@ abstract class BaseRepository {
   String requireUserId() {
     final id = userId;
     if (id == null) {
-      throw AppError.authentication(message: 'You must be logged in to perform this action');
+      throw AppError.authentication(
+          message: 'You must be logged in to perform this action');
     }
     return id;
   }
@@ -50,13 +50,13 @@ abstract class BaseRepository {
     Future<T> Function() operation, {
     RetryConfig retryConfig = RetryConfig.api,
     String? operationName,
-  }) async {
-    return withRetryResult(
-      operation,
-      config: retryConfig,
-      errorTransformer: (error, stackTrace) => _transformError(error, stackTrace, operationName),
-    );
-  }
+  }) async =>
+      withRetryResult(
+        operation,
+        config: retryConfig,
+        errorTransformer: (error, stackTrace) =>
+            _transformError(error, stackTrace, operationName),
+      );
 
   /// Execute an operation without retry (for writes that shouldn't be repeated)
   Future<Result<T>> safeCallNoRetry<T>(
@@ -75,13 +75,12 @@ abstract class BaseRepository {
   Future<Result<T>> safeCriticalCall<T>(
     Future<T> Function() operation, {
     String? operationName,
-  }) async {
-    return safeCall(
-      operation,
-      retryConfig: RetryConfig.critical,
-      operationName: operationName,
-    );
-  }
+  }) async =>
+      safeCall(
+        operation,
+        retryConfig: RetryConfig.critical,
+        operationName: operationName,
+      );
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STREAM HELPERS
@@ -110,7 +109,8 @@ abstract class BaseRepository {
         }
 
         reconnectAttempts++;
-        debugPrint('Stream: Reconnect attempt $reconnectAttempts after ${reconnectDelay.inSeconds}s');
+        debugPrint(
+            'Stream: Reconnect attempt $reconnectAttempts after ${reconnectDelay.inSeconds}s');
         await Future.delayed(reconnectDelay);
       }
     }
@@ -121,15 +121,16 @@ abstract class BaseRepository {
     required String table,
     required List<String> primaryKey,
     required T Function(Map<String, dynamic> json) fromJson,
-    PostgrestTransformBuilder<List<Map<String, dynamic>>> Function(SupabaseQueryBuilder query)? queryBuilder,
-  }) {
-    return safeStream(() {
-      final query = supabase.from(table);
-      final stream = query.stream(primaryKey: primaryKey);
+    PostgrestTransformBuilder<List<Map<String, dynamic>>> Function(
+            SupabaseQueryBuilder query)?
+        queryBuilder,
+  }) =>
+      safeStream(() {
+        final query = supabase.from(table);
+        final stream = query.stream(primaryKey: primaryKey);
 
-      return stream.map((rows) => rows.map(fromJson).toList());
-    });
-  }
+        return stream.map((rows) => rows.map(fromJson).toList());
+      });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // COMMON QUERY PATTERNS
@@ -142,17 +143,19 @@ abstract class BaseRepository {
     required T Function(Map<String, dynamic> json) fromJson,
     String idColumn = 'id',
     String selectColumns = '*',
-  }) async {
-    return safeCall(() async {
-      final response = await supabase
-          .from(table)
-          .select(selectColumns)
-          .eq(idColumn, id)
-          .single();
+  }) async =>
+      safeCall(
+        () async {
+          final response = await supabase
+              .from(table)
+              .select(selectColumns)
+              .eq(idColumn, id)
+              .single();
 
-      return fromJson(response);
-    }, operationName: 'fetchById($table)');
-  }
+          return fromJson(response);
+        },
+        operationName: 'fetchById($table)',
+      );
 
   /// Fetch a list of records
   Future<Result<List<T>>> fetchList<T>({
@@ -164,45 +167,52 @@ abstract class BaseRepository {
     bool ascending = true,
     int? limit,
     int? offset,
-  }) async {
-    return safeCall(() async {
-      var query = supabase.from(table).select(selectColumns);
+  }) async =>
+      safeCall(
+        () async {
+          var query = supabase.from(table).select(selectColumns);
 
-      if (filters != null) {
-        for (final entry in filters.entries) {
-          query = query.eq(entry.key, entry.value);
-        }
-      }
+          if (filters != null) {
+            for (final entry in filters.entries) {
+              query = query.eq(entry.key, entry.value);
+            }
+          }
 
-      if (orderBy != null) {
-        query = query.order(orderBy, ascending: ascending);
-      }
+          if (orderBy != null) {
+            query = query.order(orderBy, ascending: ascending);
+          }
 
-      if (limit != null) {
-        query = query.limit(limit);
-      }
+          if (limit != null) {
+            query = query.limit(limit);
+          }
 
-      if (offset != null) {
-        query = query.range(offset, offset + (limit ?? 20) - 1);
-      }
+          if (offset != null) {
+            query = query.range(offset, offset + (limit ?? 20) - 1);
+          }
 
-      final response = await query;
-      return (response as List).map((json) => fromJson(json as Map<String, dynamic>)).toList();
-    }, operationName: 'fetchList($table)');
-  }
+          final response = await query;
+          return (response as List)
+              .map((json) => fromJson(json as Map<String, dynamic>))
+              .toList();
+        },
+        operationName: 'fetchList($table)',
+      );
 
   /// Insert a record
   Future<Result<T>> insert<T>({
     required String table,
     required Map<String, dynamic> data,
     required T Function(Map<String, dynamic> json) fromJson,
-  }) async {
-    return safeCallNoRetry(() async {
-      final response = await supabase.from(table).insert(data).select().single();
+  }) async =>
+      safeCallNoRetry(
+        () async {
+          final response =
+              await supabase.from(table).insert(data).select().single();
 
-      return fromJson(response);
-    }, operationName: 'insert($table)');
-  }
+          return fromJson(response);
+        },
+        operationName: 'insert($table)',
+      );
 
   /// Update a record
   Future<Result<T>> update<T>({
@@ -211,24 +221,33 @@ abstract class BaseRepository {
     required Map<String, dynamic> data,
     required T Function(Map<String, dynamic> json) fromJson,
     String idColumn = 'id',
-  }) async {
-    return safeCallNoRetry(() async {
-      final response = await supabase.from(table).update(data).eq(idColumn, id).select().single();
+  }) async =>
+      safeCallNoRetry(
+        () async {
+          final response = await supabase
+              .from(table)
+              .update(data)
+              .eq(idColumn, id)
+              .select()
+              .single();
 
-      return fromJson(response);
-    }, operationName: 'update($table)');
-  }
+          return fromJson(response);
+        },
+        operationName: 'update($table)',
+      );
 
   /// Delete a record
   Future<Result<void>> delete({
     required String table,
     required String id,
     String idColumn = 'id',
-  }) async {
-    return safeCallNoRetry(() async {
-      await supabase.from(table).delete().eq(idColumn, id);
-    }, operationName: 'delete($table)');
-  }
+  }) async =>
+      safeCallNoRetry(
+        () async {
+          await supabase.from(table).delete().eq(idColumn, id);
+        },
+        operationName: 'delete($table)',
+      );
 
   /// Upsert a record
   Future<Result<T>> upsert<T>({
@@ -236,35 +255,40 @@ abstract class BaseRepository {
     required Map<String, dynamic> data,
     required T Function(Map<String, dynamic> json) fromJson,
     String? onConflict,
-  }) async {
-    return safeCallNoRetry(() async {
-      final response = await supabase
-          .from(table)
-          .upsert(data, onConflict: onConflict)
-          .select()
-          .single();
+  }) async =>
+      safeCallNoRetry(
+        () async {
+          final response = await supabase
+              .from(table)
+              .upsert(data, onConflict: onConflict)
+              .select()
+              .single();
 
-      return fromJson(response);
-    }, operationName: 'upsert($table)');
-  }
+          return fromJson(response);
+        },
+        operationName: 'upsert($table)',
+      );
 
   /// Call an RPC function
   Future<Result<T>> rpc<T>({
     required String functionName,
     Map<String, dynamic>? params,
     required T Function(dynamic response) transform,
-  }) async {
-    return safeCall(() async {
-      final response = await supabase.rpc(functionName, params: params);
-      return transform(response);
-    }, operationName: 'rpc($functionName)');
-  }
+  }) async =>
+      safeCall(
+        () async {
+          final response = await supabase.rpc(functionName, params: params);
+          return transform(response);
+        },
+        operationName: 'rpc($functionName)',
+      );
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ERROR TRANSFORMATION
   // ═══════════════════════════════════════════════════════════════════════════
 
-  AppError _transformError(dynamic error, StackTrace? stackTrace, String? operationName) {
+  AppError _transformError(
+      dynamic error, StackTrace? stackTrace, String? operationName) {
     final context = operationName != null ? {'operation': operationName} : null;
 
     // PostgrestException (Supabase database errors)
@@ -308,7 +332,8 @@ abstract class BaseRepository {
     );
   }
 
-  AppError _transformPostgrestError(PostgrestException error, Map<String, dynamic>? context) {
+  AppError _transformPostgrestError(
+      PostgrestException error, Map<String, dynamic>? context) {
     final code = error.code;
     final message = error.message;
 

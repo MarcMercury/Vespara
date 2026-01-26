@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../domain/models/content_rating.dart';
-import '../utils/player_colors.dart';
 import '../utils/haptic_patterns.dart';
+import '../utils/player_colors.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// BASE GAME PROVIDER - Abstract Foundation for TAG Games
@@ -17,13 +18,6 @@ import '../utils/haptic_patterns.dart';
 
 /// Base player model that all games can extend
 class BasePlayer {
-  final String id;
-  final String name;
-  final Color color;
-  final int index;
-  bool isActive;
-  int score;
-
   BasePlayer({
     required this.id,
     required this.name,
@@ -34,14 +28,18 @@ class BasePlayer {
   });
 
   /// Create a player with auto-generated ID and color
-  factory BasePlayer.create(String name, int index) {
-    return BasePlayer(
-      id: '${DateTime.now().millisecondsSinceEpoch}_$index',
-      name: name,
-      color: PlayerColors.forIndex(index),
-      index: index,
-    );
-  }
+  factory BasePlayer.create(String name, int index) => BasePlayer(
+        id: '${DateTime.now().millisecondsSinceEpoch}_$index',
+        name: name,
+        color: PlayerColors.forIndex(index),
+        index: index,
+      );
+  final String id;
+  final String name;
+  final Color color;
+  final int index;
+  bool isActive;
+  int score;
 
   /// Get contrasting text color for this player's color
   Color get textColor => color.contrastingText;
@@ -56,16 +54,15 @@ class BasePlayer {
     int? index,
     bool? isActive,
     int? score,
-  }) {
-    return BasePlayer(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      color: color ?? this.color,
-      index: index ?? this.index,
-      isActive: isActive ?? this.isActive,
-      score: score ?? this.score,
-    );
-  }
+  }) =>
+      BasePlayer(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        color: color ?? this.color,
+        index: index ?? this.index,
+        isActive: isActive ?? this.isActive,
+        score: score ?? this.score,
+      );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -307,8 +304,7 @@ mixin MultiplayerGameMixin<TState extends BaseGameState>
 }
 
 /// Mixin for timed game functionality
-mixin TimedGameMixin<TState extends BaseGameState>
-    on BaseGameNotifier<TState> {
+mixin TimedGameMixin<TState extends BaseGameState> on BaseGameNotifier<TState> {
   /// Time remaining in current round/phase
   Duration get timeRemaining;
 

@@ -15,11 +15,10 @@ import 'ai_service.dart';
 /// Zero effort - everything is auto-detected
 
 class RelationshipProgressService {
+  RelationshipProgressService._();
   static RelationshipProgressService? _instance;
   static RelationshipProgressService get instance =>
       _instance ??= RelationshipProgressService._();
-
-  RelationshipProgressService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
   final AIService _aiService = AIService.instance;
@@ -101,7 +100,8 @@ class RelationshipProgressService {
 
       final messages = messagesResult as List;
       final totalMessages = messages.length;
-      final myMessages = messages.where((m) => m['sender_id'] == _userId).length;
+      final myMessages =
+          messages.where((m) => m['sender_id'] == _userId).length;
       final theirMessages = totalMessages - myMessages;
 
       // Calculate average response time
@@ -124,7 +124,8 @@ class RelationshipProgressService {
             0,
             (sum, d) => sum + d.inMinutes,
           );
-          avgResponseTime = Duration(minutes: totalMinutes ~/ responseTimes.length);
+          avgResponseTime =
+              Duration(minutes: totalMinutes ~/ responseTimes.length);
         }
       }
 
@@ -166,11 +167,13 @@ class RelationshipProgressService {
           .maybeSingle();
 
       if (match != null) {
-        milestones.add(Milestone(
-          type: MilestoneType.matched,
-          achievedAt: DateTime.parse(match['created_at']),
-          title: 'Matched! 💕',
-        ));
+        milestones.add(
+          Milestone(
+            type: MilestoneType.matched,
+            achievedAt: DateTime.parse(match['created_at']),
+            title: 'Matched! 💕',
+          ),
+        );
       }
 
       // First message
@@ -184,11 +187,13 @@ class RelationshipProgressService {
 
       if (firstMessage != null) {
         final wasMe = firstMessage['sender_id'] == _userId;
-        milestones.add(Milestone(
-          type: MilestoneType.firstMessage,
-          achievedAt: DateTime.parse(firstMessage['created_at']),
-          title: wasMe ? 'You broke the ice! 🧊' : 'They messaged first! 💬',
-        ));
+        milestones.add(
+          Milestone(
+            type: MilestoneType.firstMessage,
+            achievedAt: DateTime.parse(firstMessage['created_at']),
+            title: wasMe ? 'You broke the ice! 🧊' : 'They messaged first! 💬',
+          ),
+        );
       }
 
       // Reached 50 messages
@@ -199,11 +204,13 @@ class RelationshipProgressService {
           .count(CountOption.exact);
 
       if ((messageCount.count ?? 0) >= 50) {
-        milestones.add(Milestone(
-          type: MilestoneType.deepConversation,
-          achievedAt: DateTime.now(),
-          title: 'Deep in conversation! 🗣️',
-        ));
+        milestones.add(
+          Milestone(
+            type: MilestoneType.deepConversation,
+            achievedAt: DateTime.now(),
+            title: 'Deep in conversation! 🗣️',
+          ),
+        );
       }
 
       // Check for phone/date mentions
@@ -221,11 +228,13 @@ class RelationshipProgressService {
       if (allText.contains('phone') ||
           allText.contains('call') ||
           allText.contains('number')) {
-        milestones.add(Milestone(
-          type: MilestoneType.phoneMentioned,
-          achievedAt: DateTime.now(),
-          title: 'Phone call discussed! 📱',
-        ));
+        milestones.add(
+          Milestone(
+            type: MilestoneType.phoneMentioned,
+            achievedAt: DateTime.now(),
+            title: 'Phone call discussed! 📱',
+          ),
+        );
       }
 
       if (allText.contains('date') ||
@@ -233,11 +242,13 @@ class RelationshipProgressService {
           allText.contains('get together') ||
           allText.contains('grab a drink') ||
           allText.contains('grab coffee')) {
-        milestones.add(Milestone(
-          type: MilestoneType.dateMentioned,
-          achievedAt: DateTime.now(),
-          title: 'Date discussed! 🎉',
-        ));
+        milestones.add(
+          Milestone(
+            type: MilestoneType.dateMentioned,
+            achievedAt: DateTime.now(),
+            title: 'Date discussed! 🎉',
+          ),
+        );
       }
 
       // Check for planned dates
@@ -249,18 +260,22 @@ class RelationshipProgressService {
 
         for (final date in plannedDates) {
           if (date['status'] == 'planned') {
-            milestones.add(Milestone(
-              type: MilestoneType.datePlanned,
-              achievedAt: DateTime.parse(date['created_at']),
-              title: 'Date planned! 📅',
-            ));
+            milestones.add(
+              Milestone(
+                type: MilestoneType.datePlanned,
+                achievedAt: DateTime.parse(date['created_at']),
+                title: 'Date planned! 📅',
+              ),
+            );
           }
           if (date['status'] == 'completed') {
-            milestones.add(Milestone(
-              type: MilestoneType.dateCompleted,
-              achievedAt: DateTime.parse(date['created_at']),
-              title: 'Date happened! 🌟',
-            ));
+            milestones.add(
+              Milestone(
+                type: MilestoneType.dateCompleted,
+                achievedAt: DateTime.parse(date['created_at']),
+                title: 'Date happened! 🌟',
+              ),
+            );
           }
         }
       } catch (_) {
@@ -280,20 +295,26 @@ class RelationshipProgressService {
   // CALCULATE STAGE
   // ═══════════════════════════════════════════════════════════════════════════
 
-  RelationshipStage _calculateStage(MatchStats stats, List<Milestone> milestones) {
+  RelationshipStage _calculateStage(
+      MatchStats stats, List<Milestone> milestones) {
     // Check milestones first (most reliable)
-    final hasDated = milestones.any((m) =>
-        m.type == MilestoneType.dateCompleted);
-    final hasPlannedDate = milestones.any((m) =>
-        m.type == MilestoneType.datePlanned);
-    final hasDateMentioned = milestones.any((m) =>
-        m.type == MilestoneType.dateMentioned);
-    final hasPhoneMentioned = milestones.any((m) =>
-        m.type == MilestoneType.phoneMentioned);
+    final hasDated = milestones.any(
+      (m) => m.type == MilestoneType.dateCompleted,
+    );
+    final hasPlannedDate = milestones.any(
+      (m) => m.type == MilestoneType.datePlanned,
+    );
+    final hasDateMentioned = milestones.any(
+      (m) => m.type == MilestoneType.dateMentioned,
+    );
+    final hasPhoneMentioned = milestones.any(
+      (m) => m.type == MilestoneType.phoneMentioned,
+    );
 
     if (hasDated) return RelationshipStage.dating;
     if (hasPlannedDate) return RelationshipStage.planningDate;
-    if (hasDateMentioned || hasPhoneMentioned) return RelationshipStage.escalating;
+    if (hasDateMentioned || hasPhoneMentioned)
+      return RelationshipStage.escalating;
 
     // Fallback to message count
     if (stats.totalMessages >= 100) return RelationshipStage.deepConnection;
@@ -434,7 +455,8 @@ class RelationshipProgressService {
     final progress = await getProgress(matchId);
 
     final result = await _aiService.chat(
-      systemPrompt: '''Generate a brief, encouraging summary of this relationship's progress.
+      systemPrompt:
+          '''Generate a brief, encouraging summary of this relationship's progress.
 Keep it under 100 characters. Be warm and positive.''',
       prompt: '''Stats:
 - Matched ${progress.stats.daysSinceMatch} days ago
@@ -572,26 +594,17 @@ enum MilestoneType {
 }
 
 class Milestone {
-  final MilestoneType type;
-  final DateTime achievedAt;
-  final String title;
-
   Milestone({
     required this.type,
     required this.achievedAt,
     required this.title,
   });
+  final MilestoneType type;
+  final DateTime achievedAt;
+  final String title;
 }
 
 class MatchStats {
-  final DateTime matchedAt;
-  final int totalMessages;
-  final int myMessages;
-  final int theirMessages;
-  final int daysSinceMatch;
-  final Duration? averageResponseTime;
-  final DateTime? lastMessageAt;
-
   MatchStats({
     required this.matchedAt,
     required this.totalMessages,
@@ -609,13 +622,21 @@ class MatchStats {
         theirMessages: 0,
         daysSinceMatch: 0,
       );
+  final DateTime matchedAt;
+  final int totalMessages;
+  final int myMessages;
+  final int theirMessages;
+  final int daysSinceMatch;
+  final Duration? averageResponseTime;
+  final DateTime? lastMessageAt;
 
   double get conversationBalance {
     if (totalMessages == 0) return 0.5;
     return myMessages / totalMessages;
   }
 
-  bool get isBalanced => conversationBalance > 0.35 && conversationBalance < 0.65;
+  bool get isBalanced =>
+      conversationBalance > 0.35 && conversationBalance < 0.65;
 
   String get balanceLabel {
     if (totalMessages < 5) return 'Just getting started';
@@ -632,26 +653,19 @@ enum NextStepUrgency {
 }
 
 class NextStep {
-  final String action;
-  final String emoji;
-  final String reason;
-  final NextStepUrgency urgency;
-
   NextStep({
     required this.action,
     required this.emoji,
     required this.reason,
     required this.urgency,
   });
+  final String action;
+  final String emoji;
+  final String reason;
+  final NextStepUrgency urgency;
 }
 
 class RelationshipProgress {
-  final String matchId;
-  final RelationshipStage stage;
-  final MatchStats stats;
-  final List<Milestone> milestones;
-  final NextStep? suggestedNextStep;
-
   RelationshipProgress({
     required this.matchId,
     required this.stage,
@@ -659,4 +673,9 @@ class RelationshipProgress {
     required this.milestones,
     this.suggestedNextStep,
   });
+  final String matchId;
+  final RelationshipStage stage;
+  final MatchStats stats;
+  final List<Milestone> milestones;
+  final NextStep? suggestedNextStep;
 }

@@ -127,32 +127,24 @@ extension ContentRatingExtension on ContentRating {
   }
 
   /// Background color (lighter variant for cards/containers)
-  Color get backgroundColor {
-    return color.withOpacity(0.15);
-  }
+  Color get backgroundColor => color.withOpacity(0.15);
 
   /// Border color (medium opacity)
-  Color get borderColor {
-    return color.withOpacity(0.5);
-  }
+  Color get borderColor => color.withOpacity(0.5);
 
   /// Numeric index (0-4) for comparison and progression tracking
   int get numericValue => index;
 
   /// Check if this rating includes content up to a certain level
-  bool includes(ContentRating other) {
-    return index >= other.index;
-  }
+  bool includes(ContentRating other) => index >= other.index;
 
   /// Get list of all ratings up to and including this level
-  List<ContentRating> get includedRatings {
-    return ContentRating.values.where((r) => r.index <= index).toList();
-  }
+  List<ContentRating> get includedRatings =>
+      ContentRating.values.where((r) => r.index <= index).toList();
 
   /// Get database values for all included ratings (for SQL IN queries)
-  List<String> get includedDbValues {
-    return includedRatings.map((r) => r.dbValue).toList();
-  }
+  List<String> get includedDbValues =>
+      includedRatings.map((r) => r.dbValue).toList();
 
   /// Parse from database value
   static ContentRating fromDbValue(String value) {
@@ -210,7 +202,6 @@ class ContentRatingHelper {
   static ContentRating get maximum => ContentRating.xxx;
 
   /// Validate if a string is a valid rating
-  static bool isValid(String value) {
-    return ['PG', 'PG-13', 'R', 'X', 'XXX'].contains(value.toUpperCase());
-  }
+  static bool isValid(String value) =>
+      ['PG', 'PG-13', 'R', 'X', 'XXX'].contains(value.toUpperCase());
 }

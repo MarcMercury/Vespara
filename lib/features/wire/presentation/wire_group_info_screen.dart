@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/domain/models/wire_models.dart';
+import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
-import '../../../core/providers/wire_provider.dart';
-import '../../../core/domain/models/wire_models.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// WIRE GROUP INFO SCREEN - WhatsApp-Style Group Settings & Info
 /// ════════════════════════════════════════════════════════════════════════════
 
 class WireGroupInfoScreen extends ConsumerStatefulWidget {
-  final String conversationId;
-  
   const WireGroupInfoScreen({
     super.key,
     required this.conversationId,
   });
+  final String conversationId;
 
   @override
-  ConsumerState<WireGroupInfoScreen> createState() => _WireGroupInfoScreenState();
+  ConsumerState<WireGroupInfoScreen> createState() =>
+      _WireGroupInfoScreenState();
 }
 
 class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
   final _editNameController = TextEditingController();
   final _editDescriptionController = TextEditingController();
-  
+
   bool _isEditingName = false;
   bool _isLoading = false;
-  
+
   WireConversation? get _conversation {
     final conversations = ref.watch(wireProvider).conversations;
     return conversations.firstWhere(
@@ -39,18 +37,15 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
       orElse: () => throw Exception('Conversation not found'),
     );
   }
-  
-  List<ConversationParticipant> get _participants {
-    return ref.watch(activeParticipantsProvider);
-  }
-  
+
+  List<ConversationParticipant> get _participants =>
+      ref.watch(activeParticipantsProvider);
+
   String? get _currentUserId => Supabase.instance.client.auth.currentUser?.id;
-  
-  bool get _isAdmin {
-    return _participants.any(
-      (p) => p.userId == _currentUserId && p.role == ParticipantRole.admin,
-    );
-  }
+
+  bool get _isAdmin => _participants.any(
+        (p) => p.userId == _currentUserId && p.role == ParticipantRole.admin,
+      );
 
   @override
   void dispose() {
@@ -72,11 +67,12 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
           title: const Text('Group Info'),
         ),
         body: const Center(
-          child: Text('Group not found', style: TextStyle(color: VesparaColors.secondary)),
+          child: Text('Group not found',
+              style: TextStyle(color: VesparaColors.secondary)),
         ),
       );
     }
-    
+
     return Scaffold(
       backgroundColor: VesparaColors.background,
       body: CustomScrollView(
@@ -104,275 +100,265 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
     );
   }
 
-  Widget _buildSliverAppBar(WireConversation conversation) {
-    return SliverAppBar(
-      expandedHeight: 200,
-      pinned: true,
-      backgroundColor: VesparaColors.surface,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        if (_isAdmin)
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () => _showEditDialog(conversation),
+  Widget _buildSliverAppBar(WireConversation conversation) => SliverAppBar(
+        expandedHeight: 200,
+        pinned: true,
+        backgroundColor: VesparaColors.surface,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          if (_isAdmin)
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.white),
+              onPressed: () => _showEditDialog(conversation),
+            ),
+        ],
+        flexibleSpace: FlexibleSpaceBar(
+          background: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background image or gradient
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      VesparaColors.glow.withOpacity(0.3),
+                      VesparaColors.background,
+                    ],
+                  ),
+                ),
+                child: conversation.avatarUrl != null
+                    ? Image.network(
+                        conversation.avatarUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.group,
+                          size: 80,
+                          color: VesparaColors.glow.withOpacity(0.5),
+                        ),
+                      ),
+              ),
+              // Gradient overlay
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      VesparaColors.background.withOpacity(0.8),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
+        ),
+      );
+
+  Widget _buildGroupHeader(WireConversation conversation) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            // Background image or gradient
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    VesparaColors.glow.withOpacity(0.3),
-                    VesparaColors.background,
+            // Group name
+            if (_isEditingName)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _editNameController,
+                      autofocus: true,
+                      style: const TextStyle(
+                        color: VesparaColors.primary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: VesparaColors.glow),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: VesparaColors.glow, width: 2),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.check, color: VesparaColors.glow),
+                    onPressed: _saveName,
+                  ),
+                  IconButton(
+                    icon:
+                        const Icon(Icons.close, color: VesparaColors.secondary),
+                    onPressed: () => setState(() => _isEditingName = false),
+                  ),
+                ],
+              )
+            else
+              GestureDetector(
+                onTap: _isAdmin ? () => _startEditingName(conversation) : null,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      conversation.groupName ?? 'Unnamed Group',
+                      style: const TextStyle(
+                        color: VesparaColors.primary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (_isAdmin) ...[
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: VesparaColors.secondary,
+                      ),
+                    ],
                   ],
                 ),
               ),
-              child: conversation.avatarUrl != null
-                  ? Image.network(
-                      conversation.avatarUrl!,
-                      fit: BoxFit.cover,
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.group,
-                        size: 80,
-                        color: VesparaColors.glow.withOpacity(0.5),
-                      ),
-                    ),
+
+            const SizedBox(height: 8),
+
+            // Group created info
+            Text(
+              'Group · ${_participants.length} participants',
+              style: const TextStyle(
+                color: VesparaColors.secondary,
+                fontSize: 14,
+              ),
             ),
-            // Gradient overlay
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    VesparaColors.background.withOpacity(0.8),
-                  ],
-                ),
+
+            Text(
+              'Created ${_formatDate(conversation.createdAt)}',
+              style: TextStyle(
+                color: VesparaColors.secondary.withOpacity(0.7),
+                fontSize: 12,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildGroupHeader(WireConversation conversation) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Group name
-          if (_isEditingName)
+  Widget _buildDescription(WireConversation conversation) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _editNameController,
-                    autofocus: true,
-                    style: const TextStyle(
-                      color: VesparaColors.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(
-                        borderSide: BorderSide(color: VesparaColors.glow),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: VesparaColors.glow, width: 2),
-                      ),
-                    ),
+                const Text(
+                  'Description',
+                  style: TextStyle(
+                    color: VesparaColors.secondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.check, color: VesparaColors.glow),
-                  onPressed: _saveName,
-                ),
-                IconButton(
-                  icon: Icon(Icons.close, color: VesparaColors.secondary),
-                  onPressed: () => setState(() => _isEditingName = false),
-                ),
-              ],
-            )
-          else
-            GestureDetector(
-              onTap: _isAdmin ? () => _startEditingName(conversation) : null,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    conversation.groupName ?? 'Unnamed Group',
-                    style: const TextStyle(
-                      color: VesparaColors.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (_isAdmin) ...[
-                    const SizedBox(width: 8),
-                    Icon(
+                if (_isAdmin)
+                  GestureDetector(
+                    onTap: () => _showEditDescriptionDialog(conversation),
+                    child: const Icon(
                       Icons.edit,
                       size: 16,
-                      color: VesparaColors.secondary,
+                      color: VesparaColors.glow,
                     ),
-                  ],
-                ],
-              ),
-            ),
-          
-          const SizedBox(height: 8),
-          
-          // Group created info
-          Text(
-            'Group · ${_participants.length} participants',
-            style: TextStyle(
-              color: VesparaColors.secondary,
-              fontSize: 14,
-            ),
-          ),
-          
-          Text(
-            'Created ${_formatDate(conversation.createdAt)}',
-            style: TextStyle(
-              color: VesparaColors.secondary.withOpacity(0.7),
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescription(WireConversation conversation) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Description',
-                style: TextStyle(
-                  color: VesparaColors.secondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (_isAdmin)
-                GestureDetector(
-                  onTap: () => _showEditDescriptionDialog(conversation),
-                  child: Icon(
-                    Icons.edit,
-                    size: 16,
-                    color: VesparaColors.glow,
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            conversation.groupDescription ?? 'No description',
-            style: TextStyle(
-              color: conversation.groupDescription != null 
-                  ? VesparaColors.primary 
-                  : VesparaColors.secondary,
-              fontSize: 14,
-              fontStyle: conversation.groupDescription == null 
-                  ? FontStyle.italic 
-                  : FontStyle.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMediaSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: VesparaColors.glow.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.photo_library, color: VesparaColors.glow),
-            ),
-            title: const Text(
-              'Media, Links, and Docs',
-              style: TextStyle(color: VesparaColors.primary),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '0',
-                  style: TextStyle(color: VesparaColors.secondary),
-                ),
-                Icon(Icons.chevron_right, color: VesparaColors.secondary),
               ],
             ),
-            onTap: () {
-              VesparaHaptics.lightTap();
-              // TODO: Navigate to media gallery
-            },
-          ),
-          const Divider(height: 1, color: VesparaColors.border, indent: 72),
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: VesparaColors.tagsYellow.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 8),
+            Text(
+              conversation.groupDescription ?? 'No description',
+              style: TextStyle(
+                color: conversation.groupDescription != null
+                    ? VesparaColors.primary
+                    : VesparaColors.secondary,
+                fontSize: 14,
+                fontStyle: conversation.groupDescription == null
+                    ? FontStyle.italic
+                    : FontStyle.normal,
               ),
-              child: const Icon(Icons.star, color: VesparaColors.tagsYellow),
             ),
-            title: const Text(
-              'Starred Messages',
-              style: TextStyle(color: VesparaColors.primary),
+          ],
+        ),
+      );
+
+  Widget _buildMediaSection() => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child:
+                    const Icon(Icons.photo_library, color: VesparaColors.glow),
+              ),
+              title: const Text(
+                'Media, Links, and Docs',
+                style: TextStyle(color: VesparaColors.primary),
+              ),
+              trailing: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '0',
+                    style: TextStyle(color: VesparaColors.secondary),
+                  ),
+                  Icon(Icons.chevron_right, color: VesparaColors.secondary),
+                ],
+              ),
+              onTap: VesparaHaptics.lightTap,
             ),
-            trailing: Icon(Icons.chevron_right, color: VesparaColors.secondary),
-            onTap: () {
-              VesparaHaptics.lightTap();
-              // TODO: Navigate to starred messages
-            },
-          ),
-        ],
-      ),
-    );
-  }
+            const Divider(height: 1, color: VesparaColors.border, indent: 72),
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: VesparaColors.tagsYellow.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.star, color: VesparaColors.tagsYellow),
+              ),
+              title: const Text(
+                'Starred Messages',
+                style: TextStyle(color: VesparaColors.primary),
+              ),
+              trailing: const Icon(Icons.chevron_right,
+                  color: VesparaColors.secondary),
+              onTap: VesparaHaptics.lightTap,
+            ),
+          ],
+        ),
+      );
 
   Widget _buildParticipantsSection() {
     final participants = _participants;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -390,7 +376,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
               children: [
                 Text(
                   '${participants.length} Participants',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: VesparaColors.secondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -399,14 +385,14 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
                 if (_isAdmin)
                   GestureDetector(
                     onTap: _showAddParticipantsSheet,
-                    child: Row(
+                    child: const Row(
                       children: [
                         Icon(
                           Icons.person_add,
                           size: 16,
                           color: VesparaColors.glow,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           'Add',
                           style: TextStyle(
@@ -421,9 +407,9 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
               ],
             ),
           ),
-          
+
           // Participant list
-          ...participants.map((participant) => _buildParticipantTile(participant)),
+          ...participants.map(_buildParticipantTile),
         ],
       ),
     );
@@ -431,21 +417,21 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
 
   Widget _buildParticipantTile(ConversationParticipant participant) {
     final isCurrentUser = participant.userId == _currentUserId;
-    
+
     return ListTile(
-      onLongPress: _isAdmin && !isCurrentUser 
-          ? () => _showParticipantOptions(participant) 
+      onLongPress: _isAdmin && !isCurrentUser
+          ? () => _showParticipantOptions(participant)
           : null,
       leading: CircleAvatar(
         radius: 24,
         backgroundColor: VesparaColors.background,
-        backgroundImage: participant.avatarUrl != null 
-            ? NetworkImage(participant.avatarUrl!) 
+        backgroundImage: participant.avatarUrl != null
+            ? NetworkImage(participant.avatarUrl!)
             : null,
         child: participant.avatarUrl == null
             ? Text(
                 (participant.displayName ?? 'U').substring(0, 1).toUpperCase(),
-                style: TextStyle(
+                style: const TextStyle(
                   color: VesparaColors.glow,
                   fontWeight: FontWeight.w600,
                 ),
@@ -456,9 +442,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
         children: [
           Expanded(
             child: Text(
-              isCurrentUser 
-                  ? 'You' 
-                  : (participant.displayName ?? 'Unknown'),
+              isCurrentUser ? 'You' : (participant.displayName ?? 'Unknown'),
               style: const TextStyle(
                 color: VesparaColors.primary,
                 fontWeight: FontWeight.w500,
@@ -472,7 +456,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
                 color: VesparaColors.glow.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text(
+              child: const Text(
                 'Admin',
                 style: TextStyle(
                   fontSize: 10,
@@ -486,7 +470,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
       subtitle: participant.nickname != null
           ? Text(
               '~${participant.nickname}',
-              style: TextStyle(
+              style: const TextStyle(
                 color: VesparaColors.secondary,
                 fontSize: 12,
               ),
@@ -495,125 +479,118 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
     );
   }
 
-  Widget _buildSettingsSection(WireConversation conversation) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          // Mute notifications
-          SwitchListTile(
-            value: conversation.isMuted,
-            onChanged: (value) => _toggleMute(),
-            secondary: Icon(
-              conversation.isMuted 
-                  ? Icons.notifications_off 
-                  : Icons.notifications,
-              color: VesparaColors.secondary,
-            ),
-            title: const Text(
-              'Mute Notifications',
-              style: TextStyle(color: VesparaColors.primary),
-            ),
-            activeColor: VesparaColors.glow,
-          ),
-          const Divider(height: 1, color: VesparaColors.border, indent: 56),
-          
-          // Custom notifications
-          ListTile(
-            leading: Icon(Icons.music_note, color: VesparaColors.secondary),
-            title: const Text(
-              'Custom Notifications',
-              style: TextStyle(color: VesparaColors.primary),
-            ),
-            trailing: Icon(Icons.chevron_right, color: VesparaColors.secondary),
-            onTap: () {
-              VesparaHaptics.lightTap();
-              // TODO: Navigate to custom notifications
-            },
-          ),
-          const Divider(height: 1, color: VesparaColors.border, indent: 56),
-          
-          // Disappearing messages
-          ListTile(
-            leading: Icon(Icons.timer, color: VesparaColors.secondary),
-            title: const Text(
-              'Disappearing Messages',
-              style: TextStyle(color: VesparaColors.primary),
-            ),
-            subtitle: Text(
-              'Off',
-              style: TextStyle(color: VesparaColors.secondary, fontSize: 12),
-            ),
-            trailing: Icon(Icons.chevron_right, color: VesparaColors.secondary),
-            onTap: () {
-              VesparaHaptics.lightTap();
-              // TODO: Show disappearing messages options
-            },
-          ),
-          const Divider(height: 1, color: VesparaColors.border, indent: 56),
-          
-          // Group permissions (admin only)
-          if (_isAdmin)
-            ListTile(
-              leading: Icon(Icons.admin_panel_settings, color: VesparaColors.secondary),
+  Widget _buildSettingsSection(WireConversation conversation) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            // Mute notifications
+            SwitchListTile(
+              value: conversation.isMuted,
+              onChanged: (value) => _toggleMute(),
+              secondary: Icon(
+                conversation.isMuted
+                    ? Icons.notifications_off
+                    : Icons.notifications,
+                color: VesparaColors.secondary,
+              ),
               title: const Text(
-                'Group Permissions',
+                'Mute Notifications',
                 style: TextStyle(color: VesparaColors.primary),
               ),
-              trailing: Icon(Icons.chevron_right, color: VesparaColors.secondary),
+              activeThumbColor: VesparaColors.glow,
+            ),
+            const Divider(height: 1, color: VesparaColors.border, indent: 56),
+
+            // Custom notifications
+            const ListTile(
+              leading: Icon(Icons.music_note, color: VesparaColors.secondary),
+              title: Text(
+                'Custom Notifications',
+                style: TextStyle(color: VesparaColors.primary),
+              ),
+              trailing:
+                  Icon(Icons.chevron_right, color: VesparaColors.secondary),
+              onTap: VesparaHaptics.lightTap,
+            ),
+            const Divider(height: 1, color: VesparaColors.border, indent: 56),
+
+            // Disappearing messages
+            const ListTile(
+              leading: Icon(Icons.timer, color: VesparaColors.secondary),
+              title: Text(
+                'Disappearing Messages',
+                style: TextStyle(color: VesparaColors.primary),
+              ),
+              subtitle: Text(
+                'Off',
+                style: TextStyle(color: VesparaColors.secondary, fontSize: 12),
+              ),
+              trailing:
+                  Icon(Icons.chevron_right, color: VesparaColors.secondary),
+              onTap: VesparaHaptics.lightTap,
+            ),
+            const Divider(height: 1, color: VesparaColors.border, indent: 56),
+
+            // Group permissions (admin only)
+            if (_isAdmin)
+              const ListTile(
+                leading: Icon(Icons.admin_panel_settings,
+                    color: VesparaColors.secondary),
+                title: Text(
+                  'Group Permissions',
+                  style: TextStyle(color: VesparaColors.primary),
+                ),
+                trailing:
+                    Icon(Icons.chevron_right, color: VesparaColors.secondary),
+                onTap: VesparaHaptics.lightTap,
+              ),
+          ],
+        ),
+      );
+
+  Widget _buildDangerZone(WireConversation conversation) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            // Report group
+            ListTile(
+              leading:
+                  const Icon(Icons.flag_outlined, color: VesparaColors.tagsRed),
+              title: const Text(
+                'Report Group',
+                style: TextStyle(color: VesparaColors.tagsRed),
+              ),
               onTap: () {
                 VesparaHaptics.lightTap();
-                // TODO: Navigate to group permissions
+                _showReportDialog();
               },
             ),
-        ],
-      ),
-    );
-  }
+            const Divider(height: 1, color: VesparaColors.border, indent: 56),
 
-  Widget _buildDangerZone(WireConversation conversation) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          // Report group
-          ListTile(
-            leading: Icon(Icons.flag_outlined, color: VesparaColors.tagsRed),
-            title: Text(
-              'Report Group',
-              style: TextStyle(color: VesparaColors.tagsRed),
+            // Leave group
+            ListTile(
+              leading:
+                  const Icon(Icons.exit_to_app, color: VesparaColors.tagsRed),
+              title: const Text(
+                'Leave Group',
+                style: TextStyle(color: VesparaColors.tagsRed),
+              ),
+              onTap: () {
+                VesparaHaptics.mediumTap();
+                _showLeaveConfirmation();
+              },
             ),
-            onTap: () {
-              VesparaHaptics.lightTap();
-              _showReportDialog();
-            },
-          ),
-          const Divider(height: 1, color: VesparaColors.border, indent: 56),
-          
-          // Leave group
-          ListTile(
-            leading: Icon(Icons.exit_to_app, color: VesparaColors.tagsRed),
-            title: Text(
-              'Leave Group',
-              style: TextStyle(color: VesparaColors.tagsRed),
-            ),
-            onTap: () {
-              VesparaHaptics.mediumTap();
-              _showLeaveConfirmation();
-            },
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 
   // ══════════════════════════════════════════════════════════════════════════
   // ACTIONS
@@ -624,22 +601,21 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
     setState(() => _isEditingName = true);
   }
 
-  void _saveName() async {
+  Future<void> _saveName() async {
     final newName = _editNameController.text.trim();
     if (newName.isEmpty) return;
-    
+
     setState(() {
       _isEditingName = false;
       _isLoading = true;
     });
-    
+
     try {
       // Update in database
       await Supabase.instance.client
           .from('conversations')
-          .update({'name': newName})
-          .eq('id', widget.conversationId);
-      
+          .update({'name': newName}).eq('id', widget.conversationId);
+
       // Refresh data
       await ref.read(wireProvider.notifier).loadConversations();
     } catch (e) {
@@ -732,7 +708,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
 
   void _showEditDescriptionDialog(WireConversation conversation) {
     _editDescriptionController.text = conversation.groupDescription ?? '';
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -747,7 +723,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
           style: const TextStyle(color: VesparaColors.primary),
           decoration: InputDecoration(
             hintText: 'Group description',
-            hintStyle: TextStyle(color: VesparaColors.secondary),
+            hintStyle: const TextStyle(color: VesparaColors.secondary),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -756,18 +732,19 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+            child: const Text('Cancel',
+                style: TextStyle(color: VesparaColors.secondary)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               final newDesc = _editDescriptionController.text.trim();
-              
+
               await Supabase.instance.client
                   .from('conversations')
-                  .update({'description': newDesc.isEmpty ? null : newDesc})
-                  .eq('id', widget.conversationId);
-              
+                  .update({'description': newDesc.isEmpty ? null : newDesc}).eq(
+                      'id', widget.conversationId);
+
               await ref.read(wireProvider.notifier).loadConversations();
             },
             style: ElevatedButton.styleFrom(
@@ -792,7 +769,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
 
   void _showParticipantOptions(ConversationParticipant participant) {
     VesparaHaptics.mediumTap();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
@@ -814,7 +791,8 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.admin_panel_settings, color: VesparaColors.glow),
+              leading: const Icon(Icons.admin_panel_settings,
+                  color: VesparaColors.glow),
               title: Text(
                 participant.role == ParticipantRole.admin
                     ? 'Remove Admin'
@@ -823,23 +801,24 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
               onTap: () async {
                 Navigator.pop(context);
                 await ref.read(wireProvider.notifier).makeAdmin(
-                  widget.conversationId,
-                  participant.userId,
-                );
+                      widget.conversationId,
+                      participant.userId,
+                    );
               },
             ),
             ListTile(
-              leading: Icon(Icons.remove_circle_outline, color: VesparaColors.tagsRed),
-              title: Text(
+              leading: const Icon(Icons.remove_circle_outline,
+                  color: VesparaColors.tagsRed),
+              title: const Text(
                 'Remove from Group',
                 style: TextStyle(color: VesparaColors.tagsRed),
               ),
               onTap: () async {
                 Navigator.pop(context);
                 await ref.read(wireProvider.notifier).removeParticipant(
-                  widget.conversationId,
-                  participant.userId,
-                );
+                      widget.conversationId,
+                      participant.userId,
+                    );
               },
             ),
             const SizedBox(height: 16),
@@ -849,7 +828,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
     );
   }
 
-  void _toggleMute() async {
+  Future<void> _toggleMute() async {
     VesparaHaptics.lightTap();
     await ref.read(wireProvider.notifier).toggleMute(widget.conversationId);
   }
@@ -870,7 +849,8 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+            child: const Text('Cancel',
+                style: TextStyle(color: VesparaColors.secondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -908,19 +888,20 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+            child: const Text('Cancel',
+                style: TextStyle(color: VesparaColors.secondary)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              
+
               if (_currentUserId != null) {
                 await ref.read(wireProvider.notifier).removeParticipant(
-                  widget.conversationId,
-                  _currentUserId!,
-                );
+                      widget.conversationId,
+                      _currentUserId!,
+                    );
               }
-              
+
               if (mounted) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
               }
@@ -938,7 +919,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
-    
+
     if (diff.inDays == 0) {
       return 'today';
     } else if (diff.inDays == 1) {
@@ -946,8 +927,20 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
     } else if (diff.inDays < 7) {
       return '${diff.inDays} days ago';
     } else {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     }
   }

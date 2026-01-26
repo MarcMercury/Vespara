@@ -214,10 +214,8 @@ class TagHaptics {
 /// Extension to add haptic feedback to common widget events
 extension HapticExtension on Function {
   /// Wrap a callback with haptic feedback
-  Function withHaptic(Future<void> Function() haptic) {
-    return () async {
-      await haptic();
-      this();
-    };
-  }
+  Function withHaptic(Future<void> Function() haptic) => () async {
+        await haptic();
+        this();
+      };
 }

@@ -15,11 +15,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// All data is used to improve the experience - no user action required.
 
 class EngagementAnalyticsService {
+  EngagementAnalyticsService._();
   static EngagementAnalyticsService? _instance;
   static EngagementAnalyticsService get instance =>
       _instance ??= EngagementAnalyticsService._();
-
-  EngagementAnalyticsService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -42,15 +41,17 @@ class EngagementAnalyticsService {
     required int playerCount,
     String? sessionId,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'game_start',
-      properties: {
-        'game_type': gameType,
-        'heat_level': heatLevel,
-        'player_count': playerCount,
-        'session_id': sessionId,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'game_start',
+        properties: {
+          'game_type': gameType,
+          'heat_level': heatLevel,
+          'player_count': playerCount,
+          'session_id': sessionId,
+        },
+      ),
+    );
   }
 
   /// Track when a game session ends
@@ -61,16 +62,18 @@ class EngagementAnalyticsService {
     required Duration duration,
     required bool completed,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'game_end',
-      properties: {
-        'game_type': gameType,
-        'session_id': sessionId,
-        'rounds_played': roundsPlayed,
-        'duration_seconds': duration.inSeconds,
-        'completed': completed,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'game_end',
+        properties: {
+          'game_type': gameType,
+          'session_id': sessionId,
+          'rounds_played': roundsPlayed,
+          'duration_seconds': duration.inSeconds,
+          'completed': completed,
+        },
+      ),
+    );
   }
 
   /// Track individual prompt/card engagement
@@ -81,16 +84,18 @@ class EngagementAnalyticsService {
     required PromptAction action,
     Duration? timeSpent,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'prompt_engagement',
-      properties: {
-        'game_type': gameType,
-        'prompt_id': promptId,
-        'heat_level': heatLevel,
-        'action': action.name,
-        'time_spent_seconds': timeSpent?.inSeconds,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'prompt_engagement',
+        properties: {
+          'game_type': gameType,
+          'prompt_id': promptId,
+          'heat_level': heatLevel,
+          'action': action.name,
+          'time_spent_seconds': timeSpent?.inSeconds,
+        },
+      ),
+    );
   }
 
   /// Track heat level selection
@@ -99,15 +104,17 @@ class EngagementAnalyticsService {
     required String selectedHeat,
     String? previousHeat,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'heat_selection',
-      properties: {
-        'game_type': gameType,
-        'selected_heat': selectedHeat,
-        'previous_heat': previousHeat,
-        'changed': previousHeat != null && previousHeat != selectedHeat,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'heat_selection',
+        properties: {
+          'game_type': gameType,
+          'selected_heat': selectedHeat,
+          'previous_heat': previousHeat,
+          'changed': previousHeat != null && previousHeat != selectedHeat,
+        },
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -122,16 +129,18 @@ class EngagementAnalyticsService {
     bool? hasEmoji,
     bool? hasQuestion,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'message_sent',
-      properties: {
-        'match_id': matchId,
-        'message_length': messageLength,
-        'is_first_message': isFirstMessage,
-        'has_emoji': hasEmoji,
-        'has_question': hasQuestion,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'message_sent',
+        properties: {
+          'match_id': matchId,
+          'message_length': messageLength,
+          'is_first_message': isFirstMessage,
+          'has_emoji': hasEmoji,
+          'has_question': hasQuestion,
+        },
+      ),
+    );
   }
 
   /// Track message received/read
@@ -139,13 +148,15 @@ class EngagementAnalyticsService {
     required String matchId,
     required Duration timeToRead,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'message_read',
-      properties: {
-        'match_id': matchId,
-        'time_to_read_seconds': timeToRead.inSeconds,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'message_read',
+        properties: {
+          'match_id': matchId,
+          'time_to_read_seconds': timeToRead.inSeconds,
+        },
+      ),
+    );
   }
 
   /// Track conversation milestone
@@ -153,13 +164,15 @@ class EngagementAnalyticsService {
     required String matchId,
     required ConversationMilestone milestone,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'conversation_milestone',
-      properties: {
-        'match_id': matchId,
-        'milestone': milestone.name,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'conversation_milestone',
+        properties: {
+          'match_id': matchId,
+          'milestone': milestone.name,
+        },
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -172,14 +185,16 @@ class EngagementAnalyticsService {
     required Duration viewDuration,
     required int photosViewed,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'profile_view',
-      properties: {
-        'viewed_profile_id': viewedProfileId,
-        'view_duration_seconds': viewDuration.inSeconds,
-        'photos_viewed': photosViewed,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'profile_view',
+        properties: {
+          'viewed_profile_id': viewedProfileId,
+          'view_duration_seconds': viewDuration.inSeconds,
+          'photos_viewed': photosViewed,
+        },
+      ),
+    );
   }
 
   /// Track swipe action
@@ -188,14 +203,16 @@ class EngagementAnalyticsService {
     required SwipeAction action,
     required Duration decisionTime,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'swipe',
-      properties: {
-        'profile_id': profileId,
-        'action': action.name,
-        'decision_time_seconds': decisionTime.inSeconds,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'swipe',
+        properties: {
+          'profile_id': profileId,
+          'action': action.name,
+          'decision_time_seconds': decisionTime.inSeconds,
+        },
+      ),
+    );
   }
 
   /// Track match
@@ -203,13 +220,15 @@ class EngagementAnalyticsService {
     required String matchId,
     required String matchedUserId,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'match',
-      properties: {
-        'match_id': matchId,
-        'matched_user_id': matchedUserId,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'match',
+        properties: {
+          'match_id': matchId,
+          'matched_user_id': matchedUserId,
+        },
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -218,23 +237,27 @@ class EngagementAnalyticsService {
 
   /// Track app session start
   void trackSessionStart() {
-    _enqueue(AnalyticsEvent(
-      type: 'session_start',
-      properties: {
-        'hour_of_day': DateTime.now().hour,
-        'day_of_week': DateTime.now().weekday,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'session_start',
+        properties: {
+          'hour_of_day': DateTime.now().hour,
+          'day_of_week': DateTime.now().weekday,
+        },
+      ),
+    );
   }
 
   /// Track app session end
   void trackSessionEnd({required Duration sessionDuration}) {
-    _enqueue(AnalyticsEvent(
-      type: 'session_end',
-      properties: {
-        'duration_seconds': sessionDuration.inSeconds,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'session_end',
+        properties: {
+          'duration_seconds': sessionDuration.inSeconds,
+        },
+      ),
+    );
 
     // Flush immediately on session end
     _flush();
@@ -245,13 +268,15 @@ class EngagementAnalyticsService {
     required String screenName,
     Map<String, dynamic>? properties,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'screen_view',
-      properties: {
-        'screen_name': screenName,
-        ...?properties,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'screen_view',
+        properties: {
+          'screen_name': screenName,
+          ...?properties,
+        },
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -263,13 +288,15 @@ class EngagementAnalyticsService {
     required String feature,
     Map<String, dynamic>? properties,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'feature_used',
-      properties: {
-        'feature': feature,
-        ...?properties,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'feature_used',
+        properties: {
+          'feature': feature,
+          ...?properties,
+        },
+      ),
+    );
   }
 
   /// Track AI feature used (for Phase 2+)
@@ -278,14 +305,16 @@ class EngagementAnalyticsService {
     required bool accepted,
     Duration? generationTime,
   }) {
-    _enqueue(AnalyticsEvent(
-      type: 'ai_feature_used',
-      properties: {
-        'feature': feature,
-        'accepted': accepted,
-        'generation_time_ms': generationTime?.inMilliseconds,
-      },
-    ));
+    _enqueue(
+      AnalyticsEvent(
+        type: 'ai_feature_used',
+        properties: {
+          'feature': feature,
+          'accepted': accepted,
+          'generation_time_ms': generationTime?.inMilliseconds,
+        },
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -423,10 +452,12 @@ class EngagementAnalyticsService {
   void _enqueue(AnalyticsEvent event) {
     if (_userId == null) return;
 
-    _eventQueue.add(event.copyWith(
-      userId: _userId!,
-      timestamp: DateTime.now(),
-    ));
+    _eventQueue.add(
+      event.copyWith(
+        userId: _userId,
+        timestamp: DateTime.now(),
+      ),
+    );
 
     // Start flush timer if not running
     _flushTimer ??= Timer.periodic(_flushInterval, (_) => _flush());
@@ -446,12 +477,14 @@ class EngagementAnalyticsService {
     try {
       await _supabase.from('engagement_events').insert(
             events
-                .map((e) => {
-                      'user_id': e.userId,
-                      'event_type': e.type,
-                      'properties': e.properties,
-                      'created_at': e.timestamp?.toIso8601String(),
-                    })
+                .map(
+                  (e) => {
+                    'user_id': e.userId,
+                    'event_type': e.type,
+                    'properties': e.properties,
+                    'created_at': e.timestamp?.toIso8601String(),
+                  },
+                )
                 .toList(),
           );
 
@@ -479,31 +512,29 @@ class EngagementAnalyticsService {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class AnalyticsEvent {
-  final String type;
-  final Map<String, dynamic> properties;
-  final String? userId;
-  final DateTime? timestamp;
-
   AnalyticsEvent({
     required this.type,
     required this.properties,
     this.userId,
     this.timestamp,
   });
+  final String type;
+  final Map<String, dynamic> properties;
+  final String? userId;
+  final DateTime? timestamp;
 
   AnalyticsEvent copyWith({
     String? type,
     Map<String, dynamic>? properties,
     String? userId,
     DateTime? timestamp,
-  }) {
-    return AnalyticsEvent(
-      type: type ?? this.type,
-      properties: properties ?? this.properties,
-      userId: userId ?? this.userId,
-      timestamp: timestamp ?? this.timestamp,
-    );
-  }
+  }) =>
+      AnalyticsEvent(
+        type: type ?? this.type,
+        properties: properties ?? this.properties,
+        userId: userId ?? this.userId,
+        timestamp: timestamp ?? this.timestamp,
+      );
 }
 
 enum PromptAction {

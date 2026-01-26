@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:math' as math;
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/domain/models/discoverable_profile.dart';
-import '../../../core/domain/models/profile_photo.dart';
+import '../../../core/providers/connection_state_provider.dart'
+    show
+        connectionStateProvider,
+        metAtEventsProvider,
+        VesparaConnectionState,
+        EventAttendee;
 import '../../../core/providers/match_state_provider.dart';
-import '../../../core/providers/connection_state_provider.dart' 
-    show connectionStateProvider, metAtEventsProvider, VesparaConnectionState, EventAttendee;
-import '../../../core/widgets/photo_ranking_sheet.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DISCOVER SCREEN - Module 2
@@ -29,7 +30,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   int _currentIndex = 0;
   int _selectedTabIndex = 0; // 0 = Strict, 1 = Explore, 2 = Met IRL
   int _metIrlIndex = 0;
-  
+
   // Animation controllers
   late AnimationController _cardController;
   late AnimationController _glowController;
@@ -42,12 +43,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   void initState() {
     super.initState();
     _profiles = []; // Will be loaded from database
-    
+
     _cardController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    
+
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -63,14 +64,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
   void _onSwipe(SwipeDirection direction) {
     if (_currentIndex >= _profiles.length) return;
-    
+
     final profile = _profiles[_currentIndex];
     final matchNotifier = ref.read(matchStateProvider.notifier);
-    
+
     // Process swipe action and update global state
     String message;
     bool isMatch = false;
-    
+
     switch (direction) {
       case SwipeDirection.left:
         matchNotifier.passProfile(profile.id);
@@ -79,18 +80,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       case SwipeDirection.right:
         // Check for mutual match (simulated - 50% chance)
         isMatch = DateTime.now().millisecond % 2 == 0;
-        matchNotifier.likeProfile(profile.id, profile.displayName ?? 'Someone', profile.photos.isNotEmpty ? profile.photos.first : null);
-        message = isMatch 
-            ? "It's a match with ${profile.displayName}! 💜" 
+        matchNotifier.likeProfile(profile.id, profile.displayName ?? 'Someone',
+            profile.photos.isNotEmpty ? profile.photos.first : null);
+        message = isMatch
+            ? "It's a match with ${profile.displayName}! 💜"
             : 'Liked ${profile.displayName}! 💜';
         break;
       case SwipeDirection.superLike:
-        matchNotifier.superLikeProfile(profile.id, profile.displayName ?? 'Someone', profile.photos.isNotEmpty ? profile.photos.first : null);
-        message = "Super Match with ${profile.displayName}! ⭐";
+        matchNotifier.superLikeProfile(
+            profile.id,
+            profile.displayName ?? 'Someone',
+            profile.photos.isNotEmpty ? profile.photos.first : null);
+        message = 'Super Match with ${profile.displayName}! ⭐';
         isMatch = true;
         break;
     }
-    
+
     // Show feedback - clear any existing snackbar first
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -109,21 +114,25 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         dismissDirection: DismissDirection.horizontal,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: isMatch 
-            ? VesparaColors.success 
-            : (direction == SwipeDirection.left ? VesparaColors.surface : VesparaColors.glow.withOpacity(0.9)),
-        action: isMatch ? SnackBarAction(
-          label: 'Message',
-          textColor: Colors.white,
-          onPressed: () {
-            // Dismiss this snackbar and navigate to Wire
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            // TODO: Navigate to Wire with this match conversation
-          },
-        ) : null,
+        backgroundColor: isMatch
+            ? VesparaColors.success
+            : (direction == SwipeDirection.left
+                ? VesparaColors.surface
+                : VesparaColors.glow.withOpacity(0.9)),
+        action: isMatch
+            ? SnackBarAction(
+                label: 'Message',
+                textColor: Colors.white,
+                onPressed: () {
+                  // Dismiss this snackbar and navigate to Wire
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  // TODO: Navigate to Wire with this match conversation
+                },
+              )
+            : null,
       ),
     );
-    
+
     setState(() {
       _currentIndex++;
       _dragOffset = 0;
@@ -141,7 +150,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
   void _onDragEnd(DragEndDetails details) {
     setState(() => _isDragging = false);
-    
+
     if (_dragOffset.abs() > 100) {
       // Swipe threshold reached
       _onSwipe(_dragOffset > 0 ? SwipeDirection.right : SwipeDirection.left);
@@ -154,69 +163,243 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VesparaColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildMatchTypeToggle(),
-            Expanded(
-              child: _selectedTabIndex == 2 
-                  ? _buildMetIrlContent()
-                  : _buildCardStack(),
-            ),
-            if (_selectedTabIndex != 2) ...[
-              _buildActionButtons(),
+  // Filter state
+  RangeValues _ageRange = const RangeValues(21, 45);
+  double _maxDistance = 25;
+  final Set<String> _selectedRelTypes = {
+    'casual',
+    'exploring',
+    'ethicalNonMonogamy'
+  };
+
+  void _showFiltersDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: VesparaColors.secondary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text('Discovery Filters',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.primary)),
+              const SizedBox(height: 24),
+
+              // Age Range
+              Text(
+                  'Age Range: ${_ageRange.start.toInt()} - ${_ageRange.end.toInt()}',
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.secondary)),
+              RangeSlider(
+                values: _ageRange,
+                min: 18,
+                max: 65,
+                divisions: 47,
+                activeColor: VesparaColors.glow,
+                onChanged: (v) {
+                  setModalState(() => _ageRange = v);
+                  setState(() => _ageRange = v);
+                },
+              ),
+
+              // Distance
+              const SizedBox(height: 16),
+              Text('Max Distance: ${_maxDistance.toInt()} miles',
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.secondary)),
+              Slider(
+                value: _maxDistance,
+                min: 1,
+                max: 100,
+                activeColor: VesparaColors.glow,
+                onChanged: (v) {
+                  setModalState(() => _maxDistance = v);
+                  setState(() => _maxDistance = v);
+                },
+              ),
+
+              // Relationship Types
+              const SizedBox(height: 16),
+              const Text('Looking For',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.secondary)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  'casual',
+                  'exploring',
+                  'ethicalNonMonogamy',
+                  'polyamory',
+                  'monogamy'
+                ].map((type) {
+                  final selected = _selectedRelTypes.contains(type);
+                  return GestureDetector(
+                    onTap: () {
+                      setModalState(() {
+                        if (selected) {
+                          _selectedRelTypes.remove(type);
+                        } else {
+                          _selectedRelTypes.add(type);
+                        }
+                      });
+                      setState(() {});
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? VesparaColors.glow.withOpacity(0.2)
+                            : VesparaColors.background,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: selected
+                                ? VesparaColors.glow
+                                : VesparaColors.secondary.withOpacity(0.3)),
+                      ),
+                      child: Text(_formatType(type),
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: selected
+                                  ? VesparaColors.glow
+                                  : VesparaColors.secondary)),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Filters updated!'),
+                        backgroundColor: VesparaColors.success));
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: VesparaColors.glow,
+                      foregroundColor: VesparaColors.background,
+                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                  child: const Text('Apply Filters'),
+                ),
+              ),
               const SizedBox(height: 16),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
-          ),
-          Column(
+  String _formatType(String type) {
+    switch (type) {
+      case 'casual':
+        return 'Casual';
+      case 'exploring':
+        return 'Exploring';
+      case 'ethicalNonMonogamy':
+        return 'ENM';
+      case 'polyamory':
+        return 'Poly';
+      case 'monogamy':
+        return 'Monogamy';
+      default:
+        return type;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: VesparaColors.background,
+        body: SafeArea(
+          child: Column(
             children: [
-              Text(
-                'DISCOVER',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 4,
-                  color: VesparaColors.primary,
-                ),
+              _buildHeader(),
+              _buildMatchTypeToggle(),
+              Expanded(
+                child: _selectedTabIndex == 2
+                    ? _buildMetIrlContent()
+                    : _buildCardStack(),
               ),
-              Text(
-                '${_profiles.length - _currentIndex} profiles nearby',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VesparaColors.secondary,
-                ),
-              ),
+              if (_selectedTabIndex != 2) ...[
+                _buildActionButtons(),
+                const SizedBox(height: 16),
+              ],
             ],
           ),
-          const SizedBox(width: 48), // Balance for back button
-        ],
-      ),
-    );
-  }
+        ),
+      );
+
+  Widget _buildHeader() => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+            ),
+            Column(
+              children: [
+                const Text(
+                  'DISCOVER',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 4,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+                Text(
+                  '${_profiles.length - _currentIndex} profiles nearby',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              onPressed: _showFiltersDialog,
+              icon: const Icon(Icons.tune, color: VesparaColors.secondary),
+            ),
+          ],
+        ),
+      );
 
   Widget _buildMatchTypeToggle() {
     final metIrlCount = ref.watch(metAtEventsProvider).length;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(4),
@@ -234,8 +417,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _selectedTabIndex == 0 
-                      ? VesparaColors.glow.withOpacity(0.2) 
+                  color: _selectedTabIndex == 0
+                      ? VesparaColors.glow.withOpacity(0.2)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -246,8 +429,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1,
-                    color: _selectedTabIndex == 0 
-                        ? VesparaColors.primary 
+                    color: _selectedTabIndex == 0
+                        ? VesparaColors.primary
                         : VesparaColors.secondary,
                   ),
                 ),
@@ -262,8 +445,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _selectedTabIndex == 1 
-                      ? VesparaColors.tagsYellow.withOpacity(0.2) 
+                  color: _selectedTabIndex == 1
+                      ? VesparaColors.tagsYellow.withOpacity(0.2)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -276,8 +459,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
-                        color: _selectedTabIndex == 1 
-                            ? VesparaColors.tagsYellow 
+                        color: _selectedTabIndex == 1
+                            ? VesparaColors.tagsYellow
                             : VesparaColors.secondary,
                       ),
                     ),
@@ -285,8 +468,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     Icon(
                       Icons.auto_awesome,
                       size: 12,
-                      color: _selectedTabIndex == 1 
-                          ? VesparaColors.tagsYellow 
+                      color: _selectedTabIndex == 1
+                          ? VesparaColors.tagsYellow
                           : VesparaColors.secondary,
                     ),
                   ],
@@ -302,8 +485,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _selectedTabIndex == 2 
-                      ? VesparaColors.success.withOpacity(0.2) 
+                  color: _selectedTabIndex == 2
+                      ? VesparaColors.success.withOpacity(0.2)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -316,22 +499,23 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
-                        color: _selectedTabIndex == 2 
-                            ? VesparaColors.success 
+                        color: _selectedTabIndex == 2
+                            ? VesparaColors.success
                             : VesparaColors.secondary,
                       ),
                     ),
                     if (metIrlCount > 0) ...[
                       const SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: VesparaColors.success,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           '$metIrlCount',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: VesparaColors.background,
@@ -350,14 +534,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildCardStack() {
-    final filteredProfiles = _profiles.where((p) => 
-        _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch
-    ).toList();
-    
+    final filteredProfiles = _profiles
+        .where(
+          (p) => _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch,
+        )
+        .toList();
+
     if (_currentIndex >= _profiles.length) {
       return _buildEmptyState();
     }
-    
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -367,10 +553,11 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             scale: 0.9,
             child: Opacity(
               opacity: 0.5,
-              child: _buildProfileCard(_profiles[_currentIndex + 1], isBackground: true),
+              child: _buildProfileCard(_profiles[_currentIndex + 1],
+                  isBackground: true),
             ),
           ),
-        
+
         // Current card
         GestureDetector(
           onPanUpdate: _onDragUpdate,
@@ -382,16 +569,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               child: Stack(
                 children: [
                   _buildProfileCard(_profiles[_currentIndex]),
-                  
+
                   // Swipe indicators
                   if (_dragOffset.abs() > 50)
                     Positioned.fill(
-                      child: Container(
+                      child: DecoratedBox(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: _dragOffset > 0 
-                                ? VesparaColors.success 
+                            color: _dragOffset > 0
+                                ? VesparaColors.success
                                 : VesparaColors.error,
                             width: 4,
                           ),
@@ -401,13 +588,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                             angle: _dragOffset > 0 ? -0.3 : 0.3,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 24, 
+                                horizontal: 24,
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: _dragOffset > 0 
-                                      ? VesparaColors.success 
+                                  color: _dragOffset > 0
+                                      ? VesparaColors.success
                                       : VesparaColors.error,
                                   width: 3,
                                 ),
@@ -418,8 +605,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                                 style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w800,
-                                  color: _dragOffset > 0 
-                                      ? VesparaColors.success 
+                                  color: _dragOffset > 0
+                                      ? VesparaColors.success
                                       : VesparaColors.error,
                                 ),
                               ),
@@ -437,101 +624,105 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     );
   }
 
-  Widget _buildProfileCard(DiscoverableProfile profile, {bool isBackground = false}) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            // Photo background
-            Positioned.fill(
-              child: profile.photos.isNotEmpty
-                  ? Image.network(
-                      profile.photos.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholderPhoto(profile),
-                    )
-                  : _buildPlaceholderPhoto(profile),
+  Widget _buildProfileCard(DiscoverableProfile profile,
+          {bool isBackground = false}) =>
+      Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-            
-            // Gradient overlay
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.transparent,
-                      VesparaColors.background.withOpacity(0.8),
-                      VesparaColors.background,
-                    ],
-                    stops: const [0.0, 0.4, 0.75, 1.0],
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              // Photo background
+              Positioned.fill(
+                child: profile.photos.isNotEmpty
+                    ? Image.network(
+                        profile.photos.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _buildPlaceholderPhoto(profile),
+                      )
+                    : _buildPlaceholderPhoto(profile),
+              ),
+
+              // Gradient overlay
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.transparent,
+                        VesparaColors.background.withOpacity(0.8),
+                        VesparaColors.background,
+                      ],
+                      stops: const [0.0, 0.4, 0.75, 1.0],
+                    ),
                   ),
                 ),
               ),
-            ),
-            
-            // Wildcard badge
-            if (profile.isWildcard)
+
+              // Wildcard badge
+              if (profile.isWildcard)
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.tagsYellow.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.auto_awesome, size: 14, color: Colors.black),
+                        SizedBox(width: 4),
+                        Text(
+                          'AI PICK',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Compatibility score
               Positioned(
                 top: 16,
-                left: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: VesparaColors.tagsYellow.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.auto_awesome, size: 14, color: Colors.black),
-                      const SizedBox(width: 4),
-                      Text(
-                        'AI PICK',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            
-            // Compatibility score
-            Positioned(
-              top: 16,
-              right: 16,
-              child: AnimatedBuilder(
-                animation: _glowController,
-                builder: (context, child) {
-                  return Container(
+                right: 16,
+                child: AnimatedBuilder(
+                  animation: _glowController,
+                  builder: (context, child) => Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: VesparaColors.surface.withOpacity(0.9),
                       border: Border.all(
-                        color: VesparaColors.glow.withOpacity(0.3 + _glowController.value * 0.3),
+                        color: VesparaColors.glow
+                            .withOpacity(0.3 + _glowController.value * 0.3),
                         width: 2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: VesparaColors.glow.withOpacity(0.2 + _glowController.value * 0.2),
+                          color: VesparaColors.glow
+                              .withOpacity(0.2 + _glowController.value * 0.2),
                           blurRadius: 12,
                           spreadRadius: 2,
                         ),
@@ -539,100 +730,76 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     ),
                     child: Text(
                       '${(profile.compatibilityScore * 100).round()}%',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: VesparaColors.primary,
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-            
-            // Profile info
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Name and age
-                    Row(
-                      children: [
-                        Text(
-                          '${profile.displayName ?? "?"}, ${profile.age ?? "?"}',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: VesparaColors.primary,
-                          ),
-                        ),
-                        if (profile.isVerified) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.verified,
-                            color: VesparaColors.glow,
-                            size: 24,
-                          ),
-                        ],
-                      ],
-                    ),
-                    
-                    // Headline
-                    if (profile.headline != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          profile.headline!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: VesparaColors.secondary,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    
-                    // Location and distance
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Row(
+
+              // Profile info
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Name and age
+                      Row(
                         children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: VesparaColors.secondary,
-                          ),
-                          const SizedBox(width: 4),
                           Text(
-                            '${profile.location ?? "Unknown"} • ${profile.distanceKm?.toStringAsFixed(1) ?? "?"} km',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: VesparaColors.secondary,
+                            '${profile.displayName ?? "?"}, ${profile.age ?? "?"}',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: VesparaColors.primary,
                             ),
                           ),
+                          if (profile.isVerified) ...[
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.verified,
+                              color: VesparaColors.glow,
+                              size: 24,
+                            ),
+                          ],
                         ],
                       ),
-                    ),
-                    
-                    // Occupation
-                    if (profile.occupation != null)
+
+                      // Headline
+                      if (profile.headline != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            profile.headline!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: VesparaColors.secondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+
+                      // Location and distance
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: 8),
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.work_outline,
+                            const Icon(
+                              Icons.location_on,
                               size: 14,
                               color: VesparaColors.secondary,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${profile.occupation}${profile.company != null ? " at ${profile.company}" : ""}',
-                              style: TextStyle(
+                              '${profile.location ?? "Unknown"} • ${profile.distanceKm?.toStringAsFixed(1) ?? "?"} km',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: VesparaColors.secondary,
                               ),
@@ -640,229 +807,209 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                           ],
                         ),
                       ),
-                    
-                    // Relationship types
-                    if (profile.relationshipTypes.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: profile.relationshipTypes.map((type) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10, 
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: VesparaColors.glow.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: VesparaColors.glow.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Text(
-                                _formatRelationshipType(type),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: VesparaColors.glow,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    
-                    // Prompts preview
-                    if (profile.prompts.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(top: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: VesparaColors.surface.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              profile.prompts.first.question,
-                              style: TextStyle(
-                                fontSize: 11,
+
+                      // Occupation
+                      if (profile.occupation != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.work_outline,
+                                size: 14,
                                 color: VesparaColors.secondary,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              profile.prompts.first.answer,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: VesparaColors.primary,
+                              const SizedBox(width: 4),
+                              Text(
+                                '${profile.occupation}${profile.company != null ? " at ${profile.company}" : ""}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: VesparaColors.secondary,
+                                ),
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    
-                    // Wildcard reason
-                    if (profile.isWildcard && profile.wildcardReason != null)
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: VesparaColors.tagsYellow.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: VesparaColors.tagsYellow.withOpacity(0.3),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.lightbulb_outline,
-                              size: 14,
-                              color: VesparaColors.tagsYellow,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                profile.wildcardReason!,
-                                style: TextStyle(
+
+                      // Relationship types
+                      if (profile.relationshipTypes.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: profile.relationshipTypes
+                                .map(
+                                  (type) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          VesparaColors.glow.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color:
+                                            VesparaColors.glow.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _formatRelationshipType(type),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: VesparaColors.glow,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+
+                      // Prompts preview
+                      if (profile.prompts.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(top: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: VesparaColors.surface.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile.prompts.first.question,
+                                style: const TextStyle(
                                   fontSize: 11,
-                                  color: VesparaColors.tagsYellow,
+                                  color: VesparaColors.secondary,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                profile.prompts.first.answer,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: VesparaColors.primary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
+
+                      // Wildcard reason
+                      if (profile.isWildcard && profile.wildcardReason != null)
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: VesparaColors.tagsYellow.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: VesparaColors.tagsYellow.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.lightbulb_outline,
+                                size: 14,
+                                color: VesparaColors.tagsYellow,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  profile.wildcardReason!,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: VesparaColors.tagsYellow,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildPlaceholderPhoto(DiscoverableProfile profile) {
-    return Container(
-      color: VesparaColors.surface,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.person,
-              size: 80,
-              color: VesparaColors.glow.withOpacity(0.3),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              profile.displayName?[0].toUpperCase() ?? '?',
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w300,
-                color: VesparaColors.glow.withOpacity(0.5),
+  Widget _buildPlaceholderPhoto(DiscoverableProfile profile) => ColoredBox(
+        color: VesparaColors.surface,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person,
+                size: 80,
+                color: VesparaColors.glow.withOpacity(0.3),
               ),
+              const SizedBox(height: 8),
+              Text(
+                profile.displayName?[0].toUpperCase() ?? '?',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w300,
+                  color: VesparaColors.glow.withOpacity(0.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _buildActionButtons() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Pass button
+            _buildActionButton(
+              icon: Icons.close,
+              color: VesparaColors.error,
+              size: 60,
+              onTap: () => _onSwipe(SwipeDirection.left),
+            ),
+
+            // Super Like button
+            _buildActionButton(
+              icon: Icons.star,
+              color: VesparaColors.tagsYellow,
+              size: 48,
+              onTap: () => _onSwipe(SwipeDirection.superLike),
+            ),
+
+            // Like button
+            _buildActionButton(
+              icon: Icons.favorite,
+              color: VesparaColors.success,
+              size: 60,
+              onTap: () => _onSwipe(SwipeDirection.right),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Pass button
-          _buildActionButton(
-            icon: Icons.close,
-            color: VesparaColors.error,
-            size: 60,
-            onTap: () => _onSwipe(SwipeDirection.left),
-          ),
-          
-          // Rank Photos button
-          _buildActionButton(
-            icon: Icons.photo_library,
-            color: Colors.amber,
-            size: 44,
-            onTap: _openPhotoRanking,
-          ),
-          
-          // Super Like button
-          _buildActionButton(
-            icon: Icons.star,
-            color: VesparaColors.tagsYellow,
-            size: 48,
-            onTap: () => _onSwipe(SwipeDirection.superLike),
-          ),
-          
-          // Like button
-          _buildActionButton(
-            icon: Icons.favorite,
-            color: VesparaColors.success,
-            size: 60,
-            onTap: () => _onSwipe(SwipeDirection.right),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _openPhotoRanking() {
-    if (_currentIndex >= _profiles.length) return;
-    
-    final profile = _profiles[_currentIndex];
-    if (profile.photos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('This user has no photos to rank'),
-          backgroundColor: VesparaColors.surface,
-        ),
       );
-      return;
-    }
-    
-    // Convert profile photos to ProfilePhoto objects for ranking
-    final photos = profile.photos.asMap().entries.map((entry) {
-      return ProfilePhoto.fromUrl(
-        id: '${profile.id}_photo_${entry.key}',
-        userId: profile.id,
-        photoUrl: entry.value,
-        position: entry.key + 1,
-        isPrimary: entry.key == 0,
-      );
-    }).toList();
-    
-    PhotoRankingSheet.show(
-      context,
-      userId: profile.id,
-      userName: profile.displayName ?? 'This person',
-      photos: photos,
-    );
-  }
 
   Widget _buildActionButton({
     required IconData icon,
     required Color color,
     required double size,
     required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedBuilder(
-        animation: _glowController,
-        builder: (context, child) {
-          return Container(
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: AnimatedBuilder(
+          animation: _glowController,
+          builder: (context, child) => Container(
             width: size,
             height: size,
             decoration: BoxDecoration(
@@ -885,63 +1032,60 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               color: color,
               size: size * 0.5,
             ),
-          );
-        },
-      ),
-    );
-  }
+          ),
+        ),
+      );
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.explore_off,
-              size: 80,
-              color: VesparaColors.glow.withOpacity(0.3),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No more profiles',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.primary,
+  Widget _buildEmptyState() => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.explore_off,
+                size: 80,
+                color: VesparaColors.glow.withOpacity(0.3),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Check back later or adjust your filters to discover more connections.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: VesparaColors.secondary,
-              ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() => _currentIndex = 0);
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Start Over'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VesparaColors.glow,
-                foregroundColor: VesparaColors.background,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
+              const SizedBox(height: 24),
+              const Text(
+                'No more profiles',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Text(
+                'Check back later or adjust your filters to discover more connections.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _currentIndex = 0);
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Start Over'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.glow,
+                  foregroundColor: VesparaColors.background,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   String _formatRelationshipType(String type) {
     switch (type) {
@@ -967,7 +1111,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   Widget _buildMetIrlContent() {
     final metIrlAttendees = ref.watch(metAtEventsProvider);
     final connectionState = ref.watch(connectionStateProvider);
-    
+
     if (metIrlAttendees.isEmpty) {
       return _buildMetIrlEmptyState();
     }
@@ -998,7 +1142,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   color: VesparaColors.success.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.people,
                   color: VesparaColors.success,
                   size: 24,
@@ -1009,7 +1153,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'People you\'ve met',
                       style: TextStyle(
                         fontSize: 16,
@@ -1019,7 +1163,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     ),
                     Text(
                       '${metIrlAttendees.length} from past events',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
                         color: VesparaColors.secondary,
                       ),
@@ -1064,26 +1208,28 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     String? eventName;
                     String? eventId;
                     for (final event in connectionState.events) {
-                      if (event.attendees.any((a) => a.userId == attendee.userId)) {
+                      if (event.attendees
+                          .any((a) => a.userId == attendee.userId)) {
                         eventName = event.title;
                         eventId = event.id;
                         break;
                       }
                     }
-                    
+
                     ref.read(connectionStateProvider.notifier).connectViaEvent(
-                      attendee.userId,
-                      attendee.name,
-                      attendee.avatar,
-                      eventId ?? '',
-                      eventName,
-                    );
-                    
+                          attendee.userId,
+                          attendee.name,
+                          attendee.avatar,
+                          eventId ?? '',
+                          eventName,
+                        );
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Row(
                           children: [
-                            Icon(Icons.favorite, color: VesparaColors.success),
+                            const Icon(Icons.favorite,
+                                color: VesparaColors.success),
                             const SizedBox(width: 12),
                             Text('Connected with ${attendee.name}!'),
                           ],
@@ -1095,7 +1241,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         ),
                       ),
                     );
-                    
+
                     setState(() => _metIrlIndex++);
                   },
                 ),
@@ -1106,7 +1252,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     );
   }
 
-  Widget _buildMetIrlCard(EventAttendee attendee, VesparaConnectionState connectionState) {
+  Widget _buildMetIrlCard(
+      EventAttendee attendee, VesparaConnectionState connectionState) {
     // Find event details for this attendee
     String? eventName;
     DateTime? eventDate;
@@ -1143,7 +1290,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(22)),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1178,8 +1326,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       ),
                       child: Center(
                         child: Text(
-                          attendee.name.isNotEmpty ? attendee.name[0].toUpperCase() : '?',
-                          style: TextStyle(
+                          attendee.name.isNotEmpty
+                              ? attendee.name[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                             color: VesparaColors.success,
@@ -1190,7 +1340,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     const SizedBox(height: 20),
                     Text(
                       attendee.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: VesparaColors.primary,
@@ -1207,13 +1357,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: VesparaColors.background.withOpacity(0.5),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(22)),
             ),
             child: Column(
               children: [
                 // Met at badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     color: VesparaColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1224,7 +1376,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.event,
                         color: VesparaColors.success,
                         size: 18,
@@ -1232,7 +1384,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       const SizedBox(width: 8),
                       Text(
                         'Met at ${eventName ?? "an event"}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: VesparaColors.success,
@@ -1245,7 +1397,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   const SizedBox(height: 8),
                   Text(
                     _formatEventDate(eventDate),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       color: VesparaColors.secondary,
                     ),
@@ -1265,172 +1417,172 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     required Color color,
     required VoidCallback onTap,
     bool isPrimary = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: isPrimary ? 72 : 56,
-            height: isPrimary ? 72 : 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isPrimary ? color : VesparaColors.surface,
-              border: isPrimary ? null : Border.all(
-                color: color.withOpacity(0.3),
-                width: 2,
-              ),
-              boxShadow: isPrimary ? [
-                BoxShadow(
-                  color: color.withOpacity(0.4),
-                  blurRadius: 16,
-                  spreadRadius: 2,
-                ),
-              ] : null,
-            ),
-            child: Icon(
-              icon,
-              color: isPrimary ? VesparaColors.background : color,
-              size: isPrimary ? 32 : 24,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetIrlEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
+  }) =>
+      GestureDetector(
+        onTap: onTap,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              width: isPrimary ? 72 : 56,
+              height: isPrimary ? 72 : 56,
               decoration: BoxDecoration(
-                color: VesparaColors.surface,
                 shape: BoxShape.circle,
+                color: isPrimary ? color : VesparaColors.surface,
+                border: isPrimary
+                    ? null
+                    : Border.all(
+                        color: color.withOpacity(0.3),
+                        width: 2,
+                      ),
+                boxShadow: isPrimary
+                    ? [
+                        BoxShadow(
+                          color: color.withOpacity(0.4),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : null,
               ),
               child: Icon(
-                Icons.event_available,
-                size: 64,
-                color: VesparaColors.glow.withOpacity(0.5),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No event connections yet',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Attend events to meet people IRL!\nAfter the event, you can connect with\npeople you\'ve met here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: VesparaColors.secondary,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                // Would navigate to events/group screen
-              },
-              icon: const Icon(Icons.search),
-              label: const Text('Find Events'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VesparaColors.success,
-                foregroundColor: VesparaColors.background,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetIrlDoneState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [VesparaColors.success, VesparaColors.glow],
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.check,
-                size: 48,
-                color: VesparaColors.background,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'All caught up!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.primary,
+                icon,
+                color: isPrimary ? VesparaColors.background : color,
+                size: isPrimary ? 32 : 24,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'You\'ve reviewed everyone from your events.',
-              textAlign: TextAlign.center,
+              label,
               style: TextStyle(
-                fontSize: 14,
-                color: VesparaColors.secondary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: () {
-                setState(() => _metIrlIndex = 0);
-              },
-              child: Text(
-                'Start Over',
-                style: TextStyle(
-                  color: VesparaColors.glow,
-                  fontWeight: FontWeight.w600,
-                ),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: color,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _buildMetIrlEmptyState() => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: const BoxDecoration(
+                  color: VesparaColors.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.event_available,
+                  size: 64,
+                  color: VesparaColors.glow.withOpacity(0.5),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'No event connections yet',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Attend events to meet people IRL!\nAfter the event, you can connect with\npeople you\'ve met here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Would navigate to events/group screen
+                },
+                icon: const Icon(Icons.search),
+                label: const Text('Find Events'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.success,
+                  foregroundColor: VesparaColors.background,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _buildMetIrlDoneState() => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [VesparaColors.success, VesparaColors.glow],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  size: 48,
+                  color: VesparaColors.background,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'All caught up!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You\'ve reviewed everyone from your events.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () {
+                  setState(() => _metIrlIndex = 0);
+                },
+                child: const Text(
+                  'Start Over',
+                  style: TextStyle(
+                    color: VesparaColors.glow,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   String _formatEventDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
-    
+
     if (diff.inDays == 0) {
       return 'Today';
     } else if (diff.inDays == 1) {

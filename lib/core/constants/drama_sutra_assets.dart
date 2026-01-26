@@ -17,7 +17,7 @@ const List<String> dramaSutraAssetPaths = [
   'assets/images/drama_sutra/group-sex-10_X5.png',
   'assets/images/drama_sutra/group-sex-11_X5.png',
   'assets/images/drama_sutra/group-sex-12_X5.png',
-  
+
   // Bingo positions
   'assets/images/drama_sutra/acrobat.png',
   'assets/images/drama_sutra/ballerina.png',

@@ -11,20 +11,6 @@ import '../providers/share_or_dare_provider.dart';
 
 /// Game model for database representation
 class LudusGame {
-  final String id;
-  final String title;
-  final String? description;
-  final String category;
-  final String ratingLevel; // 'green', 'yellow', 'red'
-  final int minPlayers;
-  final int maxPlayers;
-  final int estimatedDuration;
-  final Map<String, dynamic> content;
-  final String? thumbnailUrl;
-  final bool isActive;
-  final int playCount;
-  final DateTime createdAt;
-
   LudusGame({
     required this.id,
     required this.title,
@@ -41,39 +27,50 @@ class LudusGame {
     required this.createdAt,
   });
 
-  factory LudusGame.fromJson(Map<String, dynamic> json) {
-    return LudusGame(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String?,
-      category: json['category'] as String,
-      ratingLevel: json['rating_level'] as String? ?? 'green',
-      minPlayers: json['min_players'] as int? ?? 2,
-      maxPlayers: json['max_players'] as int? ?? 10,
-      estimatedDuration: json['estimated_duration'] as int? ?? 30,
-      content: json['content'] as Map<String, dynamic>? ?? {},
-      thumbnailUrl: json['thumbnail_url'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      playCount: json['play_count'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
+  factory LudusGame.fromJson(Map<String, dynamic> json) => LudusGame(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        description: json['description'] as String?,
+        category: json['category'] as String,
+        ratingLevel: json['rating_level'] as String? ?? 'green',
+        minPlayers: json['min_players'] as int? ?? 2,
+        maxPlayers: json['max_players'] as int? ?? 10,
+        estimatedDuration: json['estimated_duration'] as int? ?? 30,
+        content: json['content'] as Map<String, dynamic>? ?? {},
+        thumbnailUrl: json['thumbnail_url'] as String?,
+        isActive: json['is_active'] as bool? ?? true,
+        playCount: json['play_count'] as int? ?? 0,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
+  final String id;
+  final String title;
+  final String? description;
+  final String category;
+  final String ratingLevel; // 'green', 'yellow', 'red'
+  final int minPlayers;
+  final int maxPlayers;
+  final int estimatedDuration;
+  final Map<String, dynamic> content;
+  final String? thumbnailUrl;
+  final bool isActive;
+  final int playCount;
+  final DateTime createdAt;
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'description': description,
-    'category': category,
-    'rating_level': ratingLevel,
-    'min_players': minPlayers,
-    'max_players': maxPlayers,
-    'estimated_duration': estimatedDuration,
-    'content': content,
-    'thumbnail_url': thumbnailUrl,
-    'is_active': isActive,
-    'play_count': playCount,
-    'created_at': createdAt.toIso8601String(),
-  };
+        'id': id,
+        'title': title,
+        'description': description,
+        'category': category,
+        'rating_level': ratingLevel,
+        'min_players': minPlayers,
+        'max_players': maxPlayers,
+        'estimated_duration': estimatedDuration,
+        'content': content,
+        'thumbnail_url': thumbnailUrl,
+        'is_active': isActive,
+        'play_count': playCount,
+        'created_at': createdAt.toIso8601String(),
+      };
 
   /// Convert rating level string to ConsentLevel enum
   ConsentLevel get consentLevel {
@@ -90,17 +87,6 @@ class LudusGame {
 
 /// Game session model
 class GameSession {
-  final String id;
-  final String gameId;
-  final String hostId;
-  final List<String> participants;
-  final String consentLevel;
-  final int currentRound;
-  final Map<String, dynamic> gameState;
-  final bool isActive;
-  final DateTime startedAt;
-  final DateTime? endedAt;
-
   GameSession({
     required this.id,
     required this.gameId,
@@ -114,28 +100,35 @@ class GameSession {
     this.endedAt,
   });
 
-  factory GameSession.fromJson(Map<String, dynamic> json) {
-    return GameSession(
-      id: json['id'] as String,
-      gameId: json['game_id'] as String,
-      hostId: json['host_id'] as String,
-      participants: List<String>.from(json['participants'] ?? []),
-      consentLevel: json['consent_level'] as String? ?? 'green',
-      currentRound: json['current_round'] as int? ?? 0,
-      gameState: json['game_state'] as Map<String, dynamic>? ?? {},
-      isActive: json['is_active'] as bool? ?? true,
-      startedAt: DateTime.parse(json['started_at'] as String),
-      endedAt: json['ended_at'] != null 
-          ? DateTime.parse(json['ended_at'] as String) 
-          : null,
-    );
-  }
+  factory GameSession.fromJson(Map<String, dynamic> json) => GameSession(
+        id: json['id'] as String,
+        gameId: json['game_id'] as String,
+        hostId: json['host_id'] as String,
+        participants: List<String>.from(json['participants'] ?? []),
+        consentLevel: json['consent_level'] as String? ?? 'green',
+        currentRound: json['current_round'] as int? ?? 0,
+        gameState: json['game_state'] as Map<String, dynamic>? ?? {},
+        isActive: json['is_active'] as bool? ?? true,
+        startedAt: DateTime.parse(json['started_at'] as String),
+        endedAt: json['ended_at'] != null
+            ? DateTime.parse(json['ended_at'] as String)
+            : null,
+      );
+  final String id;
+  final String gameId;
+  final String hostId;
+  final List<String> participants;
+  final String consentLevel;
+  final int currentRound;
+  final Map<String, dynamic> gameState;
+  final bool isActive;
+  final DateTime startedAt;
+  final DateTime? endedAt;
 }
 
 class LudusRepository {
-  final SupabaseClient _supabase;
-
   LudusRepository(this._supabase);
+  final SupabaseClient _supabase;
 
   String? get _userId => _supabase.auth.currentUser?.id;
 
@@ -148,23 +141,23 @@ class LudusRepository {
   Future<List<LudusGame>> fetchGamesByRating(String consentLevel) async {
     try {
       // Use the database function for proper filtering
-      final response = await _supabase.rpc('get_games_by_consent', params: {
-        'p_consent_level': consentLevel,
-      });
+      final response = await _supabase.rpc(
+        'get_games_by_consent',
+        params: {
+          'p_consent_level': consentLevel,
+        },
+      );
 
       return (response as List)
           .map((json) => LudusGame.fromJson(json))
           .toList();
     } catch (e) {
       // Fallback to manual filtering
-      final response = await _supabase
-          .from('ludus_games')
-          .select()
-          .eq('is_active', true);
+      final response =
+          await _supabase.from('ludus_games').select().eq('is_active', true);
 
-      final games = (response as List)
-          .map((json) => LudusGame.fromJson(json))
-          .toList();
+      final games =
+          (response as List).map((json) => LudusGame.fromJson(json)).toList();
 
       // Apply consent filtering logic
       return games.where((game) {
@@ -188,9 +181,7 @@ class LudusRepository {
         .eq('is_active', true)
         .order('play_count', ascending: false);
 
-    return (response as List)
-        .map((json) => LudusGame.fromJson(json))
-        .toList();
+    return (response as List).map((json) => LudusGame.fromJson(json)).toList();
   }
 
   /// Get a single game by ID
@@ -213,9 +204,7 @@ class LudusRepository {
         .eq('category', category)
         .eq('is_active', true);
 
-    return (response as List)
-        .map((json) => LudusGame.fromJson(json))
-        .toList();
+    return (response as List).map((json) => LudusGame.fromJson(json)).toList();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -225,7 +214,7 @@ class LudusRepository {
   /// Fetch game cards filtered by consent level
   Future<List<GameCard>> fetchGameCards(String consentLevel) async {
     List<String> allowedLevels;
-    
+
     switch (consentLevel) {
       case 'red':
         allowedLevels = ['green', 'yellow', 'red'];
@@ -243,9 +232,7 @@ class LudusRepository {
         .inFilter('level', allowedLevels)
         .order('intensity');
 
-    return (response as List)
-        .map((json) => GameCard.fromJson(json))
-        .toList();
+    return (response as List).map((json) => GameCard.fromJson(json)).toList();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -273,7 +260,8 @@ class LudusRepository {
         .single();
 
     // Increment play count
-    await _supabase.rpc('increment_play_count', params: {'game_id': gameId}).catchError((_) {
+    await _supabase.rpc('increment_play_count',
+        params: {'game_id': gameId}).catchError((_) {
       // Fallback if function doesn't exist
       return null;
     });
@@ -299,48 +287,44 @@ class LudusRepository {
   }
 
   /// Update game session state
-  Future<void> updateSessionState(String sessionId, Map<String, dynamic> state) async {
-    await _supabase
-        .from('game_sessions')
-        .update({
-          'game_state': state,
-          'current_round': state['round'] ?? 0,
-        })
-        .eq('id', sessionId);
+  Future<void> updateSessionState(
+      String sessionId, Map<String, dynamic> state) async {
+    await _supabase.from('game_sessions').update({
+      'game_state': state,
+      'current_round': state['round'] ?? 0,
+    }).eq('id', sessionId);
   }
 
   /// End a game session
   Future<void> endSession(String sessionId) async {
-    await _supabase
-        .from('game_sessions')
-        .update({
-          'is_active': false,
-          'ended_at': DateTime.now().toIso8601String(),
-        })
-        .eq('id', sessionId);
+    await _supabase.from('game_sessions').update({
+      'is_active': false,
+      'ended_at': DateTime.now().toIso8601String(),
+    }).eq('id', sessionId);
   }
 
   /// Stream active game session (for real-time multiplayer)
-  Stream<GameSession?> watchSession(String sessionId) {
-    return _supabase
-        .from('game_sessions')
-        .stream(primaryKey: ['id'])
-        .eq('id', sessionId)
-        .map((data) => data.isNotEmpty ? GameSession.fromJson(data.first) : null);
-  }
-  
+  Stream<GameSession?> watchSession(String sessionId) => _supabase
+      .from('game_sessions')
+      .stream(primaryKey: ['id'])
+      .eq('id', sessionId)
+      .map((data) => data.isNotEmpty ? GameSession.fromJson(data.first) : null);
+
   // ═══════════════════════════════════════════════════════════════════════════
   // SHARE OR DARE (Share or Dare)
   // ═══════════════════════════════════════════════════════════════════════════
-  
+
   /// Fetch Share or Dare cards filtered by heat level
   Future<List<ShareOrDareCard>> getShareOrDareCards(String maxHeat) async {
     try {
-      final response = await _supabase.rpc('get_share_or_dare_deck', params: {
-        'p_max_heat': maxHeat,
-        'p_limit': 50,
-      });
-      
+      final response = await _supabase.rpc(
+        'get_share_or_dare_deck',
+        params: {
+          'p_max_heat': maxHeat,
+          'p_limit': 50,
+        },
+      );
+
       return (response as List)
           .map((json) => ShareOrDareCard.fromJson(json))
           .toList();
@@ -349,18 +333,25 @@ class LudusRepository {
       try {
         List<String> allowedLevels;
         switch (maxHeat) {
-          case 'X': allowedLevels = ['PG', 'PG-13', 'R', 'X']; break;
-          case 'R': allowedLevels = ['PG', 'PG-13', 'R']; break;
-          case 'PG-13': allowedLevels = ['PG', 'PG-13']; break;
-          default: allowedLevels = ['PG'];
+          case 'X':
+            allowedLevels = ['PG', 'PG-13', 'R', 'X'];
+            break;
+          case 'R':
+            allowedLevels = ['PG', 'PG-13', 'R'];
+            break;
+          case 'PG-13':
+            allowedLevels = ['PG', 'PG-13'];
+            break;
+          default:
+            allowedLevels = ['PG'];
         }
-        
+
         final response = await _supabase
             .from('share_or_dare_cards')
             .select()
             .inFilter('heat_level', allowedLevels)
             .limit(50);
-        
+
         final cards = (response as List)
             .map((json) => ShareOrDareCard.fromJson(json))
             .toList();
@@ -374,9 +365,8 @@ class LudusRepository {
 }
 
 /// Provider for LudusRepository
-final ludusRepositoryProvider = Provider<LudusRepository>((ref) {
-  return LudusRepository(Supabase.instance.client);
-});
+final ludusRepositoryProvider = Provider<LudusRepository>(
+    (ref) => LudusRepository(Supabase.instance.client));
 
 /// Current consent level state
 final consentLevelProvider = StateProvider<String>((ref) => 'green');
@@ -394,6 +384,5 @@ final filteredGameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
 });
 
 /// Active game session
-final activeGameSessionProvider = FutureProvider<GameSession?>((ref) async {
-  return ref.watch(ludusRepositoryProvider).getActiveSession();
-});
+final activeGameSessionProvider = FutureProvider<GameSession?>(
+    (ref) async => ref.watch(ludusRepositoryProvider).getActiveSession());

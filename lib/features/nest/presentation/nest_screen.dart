@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/group.dart';
+import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/profile_photo.dart';
-import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/groups_provider.dart';
+import '../../../core/providers/match_state_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
-import '../../wire/presentation/wire_screen.dart';
-import '../../planner/presentation/planner_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
-import 'groups_section.dart';
+import '../../planner/presentation/planner_screen.dart';
+import '../../wire/presentation/wire_screen.dart';
 import 'group_detail_screen.dart';
+import 'groups_section.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
@@ -31,7 +31,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late AnimationController _glowController;
-  
+
   final List<MatchPriority> _priorities = [
     MatchPriority.new_,
     MatchPriority.priority,
@@ -66,8 +66,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
 
   void _updateMatchPriority(Match match, MatchPriority newPriority) {
     // Use global state notifier
-    ref.read(matchStateProvider.notifier).updateMatchPriority(match.id, newPriority);
-    
+    ref
+        .read(matchStateProvider.notifier)
+        .updateMatchPriority(match.id, newPriority);
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${match.matchedUserName} moved to ${newPriority.label}'),
@@ -78,80 +80,77 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VesparaColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const GroupsSection(),
-                    const SizedBox(height: 16),
-                    _buildStats(),
-                    _buildTabBar(),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      child: _buildTabBarView(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
-          ),
-          Column(
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: VesparaColors.background,
+        body: SafeArea(
+          child: Column(
             children: [
-              Text(
-                'THE SANCTUM',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 4,
-                  color: VesparaColors.primary,
-                ),
-              ),
-              Text(
-                'Your connections, organized',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VesparaColors.secondary,
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const GroupsSection(),
+                      const SizedBox(height: 16),
+                      _buildStats(),
+                      _buildTabBar(),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: _buildTabBarView(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          IconButton(
-            onPressed: () => _showSearchDialog(),
-            icon: const Icon(Icons.search, color: VesparaColors.secondary),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
+
+  Widget _buildHeader() => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+            ),
+            const Column(
+              children: [
+                Text(
+                  'THE SANCTUM',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 4,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+                Text(
+                  'Your connections, organized',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              onPressed: _showSearchDialog,
+              icon: const Icon(Icons.search, color: VesparaColors.secondary),
+            ),
+          ],
+        ),
+      );
 
   Widget _buildStats() {
     final matchState = ref.watch(matchStateProvider);
     final totalMatches = matchState.matches.where((m) => !m.isArchived).length;
-    final priorityCount = matchState.getMatchesByPriority(MatchPriority.priority).length;
+    final priorityCount =
+        matchState.getMatchesByPriority(MatchPriority.priority).length;
     final newCount = matchState.getMatchesByPriority(MatchPriority.new_).length;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -163,49 +162,47 @@ class _NestScreenState extends ConsumerState<NestScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('Total', totalMatches.toString(), VesparaColors.primary),
+          _buildStatItem(
+              'Total', totalMatches.toString(), VesparaColors.primary),
           _buildStatDivider(),
           _buildStatItem('New', newCount.toString(), VesparaColors.tagsYellow),
           _buildStatDivider(),
-          _buildStatItem('Priority', priorityCount.toString(), VesparaColors.success),
+          _buildStatItem(
+              'Priority', priorityCount.toString(), VesparaColors.success),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: color,
+  Widget _buildStatItem(String label, String value, Color color) => Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: VesparaColors.secondary,
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: VesparaColors.secondary,
+            ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
 
-  Widget _buildStatDivider() {
-    return Container(
-      width: 1,
-      height: 30,
-      color: VesparaColors.glow.withOpacity(0.2),
-    );
-  }
+  Widget _buildStatDivider() => Container(
+        width: 1,
+        height: 30,
+        color: VesparaColors.glow.withOpacity(0.2),
+      );
 
   Widget _buildTabBar() {
     final groupsState = ref.watch(groupsProvider);
-    
+
     return Container(
       margin: const EdgeInsets.only(top: 16),
       child: TabBar(
@@ -234,7 +231,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
                   if (count > 0) ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: VesparaColors.glow.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -260,7 +258,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 if (groupsState.groupCount > 0) ...[
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: VesparaColors.glow.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
@@ -279,74 +278,73 @@ class _NestScreenState extends ConsumerState<NestScreen>
     );
   }
 
-  Widget _buildTabBarView() {
-    return TabBarView(
-      controller: _tabController,
-      children: [
-        // Priority tabs content
-        ..._priorities.map((priority) {
-          final matches = _getMatchesForPriority(priority);
-          
-          if (matches.isEmpty) {
-            return _buildEmptyColumn(priority);
-          }
-          
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: matches.length,
-            itemBuilder: (context, index) {
-              return _buildMatchCard(matches[index]);
-            },
-          );
-        }),
-        // Circles tab content
-        _buildCirclesTab(),
-      ],
-    );
-  }
+  Widget _buildTabBarView() => TabBarView(
+        controller: _tabController,
+        children: [
+          // Priority tabs content
+          ..._priorities.map((priority) {
+            final matches = _getMatchesForPriority(priority);
+
+            if (matches.isEmpty) {
+              return _buildEmptyColumn(priority);
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: matches.length,
+              itemBuilder: (context, index) => _buildMatchCard(matches[index]),
+            );
+          }),
+          // Circles tab content
+          _buildCirclesTab(),
+        ],
+      );
 
   Widget _buildCirclesTab() {
     final groupsState = ref.watch(groupsProvider);
-    
+
     if (groupsState.isLoading) {
-      return const Center(child: CircularProgressIndicator(color: VesparaColors.glow));
+      return const Center(
+          child: CircularProgressIndicator(color: VesparaColors.glow));
     }
-    
+
     if (groupsState.groups.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.group_outlined, size: 48, color: VesparaColors.secondary),
+            const Icon(Icons.group_outlined,
+                size: 48, color: VesparaColors.secondary),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No circles yet',
               style: TextStyle(fontSize: 16, color: VesparaColors.secondary),
             ),
             const SizedBox(height: 8),
             Text(
               'Create a circle to organize your connections',
-              style: TextStyle(fontSize: 13, color: VesparaColors.secondary.withOpacity(0.7)),
+              style: TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.secondary.withOpacity(0.7)),
             ),
           ],
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: groupsState.groups.length,
-      itemBuilder: (context, index) {
-        return _buildCircleListItem(groupsState.groups[index]);
-      },
+      itemBuilder: (context, index) =>
+          _buildCircleListItem(groupsState.groups[index]),
     );
   }
 
   Widget _buildCircleListItem(VesparaGroup group) {
     // Calculate idle members (those who haven't communicated in 7+ days)
     // For now we'll use a placeholder since we need to track last_message_at per member
-    final idleCount = 0; // TODO: Calculate from message activity
-    
+    const idleCount = 0; // TODO: Calculate from message activity
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -354,8 +352,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
         color: VesparaColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: group.isCreator 
-              ? VesparaColors.glow.withOpacity(0.3) 
+          color: group.isCreator
+              ? VesparaColors.glow.withOpacity(0.3)
               : VesparaColors.border,
         ),
       ),
@@ -375,12 +373,14 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 child: group.avatarUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: Image.network(group.avatarUrl!, fit: BoxFit.cover),
+                        child:
+                            Image.network(group.avatarUrl!, fit: BoxFit.cover),
                       )
-                    : Icon(Icons.group, color: VesparaColors.glow, size: 24),
+                    : const Icon(Icons.group,
+                        color: VesparaColors.glow, size: 24),
               ),
               const SizedBox(width: 12),
-              
+
               // Name and stats
               Expanded(
                 child: Column(
@@ -391,7 +391,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         Expanded(
                           child: Text(
                             group.name,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: VesparaColors.primary,
@@ -400,12 +400,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         ),
                         if (group.isCreator)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: VesparaColors.glow.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
+                            child: const Text(
                               'OWNER',
                               style: TextStyle(
                                 fontSize: 9,
@@ -419,10 +420,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        _buildStatChip('${group.memberCount} members', VesparaColors.glow),
+                        _buildStatChip(
+                            '${group.memberCount} members', VesparaColors.glow),
                         const SizedBox(width: 8),
                         if (idleCount > 0)
-                          _buildStatChip('$idleCount idle', VesparaColors.warning),
+                          _buildStatChip(
+                              '$idleCount idle', VesparaColors.warning),
                       ],
                     ),
                   ],
@@ -430,9 +433,9 @@ class _NestScreenState extends ConsumerState<NestScreen>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Action buttons
           Row(
             children: [
@@ -443,16 +446,17 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           colors: [VesparaColors.glow, VesparaColors.secondary],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.person_add, color: VesparaColors.background, size: 18),
-                          const SizedBox(width: 6),
+                          Icon(Icons.person_add,
+                              color: VesparaColors.background, size: 18),
+                          SizedBox(width: 6),
                           Text(
                             'Invite',
                             style: TextStyle(
@@ -475,13 +479,15 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       decoration: BoxDecoration(
                         color: VesparaColors.error.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+                        border: Border.all(
+                            color: VesparaColors.error.withOpacity(0.3)),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.delete_outline, color: VesparaColors.error, size: 18),
-                          const SizedBox(width: 6),
+                          Icon(Icons.delete_outline,
+                              color: VesparaColors.error, size: 18),
+                          SizedBox(width: 6),
                           Text(
                             'Delete',
                             style: TextStyle(
@@ -500,20 +506,23 @@ class _NestScreenState extends ConsumerState<NestScreen>
                   child: GestureDetector(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => GroupDetailScreen(groupId: group.id)),
+                      MaterialPageRoute(
+                          builder: (_) => GroupDetailScreen(groupId: group.id)),
                     ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: VesparaColors.glow.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+                        border: Border.all(
+                            color: VesparaColors.glow.withOpacity(0.3)),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.visibility, color: VesparaColors.glow, size: 18),
-                          const SizedBox(width: 6),
+                          Icon(Icons.visibility,
+                              color: VesparaColors.glow, size: 18),
+                          SizedBox(width: 6),
                           Text(
                             'View Circle',
                             style: TextStyle(
@@ -535,23 +544,21 @@ class _NestScreenState extends ConsumerState<NestScreen>
     );
   }
 
-  Widget _buildStatChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: color,
+  Widget _buildStatChip(String text, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
         ),
-      ),
-    );
-  }
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      );
 
   void _showInviteWizard(VesparaGroup group) {
     Navigator.push(
@@ -566,18 +573,19 @@ class _NestScreenState extends ConsumerState<NestScreen>
       builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
+        title: const Text(
           'Delete Circle?',
           style: TextStyle(color: VesparaColors.primary),
         ),
         content: Text(
           'Are you sure you want to delete "${group.name}"? This will remove all members and cannot be undone.',
-          style: TextStyle(color: VesparaColors.secondary),
+          style: const TextStyle(color: VesparaColors.secondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary)),
+            child: const Text('Cancel',
+                style: TextStyle(color: VesparaColors.secondary)),
           ),
           TextButton(
             onPressed: () async {
@@ -586,7 +594,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 await ref.read(groupsProvider.notifier).deleteGroup(group.id);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Circle deleted'),
                       backgroundColor: VesparaColors.surface,
                     ),
@@ -595,7 +603,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Failed to delete circle'),
                       backgroundColor: VesparaColors.error,
                     ),
@@ -603,290 +611,301 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 }
               }
             },
-            child: Text('Delete', style: TextStyle(color: VesparaColors.error)),
+            child: const Text('Delete',
+                style: TextStyle(color: VesparaColors.error)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMatchCard(Match match) {
-    return AnimatedBuilder(
-      animation: _glowController,
-      builder: (context, child) {
-        final isHot = match.priority == MatchPriority.priority;
-        
-        return GestureDetector(
-          onTap: () => _showMatchDetails(match),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: VesparaColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isHot 
-                    ? VesparaColors.glow.withOpacity(0.2 + _glowController.value * 0.2)
-                    : VesparaColors.glow.withOpacity(0.1),
-              ),
-              boxShadow: isHot ? [
-                BoxShadow(
-                  color: VesparaColors.glow.withOpacity(0.1 + _glowController.value * 0.1),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+  Widget _buildMatchCard(Match match) => AnimatedBuilder(
+        animation: _glowController,
+        builder: (context, child) {
+          final isHot = match.priority == MatchPriority.priority;
+
+          return GestureDetector(
+            onTap: () => _showMatchDetails(match),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: VesparaColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isHot
+                      ? VesparaColors.glow
+                          .withOpacity(0.2 + _glowController.value * 0.2)
+                      : VesparaColors.glow.withOpacity(0.1),
                 ),
-              ] : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: VesparaColors.glow.withOpacity(0.2),
-                        border: Border.all(
-                          color: match.isSuperMatch 
-                              ? VesparaColors.tagsYellow 
-                              : VesparaColors.glow.withOpacity(0.3),
-                          width: 2,
+                boxShadow: isHot
+                    ? [
+                        BoxShadow(
+                          color: VesparaColors.glow
+                              .withOpacity(0.1 + _glowController.value * 0.1),
+                          blurRadius: 12,
+                          spreadRadius: 2,
                         ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          match.matchedUserName?[0].toUpperCase() ?? '?',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: VesparaColors.primary,
+                      ]
+                    : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // Avatar
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: VesparaColors.glow.withOpacity(0.2),
+                          border: Border.all(
+                            color: match.isSuperMatch
+                                ? VesparaColors.tagsYellow
+                                : VesparaColors.glow.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            match.matchedUserName?[0].toUpperCase() ?? '?',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.primary,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    
-                    // Name and info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                match.matchedUserName ?? 'Unknown',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: VesparaColors.primary,
-                                ),
-                              ),
-                              if (match.matchedUserAge != null) ...[
+                      const SizedBox(width: 12),
+
+                      // Name and info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
                                 Text(
-                                  ', ${match.matchedUserAge}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: VesparaColors.secondary,
-                                  ),
-                                ),
-                              ],
-                              if (match.isSuperMatch) ...[
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.star,
-                                  size: 16,
-                                  color: VesparaColors.tagsYellow,
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              // Compatibility
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, 
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getCompatibilityColor(match.compatibilityScore).withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${match.compatibilityPercent}% match',
-                                  style: TextStyle(
-                                    fontSize: 10,
+                                  match.matchedUserName ?? 'Unknown',
+                                  style: const TextStyle(
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: _getCompatibilityColor(match.compatibilityScore),
+                                    color: VesparaColors.primary,
                                   ),
                                 ),
+                                if (match.matchedUserAge != null) ...[
+                                  Text(
+                                    ', ${match.matchedUserAge}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: VesparaColors.secondary,
+                                    ),
+                                  ),
+                                ],
+                                if (match.isSuperMatch) ...[
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.star,
+                                    size: 16,
+                                    color: VesparaColors.tagsYellow,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                // Compatibility
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getCompatibilityColor(
+                                            match.compatibilityScore)
+                                        .withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '${match.compatibilityPercent}% match',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: _getCompatibilityColor(
+                                          match.compatibilityScore),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Last active
+                                Text(
+                                  match.lastMessage != null
+                                      ? '${match.daysSinceLastMessage}d ago'
+                                      : 'New match!',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: match.isGoingCold
+                                        ? VesparaColors.warning
+                                        : VesparaColors.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Unread badge
+                      if (match.unreadCount > 0)
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: VesparaColors.glow,
+                          ),
+                          child: Center(
+                            child: Text(
+                              match.unreadCount.toString(),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: VesparaColors.background,
                               ),
-                              const SizedBox(width: 8),
-                              // Last active
-                              Text(
-                                match.lastMessage != null 
-                                    ? '${match.daysSinceLastMessage}d ago'
-                                    : 'New match!',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: match.isGoingCold 
-                                      ? VesparaColors.warning 
-                                      : VesparaColors.secondary,
+                            ),
+                          ),
+                        ),
+
+                      // Priority menu
+                      PopupMenuButton<MatchPriority>(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          color: VesparaColors.secondary,
+                        ),
+                        color: VesparaColors.surfaceElevated,
+                        onSelected: (priority) =>
+                            _updateMatchPriority(match, priority),
+                        itemBuilder: (context) => _priorities
+                            .map(
+                              (p) => PopupMenuItem(
+                                value: p,
+                                child: Row(
+                                  children: [
+                                    Text(p.emoji),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Move to ${p.label}',
+                                      style: const TextStyle(
+                                        color: VesparaColors.primary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
+
+                  // Last message preview
+                  if (match.lastMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.background.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.chat_bubble_outline,
+                            size: 14,
+                            color: VesparaColors.secondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              match.lastMessage!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: VesparaColors.secondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    
-                    // Unread badge
-                    if (match.unreadCount > 0)
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: VesparaColors.glow,
-                        ),
-                        child: Center(
-                          child: Text(
-                            match.unreadCount.toString(),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: VesparaColors.background,
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                    // Priority menu
-                    PopupMenuButton<MatchPriority>(
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: VesparaColors.secondary,
-                      ),
-                      color: VesparaColors.surfaceElevated,
-                      onSelected: (priority) => _updateMatchPriority(match, priority),
-                      itemBuilder: (context) => _priorities.map((p) {
-                        return PopupMenuItem(
-                          value: p,
-                          child: Row(
-                            children: [
-                              Text(p.emoji),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Move to ${p.label}',
-                                style: TextStyle(
-                                  color: VesparaColors.primary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
                   ],
-                ),
-                
-                // Last message preview
-                if (match.lastMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.background.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
+
+                  // AI suggestions
+                  if (match.suggestedTopics.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Row(
                       children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
+                        const Icon(
+                          Icons.lightbulb_outline,
                           size: 14,
-                          color: VesparaColors.secondary,
+                          color: VesparaColors.tagsYellow,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            match.lastMessage!,
+                            match.suggestedTopics.first,
                             style: TextStyle(
-                              fontSize: 12,
-                              color: VesparaColors.secondary,
+                              fontSize: 11,
+                              color: VesparaColors.tagsYellow.withOpacity(0.8),
+                              fontStyle: FontStyle.italic,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
+
+                  // Shared interests
+                  if (match.sharedInterests.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: match.sharedInterests
+                          .map(
+                            (interest) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: VesparaColors.glow.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                interest,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: VesparaColors.glow,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ],
-                
-                // AI suggestions
-                if (match.suggestedTopics.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        size: 14,
-                        color: VesparaColors.tagsYellow,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          match.suggestedTopics.first,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: VesparaColors.tagsYellow.withOpacity(0.8),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                
-                // Shared interests
-                if (match.sharedInterests.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: match.sharedInterests.map((interest) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8, 
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: VesparaColors.glow.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          interest,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: VesparaColors.glow,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ],
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
 
   void _showMatchDetails(Match match) {
     showModalBottomSheet(
@@ -896,236 +915,240 @@ class _NestScreenState extends ConsumerState<NestScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: VesparaColors.glow.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Header
+              Row(
                 children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: VesparaColors.glow.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(2),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: VesparaColors.glow.withOpacity(0.2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        match.matchedUserName?[0].toUpperCase() ?? '?',
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  
-                  // Header
-                  Row(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: VesparaColors.glow.withOpacity(0.2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            match.matchedUserName?[0].toUpperCase() ?? '?',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w600,
-                              color: VesparaColors.primary,
-                            ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          match.matchedUserName ?? 'Unknown',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Text(
+                          'Matched ${_formatMatchDate(match.matchedAt)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: VesparaColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              // Quick actions - Row 1
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickAction(
+                      icon: Icons.chat,
+                      label: 'Message',
+                      color: VesparaColors.glow,
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to Wire screen for chat
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const WireScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildQuickAction(
+                      icon: Icons.calendar_today,
+                      label: 'Plan Date',
+                      color: VesparaColors.success,
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to Planner screen
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const PlannerScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildQuickAction(
+                      icon: Icons.games,
+                      label: 'Play TAG',
+                      color: VesparaColors.tagsYellow,
+                      onTap: () {
+                        Navigator.pop(context);
+                        // Navigate to TAG screen
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const TagScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Quick actions - Row 2 (Rank Photos)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickAction(
+                      icon: Icons.photo_library,
+                      label: 'Rank Photos',
+                      color: Colors.amber,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openPhotoRankingForMatch(match);
+                      },
+                    ),
+                  ),
+                  const Expanded(flex: 2, child: SizedBox()),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              // AI Insights
+              _buildSectionTitle('AI Insights'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...match.suggestedDateIdeas.map(
+                      (idea) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
                           children: [
-                            Text(
-                              match.matchedUserName ?? 'Unknown',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: VesparaColors.primary,
-                              ),
-                            ),
-                            Text(
-                              'Matched ${_formatMatchDate(match.matchedAt)}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: VesparaColors.secondary,
+                            const Icon(Icons.lightbulb,
+                                size: 16, color: VesparaColors.tagsYellow),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                idea,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: VesparaColors.primary,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Quick actions - Row 1
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickAction(
-                          icon: Icons.chat,
-                          label: 'Message',
-                          color: VesparaColors.glow,
-                          onTap: () {
-                            Navigator.pop(context);
-                            // Navigate to Wire screen for chat
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const WireScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickAction(
-                          icon: Icons.calendar_today,
-                          label: 'Plan Date',
-                          color: VesparaColors.success,
-                          onTap: () {
-                            Navigator.pop(context);
-                            // Navigate to Planner screen
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const PlannerScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickAction(
-                          icon: Icons.games,
-                          label: 'Play TAG',
-                          color: VesparaColors.tagsYellow,
-                          onTap: () {
-                            Navigator.pop(context);
-                            // Navigate to TAG screen
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const TagScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Quick actions - Row 2 (Rank Photos)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickAction(
-                          icon: Icons.photo_library,
-                          label: 'Rank Photos',
-                          color: Colors.amber,
-                          onTap: () {
-                            Navigator.pop(context);
-                            _openPhotoRankingForMatch(match);
-                          },
-                        ),
-                      ),
-                      const Expanded(flex: 2, child: SizedBox()),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // AI Insights
-                  _buildSectionTitle('AI Insights'),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.background.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...match.suggestedDateIdeas.map((idea) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.lightbulb, size: 16, color: VesparaColors.tagsYellow),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  idea,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: VesparaColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Notes
-                  _buildSectionTitle('Notes'),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.background.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Add personal notes about ${match.matchedUserName}...',
-                        hintStyle: TextStyle(color: VesparaColors.secondary),
-                        border: InputBorder.none,
-                      ),
-                      style: TextStyle(color: VesparaColors.primary),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Danger zone
-                  _buildSectionTitle('Danger Zone'),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => _moveToShredder(match),
-                    icon: Icon(Icons.delete_sweep, color: VesparaColors.error),
-                    label: Text('Move to Shredder', style: TextStyle(color: VesparaColors.error)),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: VesparaColors.error.withOpacity(0.5)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            );
-          },
-        );
-      },
+
+              const SizedBox(height: 24),
+
+              // Notes
+              _buildSectionTitle('Notes'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText:
+                        'Add personal notes about ${match.matchedUserName}...',
+                    hintStyle: const TextStyle(color: VesparaColors.secondary),
+                    border: InputBorder.none,
+                  ),
+                  style: const TextStyle(color: VesparaColors.primary),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Danger zone
+              _buildSectionTitle('Danger Zone'),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => _moveToShredder(match),
+                icon:
+                    const Icon(Icons.delete_sweep, color: VesparaColors.error),
+                label: const Text('Move to Shredder',
+                    style: TextStyle(color: VesparaColors.error)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: VesparaColors.error.withOpacity(0.5)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1134,80 +1157,75 @@ class _NestScreenState extends ConsumerState<NestScreen>
     required String label,
     required Color color,
     required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 1,
-        color: VesparaColors.secondary,
-      ),
-    );
-  }
-
-  Widget _buildEmptyColumn(MatchPriority priority) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              priority.emoji,
-              style: const TextStyle(fontSize: 48),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No ${priority.label} matches',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _getEmptyMessage(priority),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: VesparaColors.secondary,
-              ),
-            ),
-          ],
+  Widget _buildSectionTitle(String title) => Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1,
+          color: VesparaColors.secondary,
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _buildEmptyColumn(MatchPriority priority) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                priority.emoji,
+                style: const TextStyle(fontSize: 48),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No ${priority.label} matches',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _getEmptyMessage(priority),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   String _getEmptyMessage(MatchPriority priority) {
     switch (priority) {
@@ -1237,29 +1255,45 @@ class _NestScreenState extends ConsumerState<NestScreen>
       context: context,
       backgroundColor: VesparaColors.surface,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: searchController,
               autofocus: true,
-              style: TextStyle(color: VesparaColors.primary),
+              style: const TextStyle(color: VesparaColors.primary),
               decoration: InputDecoration(
                 hintText: 'Search your roster...',
-                hintStyle: TextStyle(color: VesparaColors.secondary),
-                prefixIcon: Icon(Icons.search, color: VesparaColors.glow),
+                hintStyle: const TextStyle(color: VesparaColors.secondary),
+                prefixIcon: const Icon(Icons.search, color: VesparaColors.glow),
                 filled: true,
                 fillColor: VesparaColors.background,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none),
               ),
               onSubmitted: (query) {
                 Navigator.pop(context);
                 final matchState = ref.read(matchStateProvider);
-                final results = matchState.matches.where((m) => m.matchedUserName?.toLowerCase().contains(query.toLowerCase()) ?? false).toList();
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found ${results.length} matches for "$query"'), backgroundColor: VesparaColors.glow));
+                final results = matchState.matches
+                    .where((m) =>
+                        m.matchedUserName
+                            ?.toLowerCase()
+                            .contains(query.toLowerCase()) ??
+                        false)
+                    .toList();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content:
+                        Text('Found ${results.length} matches for "$query"'),
+                    backgroundColor: VesparaColors.glow));
               },
             ),
             const SizedBox(height: 24),
@@ -1273,26 +1307,57 @@ class _NestScreenState extends ConsumerState<NestScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: VesparaColors.secondary, borderRadius: BorderRadius.circular(2)))),
+            Center(
+                child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: VesparaColors.secondary,
+                        borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            Text('Plan a Date with ${match.matchedUserName}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            Text('Plan a Date with ${match.matchedUserName}',
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary)),
             const SizedBox(height: 20),
-            ...['Drinks Tonight', 'Dinner This Week', 'Weekend Adventure', 'Something Special'].map((option) => ListTile(
-              leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: VesparaColors.success.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(Icons.calendar_today, color: VesparaColors.success, size: 20)),
-              title: Text(option, style: TextStyle(color: VesparaColors.primary, fontWeight: FontWeight.w500)),
-              trailing: Icon(Icons.chevron_right, color: VesparaColors.secondary),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Scheduling "$option" with ${match.matchedUserName}...'), backgroundColor: VesparaColors.success));
-              },
-            )),
+            ...[
+              'Drinks Tonight',
+              'Dinner This Week',
+              'Weekend Adventure',
+              'Something Special'
+            ].map(
+              (option) => ListTile(
+                leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: VesparaColors.success.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.calendar_today,
+                        color: VesparaColors.success, size: 20)),
+                title: Text(option,
+                    style: const TextStyle(
+                        color: VesparaColors.primary,
+                        fontWeight: FontWeight.w500)),
+                trailing: const Icon(Icons.chevron_right,
+                    color: VesparaColors.secondary),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                          'Scheduling "$option" with ${match.matchedUserName}...'),
+                      backgroundColor: VesparaColors.success));
+                },
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -1304,27 +1369,62 @@ class _NestScreenState extends ConsumerState<NestScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: VesparaColors.secondary, borderRadius: BorderRadius.circular(2)))),
+            Center(
+                child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: VesparaColors.secondary,
+                        borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            Text('Play TAG with ${match.matchedUserName} 🎮', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: VesparaColors.primary)),
+            Text('Play TAG with ${match.matchedUserName} 🎮',
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary)),
             const SizedBox(height: 12),
-            Text('Choose a game to play together:', style: TextStyle(color: VesparaColors.secondary)),
+            const Text('Choose a game to play together:',
+                style: TextStyle(color: VesparaColors.secondary)),
             const SizedBox(height: 16),
-            ...['🧊 Icebreakers', '🃏 Truth or Dare', '🔥 Spicy Edition', '💜 Fantasy Exploration'].map((game) => ListTile(
-              title: Text(game, style: TextStyle(color: VesparaColors.primary, fontWeight: FontWeight.w500)),
-              trailing: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: VesparaColors.tagsYellow.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Text('Play', style: TextStyle(color: VesparaColors.tagsYellow, fontWeight: FontWeight.w600, fontSize: 12))),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Starting $game with ${match.matchedUserName}...'), backgroundColor: VesparaColors.tagsYellow));
-              },
-            )),
+            ...[
+              '🧊 Icebreakers',
+              '🃏 Truth or Dare',
+              '🔥 Spicy Edition',
+              '💜 Fantasy Exploration'
+            ].map(
+              (game) => ListTile(
+                title: Text(game,
+                    style: const TextStyle(
+                        color: VesparaColors.primary,
+                        fontWeight: FontWeight.w500)),
+                trailing: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                        color: VesparaColors.tagsYellow.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: const Text('Play',
+                        style: TextStyle(
+                            color: VesparaColors.tagsYellow,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12))),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                          'Starting $game with ${match.matchedUserName}...'),
+                      backgroundColor: VesparaColors.tagsYellow));
+                },
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -1339,18 +1439,34 @@ class _NestScreenState extends ConsumerState<NestScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(children: [Icon(Icons.delete_sweep, color: VesparaColors.error), const SizedBox(width: 8), Text('Move to Shredder?', style: TextStyle(color: VesparaColors.primary))]),
-        content: Text('${match.matchedUserName} will be flagged for review in The Shredder. You can always bring them back.', style: TextStyle(color: VesparaColors.secondary)),
+        title: const Row(children: [
+          Icon(Icons.delete_sweep, color: VesparaColors.error),
+          SizedBox(width: 8),
+          Text('Move to Shredder?',
+              style: TextStyle(color: VesparaColors.primary))
+        ]),
+        content: Text(
+            '${match.matchedUserName} will be flagged for review in The Shredder. You can always bring them back.',
+            style: const TextStyle(color: VesparaColors.secondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: VesparaColors.secondary))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel',
+                  style: TextStyle(color: VesparaColors.secondary))),
           ElevatedButton(
             onPressed: () {
-              setState(() { _updateMatchPriority(match, MatchPriority.onWayOut); });
+              setState(() {
+                _updateMatchPriority(match, MatchPriority.onWayOut);
+              });
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${match.matchedUserName} moved to On The Way Out'), backgroundColor: VesparaColors.error));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content:
+                      Text('${match.matchedUserName} moved to On The Way Out'),
+                  backgroundColor: VesparaColors.error));
             },
-            style: ElevatedButton.styleFrom(backgroundColor: VesparaColors.error),
-            child: Text('Move', style: TextStyle(color: Colors.white)),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: VesparaColors.error),
+            child: const Text('Move', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1370,27 +1486,29 @@ class _NestScreenState extends ConsumerState<NestScreen>
     // Convert match photos to ProfilePhoto objects for ranking
     // Use avatar photo if available
     final photos = <ProfilePhoto>[];
-    
+
     if (match.matchedUserAvatar != null) {
-      photos.add(ProfilePhoto.fromUrl(
-        id: '${match.matchedUserId}_photo_0',
-        userId: match.matchedUserId,
-        photoUrl: match.matchedUserAvatar!,
-        position: 1,
-        isPrimary: true,
-      ));
+      photos.add(
+        ProfilePhoto.fromUrl(
+          id: '${match.matchedUserId}_photo_0',
+          userId: match.matchedUserId,
+          photoUrl: match.matchedUserAvatar!,
+          position: 1,
+          isPrimary: true,
+        ),
+      );
     }
-    
+
     if (photos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('This user has no photos to rank'),
+        const SnackBar(
+          content: Text('This user has no photos to rank'),
           backgroundColor: VesparaColors.surface,
         ),
       );
       return;
     }
-    
+
     PhotoRankingSheet.show(
       context,
       userId: match.matchedUserId,

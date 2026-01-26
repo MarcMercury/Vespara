@@ -1,7 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'dart:math';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DOWN TO CLOWN - Game Provider
@@ -13,13 +14,6 @@ import 'dart:math';
 // ═══════════════════════════════════════════════════════════════════════════
 
 class DtcPrompt {
-  final String id;
-  final String prompt;
-  final String category;
-  final int difficulty;
-  final String heatLevel;
-  final List<String> tags;
-  
   const DtcPrompt({
     required this.id,
     required this.prompt,
@@ -28,32 +22,24 @@ class DtcPrompt {
     required this.heatLevel,
     required this.tags,
   });
-  
-  factory DtcPrompt.fromJson(Map<String, dynamic> json) {
-    return DtcPrompt(
-      id: json['id'] as String,
-      prompt: json['prompt'] as String,
-      category: json['category'] as String? ?? 'naughty_list',
-      difficulty: json['difficulty'] as int? ?? 2,
-      heatLevel: json['heat_level'] as String? ?? 'PG-13',
-      tags: List<String>.from(json['tags'] ?? []),
-    );
-  }
+
+  factory DtcPrompt.fromJson(Map<String, dynamic> json) => DtcPrompt(
+        id: json['id'] as String,
+        prompt: json['prompt'] as String,
+        category: json['category'] as String? ?? 'naughty_list',
+        difficulty: json['difficulty'] as int? ?? 2,
+        heatLevel: json['heat_level'] as String? ?? 'PG-13',
+        tags: List<String>.from(json['tags'] ?? []),
+      );
+  final String id;
+  final String prompt;
+  final String category;
+  final int difficulty;
+  final String heatLevel;
+  final List<String> tags;
 }
 
 class DtcGameSession {
-  final String id;
-  final String? deckCategory;
-  final String heatFilter;
-  final int roundDuration;
-  final DateTime startedAt;
-  final DateTime? endedAt;
-  final List<String> promptsShown;
-  final List<String> correctPrompts;
-  final List<String> passedPrompts;
-  final int totalCorrect;
-  final int totalPassed;
-  
   const DtcGameSession({
     required this.id,
     this.deckCategory,
@@ -67,18 +53,20 @@ class DtcGameSession {
     required this.totalCorrect,
     required this.totalPassed,
   });
+  final String id;
+  final String? deckCategory;
+  final String heatFilter;
+  final int roundDuration;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+  final List<String> promptsShown;
+  final List<String> correctPrompts;
+  final List<String> passedPrompts;
+  final int totalCorrect;
+  final int totalPassed;
 }
 
 class DtcUserStats {
-  final int totalGamesPlayed;
-  final int totalCorrect;
-  final int totalPassed;
-  final int highScore;
-  final double averageScore;
-  final DateTime? lastPlayedAt;
-  final int streakDays;
-  final int longestStreak;
-  
   const DtcUserStats({
     this.totalGamesPlayed = 0,
     this.totalCorrect = 0,
@@ -89,21 +77,27 @@ class DtcUserStats {
     this.streakDays = 0,
     this.longestStreak = 0,
   });
-  
-  factory DtcUserStats.fromJson(Map<String, dynamic> json) {
-    return DtcUserStats(
-      totalGamesPlayed: json['total_games_played'] as int? ?? 0,
-      totalCorrect: json['total_correct'] as int? ?? 0,
-      totalPassed: json['total_passed'] as int? ?? 0,
-      highScore: json['high_score'] as int? ?? 0,
-      averageScore: (json['average_score'] as num?)?.toDouble() ?? 0,
-      lastPlayedAt: json['last_played_at'] != null 
-          ? DateTime.parse(json['last_played_at']) 
-          : null,
-      streakDays: json['streak_days'] as int? ?? 0,
-      longestStreak: json['longest_streak'] as int? ?? 0,
-    );
-  }
+
+  factory DtcUserStats.fromJson(Map<String, dynamic> json) => DtcUserStats(
+        totalGamesPlayed: json['total_games_played'] as int? ?? 0,
+        totalCorrect: json['total_correct'] as int? ?? 0,
+        totalPassed: json['total_passed'] as int? ?? 0,
+        highScore: json['high_score'] as int? ?? 0,
+        averageScore: (json['average_score'] as num?)?.toDouble() ?? 0,
+        lastPlayedAt: json['last_played_at'] != null
+            ? DateTime.parse(json['last_played_at'])
+            : null,
+        streakDays: json['streak_days'] as int? ?? 0,
+        longestStreak: json['longest_streak'] as int? ?? 0,
+      );
+  final int totalGamesPlayed;
+  final int totalCorrect;
+  final int totalPassed;
+  final int highScore;
+  final double averageScore;
+  final DateTime? lastPlayedAt;
+  final int streakDays;
+  final int longestStreak;
 }
 
 /// Heat filter options
@@ -112,11 +106,11 @@ enum HeatFilter {
   mild('mild', 'Mild 🌸', 'PG and PG-13 only'),
   spicy('spicy', 'Spicy 🌶️', 'R and X rated'),
   xxx('xxx', 'XXX 🔥', 'Maximum heat');
-  
+
   final String value;
   final String label;
   final String description;
-  
+
   const HeatFilter(this.value, this.label, this.description);
 }
 
@@ -125,18 +119,6 @@ enum HeatFilter {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class DtcGameState {
-  final List<DtcPrompt> allPrompts;
-  final List<DtcPrompt> shuffledDeck;
-  final int currentIndex;
-  final List<DtcPrompt> correctPrompts;
-  final List<DtcPrompt> passedPrompts;
-  final DtcUserStats? userStats;
-  final String? currentSessionId;
-  final HeatFilter heatFilter;
-  final bool isLoading;
-  final String? error;
-  final bool isDemoMode;
-  
   const DtcGameState({
     this.allPrompts = const [],
     this.shuffledDeck = const [],
@@ -150,14 +132,25 @@ class DtcGameState {
     this.error,
     this.isDemoMode = false,
   });
-  
-  DtcPrompt? get currentPrompt => 
+  final List<DtcPrompt> allPrompts;
+  final List<DtcPrompt> shuffledDeck;
+  final int currentIndex;
+  final List<DtcPrompt> correctPrompts;
+  final List<DtcPrompt> passedPrompts;
+  final DtcUserStats? userStats;
+  final String? currentSessionId;
+  final HeatFilter heatFilter;
+  final bool isLoading;
+  final String? error;
+  final bool isDemoMode;
+
+  DtcPrompt? get currentPrompt =>
       currentIndex < shuffledDeck.length ? shuffledDeck[currentIndex] : null;
-  
+
   bool get hasMorePrompts => currentIndex < shuffledDeck.length;
-  
+
   int get totalShown => correctPrompts.length + passedPrompts.length;
-  
+
   DtcGameState copyWith({
     List<DtcPrompt>? allPrompts,
     List<DtcPrompt>? shuffledDeck,
@@ -170,21 +163,20 @@ class DtcGameState {
     bool? isLoading,
     String? error,
     bool? isDemoMode,
-  }) {
-    return DtcGameState(
-      allPrompts: allPrompts ?? this.allPrompts,
-      shuffledDeck: shuffledDeck ?? this.shuffledDeck,
-      currentIndex: currentIndex ?? this.currentIndex,
-      correctPrompts: correctPrompts ?? this.correctPrompts,
-      passedPrompts: passedPrompts ?? this.passedPrompts,
-      userStats: userStats ?? this.userStats,
-      currentSessionId: currentSessionId ?? this.currentSessionId,
-      heatFilter: heatFilter ?? this.heatFilter,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-      isDemoMode: isDemoMode ?? this.isDemoMode,
-    );
-  }
+  }) =>
+      DtcGameState(
+        allPrompts: allPrompts ?? this.allPrompts,
+        shuffledDeck: shuffledDeck ?? this.shuffledDeck,
+        currentIndex: currentIndex ?? this.currentIndex,
+        correctPrompts: correctPrompts ?? this.correctPrompts,
+        passedPrompts: passedPrompts ?? this.passedPrompts,
+        userStats: userStats ?? this.userStats,
+        currentSessionId: currentSessionId ?? this.currentSessionId,
+        heatFilter: heatFilter ?? this.heatFilter,
+        isLoading: isLoading ?? this.isLoading,
+        error: error,
+        isDemoMode: isDemoMode ?? this.isDemoMode,
+      );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -195,14 +187,14 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
   DtcGameNotifier() : super(const DtcGameState()) {
     _initialize();
   }
-  
+
   final _supabase = Supabase.instance.client;
   final _random = Random();
-  
+
   /// Initialize - load prompts and user stats
   Future<void> _initialize() async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       // Add timeout to prevent infinite loading
       await Future.any([
@@ -222,67 +214,70 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       );
     }
   }
-  
+
   /// Load prompts and user stats from database
   Future<void> _loadPromptsAndStats() async {
     await _loadPrompts();
     await _loadUserStats();
   }
-  
+
   /// Load prompts from database
   Future<void> _loadPrompts() async {
-    final response = await _supabase
-        .from('dtc_prompts')
-        .select()
-        .eq('is_active', true);
-    
-    final prompts = (response as List)
-        .map((json) => DtcPrompt.fromJson(json))
-        .toList();
-    
+    final response =
+        await _supabase.from('dtc_prompts').select().eq('is_active', true);
+
+    final prompts =
+        (response as List).map((json) => DtcPrompt.fromJson(json)).toList();
+
     state = state.copyWith(allPrompts: prompts);
   }
-  
+
   /// Load demo prompts (fallback)
   void _loadDemoPrompts() {
-    final prompts = _demoPrompts.asMap().entries.map((entry) => DtcPrompt(
-      id: 'demo-${entry.key}',
-      prompt: entry.value['prompt'] as String,
-      category: 'naughty_list',
-      difficulty: entry.value['difficulty'] as int,
-      heatLevel: entry.value['heat'] as String,
-      tags: [],
-    )).toList();
-    
+    final prompts = _demoPrompts
+        .asMap()
+        .entries
+        .map(
+          (entry) => DtcPrompt(
+            id: 'demo-${entry.key}',
+            prompt: entry.value['prompt'] as String,
+            category: 'naughty_list',
+            difficulty: entry.value['difficulty'] as int,
+            heatLevel: entry.value['heat'] as String,
+            tags: [],
+          ),
+        )
+        .toList();
+
     state = state.copyWith(allPrompts: prompts);
   }
-  
+
   /// Load user stats from database
   Future<void> _loadUserStats() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
-    
+
     final response = await _supabase
         .from('dtc_user_stats')
         .select()
         .eq('user_id', userId)
         .maybeSingle();
-    
+
     if (response != null) {
       state = state.copyWith(userStats: DtcUserStats.fromJson(response));
     }
   }
-  
+
   /// Set heat filter and reshuffle
   void setHeatFilter(HeatFilter filter) {
     state = state.copyWith(heatFilter: filter);
   }
-  
+
   /// Start a new game - shuffle deck and create session
   Future<void> startNewGame() async {
     // Filter prompts by heat level
     var filteredPrompts = state.allPrompts;
-    
+
     switch (state.heatFilter) {
       case HeatFilter.mild:
         filteredPrompts = filteredPrompts
@@ -295,15 +290,14 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
             .toList();
         break;
       case HeatFilter.xxx:
-        filteredPrompts = filteredPrompts
-            .where((p) => p.heatLevel == 'XXX')
-            .toList();
+        filteredPrompts =
+            filteredPrompts.where((p) => p.heatLevel == 'XXX').toList();
         break;
       case HeatFilter.all:
         // Keep all
         break;
     }
-    
+
     // Shuffle using Fisher-Yates algorithm for true randomness
     final shuffled = List<DtcPrompt>.from(filteredPrompts);
     for (int i = shuffled.length - 1; i > 0; i--) {
@@ -312,7 +306,7 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       shuffled[i] = shuffled[j];
       shuffled[j] = temp;
     }
-    
+
     // Create session in database
     String? sessionId;
     if (!state.isDemoMode) {
@@ -335,7 +329,7 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
         // Continue without session tracking
       }
     }
-    
+
     state = state.copyWith(
       shuffledDeck: shuffled,
       currentIndex: 0,
@@ -344,41 +338,41 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       currentSessionId: sessionId,
     );
   }
-  
+
   /// Mark current prompt as correct
   void markCorrect() {
     final current = state.currentPrompt;
     if (current == null) return;
-    
+
     // Update prompt stats in database
     _updatePromptStats(current.id, true);
-    
+
     state = state.copyWith(
       correctPrompts: [...state.correctPrompts, current],
       currentIndex: state.currentIndex + 1,
     );
-    
+
     // Reshuffle if we run out
     _checkReshuffle();
   }
-  
+
   /// Mark current prompt as passed
   void markPassed() {
     final current = state.currentPrompt;
     if (current == null) return;
-    
+
     // Update prompt stats in database
     _updatePromptStats(current.id, false);
-    
+
     state = state.copyWith(
       passedPrompts: [...state.passedPrompts, current],
       currentIndex: state.currentIndex + 1,
     );
-    
+
     // Reshuffle if we run out
     _checkReshuffle();
   }
-  
+
   /// Check if we need to reshuffle
   void _checkReshuffle() {
     if (state.currentIndex >= state.shuffledDeck.length) {
@@ -396,26 +390,29 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       );
     }
   }
-  
+
   /// Update prompt stats in database
   Future<void> _updatePromptStats(String promptId, bool wasCorrect) async {
     if (state.isDemoMode || promptId.startsWith('demo-')) return;
-    
+
     try {
-      await _supabase.rpc('update_prompt_stats', params: {
-        'p_prompt_id': promptId,
-        'p_was_correct': wasCorrect,
-      });
+      await _supabase.rpc(
+        'update_prompt_stats',
+        params: {
+          'p_prompt_id': promptId,
+          'p_was_correct': wasCorrect,
+        },
+      );
     } catch (e) {
       // Silent fail for stats
     }
   }
-  
+
   /// End the current game and save results
   Future<void> endGame() async {
     final correctCount = state.correctPrompts.length;
     final passedCount = state.passedPrompts.length;
-    
+
     if (state.isDemoMode) {
       // Just update local state for demo mode
       final newHighScore = state.userStats?.highScore ?? 0;
@@ -430,49 +427,48 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       );
       return;
     }
-    
+
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
-      
+
       // Update session
       if (state.currentSessionId != null) {
-        await _supabase
-            .from('dtc_game_sessions')
-            .update({
-              'ended_at': DateTime.now().toIso8601String(),
-              'correct_prompts': state.correctPrompts.map((p) => p.id).toList(),
-              'passed_prompts': state.passedPrompts.map((p) => p.id).toList(),
-              'total_correct': correctCount,
-              'total_passed': passedCount,
-            })
-            .eq('id', state.currentSessionId!);
+        await _supabase.from('dtc_game_sessions').update({
+          'ended_at': DateTime.now().toIso8601String(),
+          'correct_prompts': state.correctPrompts.map((p) => p.id).toList(),
+          'passed_prompts': state.passedPrompts.map((p) => p.id).toList(),
+          'total_correct': correctCount,
+          'total_passed': passedCount,
+        }).eq('id', state.currentSessionId!);
       }
-      
+
       // Update user stats
-      await _supabase.rpc('update_user_game_stats', params: {
-        'p_user_id': userId,
-        'p_correct': correctCount,
-        'p_passed': passedCount,
-      });
-      
+      await _supabase.rpc(
+        'update_user_game_stats',
+        params: {
+          'p_user_id': userId,
+          'p_correct': correctCount,
+          'p_passed': passedCount,
+        },
+      );
+
       // Reload stats
       await _loadUserStats();
-      
     } catch (e) {
       // Silent fail
     }
   }
-  
+
   /// Get personalized result message
   String getResultMessage() {
     final count = state.correctPrompts.length;
     final highScore = state.userStats?.highScore ?? 0;
-    
+
     if (count > highScore && highScore > 0) {
       return '🎉 NEW HIGH SCORE! You beat $highScore!';
     }
-    
+
     if (count >= 20) return 'Absolute legend. You know your stuff. 🔥';
     if (count >= 15) return 'Impressive! You\'re fluent in filth. 😈';
     if (count >= 10) return 'Solid performance. Getting warmed up! 🌶️';
@@ -480,22 +476,20 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
     if (count >= 1) return 'Baby steps into the naughty list. 🌙';
     return 'Maybe try the Mild filter first? 😅';
   }
-  
+
   /// Reset for a new game
   void reset() {
     state = state.copyWith(
       currentIndex: 0,
       correctPrompts: [],
       passedPrompts: [],
-      currentSessionId: null,
     );
   }
 }
 
 // Provider
-final dtcGameProvider = StateNotifierProvider<DtcGameNotifier, DtcGameState>((ref) {
-  return DtcGameNotifier();
-});
+final dtcGameProvider = StateNotifierProvider<DtcGameNotifier, DtcGameState>(
+    (ref) => DtcGameNotifier());
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DOWN TO CLOWN PROMPTS

@@ -11,6 +11,28 @@ import '../utils/haptic_patterns.dart';
 /// and actions across all TAG games.
 
 class TagGameCard extends StatefulWidget {
+  const TagGameCard({
+    super.key,
+    required this.content,
+    this.title,
+    this.subtitle,
+    required this.backgroundColor,
+    this.textColor,
+    this.accentColor,
+    this.icon,
+    this.flipOnTap = false,
+    this.onTap,
+    this.onFlipComplete,
+    this.startFaceDown = false,
+    this.contentRating,
+    this.playerName,
+    this.playerColor,
+    this.borderRadius = 24,
+    this.elevation = 8,
+    this.padding = const EdgeInsets.all(24),
+    this.isLoading = false,
+  });
+
   /// Main content/prompt text
   final String content;
 
@@ -65,28 +87,6 @@ class TagGameCard extends StatefulWidget {
   /// Whether to show shimmer loading effect
   final bool isLoading;
 
-  const TagGameCard({
-    super.key,
-    required this.content,
-    this.title,
-    this.subtitle,
-    required this.backgroundColor,
-    this.textColor,
-    this.accentColor,
-    this.icon,
-    this.flipOnTap = false,
-    this.onTap,
-    this.onFlipComplete,
-    this.startFaceDown = false,
-    this.contentRating,
-    this.playerName,
-    this.playerColor,
-    this.borderRadius = 24,
-    this.elevation = 8,
-    this.padding = const EdgeInsets.all(24),
-    this.isLoading = false,
-  });
-
   @override
   State<TagGameCard> createState() => _TagGameCardState();
 }
@@ -110,10 +110,12 @@ class _TagGameCardState extends State<TagGameCard>
     _flipAnimation = Tween<double>(
       begin: 0,
       end: 1,
-    ).animate(CurvedAnimation(
-      parent: _flipController,
-      curve: Curves.easeInOutBack,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _flipController,
+        curve: Curves.easeInOutBack,
+      ),
+    );
 
     if (widget.startFaceDown) {
       _flipController.value = 0;
@@ -174,15 +176,92 @@ class _TagGameCardState extends State<TagGameCard>
     );
   }
 
-  Widget _buildCardFront() {
-    return Transform(
-      alignment: Alignment.center,
-      transform: Matrix4.identity()..rotateY(math.pi),
-      child: GestureDetector(
+  Widget _buildCardFront() => Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()..rotateY(math.pi),
+        child: GestureDetector(
+          onTap: _handleTap,
+          child: Container(
+            decoration: BoxDecoration(
+              color: widget.backgroundColor,
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.backgroundColor.withOpacity(0.3),
+                  blurRadius: widget.elevation * 2,
+                  offset: Offset(0, widget.elevation),
+                ),
+              ],
+            ),
+            padding: widget.padding,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title row with optional rating badge
+                if (widget.title != null || widget.contentRating != null)
+                  _buildTitleRow(),
+
+                // Icon
+                if (widget.icon != null) ...[
+                  const SizedBox(height: 16),
+                  Icon(
+                    widget.icon,
+                    size: 48,
+                    color: widget.accentColor ??
+                        _effectiveTextColor.withOpacity(0.7),
+                  ),
+                ],
+
+                // Main content
+                const Spacer(),
+                Text(
+                  widget.content,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _effectiveTextColor,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+                const Spacer(),
+
+                // Subtitle
+                if (widget.subtitle != null)
+                  Text(
+                    widget.subtitle!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _effectiveTextColor.withOpacity(0.7),
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+
+                // Player attribution
+                if (widget.playerName != null) ...[
+                  const SizedBox(height: 12),
+                  _buildPlayerChip(),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _buildCardBack() => GestureDetector(
         onTap: _handleTap,
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            color: widget.backgroundColor,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                widget.backgroundColor.withOpacity(0.8),
+                widget.backgroundColor,
+                widget.backgroundColor.withOpacity(0.9),
+              ],
+            ),
             borderRadius: BorderRadius.circular(widget.borderRadius),
             boxShadow: [
               BoxShadow(
@@ -192,210 +271,123 @@ class _TagGameCardState extends State<TagGameCard>
               ),
             ],
           ),
-          padding: widget.padding,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title row with optional rating badge
-              if (widget.title != null || widget.contentRating != null)
-                _buildTitleRow(),
-
-              // Icon
-              if (widget.icon != null) ...[
-                const SizedBox(height: 16),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Icon(
-                  widget.icon,
-                  size: 48,
-                  color: widget.accentColor ?? _effectiveTextColor.withOpacity(0.7),
+                  Icons.touch_app_rounded,
+                  size: 64,
+                  color: _effectiveTextColor.withOpacity(0.5),
                 ),
-              ],
-
-              // Main content
-              const Spacer(),
-              Text(
-                widget.content,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _effectiveTextColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-              const Spacer(),
-
-              // Subtitle
-              if (widget.subtitle != null)
+                const SizedBox(height: 16),
                 Text(
-                  widget.subtitle!,
-                  textAlign: TextAlign.center,
+                  'Tap to reveal',
                   style: TextStyle(
-                    color: _effectiveTextColor.withOpacity(0.7),
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
+                    color: _effectiveTextColor.withOpacity(0.5),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-
-              // Player attribution
-              if (widget.playerName != null) ...[
-                const SizedBox(height: 12),
-                _buildPlayerChip(),
               ],
-            ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildCardBack() {
-    return GestureDetector(
-      onTap: _handleTap,
-      child: Container(
+  Widget _buildTitleRow() => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (widget.title != null)
+            Expanded(
+              child: Text(
+                widget.title!.toUpperCase(),
+                style: TextStyle(
+                  color: _effectiveTextColor.withOpacity(0.7),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+          if (widget.contentRating != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: widget.contentRating!.color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: widget.contentRating!.color.withOpacity(0.5),
+                ),
+              ),
+              child: Text(
+                widget.contentRating!.displayName,
+                style: TextStyle(
+                  color: widget.contentRating!.color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
+      );
+
+  Widget _buildPlayerChip() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              widget.backgroundColor.withOpacity(0.8),
-              widget.backgroundColor,
-              widget.backgroundColor.withOpacity(0.9),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-          boxShadow: [
-            BoxShadow(
-              color: widget.backgroundColor.withOpacity(0.3),
-              blurRadius: widget.elevation * 2,
-              offset: Offset(0, widget.elevation),
+          color: (widget.playerColor ?? Colors.white).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: widget.playerColor ?? _effectiveTextColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              widget.playerName!,
+              style: TextStyle(
+                color: _effectiveTextColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.touch_app_rounded,
-                size: 64,
-                color: _effectiveTextColor.withOpacity(0.5),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Tap to reveal',
-                style: TextStyle(
-                  color: _effectiveTextColor.withOpacity(0.5),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+      );
+
+  Widget _buildLoadingCard() => Container(
+        decoration: BoxDecoration(
+          color: widget.backgroundColor.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(widget.borderRadius),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTitleRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        if (widget.title != null)
-          Expanded(
-            child: Text(
-              widget.title!.toUpperCase(),
-              style: TextStyle(
-                color: _effectiveTextColor.withOpacity(0.7),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
-              ),
-            ),
-          ),
-        if (widget.contentRating != null)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: widget.contentRating!.color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: widget.contentRating!.color.withOpacity(0.5),
-              ),
-            ),
-            child: Text(
-              widget.contentRating!.displayName,
-              style: TextStyle(
-                color: widget.contentRating!.color,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildPlayerChip() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: (widget.playerColor ?? Colors.white).withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: widget.playerColor ?? _effectiveTextColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            widget.playerName!,
-            style: TextStyle(
-              color: _effectiveTextColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: widget.backgroundColor.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-      ),
-      padding: widget.padding,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ShimmerBox(width: 100, height: 16),
-          const SizedBox(height: 24),
-          _ShimmerBox(width: double.infinity, height: 24),
-          const SizedBox(height: 12),
-          _ShimmerBox(width: 200, height: 24),
-          const SizedBox(height: 12),
-          _ShimmerBox(width: 150, height: 24),
-        ],
-      ),
-    );
-  }
+        padding: widget.padding,
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ShimmerBox(width: 100, height: 16),
+            SizedBox(height: 24),
+            _ShimmerBox(width: double.infinity, height: 24),
+            SizedBox(height: 12),
+            _ShimmerBox(width: 200, height: 24),
+            SizedBox(height: 12),
+            _ShimmerBox(width: 150, height: 24),
+          ],
+        ),
+      );
 }
 
 /// Shimmer loading box
 class _ShimmerBox extends StatefulWidget {
+  const _ShimmerBox({required this.width, required this.height});
   final double width;
   final double height;
-
-  const _ShimmerBox({required this.width, required this.height});
 
   @override
   State<_ShimmerBox> createState() => _ShimmerBoxState();
@@ -421,11 +413,9 @@ class _ShimmerBoxState extends State<_ShimmerBox>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Container(
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
@@ -440,8 +430,6 @@ class _ShimmerBoxState extends State<_ShimmerBox>
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
 }

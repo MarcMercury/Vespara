@@ -19,11 +19,6 @@ import '../services/match_insights_service.dart';
 
 /// Shows conversation starters as tappable chips above the message input
 class StarterChips extends ConsumerStatefulWidget {
-  final String matchId;
-  final Function(String text) onSend;
-  final Function(String text) onEdit;
-  final bool isFirstMessage;
-
   const StarterChips({
     super.key,
     required this.matchId,
@@ -31,6 +26,10 @@ class StarterChips extends ConsumerStatefulWidget {
     required this.onEdit,
     this.isFirstMessage = true,
   });
+  final String matchId;
+  final Function(String text) onSend;
+  final Function(String text) onEdit;
+  final bool isFirstMessage;
 
   @override
   ConsumerState<StarterChips> createState() => _StarterChipsState();
@@ -114,7 +113,10 @@ class _StarterChipsState extends ConsumerState<StarterChips>
                   'Tap to send',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.5),
                   ),
                 ),
                 const Spacer(),
@@ -123,7 +125,10 @@ class _StarterChipsState extends ConsumerState<StarterChips>
                   child: Icon(
                     Icons.close,
                     size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.3),
                   ),
                 ),
               ],
@@ -135,19 +140,21 @@ class _StarterChipsState extends ConsumerState<StarterChips>
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _starters.map((starter) {
-                  return _StarterChip(
-                    starter: starter,
-                    onTap: () {
-                      widget.onSend(starter.text);
-                      _hideChips();
-                    },
-                    onLongPress: () {
-                      widget.onEdit(starter.text);
-                      _hideChips();
-                    },
-                  );
-                }).toList(),
+                children: _starters
+                    .map(
+                      (starter) => _StarterChip(
+                        starter: starter,
+                        onTap: () {
+                          widget.onSend(starter.text);
+                          _hideChips();
+                        },
+                        onLongPress: () {
+                          widget.onEdit(starter.text);
+                          _hideChips();
+                        },
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         ),
@@ -155,77 +162,74 @@ class _StarterChipsState extends ConsumerState<StarterChips>
     );
   }
 
-  Widget _buildLoadingChips() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: List.generate(3, (index) {
-        return Container(
-          width: 120,
-          height: 36,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(18),
+  Widget _buildLoadingChips() => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: List.generate(
+          3,
+          (index) => Container(
+            width: 120,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(18),
+            ),
           ),
-        );
-      }),
-    );
-  }
+        ),
+      );
 }
 
 class _StarterChip extends StatelessWidget {
-  final ConversationStarter starter;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
-
   const _StarterChip({
     required this.starter,
     required this.onTap,
     required this.onLongPress,
   });
+  final ConversationStarter starter;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color:
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  starter.text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.send_rounded,
+                size: 14,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                starter.text,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Icon(
-              Icons.send_rounded,
-              size: 14,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -234,14 +238,13 @@ class _StarterChip extends StatelessWidget {
 
 /// A magical button that shows bio improvement options
 class BioImproveButton extends ConsumerStatefulWidget {
-  final String currentBio;
-  final Function(String newBio) onApply;
-
   const BioImproveButton({
     super.key,
     required this.currentBio,
     required this.onApply,
   });
+  final String currentBio;
+  final Function(String newBio) onApply;
 
   @override
   ConsumerState<BioImproveButton> createState() => _BioImproveButtonState();
@@ -270,136 +273,138 @@ class _BioImproveButtonState extends ConsumerState<BioImproveButton> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // The magic button
-        if (!_showOptions)
-          TextButton.icon(
-            onPressed: _loadOptions,
-            icon: const Icon(Icons.auto_awesome, size: 18),
-            label: const Text('✨ Improve with AI'),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.primary,
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // The magic button
+          if (!_showOptions)
+            TextButton.icon(
+              onPressed: _loadOptions,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('✨ Improve with AI'),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
             ),
-          ),
 
-        // Options appear inline
-        if (_showOptions) ...[
-          Row(
-            children: [
-              Text(
-                'Pick a style:',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => setState(() => _showOptions = false),
-                child: Icon(
-                  Icons.close,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (_isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            ..._options.map((option) {
-              return _BioOptionCard(
-                option: option,
-                onTap: () {
-                  widget.onApply(option.text);
-                  setState(() => _showOptions = false);
-                },
-              );
-            }),
-        ],
-      ],
-    );
-  }
-}
-
-class _BioOptionCard extends StatelessWidget {
-  final BioOption option;
-  final VoidCallback onTap;
-
-  const _BioOptionCard({
-    required this.option,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          // Options appear inline
+          if (_showOptions) ...[
             Row(
               children: [
-                Text(option.styleEmoji, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
                 Text(
-                  option.styleLabel,
+                  'Pick a style:',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
                   ),
                 ),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Use this',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                GestureDetector(
+                  onTap: () => setState(() => _showOptions = false),
+                  child: Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.4),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              option.text,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface,
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else
+              ..._options.map(
+                (option) => _BioOptionCard(
+                  option: option,
+                  onTap: () {
+                    widget.onApply(option.text);
+                    setState(() => _showOptions = false);
+                  },
+                ),
               ),
-            ),
           ],
+        ],
+      );
+}
+
+class _BioOptionCard extends StatelessWidget {
+  const _BioOptionCard({
+    required this.option,
+    required this.onTap,
+  });
+  final BioOption option;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(option.styleEmoji, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 6),
+                  Text(
+                    option.styleLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Use this',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                option.text,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -408,12 +413,11 @@ class _BioOptionCard extends StatelessWidget {
 
 /// Shows compatibility insight on a match card
 class InsightBadge extends StatelessWidget {
-  final String insight;
-
   const InsightBadge({
     super.key,
     required this.insight,
   });
+  final String insight;
 
   @override
   Widget build(BuildContext context) {
@@ -454,12 +458,11 @@ class InsightBadge extends StatelessWidget {
 
 /// Detailed insight panel for profile view
 class InsightPanel extends ConsumerStatefulWidget {
-  final String otherUserId;
-
   const InsightPanel({
     super.key,
     required this.otherUserId,
   });
+  final String otherUserId;
 
   @override
   ConsumerState<InsightPanel> createState() => _InsightPanelState();
@@ -590,22 +593,29 @@ class _InsightPanelState extends ConsumerState<InsightPanel> {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: _insight!.sharedInterests.take(5).map((interest) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    interest,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.primary,
+              children: _insight!.sharedInterests
+                  .take(5)
+                  .map(
+                    (interest) => Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        interest,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  )
+                  .toList(),
             ),
           ],
 
@@ -620,15 +630,18 @@ class _InsightPanelState extends ConsumerState<InsightPanel> {
               ),
             ),
             const SizedBox(height: 6),
-            ..._insight!.conversationTopics.map((topic) {
-              return Padding(
+            ..._insight!.conversationTopics.map(
+              (topic) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
                     Icon(
                       Icons.chat_bubble_outline,
                       size: 12,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.6),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -636,14 +649,17 @@ class _InsightPanelState extends ConsumerState<InsightPanel> {
                         topic,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.8),
                         ),
                       ),
                     ),
                   ],
                 ),
-              );
-            }),
+              ),
+            ),
           ],
         ],
       ),
@@ -657,11 +673,6 @@ class _InsightPanelState extends ConsumerState<InsightPanel> {
 
 /// Quick action chip for profile editing
 class QuickActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isLoading;
-
   const QuickActionChip({
     super.key,
     required this.icon,
@@ -669,94 +680,95 @@ class QuickActionChip extends StatelessWidget {
     required this.onTap,
     this.isLoading = false,
   });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isLoading;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isLoading ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: isLoading ? null : onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isLoading)
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                )
+              else
+                Icon(icon,
+                    size: 14, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isLoading)
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              )
-            else
-              Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      );
 }
 
 /// Row of quick AI actions for profile editing
 class AIQuickActions extends StatelessWidget {
-  final VoidCallback? onImproveBio;
-  final VoidCallback? onSuggestInterests;
-  final VoidCallback? onGeneratePromptAnswer;
-
   const AIQuickActions({
     super.key,
     this.onImproveBio,
     this.onSuggestInterests,
     this.onGeneratePromptAnswer,
   });
+  final VoidCallback? onImproveBio;
+  final VoidCallback? onSuggestInterests;
+  final VoidCallback? onGeneratePromptAnswer;
 
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          if (onImproveBio != null)
-            QuickActionChip(
-              icon: Icons.auto_awesome,
-              label: 'Improve bio',
-              onTap: onImproveBio!,
-            ),
-          if (onSuggestInterests != null) ...[
-            const SizedBox(width: 8),
-            QuickActionChip(
-              icon: Icons.interests,
-              label: 'Suggest interests',
-              onTap: onSuggestInterests!,
-            ),
+  Widget build(BuildContext context) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            if (onImproveBio != null)
+              QuickActionChip(
+                icon: Icons.auto_awesome,
+                label: 'Improve bio',
+                onTap: onImproveBio!,
+              ),
+            if (onSuggestInterests != null) ...[
+              const SizedBox(width: 8),
+              QuickActionChip(
+                icon: Icons.interests,
+                label: 'Suggest interests',
+                onTap: onSuggestInterests!,
+              ),
+            ],
+            if (onGeneratePromptAnswer != null) ...[
+              const SizedBox(width: 8),
+              QuickActionChip(
+                icon: Icons.edit_note,
+                label: 'Help with prompts',
+                onTap: onGeneratePromptAnswer!,
+              ),
+            ],
           ],
-          if (onGeneratePromptAnswer != null) ...[
-            const SizedBox(width: 8),
-            QuickActionChip(
-              icon: Icons.edit_note,
-              label: 'Help with prompts',
-              onTap: onGeneratePromptAnswer!,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+        ),
+      );
 }

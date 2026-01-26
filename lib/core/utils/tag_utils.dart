@@ -6,6 +6,7 @@
 /// ```dart
 /// import 'package:vespara/core/utils/tag_utils.dart';
 /// ```
+library;
 
-export 'player_colors.dart';
 export 'haptic_patterns.dart';
+export 'player_colors.dart';

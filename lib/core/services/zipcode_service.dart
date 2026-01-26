@@ -15,14 +15,16 @@ class ZipCodeService {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/$cleanZip'),
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/$cleanZip'),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final places = data['places'] as List?;
-        
+
         if (places != null && places.isNotEmpty) {
           final place = places[0];
           return ZipCodeResult(
@@ -43,15 +45,14 @@ class ZipCodeService {
 
 /// Result from ZIP code lookup
 class ZipCodeResult {
-  final String city;
-  final String state;
-  final String stateFull;
-  final String zipCode;
-
   const ZipCodeResult({
     required this.city,
     required this.state,
     required this.stateFull,
     required this.zipCode,
   });
+  final String city;
+  final String state;
+  final String stateFull;
+  final String zipCode;
 }

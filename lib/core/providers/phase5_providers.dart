@@ -5,37 +5,37 @@
 // Everything wired together invisibly. AI enhances without announcing itself.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../services/ai/ambient_intelligence.dart';
 import '../services/ai/dynamic_game_generator.dart';
 import '../services/ai/predictive_matching_engine.dart';
-import '../services/ai/ambient_intelligence.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVICE PROVIDERS
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Dynamic game generator - creates personalized prompts
-final dynamicGameGeneratorProvider = Provider<DynamicGameGenerator>((ref) {
-  return DynamicGameGenerator.instance;
-});
+final dynamicGameGeneratorProvider =
+    Provider<DynamicGameGenerator>((ref) => DynamicGameGenerator.instance);
 
 /// Predictive matching engine - learns from successful couples
-final predictiveMatchingEngineProvider = Provider<PredictiveMatchingEngine>((ref) {
-  return PredictiveMatchingEngine.instance;
-});
+final predictiveMatchingEngineProvider = Provider<PredictiveMatchingEngine>(
+    (ref) => PredictiveMatchingEngine.instance);
 
 /// Ambient intelligence - app simplifies itself over time
-final ambientIntelligenceProvider = Provider<AmbientIntelligence>((ref) {
-  return AmbientIntelligence.instance;
-});
+final ambientIntelligenceProvider =
+    Provider<AmbientIntelligence>((ref) => AmbientIntelligence.instance);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DYNAMIC GAME GENERATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Get personalized prompts for a couple
-final personalizedPromptsProvider = FutureProvider.family<List<DynamicPrompt>, PersonalizedPromptRequest>((ref, request) async {
+final personalizedPromptsProvider =
+    FutureProvider.family<List<DynamicPrompt>, PersonalizedPromptRequest>(
+        (ref, request) async {
   final generator = ref.read(dynamicGameGeneratorProvider);
-  
+
   return generator.generatePromptsForCouple(
     matchId: request.matchId,
     gameType: request.gameType,
@@ -46,34 +46,35 @@ final personalizedPromptsProvider = FutureProvider.family<List<DynamicPrompt>, P
 
 /// Request class for personalized prompts
 class PersonalizedPromptRequest {
-  final String matchId;
-  final String gameType;
-  final int heatLevel;
-  final int count;
-  
   PersonalizedPromptRequest({
     required this.matchId,
     required this.gameType,
     this.heatLevel = 2,
     this.count = 10,
   });
-  
+  final String matchId;
+  final String gameType;
+  final int heatLevel;
+  final int count;
+
   @override
   bool operator ==(Object other) =>
-    other is PersonalizedPromptRequest &&
-    matchId == other.matchId &&
-    gameType == other.gameType &&
-    heatLevel == other.heatLevel &&
-    count == other.count;
-    
+      other is PersonalizedPromptRequest &&
+      matchId == other.matchId &&
+      gameType == other.gameType &&
+      heatLevel == other.heatLevel &&
+      count == other.count;
+
   @override
   int get hashCode => Object.hash(matchId, gameType, heatLevel, count);
 }
 
 /// Single contextual prompt for current moment
-final contextualPromptProvider = FutureProvider.family<DynamicPrompt, ContextualPromptRequest>((ref, request) async {
+final contextualPromptProvider =
+    FutureProvider.family<DynamicPrompt, ContextualPromptRequest>(
+        (ref, request) async {
   final generator = ref.read(dynamicGameGeneratorProvider);
-  
+
   return generator.generateContextualPrompt(
     matchId: request.matchId,
     gameType: request.gameType,
@@ -84,12 +85,6 @@ final contextualPromptProvider = FutureProvider.family<DynamicPrompt, Contextual
 });
 
 class ContextualPromptRequest {
-  final String matchId;
-  final String gameType;
-  final String? conversationContext;
-  final String? timeOfDay;
-  final String? mood;
-  
   ContextualPromptRequest({
     required this.matchId,
     required this.gameType,
@@ -97,13 +92,18 @@ class ContextualPromptRequest {
     this.timeOfDay,
     this.mood,
   });
-  
+  final String matchId;
+  final String gameType;
+  final String? conversationContext;
+  final String? timeOfDay;
+  final String? mood;
+
   @override
   bool operator ==(Object other) =>
-    other is ContextualPromptRequest &&
-    matchId == other.matchId &&
-    gameType == other.gameType;
-    
+      other is ContextualPromptRequest &&
+      matchId == other.matchId &&
+      gameType == other.gameType;
+
   @override
   int get hashCode => Object.hash(matchId, gameType);
 }
@@ -121,9 +121,11 @@ String _getTimeOfDay() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Predict compatibility between two users
-final compatibilityPredictionProvider = FutureProvider.family<MatchPrediction, CompatibilityRequest>((ref, request) async {
+final compatibilityPredictionProvider =
+    FutureProvider.family<MatchPrediction, CompatibilityRequest>(
+        (ref, request) async {
   final engine = ref.read(predictiveMatchingEngineProvider);
-  
+
   return engine.predictCompatibility(
     userId: request.userId,
     potentialMatchId: request.potentialMatchId,
@@ -131,26 +133,26 @@ final compatibilityPredictionProvider = FutureProvider.family<MatchPrediction, C
 });
 
 class CompatibilityRequest {
-  final String userId;
-  final String potentialMatchId;
-  
   CompatibilityRequest({
     required this.userId,
     required this.potentialMatchId,
   });
-  
+  final String userId;
+  final String potentialMatchId;
+
   @override
   bool operator ==(Object other) =>
-    other is CompatibilityRequest &&
-    userId == other.userId &&
-    potentialMatchId == other.potentialMatchId;
-    
+      other is CompatibilityRequest &&
+      userId == other.userId &&
+      potentialMatchId == other.potentialMatchId;
+
   @override
   int get hashCode => Object.hash(userId, potentialMatchId);
 }
 
 /// Get ranked matches for a user
-final rankedMatchesProvider = FutureProvider.family<List<RankedMatch>, String>((ref, userId) async {
+final rankedMatchesProvider =
+    FutureProvider.family<List<RankedMatch>, String>((ref, userId) async {
   final engine = ref.read(predictiveMatchingEngineProvider);
   return engine.rankPotentialMatches(userId);
 });
@@ -160,9 +162,11 @@ final rankedMatchesProvider = FutureProvider.family<List<RankedMatch>, String>((
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Feature visibility for a user
-final featureVisibilityProvider = FutureProvider.family<FeatureVisibility, FeatureVisibilityRequest>((ref, request) async {
+final featureVisibilityProvider =
+    FutureProvider.family<FeatureVisibility, FeatureVisibilityRequest>(
+        (ref, request) async {
   final ambient = ref.read(ambientIntelligenceProvider);
-  
+
   return ambient.getFeatureVisibility(
     userId: request.userId,
     featureId: request.featureId,
@@ -170,28 +174,28 @@ final featureVisibilityProvider = FutureProvider.family<FeatureVisibility, Featu
 });
 
 class FeatureVisibilityRequest {
-  final String userId;
-  final String featureId;
-  
   FeatureVisibilityRequest({
     required this.userId,
     required this.featureId,
   });
-  
+  final String userId;
+  final String featureId;
+
   @override
   bool operator ==(Object other) =>
-    other is FeatureVisibilityRequest &&
-    userId == other.userId &&
-    featureId == other.featureId;
-    
+      other is FeatureVisibilityRequest &&
+      userId == other.userId &&
+      featureId == other.featureId;
+
   @override
   int get hashCode => Object.hash(userId, featureId);
 }
 
 /// Smart defaults for a user
-final smartDefaultProvider = FutureProvider.family<dynamic, SmartDefaultRequest>((ref, request) async {
+final smartDefaultProvider =
+    FutureProvider.family<dynamic, SmartDefaultRequest>((ref, request) async {
   final ambient = ref.read(ambientIntelligenceProvider);
-  
+
   return ambient.getSmartDefault(
     userId: request.userId,
     key: request.key,
@@ -200,30 +204,31 @@ final smartDefaultProvider = FutureProvider.family<dynamic, SmartDefaultRequest>
 });
 
 class SmartDefaultRequest {
-  final String userId;
-  final String key;
-  final dynamic defaultValue;
-  
   SmartDefaultRequest({
     required this.userId,
     required this.key,
     this.defaultValue,
   });
-  
+  final String userId;
+  final String key;
+  final dynamic defaultValue;
+
   @override
   bool operator ==(Object other) =>
-    other is SmartDefaultRequest &&
-    userId == other.userId &&
-    key == other.key;
-    
+      other is SmartDefaultRequest &&
+      userId == other.userId &&
+      key == other.key;
+
   @override
   int get hashCode => Object.hash(userId, key);
 }
 
 /// Contextual suggestions for a user
-final contextualSuggestionsProvider = FutureProvider.family<List<ContextualSuggestion>, SuggestionsRequest>((ref, request) async {
+final contextualSuggestionsProvider =
+    FutureProvider.family<List<ContextualSuggestion>, SuggestionsRequest>(
+        (ref, request) async {
   final ambient = ref.read(ambientIntelligenceProvider);
-  
+
   return ambient.getSuggestions(
     userId: request.userId,
     currentScreen: request.currentScreen,
@@ -232,28 +237,28 @@ final contextualSuggestionsProvider = FutureProvider.family<List<ContextualSugge
 });
 
 class SuggestionsRequest {
-  final String userId;
-  final String currentScreen;
-  final Map<String, dynamic>? context;
-  
   SuggestionsRequest({
     required this.userId,
     required this.currentScreen,
     this.context,
   });
-  
+  final String userId;
+  final String currentScreen;
+  final Map<String, dynamic>? context;
+
   @override
   bool operator ==(Object other) =>
-    other is SuggestionsRequest &&
-    userId == other.userId &&
-    currentScreen == other.currentScreen;
-    
+      other is SuggestionsRequest &&
+      userId == other.userId &&
+      currentScreen == other.currentScreen;
+
   @override
   int get hashCode => Object.hash(userId, currentScreen);
 }
 
 /// Personalized quick actions for home screen
-final quickActionsProvider = FutureProvider.family<List<QuickAction>, String>((ref, userId) async {
+final quickActionsProvider =
+    FutureProvider.family<List<QuickAction>, String>((ref, userId) async {
   final ambient = ref.read(ambientIntelligenceProvider);
   return ambient.getPersonalizedQuickActions(userId);
 });
@@ -264,18 +269,19 @@ final quickActionsProvider = FutureProvider.family<List<QuickAction>, String>((r
 
 /// State notifier for tracking usage
 class UsageTracker extends StateNotifier<void> {
-  final AmbientIntelligence _ambient;
-  
   UsageTracker(this._ambient) : super(null);
-  
+  final AmbientIntelligence _ambient;
+
   /// Track feature usage - call this everywhere
-  void track(String userId, String featureId, {Map<String, dynamic>? metadata}) {
+  void track(String userId, String featureId,
+      {Map<String, dynamic>? metadata}) {
     // Fire and forget
     _ambient.trackUsage(userId, featureId, metadata: metadata);
   }
-  
+
   /// Track match outcome - for learning
-  void trackMatchOutcome(String matchId, String outcome, {Map<String, dynamic>? signals}) {
+  void trackMatchOutcome(String matchId, String outcome,
+      {Map<String, dynamic>? signals}) {
     // Fire and forget
     PredictiveMatchingEngine.instance.recordMatchOutcome(
       matchId: matchId,
@@ -283,7 +289,7 @@ class UsageTracker extends StateNotifier<void> {
       signals: signals ?? {},
     );
   }
-  
+
   /// Track prompt reaction
   void trackPromptReaction(String matchId, String promptId, String reaction) {
     // Fire and forget - improve prompts over time
@@ -295,9 +301,8 @@ class UsageTracker extends StateNotifier<void> {
   }
 }
 
-final usageTrackerProvider = StateNotifierProvider<UsageTracker, void>((ref) {
-  return UsageTracker(ref.read(ambientIntelligenceProvider));
-});
+final usageTrackerProvider = StateNotifierProvider<UsageTracker, void>(
+    (ref) => UsageTracker(ref.read(ambientIntelligenceProvider)));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONVENIENCE EXTENSIONS
@@ -305,12 +310,15 @@ final usageTrackerProvider = StateNotifierProvider<UsageTracker, void>((ref) {
 
 /// Extension for easy tracking in any widget
 extension UsageTrackingRef on WidgetRef {
-  void trackUsage(String userId, String featureId, {Map<String, dynamic>? metadata}) {
-    read(usageTrackerProvider.notifier).track(userId, featureId, metadata: metadata);
+  void trackUsage(String userId, String featureId,
+      {Map<String, dynamic>? metadata}) {
+    read(usageTrackerProvider.notifier)
+        .track(userId, featureId, metadata: metadata);
   }
-  
+
   void trackPromptReaction(String matchId, String promptId, String reaction) {
-    read(usageTrackerProvider.notifier).trackPromptReaction(matchId, promptId, reaction);
+    read(usageTrackerProvider.notifier)
+        .trackPromptReaction(matchId, promptId, reaction);
   }
 }
 
@@ -319,13 +327,16 @@ extension UsageTrackingRef on WidgetRef {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Everything needed for the discover screen
-final discoverIntelligenceProvider = FutureProvider.family<DiscoverIntelligence, String>((ref, userId) async {
+final discoverIntelligenceProvider =
+    FutureProvider.family<DiscoverIntelligence, String>((ref, userId) async {
   final matches = await ref.watch(rankedMatchesProvider(userId).future);
-  final suggestions = await ref.watch(contextualSuggestionsProvider(
-    SuggestionsRequest(userId: userId, currentScreen: 'discover'),
-  ).future);
+  final suggestions = await ref.watch(
+    contextualSuggestionsProvider(
+      SuggestionsRequest(userId: userId, currentScreen: 'discover'),
+    ).future,
+  );
   final quickActions = await ref.watch(quickActionsProvider(userId).future);
-  
+
   return DiscoverIntelligence(
     rankedMatches: matches,
     suggestions: suggestions,
@@ -334,31 +345,37 @@ final discoverIntelligenceProvider = FutureProvider.family<DiscoverIntelligence,
 });
 
 class DiscoverIntelligence {
-  final List<RankedMatch> rankedMatches;
-  final List<ContextualSuggestion> suggestions;
-  final List<QuickAction> quickActions;
-  
   DiscoverIntelligence({
     required this.rankedMatches,
     required this.suggestions,
     required this.quickActions,
   });
+  final List<RankedMatch> rankedMatches;
+  final List<ContextualSuggestion> suggestions;
+  final List<QuickAction> quickActions;
 }
 
 /// Everything needed for a game session
-final gameIntelligenceProvider = FutureProvider.family<GameIntelligence, GameIntelligenceRequest>((ref, request) async {
-  final prompts = await ref.watch(personalizedPromptsProvider(
-    PersonalizedPromptRequest(
-      matchId: request.matchId,
-      gameType: request.gameType,
-      heatLevel: request.heatLevel,
-    ),
-  ).future);
-  
-  final visibility = await ref.watch(featureVisibilityProvider(
-    FeatureVisibilityRequest(userId: request.userId, featureId: 'game_${request.gameType}'),
-  ).future);
-  
+final gameIntelligenceProvider =
+    FutureProvider.family<GameIntelligence, GameIntelligenceRequest>(
+        (ref, request) async {
+  final prompts = await ref.watch(
+    personalizedPromptsProvider(
+      PersonalizedPromptRequest(
+        matchId: request.matchId,
+        gameType: request.gameType,
+        heatLevel: request.heatLevel,
+      ),
+    ).future,
+  );
+
+  final visibility = await ref.watch(
+    featureVisibilityProvider(
+      FeatureVisibilityRequest(
+          userId: request.userId, featureId: 'game_${request.gameType}'),
+    ).future,
+  );
+
   return GameIntelligence(
     personalizedPrompts: prompts,
     featureVisibility: visibility,
@@ -366,36 +383,34 @@ final gameIntelligenceProvider = FutureProvider.family<GameIntelligence, GameInt
 });
 
 class GameIntelligenceRequest {
-  final String userId;
-  final String matchId;
-  final String gameType;
-  final int heatLevel;
-  
   GameIntelligenceRequest({
     required this.userId,
     required this.matchId,
     required this.gameType,
     this.heatLevel = 2,
   });
-  
+  final String userId;
+  final String matchId;
+  final String gameType;
+  final int heatLevel;
+
   @override
   bool operator ==(Object other) =>
-    other is GameIntelligenceRequest &&
-    userId == other.userId &&
-    matchId == other.matchId &&
-    gameType == other.gameType &&
-    heatLevel == other.heatLevel;
-    
+      other is GameIntelligenceRequest &&
+      userId == other.userId &&
+      matchId == other.matchId &&
+      gameType == other.gameType &&
+      heatLevel == other.heatLevel;
+
   @override
   int get hashCode => Object.hash(userId, matchId, gameType, heatLevel);
 }
 
 class GameIntelligence {
-  final List<DynamicPrompt> personalizedPrompts;
-  final FeatureVisibility featureVisibility;
-  
   GameIntelligence({
     required this.personalizedPrompts,
     required this.featureVisibility,
   });
+  final List<DynamicPrompt> personalizedPrompts;
+  final FeatureVisibility featureVisibility;
 }

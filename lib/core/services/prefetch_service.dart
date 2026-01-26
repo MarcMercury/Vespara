@@ -10,10 +10,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// feel instant. No user interaction required - it just works.
 
 class PrefetchService {
+  PrefetchService._();
   static PrefetchService? _instance;
   static PrefetchService get instance => _instance ??= PrefetchService._();
-
-  PrefetchService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -43,52 +42,57 @@ class PrefetchService {
     required String userId,
     int count = 10,
   }) async {
-    _enqueue(_PrefetchTask(
-      id: 'nearby_profiles_$userId',
-      priority: PrefetchPriority.high,
-      execute: () async {
-        // Get user's next likely matches
-        final response = await _supabase
-            .from('profiles')
-            .select('id, display_name, photos, bio, age')
-            .neq('id', userId)
-            .limit(count);
+    _enqueue(
+      _PrefetchTask(
+        id: 'nearby_profiles_$userId',
+        priority: PrefetchPriority.high,
+        execute: () async {
+          // Get user's next likely matches
+          final response = await _supabase
+              .from('profiles')
+              .select('id, display_name, photos, bio, age')
+              .neq('id', userId)
+              .limit(count);
 
-        for (final profile in response as List) {
-          final id = profile['id'] as String;
-          _profileCache[id] = _CachedData(
-            data: profile,
-            expiresAt: DateTime.now().add(_profileExpiry),
-          );
-        }
+          for (final profile in response as List) {
+            final id = profile['id'] as String;
+            _profileCache[id] = _CachedData(
+              data: profile,
+              expiresAt: DateTime.now().add(_profileExpiry),
+            );
+          }
 
-        debugPrint('PrefetchService: Cached ${(response as List).length} profiles');
-      },
-    ));
+          debugPrint(
+              'PrefetchService: Cached ${(response as List).length} profiles');
+        },
+      ),
+    );
   }
 
   /// Prefetch a specific profile (called when user hovers/approaches)
   Future<void> prefetchProfile(String profileId) async {
     if (_profileCache.containsKey(profileId)) return;
 
-    _enqueue(_PrefetchTask(
-      id: 'profile_$profileId',
-      priority: PrefetchPriority.high,
-      execute: () async {
-        final response = await _supabase
-            .from('profiles')
-            .select()
-            .eq('id', profileId)
-            .maybeSingle();
+    _enqueue(
+      _PrefetchTask(
+        id: 'profile_$profileId',
+        priority: PrefetchPriority.high,
+        execute: () async {
+          final response = await _supabase
+              .from('profiles')
+              .select()
+              .eq('id', profileId)
+              .maybeSingle();
 
-        if (response != null) {
-          _profileCache[profileId] = _CachedData(
-            data: response,
-            expiresAt: DateTime.now().add(_profileExpiry),
-          );
-        }
-      },
-    ));
+          if (response != null) {
+            _profileCache[profileId] = _CachedData(
+              data: response,
+              expiresAt: DateTime.now().add(_profileExpiry),
+            );
+          }
+        },
+      ),
+    );
   }
 
   /// Get cached profile or fetch if not available
@@ -121,13 +125,14 @@ class PrefetchService {
 
   /// Prefetch user's matches and recent conversations
   Future<void> prefetchMatches(String userId) async {
-    _enqueue(_PrefetchTask(
-      id: 'matches_$userId',
-      priority: PrefetchPriority.high,
-      execute: () async {
-        final response = await _supabase
-            .from('matches')
-            .select('''
+    _enqueue(
+      _PrefetchTask(
+        id: 'matches_$userId',
+        priority: PrefetchPriority.high,
+        execute: () async {
+          final response = await _supabase
+              .from('matches')
+              .select('''
               id,
               user1_id,
               user2_id,
@@ -135,18 +140,20 @@ class PrefetchService {
               user1:profiles!matches_user1_id_fkey(id, display_name, photos),
               user2:profiles!matches_user2_id_fkey(id, display_name, photos)
             ''')
-            .or('user1_id.eq.$userId,user2_id.eq.$userId')
-            .order('matched_at', ascending: false)
-            .limit(20);
+              .or('user1_id.eq.$userId,user2_id.eq.$userId')
+              .order('matched_at', ascending: false)
+              .limit(20);
 
-        _matchCache[userId] = _CachedData(
-          data: response,
-          expiresAt: DateTime.now().add(_matchExpiry),
-        );
+          _matchCache[userId] = _CachedData(
+            data: response,
+            expiresAt: DateTime.now().add(_matchExpiry),
+          );
 
-        debugPrint('PrefetchService: Cached ${(response as List).length} matches');
-      },
-    ));
+          debugPrint(
+              'PrefetchService: Cached ${(response as List).length} matches');
+        },
+      ),
+    );
   }
 
   /// Get cached matches
@@ -173,32 +180,36 @@ class PrefetchService {
       final cacheKey = '${gameType}_$level';
       if (_gameContentCache.containsKey(cacheKey)) continue;
 
-      _enqueue(_PrefetchTask(
-        id: 'game_$cacheKey',
-        priority: PrefetchPriority.medium,
-        execute: () async {
-          final tableName = _getGameTable(gameType);
-          if (tableName == null) return;
+      _enqueue(
+        _PrefetchTask(
+          id: 'game_$cacheKey',
+          priority: PrefetchPriority.medium,
+          execute: () async {
+            final tableName = _getGameTable(gameType);
+            if (tableName == null) return;
 
-          final response = await _supabase
-              .from(tableName)
-              .select()
-              .eq('heat_level', level)
-              .limit(50);
+            final response = await _supabase
+                .from(tableName)
+                .select()
+                .eq('heat_level', level)
+                .limit(50);
 
-          _gameContentCache[cacheKey] = _CachedData(
-            data: response,
-            expiresAt: DateTime.now().add(_gameContentExpiry),
-          );
+            _gameContentCache[cacheKey] = _CachedData(
+              data: response,
+              expiresAt: DateTime.now().add(_gameContentExpiry),
+            );
 
-          debugPrint('PrefetchService: Cached ${(response as List).length} $gameType cards ($level)');
-        },
-      ));
+            debugPrint(
+                'PrefetchService: Cached ${(response as List).length} $gameType cards ($level)');
+          },
+        ),
+      );
     }
   }
 
   /// Get cached game content
-  List<Map<String, dynamic>>? getCachedGameContent(String gameType, String heatLevel) {
+  List<Map<String, dynamic>>? getCachedGameContent(
+      String gameType, String heatLevel) {
     final cacheKey = '${gameType}_$heatLevel';
     final cached = _gameContentCache[cacheKey];
     if (cached != null && !cached.isExpired) {
@@ -248,23 +259,25 @@ class PrefetchService {
 
   /// Prefetch recent messages for a conversation
   Future<void> prefetchConversation(String matchId) async {
-    _enqueue(_PrefetchTask(
-      id: 'conversation_$matchId',
-      priority: PrefetchPriority.high,
-      execute: () async {
-        final response = await _supabase
-            .from('messages')
-            .select()
-            .eq('match_id', matchId)
-            .order('created_at', ascending: false)
-            .limit(50);
+    _enqueue(
+      _PrefetchTask(
+        id: 'conversation_$matchId',
+        priority: PrefetchPriority.high,
+        execute: () async {
+          final response = await _supabase
+              .from('messages')
+              .select()
+              .eq('match_id', matchId)
+              .order('created_at', ascending: false)
+              .limit(50);
 
-        _conversationCache[matchId] = _CachedData(
-          data: response,
-          expiresAt: DateTime.now().add(_conversationExpiry),
-        );
-      },
-    ));
+          _conversationCache[matchId] = _CachedData(
+            data: response,
+            expiresAt: DateTime.now().add(_conversationExpiry),
+          );
+        },
+      ),
+    );
   }
 
   /// Get cached conversation
@@ -345,9 +358,7 @@ class PrefetchService {
   /// Process low-priority tasks during idle time
   void onIdle() {
     _idleTimer?.cancel();
-    _idleTimer = Timer(const Duration(seconds: 2), () {
-      _processQueue();
-    });
+    _idleTimer = Timer(const Duration(seconds: 2), _processQueue);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -390,24 +401,22 @@ class PrefetchService {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _CachedData {
+  _CachedData({required this.data, required this.expiresAt});
   final dynamic data;
   final DateTime expiresAt;
-
-  _CachedData({required this.data, required this.expiresAt});
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 }
 
 class _PrefetchTask {
-  final String id;
-  final PrefetchPriority priority;
-  final Future<void> Function() execute;
-
   _PrefetchTask({
     required this.id,
     required this.priority,
     required this.execute,
   });
+  final String id;
+  final PrefetchPriority priority;
+  final Future<void> Function() execute;
 }
 
 enum PrefetchPriority {

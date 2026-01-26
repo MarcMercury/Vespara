@@ -16,40 +16,51 @@ enum EventTitleStyle {
 
   String get label {
     switch (this) {
-      case EventTitleStyle.classic: return 'Classic';
-      case EventTitleStyle.eclectic: return 'Eclectic';
-      case EventTitleStyle.fancy: return 'Fancy';
-      case EventTitleStyle.literary: return 'Literary';
-      case EventTitleStyle.digital: return 'Digital';
-      case EventTitleStyle.elegant: return 'Elegant';
+      case EventTitleStyle.classic:
+        return 'Classic';
+      case EventTitleStyle.eclectic:
+        return 'Eclectic';
+      case EventTitleStyle.fancy:
+        return 'Fancy';
+      case EventTitleStyle.literary:
+        return 'Literary';
+      case EventTitleStyle.digital:
+        return 'Digital';
+      case EventTitleStyle.elegant:
+        return 'Elegant';
     }
   }
 
   String get fontFamily {
     switch (this) {
-      case EventTitleStyle.classic: return 'Inter';
-      case EventTitleStyle.eclectic: return 'Courier New';
-      case EventTitleStyle.fancy: return 'Georgia';
-      case EventTitleStyle.literary: return 'Times New Roman';
-      case EventTitleStyle.digital: return 'Roboto Mono';
-      case EventTitleStyle.elegant: return 'Playfair Display';
+      case EventTitleStyle.classic:
+        return 'Inter';
+      case EventTitleStyle.eclectic:
+        return 'Courier New';
+      case EventTitleStyle.fancy:
+        return 'Georgia';
+      case EventTitleStyle.literary:
+        return 'Times New Roman';
+      case EventTitleStyle.digital:
+        return 'Roboto Mono';
+      case EventTitleStyle.elegant:
+        return 'Playfair Display';
     }
   }
 }
 
 /// RSVP response options with custom emojis
 class RsvpOption extends Equatable {
-  final String id;
-  final String label;
-  final String emoji;
-  final int order;
-
   const RsvpOption({
     required this.id,
     required this.label,
     required this.emoji,
     required this.order,
   });
+  final String id;
+  final String label;
+  final String emoji;
+  final int order;
 
   static const defaultGoing = RsvpOption(
     id: 'going',
@@ -73,10 +84,10 @@ class RsvpOption extends Equatable {
   );
 
   static List<RsvpOption> get defaults => [
-    defaultGoing,
-    defaultMaybe,
-    defaultCantGo,
-  ];
+        defaultGoing,
+        defaultMaybe,
+        defaultCantGo,
+      ];
 
   @override
   List<Object?> get props => [id, label, emoji, order];
@@ -84,17 +95,16 @@ class RsvpOption extends Equatable {
 
 /// Event link types (playlist, registry, dress code, etc.)
 class EventLink extends Equatable {
-  final String id;
-  final EventLinkType type;
-  final String? label;
-  final String url;
-
   const EventLink({
     required this.id,
     required this.type,
     this.label,
     required this.url,
   });
+  final String id;
+  final EventLinkType type;
+  final String? label;
+  final String url;
 
   @override
   List<Object?> get props => [id, type, url];
@@ -109,33 +119,37 @@ enum EventLinkType {
 
   String get label {
     switch (this) {
-      case EventLinkType.link: return 'Link';
-      case EventLinkType.playlist: return 'Playlist';
-      case EventLinkType.registry: return 'Registry';
-      case EventLinkType.dressCode: return 'Dress Code';
-      case EventLinkType.custom: return 'Custom';
+      case EventLinkType.link:
+        return 'Link';
+      case EventLinkType.playlist:
+        return 'Playlist';
+      case EventLinkType.registry:
+        return 'Registry';
+      case EventLinkType.dressCode:
+        return 'Dress Code';
+      case EventLinkType.custom:
+        return 'Custom';
     }
   }
 
   String get icon {
     switch (this) {
-      case EventLinkType.link: return '🔗';
-      case EventLinkType.playlist: return '🎵';
-      case EventLinkType.registry: return '🎁';
-      case EventLinkType.dressCode: return '👔';
-      case EventLinkType.custom: return '📎';
+      case EventLinkType.link:
+        return '🔗';
+      case EventLinkType.playlist:
+        return '🎵';
+      case EventLinkType.registry:
+        return '🎁';
+      case EventLinkType.dressCode:
+        return '👔';
+      case EventLinkType.custom:
+        return '📎';
     }
   }
 }
 
 /// Co-host information
 class EventCoHost extends Equatable {
-  final String id;
-  final String userId;
-  final String name;
-  final String? avatarUrl;
-  final String? nickname;
-
   const EventCoHost({
     required this.id,
     required this.userId,
@@ -143,6 +157,11 @@ class EventCoHost extends Equatable {
     this.avatarUrl,
     this.nickname,
   });
+  final String id;
+  final String userId;
+  final String name;
+  final String? avatarUrl;
+  final String? nickname;
 
   @override
   List<Object?> get props => [id, userId, name];
@@ -160,25 +179,39 @@ enum UserEventStatus {
 
   String get label {
     switch (this) {
-      case UserEventStatus.invited: return 'INVITED';
-      case UserEventStatus.going: return 'GOING';
-      case UserEventStatus.maybe: return 'MAYBE';
-      case UserEventStatus.cantGo: return "CAN'T GO";
-      case UserEventStatus.hosting: return 'HOSTING';
-      case UserEventStatus.cohosting: return 'CO-HOSTING';
-      case UserEventStatus.none: return '';
+      case UserEventStatus.invited:
+        return 'INVITED';
+      case UserEventStatus.going:
+        return 'GOING';
+      case UserEventStatus.maybe:
+        return 'MAYBE';
+      case UserEventStatus.cantGo:
+        return "CAN'T GO";
+      case UserEventStatus.hosting:
+        return 'HOSTING';
+      case UserEventStatus.cohosting:
+        return 'CO-HOSTING';
+      case UserEventStatus.none:
+        return '';
     }
   }
 
   String get emoji {
     switch (this) {
-      case UserEventStatus.invited: return '💌';
-      case UserEventStatus.going: return '👍';
-      case UserEventStatus.maybe: return '🤔';
-      case UserEventStatus.cantGo: return '😢';
-      case UserEventStatus.hosting: return '👑';
-      case UserEventStatus.cohosting: return '🎭';
-      case UserEventStatus.none: return '';
+      case UserEventStatus.invited:
+        return '💌';
+      case UserEventStatus.going:
+        return '👍';
+      case UserEventStatus.maybe:
+        return '🤔';
+      case UserEventStatus.cantGo:
+        return '😢';
+      case UserEventStatus.hosting:
+        return '👑';
+      case UserEventStatus.cohosting:
+        return '🎭';
+      case UserEventStatus.none:
+        return '';
     }
   }
 }
@@ -191,88 +224,29 @@ enum EventVisibility {
 
   String get label {
     switch (this) {
-      case EventVisibility.private: return 'Private';
-      case EventVisibility.public: return 'Public';
-      case EventVisibility.openInvite: return 'Open Invite';
+      case EventVisibility.private:
+        return 'Private';
+      case EventVisibility.public:
+        return 'Public';
+      case EventVisibility.openInvite:
+        return 'Open Invite';
     }
   }
 
   String get description {
     switch (this) {
-      case EventVisibility.private: return 'Only people you invite can see this';
-      case EventVisibility.public: return 'Anyone on Vespara can discover this';
-      case EventVisibility.openInvite: return 'Guests can invite their friends';
+      case EventVisibility.private:
+        return 'Only people you invite can see this';
+      case EventVisibility.public:
+        return 'Anyone on Vespara can discover this';
+      case EventVisibility.openInvite:
+        return 'Guests can invite their friends';
     }
   }
 }
 
 /// Enhanced event model - Partiful-style
 class VesparaEvent extends Equatable {
-  final String id;
-  final String hostId;
-  final String hostName;
-  final String? hostAvatarUrl;
-  final String? hostNickname;
-  final List<EventCoHost> coHosts;
-  
-  // Title & styling
-  final String title;
-  final EventTitleStyle titleStyle;
-  final String? description;
-  
-  // Cover image
-  final String? coverImageUrl;
-  final String? coverTheme;
-  final String? coverEffect;
-  
-  // Date & time
-  final DateTime startTime;
-  final DateTime? endTime;
-  final bool hasDatePoll;
-  final List<DateTime>? pollOptions;
-  
-  // Location
-  final String? venueName;
-  final String? venueAddress;
-  final double? venueLat;
-  final double? venueLng;
-  final bool isVirtual;
-  final String? virtualLink;
-  
-  // Capacity & cost
-  final int? maxSpots;
-  final int currentAttendees;
-  final double? costPerPerson;
-  final String? costCurrency;
-  
-  // Links
-  final List<EventLink> links;
-  
-  // RSVP settings
-  final List<RsvpOption> rsvpOptions;
-  final bool requiresApproval;
-  final bool collectGuestInfo;
-  final bool sendReminders;
-  final int? reminderHoursBefore;
-  
-  // Visibility
-  final EventVisibility visibility;
-  
-  // Content rating
-  final String contentRating; // PG, flirty, spicy, explicit
-  final int ageRestriction;
-  
-  // Sections (additional content blocks)
-  final List<EventSection> sections;
-  
-  // Guest responses
-  final List<EventRsvp> rsvps;
-  
-  // Metadata
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final bool isDraft;
-
   const VesparaEvent({
     required this.id,
     required this.hostId,
@@ -315,6 +289,70 @@ class VesparaEvent extends Equatable {
     this.updatedAt,
     this.isDraft = false,
   });
+  final String id;
+  final String hostId;
+  final String hostName;
+  final String? hostAvatarUrl;
+  final String? hostNickname;
+  final List<EventCoHost> coHosts;
+
+  // Title & styling
+  final String title;
+  final EventTitleStyle titleStyle;
+  final String? description;
+
+  // Cover image
+  final String? coverImageUrl;
+  final String? coverTheme;
+  final String? coverEffect;
+
+  // Date & time
+  final DateTime startTime;
+  final DateTime? endTime;
+  final bool hasDatePoll;
+  final List<DateTime>? pollOptions;
+
+  // Location
+  final String? venueName;
+  final String? venueAddress;
+  final double? venueLat;
+  final double? venueLng;
+  final bool isVirtual;
+  final String? virtualLink;
+
+  // Capacity & cost
+  final int? maxSpots;
+  final int currentAttendees;
+  final double? costPerPerson;
+  final String? costCurrency;
+
+  // Links
+  final List<EventLink> links;
+
+  // RSVP settings
+  final List<RsvpOption> rsvpOptions;
+  final bool requiresApproval;
+  final bool collectGuestInfo;
+  final bool sendReminders;
+  final int? reminderHoursBefore;
+
+  // Visibility
+  final EventVisibility visibility;
+
+  // Content rating
+  final String contentRating; // PG, flirty, spicy, explicit
+  final int ageRestriction;
+
+  // Sections (additional content blocks)
+  final List<EventSection> sections;
+
+  // Guest responses
+  final List<EventRsvp> rsvps;
+
+  // Metadata
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final bool isDraft;
 
   /// Spots remaining
   int? get spotsRemaining {
@@ -344,23 +382,23 @@ class VesparaEvent extends Equatable {
   bool get isToday {
     final now = DateTime.now();
     return startTime.year == now.year &&
-           startTime.month == now.month &&
-           startTime.day == now.day;
+        startTime.month == now.month &&
+        startTime.day == now.day;
   }
 
   /// Is event tomorrow
   bool get isTomorrow {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
     return startTime.year == tomorrow.year &&
-           startTime.month == tomorrow.month &&
-           startTime.day == tomorrow.day;
+        startTime.month == tomorrow.month &&
+        startTime.day == tomorrow.day;
   }
 
   /// Formatted date label (Today, Tomorrow, Thu, Next Fri, etc.)
   String get dateLabel {
     final now = DateTime.now();
     final diff = startTime.difference(now);
-    
+
     if (isToday) return 'Today';
     if (isTomorrow) return 'Tomorrow';
     if (diff.inDays < 7) {
@@ -378,12 +416,12 @@ class VesparaEvent extends Equatable {
 
   /// Formatted time
   String get timeLabel {
-    final hour = startTime.hour > 12 
-        ? startTime.hour - 12 
+    final hour = startTime.hour > 12
+        ? startTime.hour - 12
         : (startTime.hour == 0 ? 12 : startTime.hour);
     final period = startTime.hour >= 12 ? 'pm' : 'am';
-    final minutes = startTime.minute > 0 
-        ? ':${startTime.minute.toString().padLeft(2, '0')}' 
+    final minutes = startTime.minute > 0
+        ? ':${startTime.minute.toString().padLeft(2, '0')}'
         : '';
     return '$hour$minutes$period';
   }
@@ -433,50 +471,49 @@ class VesparaEvent extends Equatable {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDraft,
-  }) {
-    return VesparaEvent(
-      id: id ?? this.id,
-      hostId: hostId ?? this.hostId,
-      hostName: hostName ?? this.hostName,
-      hostAvatarUrl: hostAvatarUrl ?? this.hostAvatarUrl,
-      hostNickname: hostNickname ?? this.hostNickname,
-      coHosts: coHosts ?? this.coHosts,
-      title: title ?? this.title,
-      titleStyle: titleStyle ?? this.titleStyle,
-      description: description ?? this.description,
-      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
-      coverTheme: coverTheme ?? this.coverTheme,
-      coverEffect: coverEffect ?? this.coverEffect,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      hasDatePoll: hasDatePoll ?? this.hasDatePoll,
-      pollOptions: pollOptions ?? this.pollOptions,
-      venueName: venueName ?? this.venueName,
-      venueAddress: venueAddress ?? this.venueAddress,
-      venueLat: venueLat ?? this.venueLat,
-      venueLng: venueLng ?? this.venueLng,
-      isVirtual: isVirtual ?? this.isVirtual,
-      virtualLink: virtualLink ?? this.virtualLink,
-      maxSpots: maxSpots ?? this.maxSpots,
-      currentAttendees: currentAttendees ?? this.currentAttendees,
-      costPerPerson: costPerPerson ?? this.costPerPerson,
-      costCurrency: costCurrency ?? this.costCurrency,
-      links: links ?? this.links,
-      rsvpOptions: rsvpOptions ?? this.rsvpOptions,
-      requiresApproval: requiresApproval ?? this.requiresApproval,
-      collectGuestInfo: collectGuestInfo ?? this.collectGuestInfo,
-      sendReminders: sendReminders ?? this.sendReminders,
-      reminderHoursBefore: reminderHoursBefore ?? this.reminderHoursBefore,
-      visibility: visibility ?? this.visibility,
-      contentRating: contentRating ?? this.contentRating,
-      ageRestriction: ageRestriction ?? this.ageRestriction,
-      sections: sections ?? this.sections,
-      rsvps: rsvps ?? this.rsvps,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      isDraft: isDraft ?? this.isDraft,
-    );
-  }
+  }) =>
+      VesparaEvent(
+        id: id ?? this.id,
+        hostId: hostId ?? this.hostId,
+        hostName: hostName ?? this.hostName,
+        hostAvatarUrl: hostAvatarUrl ?? this.hostAvatarUrl,
+        hostNickname: hostNickname ?? this.hostNickname,
+        coHosts: coHosts ?? this.coHosts,
+        title: title ?? this.title,
+        titleStyle: titleStyle ?? this.titleStyle,
+        description: description ?? this.description,
+        coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+        coverTheme: coverTheme ?? this.coverTheme,
+        coverEffect: coverEffect ?? this.coverEffect,
+        startTime: startTime ?? this.startTime,
+        endTime: endTime ?? this.endTime,
+        hasDatePoll: hasDatePoll ?? this.hasDatePoll,
+        pollOptions: pollOptions ?? this.pollOptions,
+        venueName: venueName ?? this.venueName,
+        venueAddress: venueAddress ?? this.venueAddress,
+        venueLat: venueLat ?? this.venueLat,
+        venueLng: venueLng ?? this.venueLng,
+        isVirtual: isVirtual ?? this.isVirtual,
+        virtualLink: virtualLink ?? this.virtualLink,
+        maxSpots: maxSpots ?? this.maxSpots,
+        currentAttendees: currentAttendees ?? this.currentAttendees,
+        costPerPerson: costPerPerson ?? this.costPerPerson,
+        costCurrency: costCurrency ?? this.costCurrency,
+        links: links ?? this.links,
+        rsvpOptions: rsvpOptions ?? this.rsvpOptions,
+        requiresApproval: requiresApproval ?? this.requiresApproval,
+        collectGuestInfo: collectGuestInfo ?? this.collectGuestInfo,
+        sendReminders: sendReminders ?? this.sendReminders,
+        reminderHoursBefore: reminderHoursBefore ?? this.reminderHoursBefore,
+        visibility: visibility ?? this.visibility,
+        contentRating: contentRating ?? this.contentRating,
+        ageRestriction: ageRestriction ?? this.ageRestriction,
+        sections: sections ?? this.sections,
+        rsvps: rsvps ?? this.rsvps,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        isDraft: isDraft ?? this.isDraft,
+      );
 
   @override
   List<Object?> get props => [id, title, startTime, hostId];
@@ -484,17 +521,16 @@ class VesparaEvent extends Equatable {
 
 /// Event section - additional content blocks
 class EventSection extends Equatable {
-  final String id;
-  final String title;
-  final String content;
-  final int order;
-
   const EventSection({
     required this.id,
     required this.title,
     required this.content,
     required this.order,
   });
+  final String id;
+  final String title;
+  final String content;
+  final int order;
 
   @override
   List<Object?> get props => [id, title, order];
@@ -502,17 +538,6 @@ class EventSection extends Equatable {
 
 /// Event RSVP response
 class EventRsvp extends Equatable {
-  final String id;
-  final String eventId;
-  final String userId;
-  final String userName;
-  final String? userAvatarUrl;
-  final String status; // invited, going, maybe, cant_go
-  final String? message;
-  final Map<String, dynamic>? guestInfo;
-  final DateTime createdAt;
-  final DateTime? respondedAt;
-
   const EventRsvp({
     required this.id,
     required this.eventId,
@@ -525,6 +550,16 @@ class EventRsvp extends Equatable {
     required this.createdAt,
     this.respondedAt,
   });
+  final String id;
+  final String eventId;
+  final String userId;
+  final String userName;
+  final String? userAvatarUrl;
+  final String status; // invited, going, maybe, cant_go
+  final String? message;
+  final Map<String, dynamic>? guestInfo;
+  final DateTime createdAt;
+  final DateTime? respondedAt;
 
   @override
   List<Object?> get props => [id, eventId, userId, status];

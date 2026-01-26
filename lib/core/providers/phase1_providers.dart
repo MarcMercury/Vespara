@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/prefetch_service.dart';
-import '../services/engagement_analytics_service.dart';
+
 import '../services/background_pregeneration_service.dart';
+import '../services/engagement_analytics_service.dart';
+import '../services/prefetch_service.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// PHASE 1 PROVIDERS - Silent Intelligence
@@ -17,9 +18,8 @@ import '../services/background_pregeneration_service.dart';
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Prefetch service singleton
-final prefetchServiceProvider = Provider<PrefetchService>((ref) {
-  return PrefetchService.instance;
-});
+final prefetchServiceProvider =
+    Provider<PrefetchService>((ref) => PrefetchService.instance);
 
 /// Prefetch cache statistics
 final prefetchStatsProvider = Provider<Map<String, int>>((ref) {
@@ -32,9 +32,8 @@ final prefetchStatsProvider = Provider<Map<String, int>>((ref) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Engagement analytics service singleton
-final engagementAnalyticsProvider = Provider<EngagementAnalyticsService>((ref) {
-  return EngagementAnalyticsService.instance;
-});
+final engagementAnalyticsProvider = Provider<EngagementAnalyticsService>(
+    (ref) => EngagementAnalyticsService.instance);
 
 /// User's most active hours (learned from behavior)
 final userActiveHoursProvider = FutureProvider<List<int>>((ref) async {
@@ -43,15 +42,18 @@ final userActiveHoursProvider = FutureProvider<List<int>>((ref) async {
 });
 
 /// User's preferred heat levels by game (learned from behavior)
-final userPreferredHeatLevelsProvider = FutureProvider<Map<String, String>>((ref) async {
+final userPreferredHeatLevelsProvider =
+    FutureProvider<Map<String, String>>((ref) async {
   final analytics = ref.watch(engagementAnalyticsProvider);
   return analytics.getPreferredHeatLevels();
 });
 
 /// Get user's preferred heat for a specific game
-final preferredHeatForGameProvider = FutureProvider.family<String, String>((ref, gameType) async {
+final preferredHeatForGameProvider =
+    FutureProvider.family<String, String>((ref, gameType) async {
   final preferences = await ref.watch(userPreferredHeatLevelsProvider.future);
-  return preferences[gameType] ?? 'PG'; // Default to PG if no preference learned
+  return preferences[gameType] ??
+      'PG'; // Default to PG if no preference learned
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -59,30 +61,34 @@ final preferredHeatForGameProvider = FutureProvider.family<String, String>((ref,
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Background pregeneration service singleton
-final backgroundPregenerationProvider = Provider<BackgroundPregenerationService>((ref) {
-  return BackgroundPregenerationService.instance;
-});
+final backgroundPregenerationProvider =
+    Provider<BackgroundPregenerationService>(
+        (ref) => BackgroundPregenerationService.instance);
 
 /// Pregenerated ice breakers for a scenario
-final pregeneratedIceBreakersProvider = Provider.family<List<String>, String>((ref, scenario) {
+final pregeneratedIceBreakersProvider =
+    Provider.family<List<String>, String>((ref, scenario) {
   final service = ref.watch(backgroundPregenerationProvider);
   return service.getIceBreakers(scenario);
 });
 
 /// Pregenerated bio suggestions for a style
-final pregeneratedBioSuggestionsProvider = Provider.family<List<String>, String>((ref, style) {
+final pregeneratedBioSuggestionsProvider =
+    Provider.family<List<String>, String>((ref, style) {
   final service = ref.watch(backgroundPregenerationProvider);
   return service.getBioSuggestions(style);
 });
 
 /// Pregenerated conversation templates for a situation
-final pregeneratedConversationTemplatesProvider = Provider.family<List<String>, String>((ref, situation) {
+final pregeneratedConversationTemplatesProvider =
+    Provider.family<List<String>, String>((ref, situation) {
   final service = ref.watch(backgroundPregenerationProvider);
   return service.getConversationTemplates(situation);
 });
 
 /// Check if pregenerated content is available
-final hasPregenContentProvider = Provider.family<bool, (ContentType, String)>((ref, params) {
+final hasPregenContentProvider =
+    Provider.family<bool, (ContentType, String)>((ref, params) {
   final service = ref.watch(backgroundPregenerationProvider);
   return service.hasContent(params.$1, params.$2);
 });
@@ -98,9 +104,11 @@ final pregenerationStatsProvider = Provider<Map<String, int>>((ref) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Smart game defaults based on learned preferences
-final smartGameDefaultsProvider = FutureProvider.family<SmartGameDefaults, String>((ref, gameType) async {
-  final preferredHeat = await ref.watch(preferredHeatForGameProvider(gameType).future);
-  
+final smartGameDefaultsProvider =
+    FutureProvider.family<SmartGameDefaults, String>((ref, gameType) async {
+  final preferredHeat =
+      await ref.watch(preferredHeatForGameProvider(gameType).future);
+
   return SmartGameDefaults(
     gameType: gameType,
     suggestedHeatLevel: preferredHeat,
@@ -109,13 +117,12 @@ final smartGameDefaultsProvider = FutureProvider.family<SmartGameDefaults, Strin
 
 /// Data class for smart game defaults
 class SmartGameDefaults {
-  final String gameType;
-  final String suggestedHeatLevel;
-
   const SmartGameDefaults({
     required this.gameType,
     required this.suggestedHeatLevel,
   });
+  final String gameType;
+  final String suggestedHeatLevel;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -128,11 +135,11 @@ void initializePhase1Services(String userId) {
   // Start prefetching
   final prefetch = PrefetchService.instance;
   prefetch.onAppOpen(userId);
-  
+
   // Start engagement tracking
   final analytics = EngagementAnalyticsService.instance;
   analytics.trackSessionStart();
-  
+
   // Start background pregeneration
   final pregen = BackgroundPregenerationService.instance;
   pregen.start();
@@ -144,11 +151,11 @@ Future<void> cleanupPhase1Services() async {
   // Flush analytics
   final analytics = EngagementAnalyticsService.instance;
   await analytics.forceFlush();
-  
+
   // Stop background generation
   final pregen = BackgroundPregenerationService.instance;
   pregen.stop();
-  
+
   // Clear caches
   final prefetch = PrefetchService.instance;
   prefetch.clearAll();

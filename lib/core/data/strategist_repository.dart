@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// ════════════════════════════════════════════════════════════════════════════
 /// STRATEGIST REPOSITORY
 /// Handles Tonight Mode, location services, and AI strategist operations
-/// 
+///
 /// PHASE 6: Geohash sharding for scalability (1M+ users)
 /// - Uses geohash_5 (~5km cells) for realtime subscriptions
 /// - Prevents global broadcast DDoS
@@ -15,22 +15,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Geohash calculator for client-side sharding
 class GeohashUtils {
   static const String _base32 = '0123456789bcdefghjkmnpqrstuvwxyz';
-  
+
   /// Calculate geohash from lat/lng at given precision
   /// Precision: 4 = ~39km, 5 = ~5km, 6 = ~1.2km
   static String encode(double latitude, double longitude, {int precision = 5}) {
-    double latMin = -90.0, latMax = 90.0;
-    double lngMin = -180.0, lngMax = 180.0;
+    double latMin = -90.0;
+    double latMax = 90.0;
+    double lngMin = -180.0;
+    double lngMax = 180.0;
     bool isLng = true;
     int bit = 0;
     int ch = 0;
     String geohash = '';
-    
+
     while (geohash.length < precision) {
       if (isLng) {
         final mid = (lngMin + lngMax) / 2;
         if (longitude >= mid) {
-          ch |= (16 >> bit);
+          ch |= 16 >> bit;
           lngMin = mid;
         } else {
           lngMax = mid;
@@ -38,26 +40,26 @@ class GeohashUtils {
       } else {
         final mid = (latMin + latMax) / 2;
         if (latitude >= mid) {
-          ch |= (16 >> bit);
+          ch |= 16 >> bit;
           latMin = mid;
         } else {
           latMax = mid;
         }
       }
-      
+
       isLng = !isLng;
       bit++;
-      
+
       if (bit == 5) {
         geohash += _base32[ch];
         bit = 0;
         ch = 0;
       }
     }
-    
+
     return geohash;
   }
-  
+
   /// Get neighboring geohashes for broader search
   static List<String> getNeighbors(String geohash) {
     // For simplicity, return the geohash and its 8 neighbors
@@ -67,11 +69,10 @@ class GeohashUtils {
 }
 
 class StrategistRepository {
+  StrategistRepository(this._supabase);
   final SupabaseClient _supabase;
   RealtimeChannel? _tonightModeChannel;
   String? _currentGeohash;
-
-  StrategistRepository(this._supabase);
 
   String? get _userId => _supabase.auth.currentUser?.id;
 
@@ -90,36 +91,33 @@ class StrategistRepository {
 
       // Use database function to update atomically
       try {
-        final result = await _supabase.rpc('toggle_tonight_mode', params: {
-          'p_user_id': _userId,
-          'p_enabled': true,
-          'p_lat': position.latitude,
-          'p_lng': position.longitude,
-        });
+        final result = await _supabase.rpc(
+          'toggle_tonight_mode',
+          params: {
+            'p_user_id': _userId,
+            'p_enabled': true,
+            'p_lat': position.latitude,
+            'p_lng': position.longitude,
+          },
+        );
         return result == true;
       } catch (e) {
         // Fallback to direct update
-        await _supabase
-            .from('profiles')
-            .update({
-              'current_status': 'tonight_mode',
-              'location_updated_at': DateTime.now().toIso8601String(),
-              'is_visible': true,
-              'last_active_at': DateTime.now().toIso8601String(),
-            })
-            .eq('id', _userId!);
+        await _supabase.from('profiles').update({
+          'current_status': 'tonight_mode',
+          'location_updated_at': DateTime.now().toIso8601String(),
+          'is_visible': true,
+          'last_active_at': DateTime.now().toIso8601String(),
+        }).eq('id', _userId!);
         return true;
       }
     } else {
       // Disable Tonight Mode
-      await _supabase
-          .from('profiles')
-          .update({
-            'current_status': 'active',
-            'is_visible': true,
-            'last_active_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', _userId!);
+      await _supabase.from('profiles').update({
+        'current_status': 'active',
+        'is_visible': true,
+        'last_active_at': DateTime.now().toIso8601String(),
+      }).eq('id', _userId!);
       return true;
     }
   }
@@ -156,12 +154,15 @@ class StrategistRepository {
     final position = await _getCurrentLocation();
     if (position == null) return;
 
-    await _supabase.rpc('toggle_tonight_mode', params: {
-      'p_user_id': _userId,
-      'p_enabled': true,
-      'p_lat': position.latitude,
-      'p_lng': position.longitude,
-    }).catchError((_) {
+    await _supabase.rpc(
+      'toggle_tonight_mode',
+      params: {
+        'p_user_id': _userId,
+        'p_enabled': true,
+        'p_lat': position.latitude,
+        'p_lng': position.longitude,
+      },
+    ).catchError((_) {
       // Silently fail if function doesn't exist
       return null;
     });
@@ -169,20 +170,24 @@ class StrategistRepository {
 
   /// Get nearby users in Tonight Mode
   /// PHASE 6: Uses geohash sharding instead of global query
-  Future<List<Map<String, dynamic>>> getNearbyUsers({double radiusKm = 10}) async {
+  Future<List<Map<String, dynamic>>> getNearbyUsers(
+      {double radiusKm = 10}) async {
     if (_userId == null) return [];
 
     try {
       // First try the database function (uses PostGIS)
-      final response = await _supabase.rpc('get_nearby_users', params: {
-        'user_id': _userId,
-        'radius_km': radiusKm,
-      });
+      final response = await _supabase.rpc(
+        'get_nearby_users',
+        params: {
+          'user_id': _userId,
+          'radius_km': radiusKm,
+        },
+      );
       return List<Map<String, dynamic>>.from(response ?? []);
     } catch (e) {
       // Fallback: Use geohash-based query (more scalable)
       if (_currentGeohash == null) return [];
-      
+
       final response = await _supabase
           .from('profiles')
           .select('id, display_name, avatar_url, geohash_5')
@@ -192,44 +197,43 @@ class StrategistRepository {
           .neq('id', _userId!)
           .order('last_active_at', ascending: false)
           .limit(50);
-      
+
       return List<Map<String, dynamic>>.from(response);
     }
   }
-  
+
   /// Subscribe to nearby Tonight Mode users via geohash channel
   /// PHASE 6: Geohash sharding prevents global broadcast DDoS
   Stream<List<Map<String, dynamic>>> watchNearbyUsers() {
     final controller = StreamController<List<Map<String, dynamic>>>();
-    
+
     _subscribeToGeohashChannel(controller);
-    
+
     // Also emit initial data
     getNearbyUsers().then((users) {
       if (!controller.isClosed) {
         controller.add(users);
       }
     });
-    
+
     return controller.stream;
   }
-  
+
   Future<void> _subscribeToGeohashChannel(
     StreamController<List<Map<String, dynamic>>> controller,
   ) async {
     // Get current position and calculate geohash
     final position = await _getCurrentLocation();
     if (position == null) return;
-    
+
     _currentGeohash = GeohashUtils.encode(
-      position.latitude, 
+      position.latitude,
       position.longitude,
-      precision: 5, // ~5km cells
     );
-    
+
     // Unsubscribe from previous channel
     await _tonightModeChannel?.unsubscribe();
-    
+
     // Subscribe to geohash-specific channel
     // Only users in the same ~5km cell will receive updates
     _tonightModeChannel = _supabase
@@ -253,7 +257,7 @@ class StrategistRepository {
         )
         .subscribe();
   }
-  
+
   /// Cleanup realtime subscription
   Future<void> dispose() async {
     await _tonightModeChannel?.unsubscribe();
@@ -347,9 +351,12 @@ class StrategistRepository {
     if (_userId == null) return 0.0;
 
     try {
-      final result = await _supabase.rpc('calculate_ghost_rate', params: {
-        'p_user_id': _userId,
-      });
+      final result = await _supabase.rpc(
+        'calculate_ghost_rate',
+        params: {
+          'p_user_id': _userId,
+        },
+      );
       return (result as num?)?.toDouble() ?? 0.0;
     } catch (e) {
       final response = await _supabase
@@ -363,30 +370,30 @@ class StrategistRepository {
 }
 
 /// Provider for StrategistRepository
-final strategistRepositoryProvider = Provider<StrategistRepository>((ref) {
-  return StrategistRepository(Supabase.instance.client);
-});
+final strategistRepositoryProvider = Provider<StrategistRepository>(
+    (ref) => StrategistRepository(Supabase.instance.client));
 
 /// Tonight Mode state provider with persistence
-final tonightModeStateProvider = StateNotifierProvider<TonightModeNotifier, bool>((ref) {
-  return TonightModeNotifier(ref);
-});
+final tonightModeStateProvider =
+    StateNotifierProvider<TonightModeNotifier, bool>(TonightModeNotifier.new);
 
 class TonightModeNotifier extends StateNotifier<bool> {
-  final Ref _ref;
-
   TonightModeNotifier(this._ref) : super(false) {
     _loadInitialState();
   }
+  final Ref _ref;
 
   Future<void> _loadInitialState() async {
-    final isEnabled = await _ref.read(strategistRepositoryProvider).isTonightModeEnabled();
+    final isEnabled =
+        await _ref.read(strategistRepositoryProvider).isTonightModeEnabled();
     state = isEnabled;
   }
 
   Future<bool> toggle() async {
     final newState = !state;
-    final success = await _ref.read(strategistRepositoryProvider).toggleTonightMode(newState);
+    final success = await _ref
+        .read(strategistRepositoryProvider)
+        .toggleTonightMode(newState);
     if (success) {
       state = newState;
     }
@@ -394,23 +401,25 @@ class TonightModeNotifier extends StateNotifier<bool> {
   }
 
   Future<void> enable() async {
-    final success = await _ref.read(strategistRepositoryProvider).toggleTonightMode(true);
+    final success =
+        await _ref.read(strategistRepositoryProvider).toggleTonightMode(true);
     if (success) state = true;
   }
 
   Future<void> disable() async {
-    final success = await _ref.read(strategistRepositoryProvider).toggleTonightMode(false);
+    final success =
+        await _ref.read(strategistRepositoryProvider).toggleTonightMode(false);
     if (success) state = false;
   }
 }
 
 /// Ghost rate provider
-final ghostRateProvider = FutureProvider<double>((ref) async {
-  return ref.watch(strategistRepositoryProvider).getGhostRate();
-});
+final ghostRateProvider = FutureProvider<double>(
+    (ref) async => ref.watch(strategistRepositoryProvider).getGhostRate());
 
 /// Nearby users provider (only active when Tonight Mode is ON)
-final nearbyUsersProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final nearbyUsersProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final isTonightMode = ref.watch(tonightModeStateProvider);
   if (!isTonightMode) return [];
   return ref.watch(strategistRepositoryProvider).getNearbyUsers();

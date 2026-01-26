@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/models/tag_rating.dart';
+import '../../../core/domain/models/tags_game.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
-import '../../../core/domain/models/tags_game.dart';
-import '../../../core/domain/models/tag_rating.dart';
 import '../widgets/tag_rating_display.dart';
-import 'ice_breakers_screen.dart';
-import 'share_or_dare_screen.dart';
 import 'down_to_clown_screen.dart';
-import 'path_of_pleasure_screen.dart';
-import 'lane_of_lust_screen.dart';
 import 'drama_sutra_screen.dart';
 import 'flash_freeze_screen.dart';
+import 'ice_breakers_screen.dart';
+import 'lane_of_lust_screen.dart';
+import 'path_of_pleasure_screen.dart';
+import 'share_or_dare_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TAG - Module 8 (Adult Games)
@@ -30,13 +30,13 @@ class TagScreen extends ConsumerStatefulWidget {
 class _TagScreenState extends ConsumerState<TagScreen> {
   List<TagsGame> _games = [];
   GameCategory? _selectedCategory;
-  
+
   @override
   void initState() {
     super.initState();
     // Populate games - these are core game modes, not mock data
     _games = [
-      TagsGame(
+      const TagsGame(
         id: 'dtc',
         title: 'Down to Clown',
         category: GameCategory.downToClown,
@@ -44,135 +44,127 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         minPlayers: 4,
         maxPlayers: 20,
       ),
-      TagsGame(
+      const TagsGame(
         id: 'icebreakers',
         title: 'Ice Breakers',
         category: GameCategory.icebreakers,
         description: 'Get to know each other with fun prompts',
-        minPlayers: 2,
-        maxPlayers: 10,
       ),
-      TagsGame(
+      const TagsGame(
         id: 'velvet',
         title: 'Share or Dare',
         category: GameCategory.shareOrDare,
         description: 'Truth or dare with a twist',
-        minPlayers: 2,
         maxPlayers: 8,
       ),
-      TagsGame(
+      const TagsGame(
         id: 'pop',
         title: 'Path of Pleasure',
         category: GameCategory.pathOfPleasure,
         description: '1v1 ranking battles',
-        minPlayers: 2,
         maxPlayers: 2,
       ),
-      TagsGame(
+      const TagsGame(
         id: 'lol',
         title: 'Lane of Lust',
         category: GameCategory.laneOfLust,
         description: 'Explore desires together',
-        minPlayers: 2,
         maxPlayers: 4,
       ),
-      TagsGame(
+      const TagsGame(
         id: 'drama',
         title: 'Drama-Sutra',
         category: GameCategory.dramaSutra,
         description: 'Intimate poses and positions',
-        minPlayers: 2,
         maxPlayers: 2,
       ),
-      TagsGame(
+      const TagsGame(
         id: 'flash',
         title: 'Flash Freeze',
         category: GameCategory.flashFreeze,
         description: 'Quick-fire decisions',
-        minPlayers: 2,
         maxPlayers: 6,
       ),
     ];
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VesparaColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildCategoryFilter(),
-            Expanded(child: _buildGamesList()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(VesparaIcons.back, color: VesparaColors.primary),
-          ),
-          Column(
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: VesparaColors.background,
+        body: SafeArea(
+          child: Column(
             children: [
-              Text(
-                'TAG',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 4,
-                  color: VesparaColors.tagsYellow,
-                ),
-              ),
-              Text(
-                "You're It 🎯",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VesparaColors.secondary,
-                ),
-              ),
+              _buildHeader(),
+              _buildCategoryFilter(),
+              Expanded(child: _buildGamesList()),
             ],
           ),
-          IconButton(
-            onPressed: () => _showRandomGame(),
-            icon: const Icon(VesparaIcons.random, color: VesparaColors.tagsYellow),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
 
-  Widget _buildCategoryFilter() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        children: [
-          _buildCategoryChip(null, 'All', VesparaIcons.games, VesparaColors.glow),
-          ...GameCategory.values.map((cat) => _buildCategoryChip(
-            cat,
-            cat.displayName,
-            _getCategoryIcon(cat),
-            _getCategoryColor(cat),
-          )),
-        ],
-      ),
-    );
-  }
+  Widget _buildHeader() => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(VesparaIcons.back, color: VesparaColors.primary),
+            ),
+            const Column(
+              children: [
+                Text(
+                  'TAG',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 4,
+                    color: VesparaColors.tagsYellow,
+                  ),
+                ),
+                Text(
+                  "You're It 🎯",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              onPressed: _showRandomGame,
+              icon: const Icon(VesparaIcons.random,
+                  color: VesparaColors.tagsYellow),
+            ),
+          ],
+        ),
+      );
 
-  Widget _buildCategoryChip(GameCategory? category, String name, IconData icon, Color color) {
+  Widget _buildCategoryFilter() => Container(
+        height: 80,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          children: [
+            _buildCategoryChip(
+                null, 'All', VesparaIcons.games, VesparaColors.glow),
+            ...GameCategory.values.map(
+              (cat) => _buildCategoryChip(
+                cat,
+                cat.displayName,
+                _getCategoryIcon(cat),
+                _getCategoryColor(cat),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildCategoryChip(
+      GameCategory? category, String name, IconData icon, Color color) {
     final isSelected = _selectedCategory == category;
-    
+
     return GestureDetector(
       onTap: () => setState(() => _selectedCategory = category),
       child: Container(
@@ -187,7 +179,8 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: isSelected ? color : VesparaColors.secondary),
+            Icon(icon,
+                size: 18, color: isSelected ? color : VesparaColors.secondary),
             const SizedBox(width: 6),
             Text(
               name,
@@ -207,17 +200,17 @@ class _TagScreenState extends ConsumerState<TagScreen> {
     final filteredGames = _selectedCategory == null
         ? _games
         : _games.where((g) => g.category == _selectedCategory).toList();
-    
+
     if (filteredGames.isEmpty) {
       return _buildEmptyState();
     }
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Responsive: smaller screens get taller cards
         final screenWidth = constraints.maxWidth;
         final aspectRatio = screenWidth < 360 ? 0.75 : 0.85;
-        
+
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -233,39 +226,37 @@ class _TagScreenState extends ConsumerState<TagScreen> {
     );
   }
 
-  Widget _buildGameCard(TagsGame game) {
-    return GestureDetector(
-      onTap: () => _showGameDetails(game),
-      child: Container(
-        decoration: BoxDecoration(
-          color: VesparaColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Image.asset(
-            _getGameIconPath(game.title),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              // Fallback if image not found
-              return Center(
-                child: Text(
-                  game.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: VesparaColors.primary,
+  Widget _buildGameCard(TagsGame game) => GestureDetector(
+        onTap: () => _showGameDetails(game),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Image.asset(
+              _getGameIconPath(game.title),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback if image not found
+                return Center(
+                  child: Text(
+                    game.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: VesparaColors.primary,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 
   String _getGameIconPath(String gameTitle) {
     // Map game titles to their icon file names
@@ -274,37 +265,35 @@ class _TagScreenState extends ConsumerState<TagScreen> {
     return 'assets/images/GAME ICONS/$fileName.png';
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            VesparaIcons.games,
-            size: 80,
-            color: VesparaColors.tagsYellow.withOpacity(0.3),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No games in this category',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.primary,
+  Widget _buildEmptyState() => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              VesparaIcons.games,
+              size: 80,
+              color: VesparaColors.tagsYellow.withOpacity(0.3),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try a different category',
-            style: TextStyle(
-              fontSize: 14,
-              color: VesparaColors.secondary,
+            const SizedBox(height: 24),
+            const Text(
+              'No games in this category',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: 8),
+            const Text(
+              'Try a different category',
+              style: TextStyle(
+                fontSize: 14,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ],
+        ),
+      );
 
   IconData _getCategoryIcon(GameCategory category) {
     switch (category) {
@@ -338,12 +327,12 @@ class _TagScreenState extends ConsumerState<TagScreen> {
 
   void _showGameDetails(TagsGame game) {
     final categoryColor = _getCategoryColor(game.category);
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => DraggableScrollableSheet(
@@ -369,14 +358,14 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Header - simplified
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       game.title,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                         color: VesparaColors.primary,
@@ -385,7 +374,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                     const SizedBox(height: 4),
                     Text(
                       game.description ?? game.category.description,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: VesparaColors.secondary,
                         height: 1.4,
@@ -393,14 +382,14 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // TAG Rating Grid
                 TagRatingDisplay(rating: _getTagRating(game.category)),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Start button
                 SizedBox(
                   width: double.infinity,
@@ -417,11 +406,11 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(VesparaIcons.play),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           'Start Game',
                           style: TextStyle(
@@ -440,7 +429,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       ),
     );
   }
-  
+
   TagRating _getTagRating(GameCategory category) {
     switch (category) {
       case GameCategory.downToClown:
@@ -460,36 +449,34 @@ class _TagScreenState extends ConsumerState<TagScreen> {
     }
   }
 
-  Widget _buildInfoCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: VesparaColors.background,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 20, color: VesparaColors.glow),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.primary,
+  Widget _buildInfoCard(String label, String value, IconData icon) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: VesparaColors.background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: VesparaColors.glow),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: VesparaColors.secondary,
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: VesparaColors.secondary,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 
   void _showRandomGame() {
     if (_games.isEmpty) return;

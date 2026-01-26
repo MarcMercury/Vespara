@@ -16,11 +16,10 @@ import 'ai_service.dart';
 /// User perception: "These matches are SO much better than other apps"
 
 class PredictiveMatchingEngine {
+  PredictiveMatchingEngine._();
   static PredictiveMatchingEngine? _instance;
   static PredictiveMatchingEngine get instance =>
       _instance ??= PredictiveMatchingEngine._();
-
-  PredictiveMatchingEngine._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
   final AIService _aiService = AIService.instance;
@@ -41,13 +40,13 @@ class PredictiveMatchingEngine {
     final signals = await _gatherSignals(myProfile, theirProfile);
 
     // Calculate base score from explicit factors
-    double baseScore = _calculateBaseScore(signals);
+    final double baseScore = _calculateBaseScore(signals);
 
     // Apply learned weights from successful couples
     final learnedBoost = await _applyLearnedWeights(signals);
 
     // Calculate final score
-    double finalScore = (baseScore + learnedBoost).clamp(0.0, 1.0);
+    final double finalScore = (baseScore + learnedBoost).clamp(0.0, 1.0);
 
     // Generate human-readable explanation
     final explanation = _generateExplanation(signals, finalScore);
@@ -74,10 +73,12 @@ class PredictiveMatchingEngine {
         theirProfile: candidate,
       );
 
-      rankings.add(RankedMatch(
-        profile: candidate,
-        prediction: prediction,
-      ));
+      rankings.add(
+        RankedMatch(
+          profile: candidate,
+          prediction: prediction,
+        ),
+      );
     }
 
     // Sort by score, highest first
@@ -105,7 +106,8 @@ class PredictiveMatchingEngine {
         {};
 
     final sharedInterests = myInterests.intersection(theirInterests);
-    final complementaryInterests = _findComplementary(myInterests, theirInterests);
+    final complementaryInterests =
+        _findComplementary(myInterests, theirInterests);
 
     // Communication style signals
     final myBio = (myProfile['bio'] ?? '').toString();
@@ -171,9 +173,8 @@ class PredictiveMatchingEngine {
     // Similar length preference
     final len1 = bio1.length;
     final len2 = bio2.length;
-    final lengthRatio = len1 > 0 && len2 > 0
-        ? (len1 < len2 ? len1 / len2 : len2 / len1)
-        : 0.5;
+    final lengthRatio =
+        len1 > 0 && len2 > 0 ? (len1 < len2 ? len1 / len2 : len2 / len1) : 0.5;
     score += (lengthRatio - 0.5) * 0.2;
 
     // Emoji usage
@@ -194,9 +195,8 @@ class PredictiveMatchingEngine {
     return score.clamp(0.0, 1.0);
   }
 
-  bool _hasEmojis(String text) {
-    return RegExp(r'[\u{1F300}-\u{1F9FF}]', unicode: true).hasMatch(text);
-  }
+  bool _hasEmojis(String text) =>
+      RegExp(r'[\u{1F300}-\u{1F9FF}]', unicode: true).hasMatch(text);
 
   bool _hasHumor(String text) {
     final lower = text.toLowerCase();
@@ -319,33 +319,39 @@ class PredictiveMatchingEngine {
     final attachment1 = _inferAttachmentStyle(profile1);
     final attachment2 = _inferAttachmentStyle(profile2);
     if (_areAttachmentStylesCompatible(attachment1, attachment2)) {
-      signals.add(HiddenSignal(
-        factor: 'attachment_compatibility',
-        strength: 0.15,
-        description: 'Compatible emotional styles',
-      ));
+      signals.add(
+        HiddenSignal(
+          factor: 'attachment_compatibility',
+          strength: 0.15,
+          description: 'Compatible emotional styles',
+        ),
+      );
     }
 
     // Detect ambition level match
     final ambition1 = _inferAmbitionLevel(profile1);
     final ambition2 = _inferAmbitionLevel(profile2);
     if ((ambition1 - ambition2).abs() < 2) {
-      signals.add(HiddenSignal(
-        factor: 'ambition_match',
-        strength: 0.1,
-        description: 'Similar drive levels',
-      ));
+      signals.add(
+        HiddenSignal(
+          factor: 'ambition_match',
+          strength: 0.1,
+          description: 'Similar drive levels',
+        ),
+      );
     }
 
     // Detect social energy match
     final social1 = _inferSocialEnergy(profile1);
     final social2 = _inferSocialEnergy(profile2);
     if ((social1 - social2).abs() < 2) {
-      signals.add(HiddenSignal(
-        factor: 'social_energy_match',
-        strength: 0.1,
-        description: 'Compatible social energy',
-      ));
+      signals.add(
+        HiddenSignal(
+          factor: 'social_energy_match',
+          strength: 0.1,
+          description: 'Compatible social energy',
+        ),
+      );
     }
 
     return signals;
@@ -475,7 +481,8 @@ class PredictiveMatchingEngine {
         if (factor == 'shared_interests' && signals.sharedInterestCount > 2) {
           boost += weight;
         }
-        if (factor == 'communication' && signals.communicationStyleMatch > 0.7) {
+        if (factor == 'communication' &&
+            signals.communicationStyleMatch > 0.7) {
           boost += weight;
         }
         // Add more learned factors as data accumulates
@@ -535,11 +542,8 @@ class PredictiveMatchingEngine {
     return reasons.take(3).toList();
   }
 
-  List<String> _getHiddenFactors(CompatibilitySignals signals) {
-    return signals.hiddenSignals
-        .map((s) => s.description)
-        .toList();
-  }
+  List<String> _getHiddenFactors(CompatibilitySignals signals) =>
+      signals.hiddenSignals.map((s) => s.description).toList();
 
   // ═══════════════════════════════════════════════════════════════════════════
   // LEARN FROM SUCCESS
@@ -566,10 +570,12 @@ class PredictiveMatchingEngine {
     }
   }
 
-  Future<void> _updateLearnedWeights(String matchId, MatchOutcome outcome) async {
+  Future<void> _updateLearnedWeights(
+      String matchId, MatchOutcome outcome) async {
     // This would be a background job in production
     // For now, just log the intent
-    debugPrint('Would update weights for match $matchId with outcome ${outcome.name}');
+    debugPrint(
+        'Would update weights for match $matchId with outcome ${outcome.name}');
   }
 }
 
@@ -578,12 +584,6 @@ class PredictiveMatchingEngine {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class MatchPrediction {
-  final double score;
-  final CompatibilitySignals signals;
-  final String explanation;
-  final List<String> topReasons;
-  final List<String> hiddenFactors;
-
   MatchPrediction({
     required this.score,
     required this.signals,
@@ -591,6 +591,11 @@ class MatchPrediction {
     required this.topReasons,
     required this.hiddenFactors,
   });
+  final double score;
+  final CompatibilitySignals signals;
+  final String explanation;
+  final List<String> topReasons;
+  final List<String> hiddenFactors;
 
   String get scoreLabel {
     if (score >= 0.8) return 'Great Match!';
@@ -608,14 +613,6 @@ class MatchPrediction {
 }
 
 class CompatibilitySignals {
-  final int sharedInterestCount;
-  final List<String> sharedInterests;
-  final List<String> complementaryInterests;
-  final double communicationStyleMatch;
-  final double activityLevelMatch;
-  final double lifestyleMatch;
-  final List<HiddenSignal> hiddenSignals;
-
   CompatibilitySignals({
     required this.sharedInterestCount,
     required this.sharedInterests,
@@ -625,35 +622,40 @@ class CompatibilitySignals {
     required this.lifestyleMatch,
     required this.hiddenSignals,
   });
+  final int sharedInterestCount;
+  final List<String> sharedInterests;
+  final List<String> complementaryInterests;
+  final double communicationStyleMatch;
+  final double activityLevelMatch;
+  final double lifestyleMatch;
+  final List<HiddenSignal> hiddenSignals;
 }
 
 class HiddenSignal {
-  final String factor;
-  final double strength;
-  final String description;
-
   HiddenSignal({
     required this.factor,
     required this.strength,
     required this.description,
   });
+  final String factor;
+  final double strength;
+  final String description;
 }
 
 class RankedMatch {
-  final Map<String, dynamic> profile;
-  final MatchPrediction prediction;
-
   RankedMatch({
     required this.profile,
     required this.prediction,
   });
+  final Map<String, dynamic> profile;
+  final MatchPrediction prediction;
 }
 
 enum MatchOutcome {
-  noEngagement,      // Matched but never messaged
+  noEngagement, // Matched but never messaged
   shortConversation, // <10 messages
-  longConversation,  // 10+ messages
-  datePlanned,       // Mentioned meeting up
-  dateCompleted,     // Actually met
-  relationship,      // Became exclusive
+  longConversation, // 10+ messages
+  datePlanned, // Mentioned meeting up
+  dateCompleted, // Actually met
+  relationship, // Became exclusive
 }

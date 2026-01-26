@@ -173,21 +173,18 @@ class OfflineIndicator extends ConsumerWidget {
 
 /// Compact system health indicator for app bars
 class SystemHealthIndicator extends ConsumerWidget {
-  final bool showDetails;
-
   const SystemHealthIndicator({
     super.key,
     this.showDetails = false,
   });
+  final bool showDetails;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final health = ref.watch(systemHealthProvider);
 
     return GestureDetector(
-      onTap: showDetails
-          ? () => _showHealthDetails(context, health)
-          : null,
+      onTap: showDetails ? () => _showHealthDetails(context, health) : null,
       child: Container(
         padding: const EdgeInsets.all(8),
         child: Row(
@@ -243,14 +240,17 @@ class SystemHealthIndicator extends ConsumerWidget {
               icon: Icons.sync,
               label: 'Pending Operations',
               value: health.pendingOperations.toString(),
-              color: health.pendingOperations == 0 ? Colors.green : Colors.orange,
+              color:
+                  health.pendingOperations == 0 ? Colors.green : Colors.orange,
             ),
             const SizedBox(height: 8),
             _HealthRow(
               icon: Icons.auto_awesome,
               label: 'AI Budget',
               value: '${health.aiTokensRemaining} tokens',
-              color: health.aiTokensRemaining > 10000 ? Colors.green : Colors.orange,
+              color: health.aiTokensRemaining > 10000
+                  ? Colors.green
+                  : Colors.orange,
             ),
             const SizedBox(height: 24),
           ],
@@ -261,29 +261,27 @@ class SystemHealthIndicator extends ConsumerWidget {
 }
 
 class _HealthRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
   const _HealthRow({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
   });
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: color),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label)),
-        Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label)),
+          Text(value,
+              style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+        ],
+      );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -292,58 +290,49 @@ class _HealthRow extends StatelessWidget {
 
 /// Widget that shows error state with retry button
 class RetryableContent extends StatelessWidget {
-  final String errorMessage;
-  final VoidCallback onRetry;
-  final Widget? icon;
-
   const RetryableContent({
     super.key,
     required this.errorMessage,
     required this.onRetry,
     this.icon,
   });
+  final String errorMessage;
+  final VoidCallback onRetry;
+  final Widget? icon;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            icon ??
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.grey[400],
-                ),
-            const SizedBox(height: 16),
-            Text(
-              errorMessage,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
-            ),
-          ],
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              icon ??
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+              const SizedBox(height: 16),
+              Text(
+                errorMessage,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 /// Widget that wraps AsyncValue with proper loading/error states
 class AsyncValueWidget<T> extends StatelessWidget {
-  final AsyncValue<T> value;
-  final Widget Function(T data) data;
-  final Widget Function()? loading;
-  final Widget Function(Object error, StackTrace stackTrace)? error;
-  final VoidCallback? onRetry;
-
   const AsyncValueWidget({
     super.key,
     required this.value,
@@ -352,28 +341,32 @@ class AsyncValueWidget<T> extends StatelessWidget {
     this.error,
     this.onRetry,
   });
+  final AsyncValue<T> value;
+  final Widget Function(T data) data;
+  final Widget Function()? loading;
+  final Widget Function(Object error, StackTrace stackTrace)? error;
+  final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) {
-    return value.when(
-      data: data,
-      loading: loading ?? () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) {
-        if (error != null) {
-          return error!(e, st);
-        }
+  Widget build(BuildContext context) => value.when(
+        data: data,
+        loading:
+            loading ?? () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) {
+          if (error != null) {
+            return error!(e, st);
+          }
 
-        if (onRetry != null) {
-          return RetryableContent(
-            errorMessage: e.toString(),
-            onRetry: onRetry!,
+          if (onRetry != null) {
+            return RetryableContent(
+              errorMessage: e.toString(),
+              onRetry: onRetry!,
+            );
+          }
+
+          return Center(
+            child: Text('Error: $e'),
           );
-        }
-
-        return Center(
-          child: Text('Error: $e'),
-        );
-      },
-    );
-  }
+        },
+      );
 }

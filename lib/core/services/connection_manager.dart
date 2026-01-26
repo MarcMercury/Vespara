@@ -24,10 +24,9 @@ enum ConnectionStatus {
 }
 
 class ConnectionManager {
+  ConnectionManager._();
   static ConnectionManager? _instance;
   static ConnectionManager get instance => _instance ??= ConnectionManager._();
-
-  ConnectionManager._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -180,10 +179,12 @@ class ConnectionManager {
       }
 
       final delay = Duration(
-        milliseconds: (baseDelay.inMilliseconds * (1 << (attempt - 1))).clamp(0, 60000),
+        milliseconds:
+            (baseDelay.inMilliseconds * (1 << (attempt - 1))).clamp(0, 60000),
       );
 
-      debugPrint('ConnectionManager: Reconnect attempt $attempt in ${delay.inSeconds}s');
+      debugPrint(
+          'ConnectionManager: Reconnect attempt $attempt in ${delay.inSeconds}s');
 
       _reconnectTimer = Timer(delay, () async {
         try {
@@ -243,10 +244,9 @@ class ConnectionManager {
 
 /// Queues operations for execution when connection is restored
 class OfflineQueue {
+  OfflineQueue._();
   static OfflineQueue? _instance;
   static OfflineQueue get instance => _instance ??= OfflineQueue._();
-
-  OfflineQueue._();
 
   final List<_QueuedOperation> _queue = [];
   bool _isProcessing = false;
@@ -261,15 +261,18 @@ class OfflineQueue {
     // Remove duplicate if exists
     _queue.removeWhere((op) => op.id == id);
 
-    _queue.add(_QueuedOperation(
-      id: id,
-      operation: operation,
-      description: description,
-      enqueuedAt: DateTime.now(),
-      expiresAt: expiresAt,
-    ));
+    _queue.add(
+      _QueuedOperation(
+        id: id,
+        operation: operation,
+        description: description,
+        enqueuedAt: DateTime.now(),
+        expiresAt: expiresAt,
+      ),
+    );
 
-    debugPrint('OfflineQueue: Enqueued operation $id (${_queue.length} pending)');
+    debugPrint(
+        'OfflineQueue: Enqueued operation $id (${_queue.length} pending)');
   }
 
   /// Number of pending operations
@@ -311,7 +314,8 @@ class OfflineQueue {
     }
 
     _isProcessing = false;
-    debugPrint('OfflineQueue: Processing complete (${_queue.length} remaining)');
+    debugPrint(
+        'OfflineQueue: Processing complete (${_queue.length} remaining)');
   }
 
   /// Clear all pending operations
@@ -329,12 +333,6 @@ class OfflineQueue {
 }
 
 class _QueuedOperation {
-  final String id;
-  final Future<void> Function() operation;
-  final String? description;
-  final DateTime enqueuedAt;
-  final DateTime? expiresAt;
-
   _QueuedOperation({
     required this.id,
     required this.operation,
@@ -342,4 +340,9 @@ class _QueuedOperation {
     required this.enqueuedAt,
     this.expiresAt,
   });
+  final String id;
+  final Future<void> Function() operation;
+  final String? description;
+  final DateTime enqueuedAt;
+  final DateTime? expiresAt;
 }

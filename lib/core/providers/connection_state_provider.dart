@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/models/user_profile.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// CONNECTION STATE PROVIDER
@@ -8,16 +7,7 @@ import '../domain/models/user_profile.dart';
 
 /// Connection between two users
 class UserConnection {
-  final String id;
-  final String userId;
-  final String connectedUserId;
-  final String? connectedUserName;
-  final String? connectedUserAvatar;
-  final ConnectionType type;
-  final String? eventId; // If connected at an event
-  final String? eventName;
-  final DateTime connectedAt;
-  final bool isPending; // For connection requests
+  // For connection requests
 
   const UserConnection({
     required this.id,
@@ -31,33 +21,27 @@ class UserConnection {
     required this.connectedAt,
     this.isPending = false,
   });
+  final String id;
+  final String userId;
+  final String connectedUserId;
+  final String? connectedUserName;
+  final String? connectedUserAvatar;
+  final ConnectionType type;
+  final String? eventId; // If connected at an event
+  final String? eventName;
+  final DateTime connectedAt;
+  final bool isPending;
 }
 
 enum ConnectionType {
-  qrCode,      // Scanned QR code in person
-  event,       // Met at an event
-  match,       // Matched via swiping
-  mutual,      // Mutual friends introduced
+  qrCode, // Scanned QR code in person
+  event, // Met at an event
+  match, // Matched via swiping
+  mutual, // Mutual friends introduced
 }
 
 /// Event with attendee tracking
 class VesparaEvent {
-  final String id;
-  final String hostId;
-  final String hostName;
-  final String? hostAvatar;
-  final String title;
-  final String? description;
-  final String? coverImageUrl;
-  final String? venue;
-  final String? address;
-  final DateTime startTime;
-  final DateTime? endTime;
-  final bool isPublic;
-  final int? maxAttendees;
-  final List<EventAttendee> attendees;
-  final DateTime createdAt;
-
   const VesparaEvent({
     required this.id,
     required this.hostId,
@@ -75,20 +59,30 @@ class VesparaEvent {
     this.attendees = const [],
     required this.createdAt,
   });
+  final String id;
+  final String hostId;
+  final String hostName;
+  final String? hostAvatar;
+  final String title;
+  final String? description;
+  final String? coverImageUrl;
+  final String? venue;
+  final String? address;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final bool isPublic;
+  final int? maxAttendees;
+  final List<EventAttendee> attendees;
+  final DateTime createdAt;
 
-  bool get isPast => DateTime.now().isAfter(endTime ?? startTime.add(const Duration(hours: 3)));
+  bool get isPast => DateTime.now()
+      .isAfter(endTime ?? startTime.add(const Duration(hours: 3)));
   bool get isUpcoming => !isPast;
   int get attendeeCount => attendees.length;
   bool get isFull => maxAttendees != null && attendeeCount >= maxAttendees!;
 }
 
 class EventAttendee {
-  final String oderId;
-  final String name;
-  final String? avatar;
-  final AttendeeStatus status;
-  final DateTime joinedAt;
-
   const EventAttendee({
     required String userId,
     required this.name,
@@ -96,6 +90,11 @@ class EventAttendee {
     this.status = AttendeeStatus.going,
     required this.joinedAt,
   }) : oderId = userId;
+  final String oderId;
+  final String name;
+  final String? avatar;
+  final AttendeeStatus status;
+  final DateTime joinedAt;
 
   String get userId => oderId;
 }
@@ -104,12 +103,6 @@ enum AttendeeStatus { going, maybe, invited }
 
 /// Connection state for event attendees and instant connections
 class VesparaConnectionState {
-  final List<UserConnection> connections;
-  final List<VesparaEvent> events;
-  final Set<String> connectedUserIds;
-  final String? myQrCode;
-  final bool isScanning;
-
   const VesparaConnectionState({
     this.connections = const [],
     this.events = const [],
@@ -117,6 +110,11 @@ class VesparaConnectionState {
     this.myQrCode,
     this.isScanning = false,
   });
+  final List<UserConnection> connections;
+  final List<VesparaEvent> events;
+  final Set<String> connectedUserIds;
+  final String? myQrCode;
+  final bool isScanning;
 
   VesparaConnectionState copyWith({
     List<UserConnection>? connections,
@@ -124,24 +122,23 @@ class VesparaConnectionState {
     Set<String>? connectedUserIds,
     String? myQrCode,
     bool? isScanning,
-  }) {
-    return VesparaConnectionState(
-      connections: connections ?? this.connections,
-      events: events ?? this.events,
-      connectedUserIds: connectedUserIds ?? this.connectedUserIds,
-      myQrCode: myQrCode ?? this.myQrCode,
-      isScanning: isScanning ?? this.isScanning,
-    );
-  }
+  }) =>
+      VesparaConnectionState(
+        connections: connections ?? this.connections,
+        events: events ?? this.events,
+        connectedUserIds: connectedUserIds ?? this.connectedUserIds,
+        myQrCode: myQrCode ?? this.myQrCode,
+        isScanning: isScanning ?? this.isScanning,
+      );
 
   /// Get people from past events I'm not connected to
   List<EventAttendee> getUnconnectedEventAttendees(String myUserId) {
     final Set<String> seen = {};
     final List<EventAttendee> result = [];
-    
+
     for (final event in events.where((e) => e.isPast)) {
       for (final attendee in event.attendees) {
-        if (attendee.userId != myUserId && 
+        if (attendee.userId != myUserId &&
             !connectedUserIds.contains(attendee.userId) &&
             !seen.contains(attendee.userId)) {
           seen.add(attendee.userId);
@@ -153,17 +150,19 @@ class VesparaConnectionState {
   }
 
   /// Get public upcoming events
-  List<VesparaEvent> get publicUpcomingEvents => 
+  List<VesparaEvent> get publicUpcomingEvents =>
       events.where((e) => e.isPublic && e.isUpcoming).toList()
         ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
   /// Get my events (hosted + attending)
-  List<VesparaEvent> getMyEvents(String myUserId) {
-    return events.where((e) => 
-      e.hostId == myUserId || 
-      e.attendees.any((a) => a.userId == myUserId)
-    ).toList()..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
+  List<VesparaEvent> getMyEvents(String myUserId) => events
+      .where(
+        (e) =>
+            e.hostId == myUserId ||
+            e.attendees.any((a) => a.userId == myUserId),
+      )
+      .toList()
+    ..sort((a, b) => a.startTime.compareTo(b.startTime));
 }
 
 /// Connection state notifier
@@ -172,11 +171,7 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
 
   static VesparaConnectionState _initialState() {
     // Start with empty state - data will be loaded from database
-    return const VesparaConnectionState(
-      events: [],
-      connections: [],
-      connectedUserIds: {},
-    );
+    return const VesparaConnectionState();
   }
 
   /// Generate QR code data for my profile
@@ -199,7 +194,6 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
       connectedUserId: scannedUserId,
       connectedUserName: userName,
       connectedUserAvatar: avatar,
-      type: ConnectionType.qrCode,
       connectedAt: DateTime.now(),
     );
 
@@ -210,7 +204,8 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
   }
 
   /// Connect via event (swipe on event attendee)
-  void connectViaEvent(String userId, String? userName, String? avatar, String eventId, String? eventName) {
+  void connectViaEvent(String userId, String? userName, String? avatar,
+      String eventId, String? eventName) {
     if (state.connectedUserIds.contains(userId)) return;
 
     final newConnection = UserConnection(
@@ -300,9 +295,9 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
 }
 
 /// Providers
-final connectionStateProvider = StateNotifierProvider<ConnectionStateNotifier, VesparaConnectionState>((ref) {
-  return ConnectionStateNotifier();
-});
+final connectionStateProvider =
+    StateNotifierProvider<ConnectionStateNotifier, VesparaConnectionState>(
+        (ref) => ConnectionStateNotifier());
 
 final publicEventsProvider = Provider<List<VesparaEvent>>((ref) {
   final state = ref.watch(connectionStateProvider);

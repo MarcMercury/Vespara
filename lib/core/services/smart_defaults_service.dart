@@ -15,13 +15,14 @@ import 'engagement_analytics_service.dart';
 /// Users feel like "the app just gets me" - no effort required.
 
 class SmartDefaultsService {
-  static SmartDefaultsService? _instance;
-  static SmartDefaultsService get instance => _instance ??= SmartDefaultsService._();
-
   SmartDefaultsService._();
+  static SmartDefaultsService? _instance;
+  static SmartDefaultsService get instance =>
+      _instance ??= SmartDefaultsService._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
-  final EngagementAnalyticsService _analytics = EngagementAnalyticsService.instance;
+  final EngagementAnalyticsService _analytics =
+      EngagementAnalyticsService.instance;
 
   // Cached defaults (refreshed periodically)
   Map<String, String> _heatLevelDefaults = {};
@@ -49,11 +50,14 @@ class SmartDefaultsService {
     // Fallback to database query
     if (_userId != null) {
       try {
-        final result = await _supabase.rpc('get_user_preferred_heat', params: {
-          'p_user_id': _userId,
-          'p_game_type': gameType,
-        });
-        
+        final result = await _supabase.rpc(
+          'get_user_preferred_heat',
+          params: {
+            'p_user_id': _userId,
+            'p_game_type': gameType,
+          },
+        );
+
         if (result != null) {
           _heatLevelDefaults[gameType] = result as String;
           return result;
@@ -77,16 +81,17 @@ class SmartDefaultsService {
     try {
       // Get relationship metrics
       final metrics = await _getRelationshipMetrics(matchId);
-      
+
       // Determine appropriate heat based on relationship stage
       if (metrics['message_count'] < 10) {
         return 'PG'; // Just getting to know each other
       } else if (metrics['message_count'] < 50) {
         return 'PG-13'; // Building comfort
-      } else if (metrics['days_matched'] > 7 && metrics['message_count'] > 100) {
+      } else if (metrics['days_matched'] > 7 &&
+          metrics['message_count'] > 100) {
         return 'R'; // Established connection
       }
-      
+
       // Fall back to user's general preference
       return getSuggestedHeatLevel(gameType);
     } catch (e) {
@@ -108,7 +113,7 @@ class SmartDefaultsService {
         .eq('match_id', matchId)
         .count();
 
-    final matchedAt = response?['matched_at'] != null 
+    final matchedAt = response?['matched_at'] != null
         ? DateTime.parse(response!['matched_at'])
         : DateTime.now();
 
@@ -147,10 +152,10 @@ class SmartDefaultsService {
     try {
       // Get match's activity patterns
       final matchActivity = await _getMatchActivityPatterns(matchId);
-      
+
       // Get user's own patterns
       await _ensureRefreshed();
-      
+
       // Find overlapping active hours
       final overlappingHours = _findOverlappingHours(
         _activeHours,
@@ -192,7 +197,7 @@ class SmartDefaultsService {
   Future<bool> isGoodTimeToMessage(String matchId) async {
     final suggestion = await getBestMessageTime(matchId);
     final currentHour = DateTime.now().hour;
-    
+
     // Within 2 hours of suggested time
     return (currentHour - suggestion.suggestedHour).abs() <= 2;
   }
@@ -207,9 +212,8 @@ class SmartDefaultsService {
 
     if (match == null) return {};
 
-    final otherUserId = match['user1_id'] == _userId 
-        ? match['user2_id'] 
-        : match['user1_id'];
+    final otherUserId =
+        match['user1_id'] == _userId ? match['user2_id'] : match['user1_id'];
 
     // Get their preferences
     final prefs = await _supabase
@@ -227,9 +231,8 @@ class SmartDefaultsService {
     };
   }
 
-  List<int> _findOverlappingHours(List<int> hours1, List<int> hours2) {
-    return hours1.where((h) => hours2.contains(h)).toList();
-  }
+  List<int> _findOverlappingHours(List<int> hours1, List<int> hours2) =>
+      hours1.where((h) => hours2.contains(h)).toList();
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PROFILE SUGGESTIONS
@@ -241,9 +244,12 @@ class SmartDefaultsService {
 
     try {
       // Get popular interests from users with similar demographics
-      final response = await _supabase.rpc('get_popular_interests', params: {
-        'p_limit': 10,
-      }).catchError((_) => <dynamic>[]);
+      final response = await _supabase.rpc(
+        'get_popular_interests',
+        params: {
+          'p_limit': 10,
+        },
+      ).catchError((_) => <dynamic>[]);
 
       return List<String>.from(response ?? []);
     } catch (e) {
@@ -269,40 +275,50 @@ class SmartDefaultsService {
 
       // Check for missing/weak fields
       if ((profile['bio'] as String?)?.isEmpty ?? true) {
-        suggestions.add(ProfileSuggestion(
-          field: 'bio',
-          message: 'Add a bio to get 3x more matches',
-          priority: 1,
-        ));
+        suggestions.add(
+          ProfileSuggestion(
+            field: 'bio',
+            message: 'Add a bio to get 3x more matches',
+            priority: 1,
+          ),
+        );
       } else if ((profile['bio'] as String).length < 50) {
-        suggestions.add(ProfileSuggestion(
-          field: 'bio',
-          message: 'Profiles with longer bios get more messages',
-          priority: 2,
-        ));
+        suggestions.add(
+          ProfileSuggestion(
+            field: 'bio',
+            message: 'Profiles with longer bios get more messages',
+            priority: 2,
+          ),
+        );
       }
 
       final photos = profile['photos'] as List? ?? [];
       if (photos.isEmpty) {
-        suggestions.add(ProfileSuggestion(
-          field: 'photos',
-          message: 'Add photos to start matching',
-          priority: 1,
-        ));
+        suggestions.add(
+          ProfileSuggestion(
+            field: 'photos',
+            message: 'Add photos to start matching',
+            priority: 1,
+          ),
+        );
       } else if (photos.length < 3) {
-        suggestions.add(ProfileSuggestion(
-          field: 'photos',
-          message: 'Profiles with 3+ photos get 2x more likes',
-          priority: 2,
-        ));
+        suggestions.add(
+          ProfileSuggestion(
+            field: 'photos',
+            message: 'Profiles with 3+ photos get 2x more likes',
+            priority: 2,
+          ),
+        );
       }
 
       if ((profile['interests'] as List?)?.isEmpty ?? true) {
-        suggestions.add(ProfileSuggestion(
-          field: 'interests',
-          message: 'Add interests to find better matches',
-          priority: 2,
-        ));
+        suggestions.add(
+          ProfileSuggestion(
+            field: 'interests',
+            message: 'Add interests to find better matches',
+            priority: 2,
+          ),
+        );
       }
 
       return suggestions..sort((a, b) => a.priority.compareTo(b.priority));
@@ -382,7 +398,7 @@ class SmartDefaultsService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> _ensureRefreshed() async {
-    if (_lastRefresh != null && 
+    if (_lastRefresh != null &&
         DateTime.now().difference(_lastRefresh!) < _refreshInterval) {
       return;
     }
@@ -431,15 +447,14 @@ class SmartDefaultsService {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class MessageTimingSuggestion {
-  final int suggestedHour;
-  final double confidence;
-  final String reason;
-
   MessageTimingSuggestion({
     required this.suggestedHour,
     required this.confidence,
     required this.reason,
   });
+  final int suggestedHour;
+  final double confidence;
+  final String reason;
 
   String get formattedTime {
     final hour = suggestedHour % 12 == 0 ? 12 : suggestedHour % 12;
@@ -449,25 +464,23 @@ class MessageTimingSuggestion {
 }
 
 class ProfileSuggestion {
-  final String field;
-  final String message;
-  final int priority;
-
   ProfileSuggestion({
     required this.field,
     required this.message,
     required this.priority,
   });
+  final String field;
+  final String message;
+  final int priority;
 }
 
 class GameSuggestion {
-  final String gameType;
-  final String reason;
-  final String suggestedHeat;
-
   GameSuggestion({
     required this.gameType,
     required this.reason,
     required this.suggestedHeat,
   });
+  final String gameType;
+  final String reason;
+  final String suggestedHeat;
 }

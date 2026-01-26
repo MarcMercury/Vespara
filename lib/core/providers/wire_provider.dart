@@ -12,14 +12,6 @@ import '../domain/models/wire_models.dart';
 // ============================================================================
 
 class WireState {
-  final List<WireConversation> conversations;
-  final Map<String, List<WireMessage>> messagesByConversation;
-  final Map<String, List<ConversationParticipant>> participantsByConversation;
-  final String? activeConversationId;
-  final bool isLoading;
-  final String? error;
-  final Map<String, List<TypingUser>> typingByConversation;
-  
   const WireState({
     this.conversations = const [],
     this.messagesByConversation = const {},
@@ -29,7 +21,14 @@ class WireState {
     this.error,
     this.typingByConversation = const {},
   });
-  
+  final List<WireConversation> conversations;
+  final Map<String, List<WireMessage>> messagesByConversation;
+  final Map<String, List<ConversationParticipant>> participantsByConversation;
+  final String? activeConversationId;
+  final bool isLoading;
+  final String? error;
+  final Map<String, List<TypingUser>> typingByConversation;
+
   /// Get all non-archived conversations sorted by last message time
   List<WireConversation> get activeConversations {
     final active = conversations.where((c) => !c.isArchived).toList();
@@ -48,41 +47,41 @@ class WireState {
     });
     return active;
   }
-  
+
   /// Get archived conversations
   List<WireConversation> get archivedConversations =>
       conversations.where((c) => c.isArchived).toList();
-  
+
   /// Get group conversations only
   List<WireConversation> get groupConversations =>
       activeConversations.where((c) => c.isGroup).toList();
-  
-  /// Get direct conversations only  
+
+  /// Get direct conversations only
   List<WireConversation> get directConversations =>
       activeConversations.where((c) => !c.isGroup).toList();
-  
+
   /// Get total unread count
   int get totalUnreadCount =>
       conversations.fold(0, (sum, c) => sum + c.unreadCount);
-  
+
   /// Get messages for current active conversation
   List<WireMessage> get activeMessages {
     if (activeConversationId == null) return [];
     return messagesByConversation[activeConversationId] ?? [];
   }
-  
+
   /// Get participants for current active conversation
   List<ConversationParticipant> get activeParticipants {
     if (activeConversationId == null) return [];
     return participantsByConversation[activeConversationId] ?? [];
   }
-  
+
   /// Get typing users for current active conversation
   List<TypingUser> get activeTypingUsers {
     if (activeConversationId == null) return [];
     return typingByConversation[activeConversationId] ?? [];
   }
-  
+
   WireState copyWith({
     List<WireConversation>? conversations,
     Map<String, List<WireMessage>>? messagesByConversation,
@@ -91,17 +90,18 @@ class WireState {
     bool? isLoading,
     String? error,
     Map<String, List<TypingUser>>? typingByConversation,
-  }) {
-    return WireState(
-      conversations: conversations ?? this.conversations,
-      messagesByConversation: messagesByConversation ?? this.messagesByConversation,
-      participantsByConversation: participantsByConversation ?? this.participantsByConversation,
-      activeConversationId: activeConversationId ?? this.activeConversationId,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-      typingByConversation: typingByConversation ?? this.typingByConversation,
-    );
-  }
+  }) =>
+      WireState(
+        conversations: conversations ?? this.conversations,
+        messagesByConversation:
+            messagesByConversation ?? this.messagesByConversation,
+        participantsByConversation:
+            participantsByConversation ?? this.participantsByConversation,
+        activeConversationId: activeConversationId ?? this.activeConversationId,
+        isLoading: isLoading ?? this.isLoading,
+        error: error,
+        typingByConversation: typingByConversation ?? this.typingByConversation,
+      );
 }
 
 // ============================================================================
@@ -109,26 +109,25 @@ class WireState {
 // ============================================================================
 
 class WireNotifier extends StateNotifier<WireState> {
+  WireNotifier(this._supabase, this._currentUserId) : super(const WireState()) {
+    _initialize();
+  }
   final SupabaseClient _supabase;
   final String _currentUserId;
-  
+
   /// Get the current user's ID
   String get currentUserId => _currentUserId;
-  
+
   // Realtime subscriptions
   RealtimeChannel? _messagesChannel;
   RealtimeChannel? _typingChannel;
   Timer? _typingTimer;
-  
-  WireNotifier(this._supabase, this._currentUserId) : super(const WireState()) {
-    _initialize();
-  }
-  
+
   Future<void> _initialize() async {
     await loadConversations();
     _subscribeToRealtime();
   }
-  
+
   @override
   void dispose() {
     _messagesChannel?.unsubscribe();
@@ -136,15 +135,15 @@ class WireNotifier extends StateNotifier<WireState> {
     _typingTimer?.cancel();
     super.dispose();
   }
-  
+
   // ══════════════════════════════════════════════════════════════════════════
   // CONVERSATIONS
   // ══════════════════════════════════════════════════════════════════════════
-  
+
   /// Load all conversations for current user
   Future<void> loadConversations() async {
-    state = state.copyWith(isLoading: true, error: null);
-    
+    state = state.copyWith(isLoading: true);
+
     try {
       // Get conversations where user is a participant
       final response = await _supabase
@@ -163,11 +162,12 @@ class WireNotifier extends StateNotifier<WireState> {
           .eq('conversation_participants.user_id', _currentUserId)
           .eq('conversation_participants.is_active', true)
           .order('last_message_at', ascending: false);
-      
+
       final conversations = (response as List<dynamic>)
-          .map((json) => WireConversation.fromJson(json as Map<String, dynamic>))
+          .map(
+              (json) => WireConversation.fromJson(json as Map<String, dynamic>))
           .toList();
-      
+
       state = state.copyWith(
         conversations: conversations,
         isLoading: false,
@@ -180,7 +180,7 @@ class WireNotifier extends StateNotifier<WireState> {
       );
     }
   }
-  
+
   /// Create a new group conversation
   Future<String?> createGroup({
     required String groupName,
@@ -189,14 +189,17 @@ class WireNotifier extends StateNotifier<WireState> {
     String? avatarUrl,
   }) async {
     try {
-      final result = await _supabase.rpc('create_group_conversation', params: {
-        'p_creator_id': _currentUserId,
-        'p_group_name': groupName,
-        'p_participant_ids': participantIds,
-        'p_group_avatar_url': avatarUrl,
-        'p_group_description': description,
-      });
-      
+      final result = await _supabase.rpc(
+        'create_group_conversation',
+        params: {
+          'p_creator_id': _currentUserId,
+          'p_group_name': groupName,
+          'p_participant_ids': participantIds,
+          'p_group_avatar_url': avatarUrl,
+          'p_group_description': description,
+        },
+      );
+
       final conversationId = result as String;
       await loadConversations();
       return conversationId;
@@ -206,7 +209,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return null;
     }
   }
-  
+
   /// Create or get direct conversation with another user
   Future<String?> getOrCreateDirectConversation(String otherUserId) async {
     try {
@@ -219,11 +222,11 @@ class WireNotifier extends StateNotifier<WireState> {
           updatedAt: DateTime.now(),
         ),
       );
-      
+
       if (existing.id.isNotEmpty) {
         return existing.id;
       }
-      
+
       // Create new direct conversation
       final response = await _supabase
           .from('conversations')
@@ -234,9 +237,9 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .select()
           .single();
-      
+
       final conversationId = response['id'] as String;
-      
+
       // Add both participants
       await _supabase.from('conversation_participants').insert([
         {
@@ -250,7 +253,7 @@ class WireNotifier extends StateNotifier<WireState> {
           'role': 'member',
         },
       ]);
-      
+
       await loadConversations();
       return conversationId;
     } catch (e) {
@@ -258,95 +261,89 @@ class WireNotifier extends StateNotifier<WireState> {
       return null;
     }
   }
-  
+
   /// Set the active conversation and load its messages
   Future<void> openConversation(String conversationId) async {
     state = state.copyWith(activeConversationId: conversationId);
-    
+
     await Future.wait([
       loadMessages(conversationId),
       loadParticipants(conversationId),
       markAsRead(conversationId),
     ]);
   }
-  
+
   /// Close the active conversation
   void closeConversation() {
-    state = state.copyWith(activeConversationId: null);
+    state = state.copyWith();
   }
-  
+
   /// Archive a conversation
   Future<void> archiveConversation(String conversationId) async {
     try {
-      await _supabase
-          .from('conversations')
-          .update({
-            'is_archived': true,
-            'archived_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', conversationId);
-      
+      await _supabase.from('conversations').update({
+        'is_archived': true,
+        'archived_at': DateTime.now().toIso8601String(),
+      }).eq('id', conversationId);
+
       final updated = state.conversations.map((c) {
         if (c.id == conversationId) {
           return c.copyWith(isArchived: true, archivedAt: DateTime.now());
         }
         return c;
       }).toList();
-      
+
       state = state.copyWith(conversations: updated);
     } catch (e) {
       debugPrint('Error archiving conversation: $e');
     }
   }
-  
+
   /// Unarchive a conversation
   Future<void> unarchiveConversation(String conversationId) async {
     try {
-      await _supabase
-          .from('conversations')
-          .update({
-            'is_archived': false,
-            'archived_at': null,
-          })
-          .eq('id', conversationId);
-      
+      await _supabase.from('conversations').update({
+        'is_archived': false,
+        'archived_at': null,
+      }).eq('id', conversationId);
+
       final updated = state.conversations.map((c) {
         if (c.id == conversationId) {
           return c.copyWith(isArchived: false);
         }
         return c;
       }).toList();
-      
+
       state = state.copyWith(conversations: updated);
     } catch (e) {
       debugPrint('Error unarchiving conversation: $e');
     }
   }
-  
+
   /// Pin/unpin a conversation
   Future<void> togglePin(String conversationId) async {
-    final conversation = state.conversations.firstWhere((c) => c.id == conversationId);
+    final conversation =
+        state.conversations.firstWhere((c) => c.id == conversationId);
     final newPinned = !conversation.isPinned;
-    
+
     try {
       await _supabase
           .from('conversations')
-          .update({'is_pinned': newPinned})
-          .eq('id', conversationId);
-      
+          .update({'is_pinned': newPinned}).eq('id', conversationId);
+
       final updated = state.conversations.map((c) {
         if (c.id == conversationId) {
           return c.copyWith(isPinned: newPinned);
         }
         return c;
       }).toList();
-      
+
       state = state.copyWith(conversations: updated);
     } catch (e) {
       debugPrint('Error toggling pin: $e');
     }
   }
-  
+
   /// Mute/unmute a conversation
   Future<void> toggleMute(String conversationId, {Duration? duration}) async {
     final participant = await _supabase
@@ -355,22 +352,22 @@ class WireNotifier extends StateNotifier<WireState> {
         .eq('conversation_id', conversationId)
         .eq('user_id', _currentUserId)
         .single();
-    
+
     final currentlyMuted = participant['is_muted'] as bool? ?? false;
     final newMuted = !currentlyMuted;
-    
+
     try {
       await _supabase
           .from('conversation_participants')
           .update({
             'is_muted': newMuted,
-            'muted_until': duration != null 
+            'muted_until': duration != null
                 ? DateTime.now().add(duration).toIso8601String()
                 : null,
           })
           .eq('conversation_id', conversationId)
           .eq('user_id', _currentUserId);
-      
+
       final updated = state.conversations.map((c) {
         if (c.id == conversationId) {
           return c.copyWith(
@@ -380,47 +377,44 @@ class WireNotifier extends StateNotifier<WireState> {
         }
         return c;
       }).toList();
-      
+
       state = state.copyWith(conversations: updated);
     } catch (e) {
       debugPrint('Error toggling mute: $e');
     }
   }
-  
+
   // ══════════════════════════════════════════════════════════════════════════
   // MESSAGES
   // ══════════════════════════════════════════════════════════════════════════
-  
+
   /// Load messages for a conversation
-  Future<void> loadMessages(String conversationId, {int limit = 50, String? before}) async {
+  Future<void> loadMessages(String conversationId,
+      {int limit = 50, String? before}) async {
     try {
-      final baseQuery = _supabase
-          .from('messages')
-          .select('''
+      final baseQuery = _supabase.from('messages').select('''
             *,
             profiles:sender_id(display_name, avatar_url)
-          ''')
-          .eq('conversation_id', conversationId);
-      
-      final filteredQuery = before != null
-          ? baseQuery.lt('created_at', before)
-          : baseQuery;
-      
+          ''').eq('conversation_id', conversationId);
+
+      final filteredQuery =
+          before != null ? baseQuery.lt('created_at', before) : baseQuery;
+
       final response = await filteredQuery
           .order('created_at', ascending: false)
           .limit(limit);
-      
+
       final messages = (response as List<dynamic>)
           .map((json) => WireMessage.fromJson(json as Map<String, dynamic>))
           .toList()
           .reversed
           .toList();
-      
-      final existingMessages = state.messagesByConversation[conversationId] ?? [];
-      final allMessages = before != null
-          ? [...messages, ...existingMessages]
-          : messages;
-      
+
+      final existingMessages =
+          state.messagesByConversation[conversationId] ?? [];
+      final allMessages =
+          before != null ? [...messages, ...existingMessages] : messages;
+
       state = state.copyWith(
         messagesByConversation: {
           ...state.messagesByConversation,
@@ -431,7 +425,7 @@ class WireNotifier extends StateNotifier<WireState> {
       debugPrint('Error loading messages: $e');
     }
   }
-  
+
   /// Send a text message
   Future<WireMessage?> sendMessage({
     required String conversationId,
@@ -444,16 +438,15 @@ class WireNotifier extends StateNotifier<WireState> {
       conversationId: conversationId,
       senderId: _currentUserId,
       content: content,
-      type: MessageType.text,
       status: MessageStatus.sending,
       clientMessageId: clientMessageId,
       replyToId: replyToId,
       createdAt: DateTime.now(),
     );
-    
+
     // Optimistic update
     _addOptimisticMessage(conversationId, optimisticMessage);
-    
+
     try {
       final response = await _supabase
           .from('messages')
@@ -467,8 +460,8 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .select()
           .single();
-      
-      final message = WireMessage.fromJson(response as Map<String, dynamic>);
+
+      final message = WireMessage.fromJson(response);
       _replaceOptimisticMessage(conversationId, clientMessageId, message);
       return message;
     } catch (e) {
@@ -477,7 +470,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return null;
     }
   }
-  
+
   /// Send a media message (image, video, voice, file)
   Future<WireMessage?> sendMediaMessage({
     required String conversationId,
@@ -489,7 +482,7 @@ class WireNotifier extends StateNotifier<WireState> {
   }) async {
     final clientMessageId = const Uuid().v4();
     final filename = file.path.split('/').last;
-    
+
     // Create optimistic message
     final optimisticMessage = WireMessage(
       id: clientMessageId,
@@ -503,23 +496,21 @@ class WireNotifier extends StateNotifier<WireState> {
       replyToId: replyToId,
       createdAt: DateTime.now(),
     );
-    
+
     _addOptimisticMessage(conversationId, optimisticMessage);
-    
+
     try {
       // Upload file to storage
-      final storagePath = '$_currentUserId/$conversationId/$clientMessageId-$filename';
-      await _supabase.storage
-          .from('chat-media')
-          .upload(storagePath, file);
-      
-      final mediaUrl = _supabase.storage
-          .from('chat-media')
-          .getPublicUrl(storagePath);
-      
+      final storagePath =
+          '$_currentUserId/$conversationId/$clientMessageId-$filename';
+      await _supabase.storage.from('chat-media').upload(storagePath, file);
+
+      final mediaUrl =
+          _supabase.storage.from('chat-media').getPublicUrl(storagePath);
+
       // Get file metadata
       final fileBytes = await file.length();
-      
+
       // Create message
       final response = await _supabase
           .from('messages')
@@ -537,8 +528,8 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .select()
           .single();
-      
-      final message = WireMessage.fromJson(response as Map<String, dynamic>);
+
+      final message = WireMessage.fromJson(response);
       _replaceOptimisticMessage(conversationId, clientMessageId, message);
       return message;
     } catch (e) {
@@ -547,7 +538,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return null;
     }
   }
-  
+
   /// Send a voice note
   Future<WireMessage?> sendVoiceNote({
     required String conversationId,
@@ -555,16 +546,15 @@ class WireNotifier extends StateNotifier<WireState> {
     required int durationSeconds,
     List<double>? waveform,
     String? replyToId,
-  }) async {
-    return sendMediaMessage(
-      conversationId: conversationId,
-      file: audioFile,
-      type: MessageType.voice,
-      replyToId: replyToId,
-      waveform: waveform,
-    );
-  }
-  
+  }) async =>
+      sendMediaMessage(
+        conversationId: conversationId,
+        file: audioFile,
+        type: MessageType.voice,
+        replyToId: replyToId,
+        waveform: waveform,
+      );
+
   /// Send a location
   Future<WireMessage?> sendLocation({
     required String conversationId,
@@ -575,7 +565,7 @@ class WireNotifier extends StateNotifier<WireState> {
     String? replyToId,
   }) async {
     final clientMessageId = const Uuid().v4();
-    
+
     try {
       final response = await _supabase
           .from('messages')
@@ -592,8 +582,8 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .select()
           .single();
-      
-      final message = WireMessage.fromJson(response as Map<String, dynamic>);
+
+      final message = WireMessage.fromJson(response);
       _addMessageToState(conversationId, message);
       return message;
     } catch (e) {
@@ -601,7 +591,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return null;
     }
   }
-  
+
   /// Edit a message
   Future<bool> editMessage({
     required String messageId,
@@ -617,14 +607,14 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .eq('id', messageId)
           .eq('sender_id', _currentUserId);
-      
+
       return true;
     } catch (e) {
       debugPrint('Error editing message: $e');
       return false;
     }
   }
-  
+
   /// Delete a message
   Future<bool> deleteMessage({
     required String messageId,
@@ -646,16 +636,13 @@ class WireNotifier extends StateNotifier<WireState> {
             .eq('sender_id', _currentUserId);
       } else {
         // Just mark as deleted for self - store in metadata
-        await _supabase
-            .from('messages')
-            .update({
-              'metadata': {
-                'deleted_for': [_currentUserId],
-              },
-            })
-            .eq('id', messageId);
+        await _supabase.from('messages').update({
+          'metadata': {
+            'deleted_for': [_currentUserId],
+          },
+        }).eq('id', messageId);
       }
-      
+
       // Remove from state
       final messages = state.messagesByConversation[conversationId] ?? [];
       final updated = messages.where((m) => m.id != messageId).toList();
@@ -665,14 +652,14 @@ class WireNotifier extends StateNotifier<WireState> {
           conversationId: updated,
         },
       );
-      
+
       return true;
     } catch (e) {
       debugPrint('Error deleting message: $e');
       return false;
     }
   }
-  
+
   /// Add a reaction to a message
   Future<bool> addReaction({
     required String messageId,
@@ -686,14 +673,14 @@ class WireNotifier extends StateNotifier<WireState> {
           .select('reactions')
           .eq('id', messageId)
           .single();
-      
+
       final reactions = (response['reactions'] as List<dynamic>? ?? [])
           .map((e) => MessageReaction.fromJson(e as Map<String, dynamic>))
           .toList();
-      
+
       // Find existing reaction with this emoji
       final existingIndex = reactions.indexWhere((r) => r.emoji == emoji);
-      
+
       if (existingIndex >= 0) {
         final existing = reactions[existingIndex];
         if (!existing.userIds.contains(_currentUserId)) {
@@ -706,27 +693,26 @@ class WireNotifier extends StateNotifier<WireState> {
         }
       } else {
         // Add new reaction
-        reactions.add(MessageReaction(
-          emoji: emoji,
-          userIds: [_currentUserId],
-        ));
+        reactions.add(
+          MessageReaction(
+            emoji: emoji,
+            userIds: [_currentUserId],
+          ),
+        );
       }
-      
-      await _supabase
-          .from('messages')
-          .update({
-            'reactions': reactions.map((r) => r.toJson()).toList(),
-            'reaction_count': reactions.fold(0, (sum, r) => sum + r.count),
-          })
-          .eq('id', messageId);
-      
+
+      await _supabase.from('messages').update({
+        'reactions': reactions.map((r) => r.toJson()).toList(),
+        'reaction_count': reactions.fold(0, (sum, r) => sum + r.count),
+      }).eq('id', messageId);
+
       return true;
     } catch (e) {
       debugPrint('Error adding reaction: $e');
       return false;
     }
   }
-  
+
   /// Remove a reaction from a message
   Future<bool> removeReaction({
     required String messageId,
@@ -739,17 +725,18 @@ class WireNotifier extends StateNotifier<WireState> {
           .select('reactions')
           .eq('id', messageId)
           .single();
-      
+
       final reactions = (response['reactions'] as List<dynamic>? ?? [])
           .map((e) => MessageReaction.fromJson(e as Map<String, dynamic>))
           .toList();
-      
+
       final existingIndex = reactions.indexWhere((r) => r.emoji == emoji);
-      
+
       if (existingIndex >= 0) {
         final existing = reactions[existingIndex];
-        final updatedUserIds = existing.userIds.where((id) => id != _currentUserId).toList();
-        
+        final updatedUserIds =
+            existing.userIds.where((id) => id != _currentUserId).toList();
+
         if (updatedUserIds.isEmpty) {
           reactions.removeAt(existingIndex);
         } else {
@@ -759,28 +746,26 @@ class WireNotifier extends StateNotifier<WireState> {
           );
         }
       }
-      
-      await _supabase
-          .from('messages')
-          .update({
-            'reactions': reactions.map((r) => r.toJson()).toList(),
-            'reaction_count': reactions.fold(0, (sum, r) => sum + r.count),
-          })
-          .eq('id', messageId);
-      
+
+      await _supabase.from('messages').update({
+        'reactions': reactions.map((r) => r.toJson()).toList(),
+        'reaction_count': reactions.fold(0, (sum, r) => sum + r.count),
+      }).eq('id', messageId);
+
       return true;
     } catch (e) {
       debugPrint('Error removing reaction: $e');
       return false;
     }
   }
-  
+
   /// Star/unstar a message
-  Future<void> toggleStarMessage(String messageId, String conversationId) async {
+  Future<void> toggleStarMessage(
+      String messageId, String conversationId) async {
     final messages = state.messagesByConversation[conversationId] ?? [];
     final message = messages.firstWhere((m) => m.id == messageId);
     final isStarred = message.starredBy.contains(_currentUserId);
-    
+
     try {
       if (isStarred) {
         await _supabase
@@ -789,14 +774,12 @@ class WireNotifier extends StateNotifier<WireState> {
             .eq('user_id', _currentUserId)
             .eq('message_id', messageId);
       } else {
-        await _supabase
-            .from('starred_messages')
-            .insert({
-              'user_id': _currentUserId,
-              'message_id': messageId,
-            });
+        await _supabase.from('starred_messages').insert({
+          'user_id': _currentUserId,
+          'message_id': messageId,
+        });
       }
-      
+
       final updatedMessages = messages.map((m) {
         if (m.id == messageId) {
           final newStarredBy = isStarred
@@ -806,7 +789,7 @@ class WireNotifier extends StateNotifier<WireState> {
         }
         return m;
       }).toList();
-      
+
       state = state.copyWith(
         messagesByConversation: {
           ...state.messagesByConversation,
@@ -817,7 +800,7 @@ class WireNotifier extends StateNotifier<WireState> {
       debugPrint('Error toggling star: $e');
     }
   }
-  
+
   /// Forward a message to another conversation
   Future<WireMessage?> forwardMessage({
     required String messageId,
@@ -830,7 +813,7 @@ class WireNotifier extends StateNotifier<WireState> {
           .select()
           .eq('id', messageId)
           .single();
-      
+
       // Create forwarded message
       final response = await _supabase
           .from('messages')
@@ -845,62 +828,66 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .select()
           .single();
-      
+
       // Update forward count on original
-      await _supabase.rpc('increment', params: {
-        'row_id': messageId,
-        'table_name': 'messages',
-        'column_name': 'forward_count',
-      });
-      
-      return WireMessage.fromJson(response as Map<String, dynamic>);
+      await _supabase.rpc(
+        'increment',
+        params: {
+          'row_id': messageId,
+          'table_name': 'messages',
+          'column_name': 'forward_count',
+        },
+      );
+
+      return WireMessage.fromJson(response);
     } catch (e) {
       debugPrint('Error forwarding message: $e');
       return null;
     }
   }
-  
+
   /// Mark conversation as read
   Future<void> markAsRead(String conversationId) async {
     try {
-      await _supabase.rpc('mark_messages_read', params: {
-        'p_conversation_id': conversationId,
-        'p_user_id': _currentUserId,
-      });
-      
+      await _supabase.rpc(
+        'mark_messages_read',
+        params: {
+          'p_conversation_id': conversationId,
+          'p_user_id': _currentUserId,
+        },
+      );
+
       final updated = state.conversations.map((c) {
         if (c.id == conversationId) {
           return c.copyWith(unreadCount: 0, lastReadAt: DateTime.now());
         }
         return c;
       }).toList();
-      
+
       state = state.copyWith(conversations: updated);
     } catch (e) {
       debugPrint('Error marking as read: $e');
     }
   }
-  
+
   // ══════════════════════════════════════════════════════════════════════════
   // PARTICIPANTS (Group management)
   // ══════════════════════════════════════════════════════════════════════════
-  
+
   /// Load participants for a conversation
   Future<void> loadParticipants(String conversationId) async {
     try {
-      final response = await _supabase
-          .from('conversation_participants')
-          .select('''
+      final response =
+          await _supabase.from('conversation_participants').select('''
             *,
             profiles:user_id(display_name, avatar_url)
-          ''')
-          .eq('conversation_id', conversationId)
-          .eq('is_active', true);
-      
+          ''').eq('conversation_id', conversationId).eq('is_active', true);
+
       final participants = (response as List<dynamic>)
-          .map((json) => ConversationParticipant.fromJson(json as Map<String, dynamic>))
+          .map((json) =>
+              ConversationParticipant.fromJson(json as Map<String, dynamic>))
           .toList();
-      
+
       state = state.copyWith(
         participantsByConversation: {
           ...state.participantsByConversation,
@@ -911,18 +898,22 @@ class WireNotifier extends StateNotifier<WireState> {
       debugPrint('Error loading participants: $e');
     }
   }
-  
+
   /// Add participants to a group
-  Future<bool> addParticipants(String conversationId, List<String> userIds) async {
+  Future<bool> addParticipants(
+      String conversationId, List<String> userIds) async {
     try {
       for (final userId in userIds) {
-        await _supabase.rpc('add_group_participant', params: {
-          'p_conversation_id': conversationId,
-          'p_new_user_id': userId,
-          'p_added_by': _currentUserId,
-        });
+        await _supabase.rpc(
+          'add_group_participant',
+          params: {
+            'p_conversation_id': conversationId,
+            'p_new_user_id': userId,
+            'p_added_by': _currentUserId,
+          },
+        );
       }
-      
+
       await loadParticipants(conversationId);
       return true;
     } catch (e) {
@@ -930,7 +921,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return false;
     }
   }
-  
+
   /// Remove a participant from a group
   Future<bool> removeParticipant(String conversationId, String userId) async {
     try {
@@ -943,7 +934,7 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .eq('conversation_id', conversationId)
           .eq('user_id', userId);
-      
+
       // Create system message
       await _supabase.from('messages').insert({
         'conversation_id': conversationId,
@@ -951,7 +942,7 @@ class WireNotifier extends StateNotifier<WireState> {
         'message_type': 'system',
         'content': 'removed a participant',
       });
-      
+
       await loadParticipants(conversationId);
       return true;
     } catch (e) {
@@ -959,7 +950,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return false;
     }
   }
-  
+
   /// Make a participant an admin
   Future<bool> makeAdmin(String conversationId, String userId) async {
     try {
@@ -971,7 +962,7 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .eq('conversation_id', conversationId)
           .eq('user_id', userId);
-      
+
       await loadParticipants(conversationId);
       return true;
     } catch (e) {
@@ -979,7 +970,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return false;
     }
   }
-  
+
   /// Leave a group
   Future<bool> leaveGroup(String conversationId) async {
     try {
@@ -991,7 +982,7 @@ class WireNotifier extends StateNotifier<WireState> {
           })
           .eq('conversation_id', conversationId)
           .eq('user_id', _currentUserId);
-      
+
       await loadConversations();
       return true;
     } catch (e) {
@@ -999,7 +990,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return false;
     }
   }
-  
+
   /// Update group info (name, description, avatar)
   Future<bool> updateGroupInfo(
     String conversationId, {
@@ -1012,14 +1003,14 @@ class WireNotifier extends StateNotifier<WireState> {
       if (name != null) updates['group_name'] = name;
       if (description != null) updates['group_description'] = description;
       if (avatarUrl != null) updates['group_avatar_url'] = avatarUrl;
-      
+
       if (updates.isEmpty) return true;
-      
+
       await _supabase
           .from('conversations')
           .update(updates)
           .eq('id', conversationId);
-      
+
       await loadConversations();
       return true;
     } catch (e) {
@@ -1027,42 +1018,42 @@ class WireNotifier extends StateNotifier<WireState> {
       return false;
     }
   }
-  
+
   // ══════════════════════════════════════════════════════════════════════════
   // TYPING INDICATORS
   // ══════════════════════════════════════════════════════════════════════════
-  
+
   /// Start typing indicator
   void startTyping(String conversationId) {
     _typingTimer?.cancel();
-    
+
     _supabase.from('typing_indicators').upsert({
       'conversation_id': conversationId,
       'user_id': _currentUserId,
       'started_at': DateTime.now().toIso8601String(),
     });
-    
+
     // Auto-stop after 5 seconds
     _typingTimer = Timer(const Duration(seconds: 5), () {
       stopTyping(conversationId);
     });
   }
-  
+
   /// Stop typing indicator
   void stopTyping(String conversationId) {
     _typingTimer?.cancel();
-    
+
     _supabase
         .from('typing_indicators')
         .delete()
         .eq('conversation_id', conversationId)
         .eq('user_id', _currentUserId);
   }
-  
+
   // ══════════════════════════════════════════════════════════════════════════
   // REALTIME SUBSCRIPTIONS
   // ══════════════════════════════════════════════════════════════════════════
-  
+
   void _subscribeToRealtime() {
     // Subscribe to new messages
     _messagesChannel = _supabase
@@ -1086,7 +1077,7 @@ class WireNotifier extends StateNotifier<WireState> {
           },
         )
         .subscribe();
-    
+
     // Subscribe to typing indicators
     _typingChannel = _supabase
         .channel('typing')
@@ -1094,19 +1085,17 @@ class WireNotifier extends StateNotifier<WireState> {
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'typing_indicators',
-          callback: (payload) {
-            _handleTypingChange(payload);
-          },
+          callback: _handleTypingChange,
         )
         .subscribe();
   }
-  
+
   void _handleNewMessage(WireMessage message) {
     // Skip if from self (already added optimistically)
     if (message.senderId == _currentUserId) return;
-    
+
     _addMessageToState(message.conversationId, message);
-    
+
     // Update conversation's last message
     final updated = state.conversations.map((c) {
       if (c.id == message.conversationId) {
@@ -1115,24 +1104,23 @@ class WireNotifier extends StateNotifier<WireState> {
           lastMessageAt: message.createdAt,
           lastMessageSenderId: message.senderId,
           lastMessageType: message.type,
-          unreadCount: c.id == state.activeConversationId 
-              ? 0 
-              : c.unreadCount + 1,
+          unreadCount:
+              c.id == state.activeConversationId ? 0 : c.unreadCount + 1,
         );
       }
       return c;
     }).toList();
-    
+
     state = state.copyWith(conversations: updated);
   }
-  
+
   void _handleUpdatedMessage(WireMessage message) {
     final messages = state.messagesByConversation[message.conversationId] ?? [];
     final updatedMessages = messages.map((m) {
       if (m.id == message.id) return message;
       return m;
     }).toList();
-    
+
     state = state.copyWith(
       messagesByConversation: {
         ...state.messagesByConversation,
@@ -1140,19 +1128,19 @@ class WireNotifier extends StateNotifier<WireState> {
       },
     );
   }
-  
+
   void _handleTypingChange(PostgresChangePayload payload) {
     final conversationId = payload.newRecord['conversation_id'] as String?;
     if (conversationId == null) return;
-    
+
     // Reload typing indicators for this conversation
     // In a real app, maintain state more efficiently
   }
-  
+
   // ══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS
   // ══════════════════════════════════════════════════════════════════════════
-  
+
   void _addOptimisticMessage(String conversationId, WireMessage message) {
     final messages = state.messagesByConversation[conversationId] ?? [];
     state = state.copyWith(
@@ -1162,7 +1150,7 @@ class WireNotifier extends StateNotifier<WireState> {
       },
     );
   }
-  
+
   void _replaceOptimisticMessage(
     String conversationId,
     String clientMessageId,
@@ -1173,7 +1161,7 @@ class WireNotifier extends StateNotifier<WireState> {
       if (m.clientMessageId == clientMessageId) return realMessage;
       return m;
     }).toList();
-    
+
     state = state.copyWith(
       messagesByConversation: {
         ...state.messagesByConversation,
@@ -1181,7 +1169,7 @@ class WireNotifier extends StateNotifier<WireState> {
       },
     );
   }
-  
+
   void _markMessageFailed(String conversationId, String clientMessageId) {
     final messages = state.messagesByConversation[conversationId] ?? [];
     final updated = messages.map((m) {
@@ -1190,7 +1178,7 @@ class WireNotifier extends StateNotifier<WireState> {
       }
       return m;
     }).toList();
-    
+
     state = state.copyWith(
       messagesByConversation: {
         ...state.messagesByConversation,
@@ -1198,13 +1186,13 @@ class WireNotifier extends StateNotifier<WireState> {
       },
     );
   }
-  
+
   void _addMessageToState(String conversationId, WireMessage message) {
     final messages = state.messagesByConversation[conversationId] ?? [];
-    
+
     // Check if message already exists
     if (messages.any((m) => m.id == message.id)) return;
-    
+
     state = state.copyWith(
       messagesByConversation: {
         ...state.messagesByConversation,
@@ -1225,26 +1213,21 @@ final wireProvider = StateNotifierProvider<WireNotifier, WireState>((ref) {
 });
 
 /// Provider for active conversation messages
-final activeMessagesProvider = Provider<List<WireMessage>>((ref) {
-  return ref.watch(wireProvider).activeMessages;
-});
+final activeMessagesProvider = Provider<List<WireMessage>>(
+    (ref) => ref.watch(wireProvider).activeMessages);
 
 /// Provider for active conversation participants
-final activeParticipantsProvider = Provider<List<ConversationParticipant>>((ref) {
-  return ref.watch(wireProvider).activeParticipants;
-});
+final activeParticipantsProvider = Provider<List<ConversationParticipant>>(
+    (ref) => ref.watch(wireProvider).activeParticipants);
 
 /// Provider for conversation list
-final conversationsProvider = Provider<List<WireConversation>>((ref) {
-  return ref.watch(wireProvider).activeConversations;
-});
+final conversationsProvider = Provider<List<WireConversation>>(
+    (ref) => ref.watch(wireProvider).activeConversations);
 
 /// Provider for group conversations only
-final groupConversationsProvider = Provider<List<WireConversation>>((ref) {
-  return ref.watch(wireProvider).groupConversations;
-});
+final groupConversationsProvider = Provider<List<WireConversation>>(
+    (ref) => ref.watch(wireProvider).groupConversations);
 
 /// Provider for total unread count
-final totalUnreadProvider = Provider<int>((ref) {
-  return ref.watch(wireProvider).totalUnreadCount;
-});
+final totalUnreadProvider =
+    Provider<int>((ref) => ref.watch(wireProvider).totalUnreadCount);

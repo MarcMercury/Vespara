@@ -4,10 +4,10 @@ import 'package:equatable/equatable.dart';
 enum ConsentLevel {
   /// 🟢 GREEN - Social & Flirtatious (No nudity, conversation focused)
   green,
-  
+
   /// 🟡 YELLOW - Sensual & Suggestive (Light touch, opt-in arousal)
   yellow,
-  
+
   /// 🔴 RED - Erotic & Explicit (Nudity allowed, pre-consented)
   red,
 }
@@ -23,7 +23,7 @@ extension ConsentLevelExtension on ConsentLevel {
         return 'Erotic';
     }
   }
-  
+
   String get description {
     switch (this) {
       case ConsentLevel.green:
@@ -34,7 +34,7 @@ extension ConsentLevelExtension on ConsentLevel {
         return 'Erotic & explicit. Pre-consented environment.';
     }
   }
-  
+
   String get emoji {
     switch (this) {
       case ConsentLevel.green:
@@ -45,7 +45,7 @@ extension ConsentLevelExtension on ConsentLevel {
         return '🔴';
     }
   }
-  
+
   int get value {
     switch (this) {
       case ConsentLevel.green:
@@ -88,7 +88,7 @@ extension GameCategoryExtension on GameCategory {
         return 'Flash & Freeze';
     }
   }
-  
+
   String get description {
     switch (this) {
       case GameCategory.downToClown:
@@ -107,7 +107,7 @@ extension GameCategoryExtension on GameCategory {
         return 'Red Light, Green Light evolved. Exposure requires endurance.';
     }
   }
-  
+
   ConsentLevel get minimumConsentLevel {
     switch (this) {
       case GameCategory.icebreakers:
@@ -123,7 +123,7 @@ extension GameCategoryExtension on GameCategory {
         return ConsentLevel.red;
     }
   }
-  
+
   int get minPlayers {
     switch (this) {
       case GameCategory.downToClown:
@@ -137,7 +137,7 @@ extension GameCategoryExtension on GameCategory {
         return 3; // Need at least 1 Signal + 2 players
     }
   }
-  
+
   int get maxPlayers {
     switch (this) {
       case GameCategory.downToClown:
@@ -150,94 +150,86 @@ extension GameCategoryExtension on GameCategory {
         return 8;
     }
   }
-  
+
   /// Velocity Meter (0-100 mph) - "How fast might this get you going?"
   int get velocityMph {
     switch (this) {
       case GameCategory.icebreakers:
-        return 0;   // Innocent fun — safe for brunch
+        return 0; // Innocent fun — safe for brunch
       case GameCategory.downToClown:
-        return 40;  // Flirty tension and teasing
+        return 40; // Flirty tension and teasing
       case GameCategory.shareOrDare:
-        return 70;  // Expect sparks — possibly skin
+        return 70; // Expect sparks — possibly skin
       case GameCategory.pathOfPleasure:
-        return 40;  // Flirty tension and teasing
+        return 40; // Flirty tension and teasing
       case GameCategory.laneOfLust:
-        return 70;  // Expect sparks — possibly skin
+        return 70; // Expect sparks — possibly skin
       case GameCategory.flashFreeze:
         return 100; // Full throttle. Buckle up.
       case GameCategory.dramaSutra:
         return 100; // Full throttle. Buckle up.
     }
   }
-  
+
   String get velocityLabel {
     if (velocityMph == 0) return '0 mph';
     if (velocityMph <= 40) return '40 mph';
     if (velocityMph <= 70) return '70 mph';
     return '100 mph';
   }
-  
+
   /// Heat Rating (PG-XXX) - "What kind of action might you see?"
   String get heatRating {
     switch (this) {
       case GameCategory.icebreakers:
-        return 'PG';     // Playful, suggestive, mostly teasing
+        return 'PG'; // Playful, suggestive, mostly teasing
       case GameCategory.downToClown:
-        return 'PG-13';  // Light touching, kissing, bold flirting
+        return 'PG-13'; // Light touching, kissing, bold flirting
       case GameCategory.shareOrDare:
-        return 'R';      // Risqué, passionate, hands-on
+        return 'R'; // Risqué, passionate, hands-on
       case GameCategory.pathOfPleasure:
-        return 'PG-13';  // Light touching, kissing, bold flirting
+        return 'PG-13'; // Light touching, kissing, bold flirting
       case GameCategory.laneOfLust:
-        return 'R';      // Risqué, passionate, hands-on
+        return 'R'; // Risqué, passionate, hands-on
       case GameCategory.flashFreeze:
-        return 'X';      // Explicit, adventurous, clothing unlikely
+        return 'X'; // Explicit, adventurous, clothing unlikely
       case GameCategory.dramaSutra:
-        return 'XXX';    // Uninhibited, wild, gloriously unfiltered
+        return 'XXX'; // Uninhibited, wild, gloriously unfiltered
     }
   }
-  
+
   /// Duration - "How long will you be playing?"
   String get durationLabel {
     switch (this) {
       case GameCategory.icebreakers:
       case GameCategory.downToClown:
       case GameCategory.flashFreeze:
-        return 'Quickie';    // 5-15 min
+        return 'Quickie'; // 5-15 min
       case GameCategory.shareOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
-        return 'Foreplay';   // 20-45 min
+        return 'Foreplay'; // 20-45 min
       case GameCategory.dramaSutra:
         return 'Full Session'; // 60+ min
     }
   }
-  
+
   String get durationTime {
     switch (durationLabel) {
-      case 'Quickie': return '5-15 min';
-      case 'Foreplay': return '20-45 min';
-      case 'Full Session': return '60+ min';
-      default: return '';
+      case 'Quickie':
+        return '5-15 min';
+      case 'Foreplay':
+        return '20-45 min';
+      case 'Full Session':
+        return '60+ min';
+      default:
+        return '';
     }
   }
 }
 
 /// TAGS Game Model
 class TagsGame extends Equatable {
-  final String id;
-  final GameCategory category;
-  final String title;
-  final String? description;
-  final int minPlayers;
-  final int maxPlayers;
-  final ConsentLevel currentConsentLevel;
-  final List<String> participantIds;
-  final DateTime? createdAt;
-  final bool isActive;
-  final Map<String, dynamic>? gameState;
-  
   const TagsGame({
     required this.id,
     required this.category,
@@ -251,47 +243,54 @@ class TagsGame extends Equatable {
     this.isActive = true,
     this.gameState,
   });
-  
-  factory TagsGame.fromJson(Map<String, dynamic> json) {
-    return TagsGame(
-      id: json['id'] as String,
-      category: GameCategory.values.firstWhere(
-        (e) => e.name == json['category'],
-        orElse: () => GameCategory.downToClown,
-      ),
-      title: json['title'] as String,
-      description: json['description'] as String?,
-      minPlayers: json['min_players'] as int? ?? 2,
-      maxPlayers: json['max_players'] as int? ?? 10,
-      currentConsentLevel: ConsentLevel.values.firstWhere(
-        (e) => e.name == json['consent_level'],
-        orElse: () => ConsentLevel.green,
-      ),
-      participantIds: List<String>.from(json['participant_ids'] ?? []),
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'] as String)
-          : null,
-      isActive: json['is_active'] as bool? ?? true,
-      gameState: json['game_state'] as Map<String, dynamic>?,
-    );
-  }
-  
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'category': category.name,
-      'title': title,
-      'description': description,
-      'min_players': minPlayers,
-      'max_players': maxPlayers,
-      'consent_level': currentConsentLevel.name,
-      'participant_ids': participantIds,
-      'created_at': createdAt?.toIso8601String(),
-      'is_active': isActive,
-      'game_state': gameState,
-    };
-  }
-  
+
+  factory TagsGame.fromJson(Map<String, dynamic> json) => TagsGame(
+        id: json['id'] as String,
+        category: GameCategory.values.firstWhere(
+          (e) => e.name == json['category'],
+          orElse: () => GameCategory.downToClown,
+        ),
+        title: json['title'] as String,
+        description: json['description'] as String?,
+        minPlayers: json['min_players'] as int? ?? 2,
+        maxPlayers: json['max_players'] as int? ?? 10,
+        currentConsentLevel: ConsentLevel.values.firstWhere(
+          (e) => e.name == json['consent_level'],
+          orElse: () => ConsentLevel.green,
+        ),
+        participantIds: List<String>.from(json['participant_ids'] ?? []),
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'] as String)
+            : null,
+        isActive: json['is_active'] as bool? ?? true,
+        gameState: json['game_state'] as Map<String, dynamic>?,
+      );
+  final String id;
+  final GameCategory category;
+  final String title;
+  final String? description;
+  final int minPlayers;
+  final int maxPlayers;
+  final ConsentLevel currentConsentLevel;
+  final List<String> participantIds;
+  final DateTime? createdAt;
+  final bool isActive;
+  final Map<String, dynamic>? gameState;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'category': category.name,
+        'title': title,
+        'description': description,
+        'min_players': minPlayers,
+        'max_players': maxPlayers,
+        'consent_level': currentConsentLevel.name,
+        'participant_ids': participantIds,
+        'created_at': createdAt?.toIso8601String(),
+        'is_active': isActive,
+        'game_state': gameState,
+      };
+
   TagsGame copyWith({
     String? id,
     GameCategory? category,
@@ -304,46 +303,41 @@ class TagsGame extends Equatable {
     DateTime? createdAt,
     bool? isActive,
     Map<String, dynamic>? gameState,
-  }) {
-    return TagsGame(
-      id: id ?? this.id,
-      category: category ?? this.category,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      minPlayers: minPlayers ?? this.minPlayers,
-      maxPlayers: maxPlayers ?? this.maxPlayers,
-      currentConsentLevel: currentConsentLevel ?? this.currentConsentLevel,
-      participantIds: participantIds ?? this.participantIds,
-      createdAt: createdAt ?? this.createdAt,
-      isActive: isActive ?? this.isActive,
-      gameState: gameState ?? this.gameState,
-    );
-  }
-  
+  }) =>
+      TagsGame(
+        id: id ?? this.id,
+        category: category ?? this.category,
+        title: title ?? this.title,
+        description: description ?? this.description,
+        minPlayers: minPlayers ?? this.minPlayers,
+        maxPlayers: maxPlayers ?? this.maxPlayers,
+        currentConsentLevel: currentConsentLevel ?? this.currentConsentLevel,
+        participantIds: participantIds ?? this.participantIds,
+        createdAt: createdAt ?? this.createdAt,
+        isActive: isActive ?? this.isActive,
+        gameState: gameState ?? this.gameState,
+      );
+
   @override
   List<Object?> get props => [
-    id,
-    category,
-    title,
-    description,
-    minPlayers,
-    maxPlayers,
-    currentConsentLevel,
-    participantIds,
-    createdAt,
-    isActive,
-    gameState,
-  ];
+        id,
+        category,
+        title,
+        description,
+        minPlayers,
+        maxPlayers,
+        currentConsentLevel,
+        participantIds,
+        createdAt,
+        isActive,
+        gameState,
+      ];
 }
 
 /// Game Card for Truth or Dare / Pleasure Deck
 class GameCard extends Equatable {
-  final String id;
-  final String content;
-  final ConsentLevel level;
-  final bool isTruth;
-  final int intensity; // 1-5
-  
+  // 1-5
+
   const GameCard({
     required this.id,
     required this.content,
@@ -351,30 +345,31 @@ class GameCard extends Equatable {
     required this.isTruth,
     required this.intensity,
   });
-  
-  factory GameCard.fromJson(Map<String, dynamic> json) {
-    return GameCard(
-      id: json['id'] as String,
-      content: json['content'] as String,
-      level: ConsentLevel.values.firstWhere(
-        (e) => e.name == json['level'],
-        orElse: () => ConsentLevel.green,
-      ),
-      isTruth: json['is_truth'] as bool,
-      intensity: json['intensity'] as int? ?? 1,
-    );
-  }
-  
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'content': content,
-      'level': level.name,
-      'is_truth': isTruth,
-      'intensity': intensity,
-    };
-  }
-  
+
+  factory GameCard.fromJson(Map<String, dynamic> json) => GameCard(
+        id: json['id'] as String,
+        content: json['content'] as String,
+        level: ConsentLevel.values.firstWhere(
+          (e) => e.name == json['level'],
+          orElse: () => ConsentLevel.green,
+        ),
+        isTruth: json['is_truth'] as bool,
+        intensity: json['intensity'] as int? ?? 1,
+      );
+  final String id;
+  final String content;
+  final ConsentLevel level;
+  final bool isTruth;
+  final int intensity;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'content': content,
+        'level': level.name,
+        'is_truth': isTruth,
+        'intensity': intensity,
+      };
+
   @override
   List<Object?> get props => [id, content, level, isTruth, intensity];
 }
