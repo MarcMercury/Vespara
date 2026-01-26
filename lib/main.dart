@@ -447,7 +447,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 12),
 
                   const Text(
-                    'Your secrets are safe here',
+                    'Vespara: Infinite Experiences',
                     style: TextStyle(
                       fontSize: 15,
                       fontStyle: FontStyle.italic,
