@@ -408,18 +408,18 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildStatColumn(_analytics.totalMatches.toString(), 'Matches'),
+            _buildStatColumn((_analytics?.totalMatches ?? 0).toString(), 'Matches'),
             Container(
                 width: 1,
                 height: 40,
                 color: VesparaColors.glow.withOpacity(0.2)),
             _buildStatColumn(
-                '${(_analytics.responseRate * 100).toInt()}%', 'Response'),
+                '${((_analytics?.responseRate ?? 0.0) * 100).toInt()}%', 'Response'),
             Container(
                 width: 1,
                 height: 40,
                 color: VesparaColors.glow.withOpacity(0.2)),
-            _buildStatColumn(_analytics.activeDays.toString(), 'Days Active'),
+            _buildStatColumn((_analytics?.activeDays ?? 0).toString(), 'Days Active'),
           ],
         ),
       );
@@ -574,7 +574,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              _analytics.aiPersonalitySummary ??
+              _analytics?.aiPersonalitySummary ??
                   'You\'re charming on the surface but tend to lose interest after the chase. You match with many but commit to few. Your texting game is strong early but fades fast. You like attention more than connection.',
               style: const TextStyle(
                 fontSize: 14,
@@ -612,7 +612,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              _analytics.aiDatingStyle ?? '"The Collector"',
+              _analytics?.aiDatingStyle ?? '"The Collector"',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -651,13 +651,13 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             const SizedBox(height: 16),
             _buildMetricRow(
-                'Ghost Rate', _analytics.ghostRate, VesparaColors.error),
+                'Ghost Rate', _analytics?.ghostRate ?? 0.0, VesparaColors.error),
             _buildMetricRow(
-                'Flake Rate', _analytics.flakeRate, VesparaColors.warning),
-            _buildMetricRow('Response Rate', _analytics.responseRate,
+                'Flake Rate', _analytics?.flakeRate ?? 0.0, VesparaColors.warning),
+            _buildMetricRow('Response Rate', _analytics?.responseRate ?? 0.0,
                 VesparaColors.success),
             _buildMetricRow(
-                'Match Rate', _analytics.matchRate, VesparaColors.glow),
+                'Match Rate', _analytics?.matchRate ?? 0.0, VesparaColors.glow),
           ],
         ),
       );
@@ -721,7 +721,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   }
 
   Widget _buildImprovementTips() {
-    final tips = _analytics.aiImprovementTips ??
+    final tips = _analytics?.aiImprovementTips ??
         [
           'Stop swiping right on everyone - be selective',
           'Actually follow through on date plans instead of flaking',

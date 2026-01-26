@@ -220,7 +220,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                   const SizedBox(height: 4),
                   Consumer(
                     builder: (context, ref, _) {
-                      final user = ref.watch(currentUserProvider).valueOrNull;
+                      final user = ref.watch(currentUserProvider);
                       final username = user?.email?.split('@').first ?? 'user';
                       return Text(
                         '@$username',
