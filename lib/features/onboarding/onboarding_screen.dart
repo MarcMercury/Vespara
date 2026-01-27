@@ -23,6 +23,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _displayNameController = TextEditingController();
   final _bioController = TextEditingController();
   final Set<String> _selectedTraits = {};
+  String? _selectedDiscretionLevel;
+
+  // Discretion level options
+  static const List<Map<String, dynamic>> _discretionOptions = [
+    {
+      'value': 'very_discreet',
+      'label': '🔒 Very Discreet',
+      'description': 'Maximum privacy, minimal profile visibility',
+    },
+    {
+      'value': 'discreet',
+      'label': '🤫 Discreet',
+      'description': 'Careful about who sees my profile',
+    },
+    {
+      'value': 'somewhat_open',
+      'label': '👀 Somewhat Open',
+      'description': 'Open to connections, some caution',
+    },
+    {
+      'value': 'open',
+      'label': '✨ Open',
+      'description': 'Comfortable being visible',
+    },
+  ];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // COMPREHENSIVE TRAIT CATEGORIES
@@ -211,7 +236,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _canProceed() {
     switch (_currentPage) {
       case 0:
-        return _displayNameController.text.trim().isNotEmpty;
+        return _displayNameController.text.trim().isNotEmpty &&
+            _selectedDiscretionLevel != null;
       case 1:
         // Require at least one selection from EACH category
         final missingCategories = _getMissingCategories();
@@ -416,6 +442,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ? 'New to Vespara ✨'
             : _bioController.text.trim(),
         'looking_for': allTraits, // Store traits in existing array column
+        'discretion_level': _selectedDiscretionLevel,
         'is_verified': true, // Mark as verified to indicate onboarding complete
         'updated_at': DateTime.now().toIso8601String(),
       });
@@ -590,7 +617,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  Widget _buildNamePage() => Padding(
+  Widget _buildNamePage() => SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -656,6 +683,89 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 48),
+
+            // Discretion Level Section
+            const Center(
+              child: Text(
+                'YOUR DISCRETION LEVEL',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Discretion options
+            ...List.generate(_discretionOptions.length, (index) {
+              final option = _discretionOptions[index];
+              final isSelected = _selectedDiscretionLevel == option['value'];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedDiscretionLevel = option['value'] as String;
+                  }),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? VesparaColors.primary.withOpacity(0.15)
+                          : VesparaColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? VesparaColors.primary
+                            : VesparaColors.surface,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                option['label'] as String,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected
+                                      ? VesparaColors.primary
+                                      : VesparaColors.primary.withOpacity(0.8),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                option['description'] as String,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: VesparaColors.secondary.withOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check_circle,
+                            color: VesparaColors.primary,
+                            size: 24,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 24),
           ],
         ),
       );
