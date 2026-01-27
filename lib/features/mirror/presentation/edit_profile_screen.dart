@@ -48,64 +48,140 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   bool _isSaving = false;
 
-  // Options
+  // Options - Using IDs that match onboarding for database consistency
   static const List<String> _pronounOptions = [
-    'He/Him',
-    'She/Her',
-    'They/Them',
-    'He/They',
-    'She/They',
-    'Any pronouns',
-    'Ask me',
+    'he/him',
+    'she/her',
+    'they/them',
+    'he/they',
+    'she/they',
+    'any',
+    'ask',
   ];
+
+  static const Map<String, String> _pronounLabels = {
+    'he/him': 'He/Him',
+    'she/her': 'She/Her',
+    'they/them': 'They/Them',
+    'he/they': 'He/They',
+    'she/they': 'She/They',
+    'any': 'Any Pronouns',
+    'ask': 'Ask Me',
+  };
 
   static const List<String> _genderOptions = [
-    'Man',
-    'Woman',
-    'Non-binary',
-    'Trans man',
-    'Trans woman',
-    'Genderqueer',
-    'Genderfluid',
-    'Agender',
-    'Two-spirit',
-    'Other',
+    'man',
+    'woman',
+    'non_binary',
+    'trans_man',
+    'trans_woman',
+    'genderqueer',
+    'genderfluid',
+    'agender',
+    'two_spirit',
+    'other',
   ];
+
+  static const Map<String, String> _genderLabels = {
+    'man': 'Man',
+    'woman': 'Woman',
+    'non_binary': 'Non-Binary',
+    'trans_man': 'Trans Man',
+    'trans_woman': 'Trans Woman',
+    'genderqueer': 'Genderqueer',
+    'genderfluid': 'Genderfluid',
+    'agender': 'Agender',
+    'two_spirit': 'Two-Spirit',
+    'other': 'Other',
+  };
 
   static const List<String> _orientationOptions = [
-    'Straight',
-    'Gay',
-    'Lesbian',
-    'Bisexual',
-    'Pansexual',
-    'Queer',
-    'Asexual',
-    'Demisexual',
-    'Heteroflexible',
-    'Homoflexible',
-    'Questioning',
+    'straight',
+    'gay',
+    'lesbian',
+    'bisexual',
+    'pansexual',
+    'queer',
+    'asexual',
+    'demisexual',
+    'heteroflexible',
+    'homoflexible',
+    'questioning',
   ];
+
+  static const Map<String, String> _orientationLabels = {
+    'straight': 'Straight',
+    'gay': 'Gay',
+    'lesbian': 'Lesbian',
+    'bisexual': 'Bisexual',
+    'pansexual': 'Pansexual',
+    'queer': 'Queer',
+    'asexual': 'Asexual',
+    'demisexual': 'Demisexual',
+    'heteroflexible': 'Heteroflexible',
+    'homoflexible': 'Homoflexible',
+    'questioning': 'Questioning',
+  };
 
   static const List<String> _relationshipStatusOptions = [
-    'Single',
-    'Partnered',
-    'Married',
-    'Open relationship',
-    'Polyamorous',
-    'Divorced',
-    'Widowed',
-    'It\'s complicated',
+    'single',
+    'dating',
+    'partnered',
+    'partnered_open',
+    'married',
+    'married_open',
+    'divorced',
+    'poly_solo',
+    'poly_nested',
+    'poly_network',
+    'situationship',
+    'exploring',
+    'relationship_anarchist',
   ];
 
+  static const Map<String, String> _relationshipStatusLabels = {
+    'single': 'Single',
+    'dating': 'Dating',
+    'partnered': 'Partnered',
+    'partnered_open': 'Open Relationship',
+    'married': 'Married',
+    'married_open': 'Married (Open)',
+    'divorced': 'Divorced',
+    'poly_solo': 'Solo Poly',
+    'poly_nested': 'Nested Poly',
+    'poly_network': 'Polycule',
+    'situationship': 'Situationship',
+    'exploring': 'Exploring',
+    'relationship_anarchist': 'Relationship Anarchist',
+  };
+
   static const List<String> _seekingOptions = [
-    'Friends',
-    'Dates',
-    'Casual',
-    'Relationship',
-    'Play partners',
-    'Networking',
-    'Open to anything',
+    'friends',
+    'dates',
+    'fwb',
+    'ongoing',
+    'relationship',
+    'play_partners',
+    'third',
+    'couple',
+    'group',
+    'events',
+    'exploring',
   ];
+
+  static const Map<String, String> _seekingLabels = {
+    'friends': 'Friends',
+    'dates': 'Casual Dates',
+    'fwb': 'FWB',
+    'ongoing': 'Ongoing Connection',
+    'relationship': 'Relationship',
+    'play_partners': 'Play Partners',
+    'third': 'Third',
+    'couple': 'Couples',
+    'group': 'Group Experiences',
+    'events': 'Events & Parties',
+    'exploring': 'Just Exploring',
+  };
 
   static const List<String> _lookingForOptions = [
     'Adventurous',
@@ -124,44 +200,94 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   ];
 
   static const List<String> _availabilityOptions = [
-    'Weekday mornings',
-    'Weekday afternoons',
-    'Weekday evenings',
-    'Weekend mornings',
-    'Weekend afternoons',
-    'Weekend evenings',
-    'Late nights',
+    'weekday_days',
+    'weekday_evenings',
+    'weekday_nights',
+    'weekend_days',
+    'weekend_evenings',
+    'weekend_nights',
+    'spontaneous',
+    'planned_only',
   ];
+
+  static const Map<String, String> _availabilityLabels = {
+    'weekday_days': 'Weekday Days',
+    'weekday_evenings': 'Weekday Evenings',
+    'weekday_nights': 'Weekday Late Nights',
+    'weekend_days': 'Weekend Days',
+    'weekend_evenings': 'Weekend Evenings',
+    'weekend_nights': 'Weekend Late Nights',
+    'spontaneous': 'Spontaneous',
+    'planned_only': 'Planned Only',
+  };
 
   static const List<String> _hostingOptions = [
-    'Can host',
-    'Can\'t host',
-    'Can travel',
-    'Can host sometimes',
-    'Prefer to travel',
+    'can_host',
+    'sometimes_host',
+    'cannot_host',
+    'prefer_not',
+    'hotel',
+    'adventurous',
   ];
+
+  static const Map<String, String> _hostingLabels = {
+    'can_host': 'Can Host',
+    'sometimes_host': 'Sometimes',
+    'cannot_host': 'Cannot Host',
+    'prefer_not': 'Prefer Not',
+    'hotel': 'Hotel Only',
+    'adventurous': 'Adventurous',
+  };
 
   static const List<String> _discretionOptions = [
-    'Very discreet',
-    'Somewhat discreet',
-    'Open',
-    'Doesn\'t matter',
+    'very_discreet',
+    'discreet',
+    'casual',
+    'open',
   ];
+
+  static const Map<String, String> _discretionLabels = {
+    'very_discreet': 'Very Discreet',
+    'discreet': 'Discreet',
+    'casual': 'Casual',
+    'open': 'Open',
+  };
 
   static const List<String> _schedulingOptions = [
-    'Spontaneous',
-    'Planner',
-    'Flexible',
-    'Last minute only',
+    'same_day',
+    'day_ahead',
+    'week_ahead',
+    'flexible',
   ];
 
+  static const Map<String, String> _schedulingLabels = {
+    'same_day': 'Same Day OK',
+    'day_ahead': 'Day Ahead',
+    'week_ahead': 'Week Ahead',
+    'flexible': 'Flexible',
+  };
+
   static const List<String> _partnerInvolvementOptions = [
-    'Solo only',
-    'Partner sometimes joins',
-    'Partner always joins',
-    'Looking for couples',
-    'Depends on the situation',
+    'na',
+    'solo_only',
+    'sometimes',
+    'always_together',
+    'parallel',
+    'soft_swap',
+    'full_swap',
+    'watch',
   ];
+
+  static const Map<String, String> _partnerInvolvementLabels = {
+    'na': 'N/A - I\'m Solo',
+    'solo_only': 'Solo Only',
+    'sometimes': 'Sometimes Together',
+    'always_together': 'Always Together',
+    'parallel': 'Parallel Play',
+    'soft_swap': 'Soft Swap',
+    'full_swap': 'Full Swap',
+    'watch': 'Partner Watches',
+  };
 
   static const List<String> _heatLevelOptions = [
     'mild',
@@ -198,12 +324,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   ];
 
   static const List<String> _partyAvailabilityOptions = [
-    'House parties',
-    'Club events',
-    'Private events',
-    'Lifestyle events',
-    'Not interested in events',
+    'house_parties',
+    'club_events',
+    'private_events',
+    'lifestyle_events',
+    'not_interested',
   ];
+
+  static const Map<String, String> _partyAvailabilityLabels = {
+    'house_parties': 'House Parties',
+    'club_events': 'Club Events',
+    'private_events': 'Private Events',
+    'lifestyle_events': 'Lifestyle Events',
+    'not_interested': 'Not Interested in Events',
+  };
 
   @override
   void initState() {
@@ -419,18 +553,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 _pronounOptions,
                 _selectedPronouns,
                 (val) => setState(() => _selectedPronouns = val),
+                labels: _pronounLabels,
               ),
-              _buildMultiSelect('Gender', _genderOptions, _selectedGender),
+              _buildMultiSelect('Gender', _genderOptions, _selectedGender,
+                  labels: _genderLabels,),
               _buildMultiSelect(
-                  'Orientation', _orientationOptions, _selectedOrientation,),
+                  'Orientation', _orientationOptions, _selectedOrientation,
+                  labels: _orientationLabels,),
 
               const SizedBox(height: 24),
 
               // Relationship Section
               _buildSectionHeader('Relationship'),
               _buildMultiSelect('Relationship Status',
-                  _relationshipStatusOptions, _selectedRelationshipStatus,),
-              _buildMultiSelect('Seeking', _seekingOptions, _selectedSeeking),
+                  _relationshipStatusOptions, _selectedRelationshipStatus,
+                  labels: _relationshipStatusLabels,),
+              _buildMultiSelect('Seeking', _seekingOptions, _selectedSeeking,
+                  labels: _seekingLabels,),
               _buildMultiSelect('Looking For (Traits)', _lookingForOptions,
                   _selectedLookingFor,),
               _buildDropdown(
@@ -438,6 +577,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 _partnerInvolvementOptions,
                 _selectedPartnerInvolvement,
                 (val) => setState(() => _selectedPartnerInvolvement = val),
+                labels: _partnerInvolvementLabels,
               ),
 
               const SizedBox(height: 24),
@@ -445,24 +585,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               // Logistics Section
               _buildSectionHeader('Logistics'),
               _buildMultiSelect(
-                  'Availability', _availabilityOptions, _selectedAvailability,),
+                  'Availability', _availabilityOptions, _selectedAvailability,
+                  labels: _availabilityLabels,),
               _buildDropdown(
                 'Scheduling Style',
                 _schedulingOptions,
                 _selectedSchedulingStyle,
                 (val) => setState(() => _selectedSchedulingStyle = val),
+                labels: _schedulingLabels,
               ),
               _buildDropdown(
                 'Hosting Status',
                 _hostingOptions,
                 _selectedHostingStatus,
                 (val) => setState(() => _selectedHostingStatus = val),
+                labels: _hostingLabels,
               ),
               _buildDropdown(
                 'Discretion Level',
                 _discretionOptions,
                 _selectedDiscretionLevel,
                 (val) => setState(() => _selectedDiscretionLevel = val),
+                labels: _discretionLabels,
               ),
 
               const SizedBox(height: 40),
@@ -556,8 +700,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
       );
 
-  Widget _buildDropdown(String label, List<String> options, String? value,
-          Function(String?) onChanged,) =>
+  Widget _buildDropdown(
+    String label,
+    List<String> options,
+    String? value,
+    Function(String?) onChanged, {
+    Map<String, String>? labels,
+  }) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Column(
@@ -593,7 +742,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       .map(
                         (opt) => DropdownMenuItem(
                           value: opt,
-                          child: Text(opt),
+                          child: Text(labels?[opt] ?? opt),
                         ),
                       )
                       .toList(),
@@ -606,7 +755,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
   Widget _buildMultiSelect(
-          String label, List<String> options, List<String> selected,) =>
+    String label,
+    List<String> options,
+    List<String> selected, {
+    Map<String, String>? labels,
+  }) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Column(
@@ -651,7 +804,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
                     child: Text(
-                      opt,
+                      labels?[opt] ?? opt,
                       style: TextStyle(
                         fontSize: 13,
                         color: isSelected
