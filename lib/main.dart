@@ -112,7 +112,8 @@ class _AuthGateState extends State<AuthGate> {
             'Vespara Auth: ${data.event} - session: ${data.session != null}',);
 
         if (mounted) {
-          // Only update if session actually changed
+          // Check if this is a token refresh event (which happens after onboarding completes)
+          final isTokenRefresh = data.event == AuthChangeEvent.tokenRefreshed;
           final sessionChanged = (_session == null) != (data.session == null);
 
           setState(() {
@@ -120,8 +121,9 @@ class _AuthGateState extends State<AuthGate> {
             _isLoading = false;
           });
 
-          // Check onboarding status when session changes
-          if (data.session != null && sessionChanged) {
+          // Check onboarding status when session changes OR on token refresh
+          // Token refresh happens after onboarding completes to trigger navigation
+          if (data.session != null && (sessionChanged || isTokenRefresh)) {
             _checkOnboardingStatus(data.session!.user.id);
           } else if (data.session == null) {
             _hasCompletedOnboarding = null;
@@ -146,17 +148,17 @@ class _AuthGateState extends State<AuthGate> {
     try {
       final response = await Supabase.instance.client
           .from('profiles')
-          .select('is_verified, display_name')
+          .select('is_verified, onboarding_complete')
           .eq('id', userId)
           .maybeSingle();
 
       if (mounted) {
         setState(() {
-          // User has completed onboarding if they have a profile with is_verified=true
-          // or if they have a display_name set
+          // User has completed onboarding if onboarding_complete=true 
+          // OR is_verified=true (for legacy accounts)
           _hasCompletedOnboarding = response != null &&
-              (response['is_verified'] == true ||
-                  response['display_name'] != null);
+              (response['onboarding_complete'] == true ||
+                  response['is_verified'] == true);
         });
       }
     } catch (e) {

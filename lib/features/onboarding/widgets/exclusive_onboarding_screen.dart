@@ -1164,6 +1164,78 @@ class _ExclusiveOnboardingScreenState
 
       print('[Onboarding] Profile saved successfully');
 
+      // ═══════════════════════════════════════════════════════════════════════
+      // SYNC SETTINGS TO USER_SETTINGS TABLE
+      // This ensures onboarding preferences carry over to the settings page
+      // ═══════════════════════════════════════════════════════════════════════
+      
+      // Map seeking options to relationship types for settings
+      final relationshipTypes = _seeking.map((s) {
+        switch (s) {
+          case 'friends': return 'Friendship';
+          case 'dates': return 'Casual';
+          case 'fwb': return 'Casual';
+          case 'ongoing': return 'Long-term';
+          case 'relationship': return 'Long-term';
+          case 'play_partners': return 'Casual';
+          case 'third': return 'Casual';
+          case 'couple': return 'Casual';
+          case 'group': return 'Casual';
+          case 'events': return 'Friendship';
+          case 'exploring': return 'Casual';
+          default: return 'Casual';
+        }
+      }).toSet().toList(); // Remove duplicates
+
+      // Ensure at least one type is selected
+      if (relationshipTypes.isEmpty) {
+        relationshipTypes.addAll(['Long-term', 'Casual', 'Friendship']);
+      }
+
+      // Determine "show_me" based on orientation
+      String showMe = 'Everyone';
+      if (_selectedOrientations.contains('straight')) {
+        // If straight, show opposite gender
+        if (_selectedGenders.contains('man')) {
+          showMe = 'Women';
+        } else if (_selectedGenders.contains('woman')) {
+          showMe = 'Men';
+        }
+      } else if (_selectedOrientations.contains('gay') || 
+                 _selectedOrientations.contains('lesbian')) {
+        // Same gender preference
+        if (_selectedGenders.contains('man')) {
+          showMe = 'Men';
+        } else if (_selectedGenders.contains('woman')) {
+          showMe = 'Women';
+        }
+      }
+      // For bi/pan/queer/etc, default to Everyone
+
+      final settingsData = {
+        'user_id': user.id,
+        'max_distance': _travelRadius,
+        'relationship_types': relationshipTypes,
+        'show_me': showMe,
+        // Keep reasonable defaults for age range
+        'min_age': 21,
+        'max_age': 55,
+        // Privacy settings based on discretion level
+        'profile_visible': _discretionLevel != 'very_discreet',
+        'show_online_status': _discretionLevel == null || 
+            _discretionLevel == 'open' || 
+            _discretionLevel == 'somewhat_open',
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      // Upsert user settings (create if not exists, update if exists)
+      await Supabase.instance.client.from('user_settings').upsert(
+        settingsData,
+        onConflict: 'user_id',
+      );
+
+      print('[Onboarding] User settings synced successfully');
+
       // Refresh session to trigger navigation
       if (mounted) {
         await Supabase.instance.client.auth.refreshSession();
@@ -1379,6 +1451,40 @@ class _ExclusiveOnboardingScreenState
               style: TextStyle(
                 fontSize: 14,
                 color: VesparaColors.secondary,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Profile outline message
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: VesparaColors.glow.withOpacity(0.2),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    color: VesparaColors.glow,
+                    size: 20,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'You\'re creating your profile outline. Once welcomed into Vespara, you\'ll be able to further build your personal profile.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: VesparaColors.secondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
