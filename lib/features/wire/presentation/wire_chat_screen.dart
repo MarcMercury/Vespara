@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -736,18 +736,10 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
   }
 
   Future<void> _pickDocument() async {
-    final result = await FilePicker.platform.pickFiles();
-
-    if (result != null && result.files.single.path != null) {
-      await ref.read(wireProvider.notifier).sendMediaMessage(
-            conversationId: widget.conversation.id,
-            file: File(result.files.single.path!),
-            type: MessageType.file,
-            replyToId: _replyingTo?.id,
-          );
-
-      setState(() => _replyingTo = null);
-    }
+    // File picking is not yet supported on web - coming soon
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Document sharing coming soon')),
+    );
   }
 
   void _shareLocation() {
