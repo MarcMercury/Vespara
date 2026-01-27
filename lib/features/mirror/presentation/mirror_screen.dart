@@ -2702,7 +2702,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Log Out?',
@@ -2713,16 +2713,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel',
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(dialogContext); // Close dialog
               try {
                 await SupabaseService.signOut();
-                // Auth state listener will handle navigation to login
+                // Clear navigation stack and go to root (AuthGate will show login)
+                if (mounted) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
