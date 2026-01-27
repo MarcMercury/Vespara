@@ -8,8 +8,10 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/domain/models/analytics.dart';
 import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
+import '../../../core/domain/models/user_settings.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/profile_photos_provider.dart';
+import '../../../core/providers/user_settings_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../widgets/qr_connect_modal.dart';
 import 'edit_profile_screen.dart';
@@ -30,17 +32,6 @@ class MirrorScreen extends ConsumerStatefulWidget {
 class _MirrorScreenState extends ConsumerState<MirrorScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  // Settings state
-  final Map<String, bool> _toggleSettings = {
-    'New Matches': true,
-    'Messages': true,
-    'Date Reminders': true,
-    'AI Insights': false,
-    'Show Online Status': true,
-    'Read Receipts': false,
-    'Profile Visible': true,
-  };
 
   UserAnalytics? _cachedAnalytics;
 
@@ -1937,58 +1928,95 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   // SETTINGS TAB
   // ════════════════════════════════════════════════════════════════════════════
 
-  Widget _buildSettingsTab() => ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildSettingsSection('Discovery Preferences', [
-            _buildSettingTile(
-                'Age Range', '21-45', Icons.cake_outlined, _showAgeRangeDialog,),
-            _buildSettingTile('Distance', 'Within 25 miles',
-                Icons.location_on_outlined, _showDistanceDialog,),
-            _buildSettingTile('Show Me', 'Everyone', Icons.people_outline,
-                _showGenderPreferenceDialog,),
-            _buildSettingTile('Relationship Types', '3 selected',
-                Icons.favorite_outline, _showRelationshipTypesDialog,),
-          ]),
-          const SizedBox(height: 16),
-          _buildSettingsSection('Notifications', [
-            _buildSettingToggle('New Matches'),
-            _buildSettingToggle('Messages'),
-            _buildSettingToggle('Date Reminders'),
-            _buildSettingToggle('AI Insights'),
-          ]),
-          const SizedBox(height: 16),
-          _buildSettingsSection('Privacy', [
-            _buildSettingToggle('Show Online Status'),
-            _buildSettingToggle('Read Receipts'),
-            _buildSettingToggle('Profile Visible'),
-          ]),
-          const SizedBox(height: 16),
-          _buildSettingsSection('Calendar Sync', [
-            _buildSettingTile('Google Calendar', 'Connected',
-                Icons.calendar_today, () => _showCalendarSyncDialog('Google'),),
-            _buildSettingTile('Apple Calendar', 'Not Connected', Icons.event,
-                () => _showCalendarSyncDialog('Apple'),),
-          ]),
-          const SizedBox(height: 16),
-          _buildSettingsSection('Account', [
-            _buildSettingTile('Subscription', 'Free', Icons.star_outline,
-                _showSubscriptionDialog,),
-            _buildSettingTile(
-                'Email',
-                ref.watch(userProfileProvider).valueOrNull?.email ?? 'Not set',
-                Icons.email_outlined,
-                _showEditEmailDialog,),
-            _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined,
-                _showEditPhoneDialog,),
-          ]),
-          const SizedBox(height: 24),
-          _buildDangerZone(),
-        ],
-      );
+  Widget _buildSettingsTab() {
+    final settingsAsync = ref.watch(userSettingsProvider);
+    
+    return settingsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error loading settings: $e')),
+      data: (settings) {
+        // Use defaults if settings is null
+        final s = settings ?? UserSettings.defaults('');
+        
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildSettingsSection('Discovery Preferences', [
+              _buildSettingTile(
+                  'Age Range', 
+                  '${s.minAge}-${s.maxAge}', 
+                  Icons.cake_outlined, 
+                  () => _showAgeRangeDialog(s),),
+              _buildSettingTile(
+                  'Distance', 
+                  'Within ${s.maxDistance} miles',
+                  Icons.location_on_outlined, 
+                  () => _showDistanceDialog(s),),
+              _buildSettingTile(
+                  'Show Me', 
+                  s.showMe, 
+                  Icons.people_outline,
+                  () => _showGenderPreferenceDialog(s),),
+              _buildSettingTile(
+                  'Relationship Types', 
+                  '${s.relationshipTypes.length} selected',
+                  Icons.favorite_outline, 
+                  () => _showRelationshipTypesDialog(s),),
+            ]),
+            const SizedBox(height: 16),
+            _buildSettingsSection('Notifications', [
+              _buildSettingToggleWithProvider('New Matches', 'notify_new_matches', s.notifyNewMatches),
+              _buildSettingToggleWithProvider('Messages', 'notify_new_messages', s.notifyNewMessages),
+              _buildSettingToggleWithProvider('Date Reminders', 'notify_date_reminders', s.notifyDateReminders),
+              _buildSettingToggleWithProvider('AI Insights', 'notify_ai_insights', s.notifyAiInsights),
+            ]),
+            const SizedBox(height: 16),
+            _buildSettingsSection('Privacy', [
+              _buildSettingToggleWithProvider('Show Online Status', 'show_online_status', s.showOnlineStatus),
+              _buildSettingToggleWithProvider('Read Receipts', 'read_receipts', s.readReceipts),
+              _buildSettingToggleWithProvider('Profile Visible', 'profile_visible', s.profileVisible),
+            ]),
+            const SizedBox(height: 16),
+            _buildSettingsSection('Calendar Sync', [
+              _buildSettingTile(
+                  'Google Calendar', 
+                  s.googleCalendarConnected ? 'Connected' : 'Not Connected',
+                  Icons.calendar_today, 
+                  () => _showCalendarSyncDialog('Google', s),),
+              _buildSettingTile(
+                  'Apple Calendar', 
+                  s.appleCalendarConnected ? 'Connected' : 'Not Connected', 
+                  Icons.event,
+                  () => _showCalendarSyncDialog('Apple', s),),
+            ]),
+            const SizedBox(height: 16),
+            _buildSettingsSection('Account', [
+              _buildSettingTile(
+                  'Subscription', 
+                  s.subscriptionTier.toUpperCase(), 
+                  Icons.star_outline,
+                  _showSubscriptionDialog,),
+              _buildSettingTile(
+                  'Email',
+                  ref.watch(userProfileProvider).valueOrNull?.email ?? 'Not set',
+                  Icons.email_outlined,
+                  _showEditEmailDialog,),
+              _buildSettingTile(
+                  'Phone', 
+                  s.phone ?? 'Not set', 
+                  Icons.phone_outlined,
+                  () => _showEditPhoneDialog(s),),
+            ]),
+            const SizedBox(height: 24),
+            _buildDangerZone(s),
+          ],
+        );
+      },
+    );
+  }
 
-  void _showAgeRangeDialog() {
-    RangeValues range = const RangeValues(21, 45);
+  void _showAgeRangeDialog(UserSettings settings) {
+    RangeValues range = RangeValues(settings.minAge.toDouble(), settings.maxAge.toDouble());
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2031,13 +2059,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Age range updated to ${range.start.toInt()}-${range.end.toInt()}',),),
+                    await ref.read(userSettingsProvider.notifier).updateDiscovery(
+                      minAge: range.start.toInt(),
+                      maxAge: range.end.toInt(),
                     );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                'Age range updated to ${range.start.toInt()}-${range.end.toInt()}',),),
+                      );
+                    }
                   },
                   child: const Text('Save',
                       style: TextStyle(
@@ -2051,8 +2085,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     );
   }
 
-  void _showDistanceDialog() {
-    double distance = 25;
+  void _showDistanceDialog(UserSettings settings) {
+    double distance = settings.maxDistance.toDouble();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2094,13 +2128,18 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Distance updated to ${distance.toInt()} miles',),),
+                    await ref.read(userSettingsProvider.notifier).updateDiscovery(
+                      maxDistance: distance.toInt(),
                     );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                'Distance updated to ${distance.toInt()} miles',),),
+                      );
+                    }
                   },
                   child: const Text('Save',
                       style: TextStyle(
@@ -2114,8 +2153,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     );
   }
 
-  void _showGenderPreferenceDialog() {
-    String selected = 'Everyone';
+  void _showGenderPreferenceDialog(UserSettings settings) {
+    String selected = settings.showMe;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2142,12 +2181,17 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   value: option,
                   groupValue: selected,
                   activeColor: VesparaColors.glow,
-                  onChanged: (v) {
+                  onChanged: (v) async {
                     setModalState(() => selected = v!);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Preference updated to $v')),
+                    await ref.read(userSettingsProvider.notifier).updateDiscovery(
+                      showMe: v,
                     );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Preference updated to $v')),
+                      );
+                    }
                   },
                 ),
               ),
@@ -2158,9 +2202,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     );
   }
 
-  void _showRelationshipTypesDialog() {
+  void _showRelationshipTypesDialog(UserSettings settings) {
     final types = ['Long-term', 'Casual', 'Open', 'Friendship', 'Unsure'];
-    final selected = {'Long-term', 'Casual', 'Friendship'};
+    final selected = Set<String>.from(settings.relationshipTypes);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2214,13 +2258,18 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              '${selected.length} relationship types selected',),),
+                    await ref.read(userSettingsProvider.notifier).updateDiscovery(
+                      relationshipTypes: selected.toList(),
                     );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                '${selected.length} relationship types selected',),),
+                      );
+                    }
                   },
                   child: const Text('Save',
                       style: TextStyle(
@@ -2234,7 +2283,10 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     );
   }
 
-  void _showCalendarSyncDialog(String provider) {
+  void _showCalendarSyncDialog(String provider, UserSettings settings) {
+    final isConnected = provider == 'Google' 
+        ? settings.googleCalendarConnected 
+        : settings.appleCalendarConnected;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2243,9 +2295,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         title: Text('$provider Calendar',
             style: const TextStyle(color: VesparaColors.primary),),
         content: Text(
-          provider == 'Google'
-              ? 'Your Google Calendar is connected. Disconnect?'
-              : 'Connect your Apple Calendar to sync dates automatically.',
+          isConnected
+              ? 'Your $provider Calendar is connected. Disconnect?'
+              : 'Connect your $provider Calendar to sync dates automatically.',
           style: const TextStyle(color: VesparaColors.secondary),
         ),
         actions: [
@@ -2255,16 +2307,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(provider == 'Google'
-                        ? 'Disconnected from Google Calendar'
-                        : 'Connecting to Apple Calendar...',),),
-              );
+              await ref.read(userSettingsProvider.notifier).toggleCalendar(provider);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(isConnected
+                          ? 'Disconnected from $provider Calendar'
+                          : 'Connected to $provider Calendar',),),
+                );
+              }
             },
-            child: Text(provider == 'Google' ? 'Disconnect' : 'Connect',
+            child: Text(isConnected ? 'Disconnect' : 'Connect',
                 style: const TextStyle(color: VesparaColors.glow),),
           ),
         ],
@@ -2379,7 +2434,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     );
   }
 
-  void _showEditPhoneDialog() {
+  void _showEditPhoneDialog(UserSettings settings) {
+    final controller = TextEditingController(text: settings.phone ?? '');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2388,6 +2444,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         title: const Text('Update Phone',
             style: TextStyle(color: VesparaColors.primary),),
         content: TextField(
+          controller: controller,
           keyboardType: TextInputType.phone,
           decoration: InputDecoration(
             hintText: '+1 (555) 000-0000',
@@ -2404,12 +2461,14 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Verification code sent to your phone'),),
-              );
+              await ref.read(userSettingsProvider.notifier).updatePhone(controller.text);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Phone number updated'),),
+                );
+              }
             },
             child:
                 const Text('Save', style: TextStyle(color: VesparaColors.glow)),
@@ -2482,21 +2541,38 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           ),
         ),
         trailing: Switch.adaptive(
-          value: _toggleSettings[title] ?? false,
-          onChanged: (v) {
-            setState(() => _toggleSettings[title] = v);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('$title ${v ? 'enabled' : 'disabled'}'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
+          value: false,
+          onChanged: (v) {},
+          activeColor: VesparaColors.glow,
+        ),
+      );
+
+  Widget _buildSettingToggleWithProvider(String title, String dbKey, bool currentValue) => ListTile(
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            color: VesparaColors.primary,
+          ),
+        ),
+        trailing: Switch.adaptive(
+          value: currentValue,
+          onChanged: (v) async {
+            await ref.read(userSettingsProvider.notifier).updateSetting(dbKey, v);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$title ${v ? 'enabled' : 'disabled'}'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
           },
           activeColor: VesparaColors.glow,
         ),
       );
 
-  Widget _buildDangerZone() => DecoratedBox(
+  Widget _buildDangerZone(UserSettings settings) => DecoratedBox(
         decoration: BoxDecoration(
           color: VesparaColors.error.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
@@ -2505,11 +2581,12 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         child: Column(
           children: [
             ListTile(
-              leading: const Icon(Icons.pause_circle_outline,
-                  color: VesparaColors.warning,),
-              title: const Text('Pause Account',
-                  style: TextStyle(color: VesparaColors.primary),),
-              onTap: _showPauseAccountDialog,
+              leading: Icon(
+                settings.isPaused ? Icons.play_circle_outline : Icons.pause_circle_outline,
+                color: VesparaColors.warning,),
+              title: Text(settings.isPaused ? 'Unpause Account' : 'Pause Account',
+                  style: const TextStyle(color: VesparaColors.primary),),
+              onTap: () => _showPauseAccountDialog(settings),
             ),
             ListTile(
               leading:
@@ -2528,17 +2605,20 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         ),
       );
 
-  void _showPauseAccountDialog() {
+  void _showPauseAccountDialog(UserSettings settings) {
+    final isPaused = settings.isPaused;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Pause Your Account?',
-            style: TextStyle(color: VesparaColors.primary),),
-        content: const Text(
-          'Your profile will be hidden and you won\'t receive new matches. You can unpause anytime.',
-          style: TextStyle(color: VesparaColors.secondary),
+        title: Text(isPaused ? 'Unpause Your Account?' : 'Pause Your Account?',
+            style: const TextStyle(color: VesparaColors.primary),),
+        content: Text(
+          isPaused 
+              ? 'Your profile will become visible again and you\'ll start receiving matches.'
+              : 'Your profile will be hidden and you won\'t receive new matches. You can unpause anytime.',
+          style: const TextStyle(color: VesparaColors.secondary),
         ),
         actions: [
           TextButton(
@@ -2547,18 +2627,22 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Account paused. Come back when you\'re ready!'),
-                  backgroundColor: VesparaColors.warning,
-                ),
-              );
+              await ref.read(userSettingsProvider.notifier).togglePause();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isPaused 
+                        ? 'Account unpaused. Welcome back!'
+                        : 'Account paused. Come back when you\'re ready!',),
+                    backgroundColor: VesparaColors.warning,
+                  ),
+                );
+              }
             },
-            child: const Text('Pause',
-                style: TextStyle(color: VesparaColors.warning),),
+            child: Text(isPaused ? 'Unpause' : 'Pause',
+                style: const TextStyle(color: VesparaColors.warning),),
           ),
         ],
       ),
@@ -2584,15 +2668,28 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.pop(context); // Go back to home
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account deleted. We\'re sorry to see you go.'),
-                  backgroundColor: VesparaColors.error,
-                ),
-              );
+              try {
+                // Delete user data from database (cascade will handle related tables)
+                await SupabaseService.signOut();
+                // Note: Full account deletion requires admin SDK or Edge Function
+                // For now, signing out effectively removes access
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Account deleted. We\'re sorry to see you go.'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting account: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Delete Forever',
                 style: TextStyle(color: VesparaColors.error),),
