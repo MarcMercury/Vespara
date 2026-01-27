@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/domain/models/analytics.dart';
+import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/providers/app_providers.dart';
+import '../../../core/providers/profile_photos_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../widgets/qr_connect_modal.dart';
 import 'edit_profile_screen.dart';
@@ -41,7 +46,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     // Analytics will be loaded via provider
   }
 
@@ -86,8 +91,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 controller: _tabController,
                 children: [
                   _buildBrutalTruthTab(), // TRUTH
-                  _buildProfileTab(), // PROFILE
-                  _buildBuildTab(), // BUILD
+                  _buildBuildTab(), // BUILD - Combined Profile + Build + Photos
                   _buildSettingsTab(), // SETTINGS
                 ],
               ),
@@ -166,7 +170,6 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           dividerHeight: 0,
           tabs: const [
             Tab(icon: Icon(Icons.psychology_outlined, size: 16), text: 'TRUTH'),
-            Tab(icon: Icon(Icons.person_outline, size: 16), text: 'PROFILE'),
             Tab(icon: Icon(Icons.auto_awesome, size: 16), text: 'BUILD'),
             Tab(
                 icon: Icon(Icons.settings_outlined, size: 16),
@@ -857,6 +860,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   }
 
   Widget _buildBuildContent(UserProfile profile) {
+    // Watch photo state
+    final photosState = ref.watch(profilePhotosProvider);
+    
     // All vibe options from onboarding
     final allVibes = [
       {'emoji': '🌙', 'label': 'Night Owl'},
@@ -910,7 +916,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Header
+        // ════════════════════════════════════════════════════════════════════
+        // PROFILE HEADER WITH NAME & BIO
+        // ════════════════════════════════════════════════════════════════════
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -922,34 +930,40 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
+          child: Column(
             children: [
-              const Icon(Icons.auto_awesome,
-                  color: VesparaColors.glow, size: 32,),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'BUILD YOUR EXPERIENCE',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: VesparaColors.primary,
-                      ),
-                    ),
-                    Text(
-                      'Help AI understand you better',
-                      style: TextStyle(
-                          fontSize: 12, color: VesparaColors.secondary,),
-                    ),
-                  ],
+              Text(
+                profile.displayName,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: VesparaColors.primary,
                 ),
               ),
-              Text(
-                '${selectedVibes.length + selectedInterests.length} selected',
-                style: const TextStyle(fontSize: 12, color: VesparaColors.glow),
+              if (profile.headline != null && profile.headline!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    profile.headline!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: VesparaColors.secondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.auto_awesome,
+                      color: VesparaColors.glow, size: 16,),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${photosState.photos.length}/5 photos • ${selectedVibes.length + selectedInterests.length} traits',
+                    style: const TextStyle(fontSize: 12, color: VesparaColors.glow),
+                  ),
+                ],
               ),
             ],
           ),
@@ -957,7 +971,31 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
         const SizedBox(height: 24),
 
-        // AI Suggestions Section
+        // ════════════════════════════════════════════════════════════════════
+        // PHOTO GALLERY SECTION
+        // ════════════════════════════════════════════════════════════════════
+        _buildPhotoGallerySection(photosState),
+
+        const SizedBox(height: 24),
+
+        // ════════════════════════════════════════════════════════════════════
+        // AI PHOTO RECOMMENDATION SECTION
+        // ════════════════════════════════════════════════════════════════════
+        if (photosState.recommendation != null)
+          _buildPhotoRecommendationSection(photosState),
+
+        if (photosState.recommendation != null) const SizedBox(height: 24),
+
+        // ════════════════════════════════════════════════════════════════════
+        // PROFILE INFO SECTION (Collapsible)
+        // ════════════════════════════════════════════════════════════════════
+        _buildProfileInfoSection(profile),
+
+        const SizedBox(height: 24),
+
+        // ════════════════════════════════════════════════════════════════════
+        // AI SUGGESTIONS SECTION
+        // ════════════════════════════════════════════════════════════════════
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -1029,7 +1067,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
         const SizedBox(height: 24),
 
-        // YOUR VIBE Section
+        // ════════════════════════════════════════════════════════════════════
+        // YOUR VIBE SECTION
+        // ════════════════════════════════════════════════════════════════════
         _buildBuildSection(
           title: 'YOUR VIBE',
           subtitle: 'How would you describe your energy?',
@@ -1051,7 +1091,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
         const SizedBox(height: 24),
 
-        // YOUR INTERESTS Section
+        // ════════════════════════════════════════════════════════════════════
+        // YOUR INTERESTS SECTION
+        // ════════════════════════════════════════════════════════════════════
         _buildBuildSection(
           title: 'YOUR INTERESTS',
           subtitle: 'What lights you up?',
@@ -1073,7 +1115,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
         const SizedBox(height: 24),
 
-        // Heat Level
+        // ════════════════════════════════════════════════════════════════════
+        // HEAT LEVEL SECTION
+        // ════════════════════════════════════════════════════════════════════
         if (profile.heatLevel != null)
           Container(
             padding: const EdgeInsets.all(16),
@@ -1123,7 +1167,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
         const SizedBox(height: 32),
 
-        // Edit button
+        // ════════════════════════════════════════════════════════════════════
+        // EDIT PROFILE BUTTON
+        // ════════════════════════════════════════════════════════════════════
         ElevatedButton.icon(
           onPressed: () => _navigateToEditProfile(profile),
           style: ElevatedButton.styleFrom(
@@ -1134,12 +1180,641 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           icon: const Icon(Icons.edit),
-          label: const Text('Edit Your Experience',
+          label: const Text('Edit Full Profile',
               style: TextStyle(fontWeight: FontWeight.bold),),
         ),
 
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // PHOTO GALLERY SECTION - Upload up to 5 photos
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildPhotoGallerySection(ProfilePhotosState photosState) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.photo_library, color: VesparaColors.glow, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'YOUR PHOTOS',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '${photosState.photos.length}/5',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: VesparaColors.glow,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add up to 5 photos. Drag to reorder. Other users will rank them to help you pick the best one.',
+            style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
+          ),
+          const SizedBox(height: 16),
+          
+          // Photo Grid (2x3 grid with 5 slots + primary indicator)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              final position = index + 1;
+              final photo = photosState.photoAtPosition(position);
+              final isUploading = photosState.isUploading && 
+                  photosState.uploadingPosition == position;
+              
+              return _buildPhotoSlot(
+                position: position,
+                photo: photo,
+                isUploading: isUploading,
+                isPrimary: photo?.isPrimary ?? false,
+              );
+            },
+          ),
+          
+          // Ranking stats
+          if (photosState.totalRankingsReceived > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.how_to_vote, 
+                        color: VesparaColors.glow, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${photosState.totalRankingsReceived} people have ranked your photos',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoSlot({
+    required int position,
+    ProfilePhoto? photo,
+    required bool isUploading,
+    required bool isPrimary,
+  }) {
+    return GestureDetector(
+      onTap: () => _handlePhotoTap(position, photo),
+      onLongPress: photo != null ? () => _showPhotoOptions(position, photo) : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: VesparaColors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isPrimary ? VesparaColors.glow : VesparaColors.border,
+            width: isPrimary ? 2 : 1,
+          ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Photo or placeholder
+            if (photo != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: Image.network(
+                  photo.photoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) => const Center(
+                    child: Icon(Icons.broken_image, color: VesparaColors.error),
+                  ),
+                ),
+              )
+            else
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_a_photo,
+                      color: VesparaColors.secondary.withOpacity(0.5),
+                      size: 28,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Add',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: VesparaColors.secondary.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            // Upload progress indicator
+            if (isUploading)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(VesparaColors.glow),
+                  ),
+                ),
+              ),
+            
+            // Primary badge
+            if (isPrimary)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.glow,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    '★ PRIMARY',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            
+            // Position number
+            Positioned(
+              bottom: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '#$position',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            
+            // Score badge (if photo has rankings)
+            if (photo?.score != null && photo!.score!.totalRankings > 0)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, color: VesparaColors.tagsYellow, size: 10),
+                      const SizedBox(width: 2),
+                      Text(
+                        photo.score!.averageRank.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handlePhotoTap(int position, ProfilePhoto? existingPhoto) async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      imageQuality: 85,
+    );
+    
+    if (image == null) return;
+    
+    final bytes = await image.readAsBytes();
+    final extension = image.path.split('.').last.toLowerCase();
+    
+    final success = await ref.read(profilePhotosProvider.notifier).uploadPhoto(
+      bytes,
+      position,
+      extension: extension,
+    );
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? 'Photo uploaded!' : 'Failed to upload photo'),
+          backgroundColor: success ? VesparaColors.success : VesparaColors.error,
+        ),
+      );
+    }
+  }
+
+  void _showPhotoOptions(int position, ProfilePhoto photo) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Photo Options',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            if (!photo.isPrimary)
+              ListTile(
+                leading: const Icon(Icons.star, color: VesparaColors.glow),
+                title: const Text('Set as Primary',
+                    style: TextStyle(color: VesparaColors.primary)),
+                subtitle: const Text('This photo will be shown first',
+                    style: TextStyle(color: VesparaColors.secondary, fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await ref.read(profilePhotosProvider.notifier).setAsPrimary(photo.id);
+                },
+              ),
+            
+            ListTile(
+              leading: const Icon(Icons.swap_horiz, color: VesparaColors.secondary),
+              title: const Text('Replace Photo',
+                  style: TextStyle(color: VesparaColors.primary)),
+              onTap: () {
+                Navigator.pop(context);
+                _handlePhotoTap(position, photo);
+              },
+            ),
+            
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: VesparaColors.error),
+              title: const Text('Delete Photo',
+                  style: TextStyle(color: VesparaColors.error)),
+              onTap: () async {
+                Navigator.pop(context);
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: VesparaColors.surface,
+                    title: const Text('Delete Photo?',
+                        style: TextStyle(color: VesparaColors.primary)),
+                    content: const Text('This action cannot be undone.',
+                        style: TextStyle(color: VesparaColors.secondary)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete',
+                            style: TextStyle(color: VesparaColors.error)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await ref.read(profilePhotosProvider.notifier).deletePhoto(photo.id);
+                }
+              },
+            ),
+            
+            if (photo.score != null && photo.score!.totalRankings > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.glow.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.analytics, color: VesparaColors.glow, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Avg Rank: ${photo.score!.averageRank.toStringAsFixed(1)} / 5',
+                              style: const TextStyle(
+                                color: VesparaColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${photo.score!.totalRankings} rankings received',
+                              style: const TextStyle(
+                                color: VesparaColors.secondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // AI PHOTO RECOMMENDATION SECTION
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildPhotoRecommendationSection(ProfilePhotosState photosState) {
+    final recommendation = photosState.recommendation!;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            VesparaColors.glow.withOpacity(0.15),
+            VesparaColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.auto_awesome, 
+                    color: VesparaColors.glow, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI PHOTO RECOMMENDATION',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                        color: VesparaColors.glow,
+                      ),
+                    ),
+                    Text(
+                      'Based on how others ranked your photos',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (recommendation.hasRecommendation)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.success.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    recommendation.confidenceLabel,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.success,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Insights
+          if (recommendation.insights.isNotEmpty)
+            ...recommendation.insights.map((insight) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.lightbulb_outline, 
+                      color: VesparaColors.tagsYellow, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      insight,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          
+          // Apply recommendation button
+          if (recommendation.hasRecommendation)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final success = await ref
+                        .read(profilePhotosProvider.notifier)
+                        .applyAIRecommendation();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(success 
+                              ? 'Photos reordered based on AI recommendation!' 
+                              : 'Failed to apply recommendation'),
+                          backgroundColor: success 
+                              ? VesparaColors.success 
+                              : VesparaColors.error,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.auto_fix_high, size: 18),
+                  label: const Text('Apply AI Recommendation'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: VesparaColors.glow,
+                    side: const BorderSide(color: VesparaColors.glow),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // PROFILE INFO SECTION - Key profile details
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildProfileInfoSection(UserProfile profile) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.person_outline, color: VesparaColors.glow, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'PROFILE INFO',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: VesparaColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          _buildCompactProfileRow('Bio', profile.bio ?? 'Not set'),
+          _buildCompactProfileRow('Location', 
+              profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Not set'),
+          _buildCompactProfileRow('Pronouns', profile.pronouns ?? 'Not set'),
+          _buildCompactProfileRow('Gender', 
+              profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Not set'),
+          _buildCompactProfileRow('Orientation',
+              profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Not set'),
+          _buildCompactProfileRow('Seeking',
+              profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Not set'),
+          _buildCompactProfileRow('Relationship Status',
+              profile.relationshipStatus.isNotEmpty 
+                  ? profile.relationshipStatus.join(', ') : 'Not set'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactProfileRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
