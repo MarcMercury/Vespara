@@ -125,15 +125,67 @@ class ProfilePhotosNotifier extends StateNotifier<ProfilePhotosState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      // Load photos with their scores
+      // Load photos with their scores from profile_photos table
       final response = await _supabase.from('profile_photos').select('''
             *,
             photo_scores(*)
           ''').eq('user_id', _userId!).order('position');
 
-      final photos = (response as List)
+      var photos = (response as List)
           .map((json) => ProfilePhoto.fromJson(json))
           .toList();
+
+      // If no photos in profile_photos table, check profiles table for onboarding photos
+      if (photos.isEmpty) {
+        final profileResponse = await _supabase
+            .from('profiles')
+            .select('avatar_url, photos')
+            .eq('id', _userId!)
+            .maybeSingle();
+
+        if (profileResponse != null) {
+          final List<String> photoUrls = [];
+          
+          // Add avatar_url first if it exists
+          if (profileResponse['avatar_url'] != null) {
+            photoUrls.add(profileResponse['avatar_url'] as String);
+          }
+          
+          // Add additional photos from profiles.photos array
+          final additionalPhotos = List<String>.from(profileResponse['photos'] ?? []);
+          for (final url in additionalPhotos) {
+            if (!photoUrls.contains(url)) {
+              photoUrls.add(url);
+            }
+          }
+
+          // Migrate onboarding photos to profile_photos table
+          for (int i = 0; i < photoUrls.length && i < 5; i++) {
+            final photoUrl = photoUrls[i];
+            await _supabase.from('profile_photos').upsert({
+              'user_id': _userId!,
+              'photo_url': photoUrl,
+              'position': i + 1,
+              'is_primary': i == 0,
+              'storage_path': photoUrl,
+              'created_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            }, onConflict: 'user_id,position');
+          }
+
+          // Reload after migration
+          if (photoUrls.isNotEmpty) {
+            final migratedResponse = await _supabase.from('profile_photos').select('''
+                  *,
+                  photo_scores(*)
+                ''').eq('user_id', _userId!).order('position');
+
+            photos = (migratedResponse as List)
+                .map((json) => ProfilePhoto.fromJson(json))
+                .toList();
+          }
+        }
+      }
 
       state = state.copyWith(
         photos: photos,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/discoverable_profile.dart';
 import '../../../core/providers/connection_state_provider.dart'
@@ -10,6 +11,11 @@ import '../../../core/providers/connection_state_provider.dart'
         EventAttendee;
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/theme/app_theme.dart';
+
+/// Supabase client provider for discover screen
+final supabaseClientProvider = Provider<SupabaseClient>((ref) {
+  return Supabase.instance.client;
+});
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DISCOVER SCREEN - Module 2
@@ -38,11 +44,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   double _dragRotation = 0;
   bool _isDragging = false;
   SwipeDirection? _pendingSwipe;
+  bool _isLoadingProfiles = true;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    _profiles = []; // Will be loaded from database
+    _profiles = [];
 
     _cardController = AnimationController(
       vsync: this,
@@ -53,6 +61,55 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+
+    // Load profiles from database
+    _loadDiscoverProfiles();
+  }
+
+  Future<void> _loadDiscoverProfiles() async {
+    try {
+      setState(() {
+        _isLoadingProfiles = true;
+        _loadError = null;
+      });
+
+      final supabase = ref.read(supabaseClientProvider);
+      final currentUserId = supabase.auth.currentUser?.id;
+
+      // Fetch discoverable profiles (excluding current user)
+      final response = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('is_discoverable', true)
+          .eq('onboarding_complete', true)
+          .neq('id', currentUserId ?? '')
+          .limit(50);
+
+      final profiles = (response as List)
+          .map((json) {
+            // Add avatar_url to photos array if photos is empty
+            final photos = List<String>.from(json['photos'] ?? []);
+            if (photos.isEmpty && json['avatar_url'] != null) {
+              photos.add(json['avatar_url'] as String);
+            }
+            json['photos'] = photos;
+            return DiscoverableProfile.fromJson(json);
+          })
+          .toList();
+
+      setState(() {
+        _profiles = profiles;
+        _isLoadingProfiles = false;
+      });
+
+      debugPrint('Discover: Loaded ${profiles.length} profiles');
+    } catch (e) {
+      debugPrint('Discover: Error loading profiles: $e');
+      setState(() {
+        _isLoadingProfiles = false;
+        _loadError = e.toString();
+      });
+    }
   }
 
   @override
@@ -534,6 +591,45 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildCardStack() {
+    // Show loading state
+    if (_isLoadingProfiles) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: VesparaColors.primary),
+            SizedBox(height: 16),
+            Text(
+              'Finding matches...',
+              style: TextStyle(color: VesparaColors.secondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show error state
+    if (_loadError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: VesparaColors.error, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading profiles',
+              style: const TextStyle(color: VesparaColors.error),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _loadDiscoverProfiles,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     final filteredProfiles = _profiles
         .where(
           (p) => _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch,

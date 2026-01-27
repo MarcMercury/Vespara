@@ -1236,6 +1236,36 @@ class _ExclusiveOnboardingScreenState
 
       print('[Onboarding] User settings synced successfully');
 
+      // ═══════════════════════════════════════════════════════════════════════
+      // SYNC PHOTOS TO PROFILE_PHOTOS TABLE
+      // This ensures photos appear in BUILD section of The Mirror
+      // ═══════════════════════════════════════════════════════════════════════
+      
+      final allPhotoUrls = <String>[];
+      if (_avatarUrl != null) {
+        allPhotoUrls.add(_avatarUrl!);
+      }
+      for (final url in _uploadedPhotos) {
+        if (!allPhotoUrls.contains(url)) {
+          allPhotoUrls.add(url);
+        }
+      }
+
+      // Insert photos into profile_photos table
+      for (int i = 0; i < allPhotoUrls.length && i < 5; i++) {
+        await Supabase.instance.client.from('profile_photos').upsert({
+          'user_id': user.id,
+          'photo_url': allPhotoUrls[i],
+          'position': i + 1,
+          'is_primary': i == 0,
+          'storage_path': allPhotoUrls[i],
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'user_id,position');
+      }
+
+      print('[Onboarding] Photos synced to profile_photos table: ${allPhotoUrls.length} photos');
+
       // Refresh session to trigger navigation
       if (mounted) {
         await Supabase.instance.client.auth.refreshSession();
