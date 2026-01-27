@@ -517,23 +517,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Map module names to their icon file names
     switch (moduleName) {
       case 'MIRROR':
-        return 'assets/Main Page Tile Icons/Mirror3.png';
+        return 'assets/Main Page Tile Icons/Mirror1.png';
       case 'DISCOVER':
-        return 'assets/Main Page Tile Icons/Discover3.png';
+        return 'assets/Main Page Tile Icons/Discover1.png';
       case 'NEST':
-        return 'assets/Main Page Tile Icons/Sanctum3.png';
+        return 'assets/Main Page Tile Icons/Sanctum1.png';
       case 'WIRE':
-        return 'assets/Main Page Tile Icons/Wire3.png';
+        return 'assets/Main Page Tile Icons/Wire1.png';
       case 'PLANNER':
-        return 'assets/Main Page Tile Icons/Planner3.png';
+        return 'assets/Main Page Tile Icons/Planner1.png';
       case 'EXPERIENCES':
-        return 'assets/Main Page Tile Icons/Experiences3.png';
+        return 'assets/Main Page Tile Icons/Experiences1.png';
       case 'SHREDDER':
-        return 'assets/Main Page Tile Icons/Shredder3.png';
+        return 'assets/Main Page Tile Icons/Shredder1.png';
       case 'TAG':
-        return 'assets/Main Page Tile Icons/Tag3.png';
+        return 'assets/Main Page Tile Icons/TAG1.png';
       default:
-        return 'assets/Main Page Tile Icons/Mirror3.png';
+        return 'assets/Main Page Tile Icons/Mirror1.png';
     }
   }
 
