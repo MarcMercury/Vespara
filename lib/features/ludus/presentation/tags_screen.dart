@@ -283,14 +283,27 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       );
 
   String _getGameIconPath(String gameTitle) {
-    // Map game titles to their icon file names
-    // Handle special case: Drama-Sutra -> Drama Sutra
-    // Handle special case: Dice Breakers -> Dice Breakers2
-    String fileName = gameTitle.replaceAll('-', ' ');
-    if (fileName == 'Dice Breakers') {
-      fileName = 'Dice Breakers2';
+    // Map game titles to their new icon file names (version 2)
+    switch (gameTitle) {
+      case 'Down to Clown':
+        return 'assets/images/GAME ICONS/Down to Clown 2.png';
+      case 'Ice Breakers':
+        return 'assets/images/GAME ICONS/Ice Breakers2.png';
+      case 'Share or Dare':
+        return 'assets/images/GAME ICONS/Share or Dare 2.png';
+      case 'Path of Pleasure':
+        return 'assets/images/GAME ICONS/Path of pleasure 2.png';
+      case 'Lane of Lust':
+        return 'assets/images/GAME ICONS/Lane of Lust  2.png';
+      case 'Drama-Sutra':
+        return 'assets/images/GAME ICONS/Drama Sutra 2.png';
+      case 'Flash Freeze':
+        return 'assets/images/GAME ICONS/Flash and Freeze 2.png';
+      case 'Dice Breakers':
+        return 'assets/images/GAME ICONS/Dice Breakers 2.png';
+      default:
+        return 'assets/images/GAME ICONS/Down to Clown 2.png';
     }
-    return 'assets/images/GAME ICONS/$fileName.png';
   }
 
   Widget _buildEmptyState() => Center(
