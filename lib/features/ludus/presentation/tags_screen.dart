@@ -283,7 +283,11 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   String _getGameIconPath(String gameTitle) {
     // Map game titles to their icon file names
     // Handle special case: Drama-Sutra -> Drama Sutra
-    final fileName = gameTitle.replaceAll('-', ' ');
+    // Handle special case: Dice Breakers -> Dice Breakers2
+    String fileName = gameTitle.replaceAll('-', ' ');
+    if (fileName == 'Dice Breakers') {
+      fileName = 'Dice Breakers2';
+    }
     return 'assets/images/GAME ICONS/$fileName.png';
   }
 
