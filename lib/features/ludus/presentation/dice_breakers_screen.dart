@@ -424,8 +424,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
           children: [
             _buildHeader(),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -480,6 +480,7 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                         });
                       },
                     ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -566,8 +567,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
           children: [
             _buildHeader(),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -661,6 +662,7 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
