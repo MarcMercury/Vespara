@@ -530,7 +530,7 @@ class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
   }
 
   void _handleSuccessfulPlacement(
-      LanePlayer player, LaneCard card, int insertIndex) {
+      LanePlayer player, LaneCard card, int insertIndex,) {
     final players = [...state.players];
     final playerIndex = players.indexWhere((p) => p.id == player.id);
 
@@ -690,533 +690,533 @@ class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
           id: id(),
           text: 'A peck on the forehead from grandma',
           desireIndex: 1,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Getting a handshake instead of a hug',
           desireIndex: 2,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A quick peck on the cheek',
           desireIndex: 3,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Brushing hands accidentally',
           desireIndex: 4,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Sitting next to your crush on the bus',
           desireIndex: 5,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A wink from across the room',
           desireIndex: 6,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Low (7-15) - Innocent/Romantic
       LaneCard(
           id: id(),
           text: 'Holding hands in a movie theater',
           desireIndex: 7,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Sharing dessert at dinner',
           desireIndex: 8,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Playing footsie under the table',
           desireIndex: 9,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Dancing close at a wedding',
           desireIndex: 10,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A long hug that lingers',
           desireIndex: 11,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Slow dancing in the living room',
           desireIndex: 12,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A kiss on the neck',
           desireIndex: 13,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Receiving a flirty text at work',
           desireIndex: 14,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A sensual back massage with oil',
           desireIndex: 15,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Medium-Low (16-25) - Flirty/Early Sexual
       LaneCard(
           id: id(),
           text: 'Making out in a parked car',
           desireIndex: 16,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Skinny dipping at night',
           desireIndex: 17,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'G-string',
           desireIndex: 18,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Morning sex that makes you late',
           desireIndex: 19,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A night you will never forget',
           desireIndex: 20,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Shower sex',
           desireIndex: 21,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Dirty talk that actually works',
           desireIndex: 22,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Masturbation',
           desireIndex: 23,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Hand job',
           desireIndex: 24,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Cunnilingus',
           desireIndex: 25,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Vaginal sex',
           desireIndex: 26,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Hair pulling',
           desireIndex: 27,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Medium (28-42) - Standard Sexual
       LaneCard(
           id: id(),
           text: 'Blow job',
           desireIndex: 28,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Sex in a hotel room on vacation',
           desireIndex: 29,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Masturbation w/toys',
           desireIndex: 30,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Use Vibrator',
           desireIndex: 31,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Blow job + Swallow',
           desireIndex: 32,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Use Sex toy with Partner',
           desireIndex: 33,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Oral creampie',
           desireIndex: 34,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Squirting',
           desireIndex: 35,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Public teasing under the table',
           desireIndex: 36,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A weekend getaway to a private cabin',
           desireIndex: 37,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Foot fetish',
           desireIndex: 38,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Dildo',
           desireIndex: 39,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Mile High Club membership',
           desireIndex: 40,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'All-night session with no interruptions',
           desireIndex: 41,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Face sitting',
           desireIndex: 42,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Medium-High (43-57) - Adventurous
       LaneCard(
           id: id(),
           text: 'Cock ring',
           desireIndex: 43,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Cum shot Facial',
           desireIndex: 44,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Blindfolded and at their mercy',
           desireIndex: 45,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Being dominated (the way you like)',
           desireIndex: 46,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Nipple clamps',
           desireIndex: 47,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Prostate massage',
           desireIndex: 48,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Being worshipped all evening',
           desireIndex: 49,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A vacation where you barely leave the room',
           desireIndex: 50,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Submission',
           desireIndex: 51,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Voyeurism',
           desireIndex: 52,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Butt plug',
           desireIndex: 53,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Being tied up and teased for an hour',
           desireIndex: 54,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Licking asshole',
           desireIndex: 55,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Bondage',
           desireIndex: 56,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Dom/sub',
           desireIndex: 57,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // High (58-72) - Kinky
       LaneCard(
           id: id(),
           text: 'Anal sex',
           desireIndex: 58,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Condom fetish - Eroticize condom use',
           desireIndex: 59,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Threesome',
           desireIndex: 60,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'FFM',
           desireIndex: 61,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'MMF',
           desireIndex: 62,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'MFM',
           desireIndex: 63,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Bear sex',
           desireIndex: 64,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'FMF',
           desireIndex: 65,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Tribadism',
           desireIndex: 66,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Strap-on - FF',
           desireIndex: 67,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Pegging',
           desireIndex: 68,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Shibari',
           desireIndex: 69,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Bondage spread',
           desireIndex: 70,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Flogger',
           desireIndex: 71,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Munch',
           desireIndex: 72,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Very High (73-87) - Very Kinky
       LaneCard(
           id: id(),
           text: 'Impact play',
           desireIndex: 73,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Whipping',
           desireIndex: 74,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Ball gag',
           desireIndex: 75,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Orgasm denial',
           desireIndex: 76,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'MFMF',
           desireIndex: 77,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Tantric Witchcraft',
           desireIndex: 78,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Attend a kink club',
           desireIndex: 79,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Double penetration',
           desireIndex: 80,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'A surprise threesome with consent',
           desireIndex: 81,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Pain play',
           desireIndex: 82,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'BDSM',
           desireIndex: 83,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Master/slave play',
           desireIndex: 84,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'DDLG - Role-play caregiver dynamics',
           desireIndex: 85,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Leather daddy',
           desireIndex: 86,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Pup play',
           desireIndex: 87,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Extreme (88-96) - Extreme Kink
       LaneCard(
           id: id(),
           text: 'Anal beads',
           desireIndex: 88,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Group sex',
           desireIndex: 89,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Butt plug gag',
           desireIndex: 90,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Sadomasochism',
           desireIndex: 91,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Gorean',
           desireIndex: 92,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Electrosex',
           desireIndex: 93,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Futa',
           desireIndex: 94,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'MMMMMMMMMMF',
           desireIndex: 95,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Cock and ball torture',
           desireIndex: 96,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
 
       // Most Extreme (97-100)
       LaneCard(
           id: id(),
           text: 'Gang bang',
           desireIndex: 97,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Gay for pay',
           desireIndex: 98,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Enema play',
           desireIndex: 99,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Fisting',
           desireIndex: 100,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Anal fisting',
           desireIndex: 101,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Breathplay',
           desireIndex: 102,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
       LaneCard(
           id: id(),
           text: 'Autoerotic asphyxiation',
           desireIndex: 103,
-          category: LaneCardCategory.vanilla),
+          category: LaneCardCategory.vanilla,),
     ];
   }
 }
@@ -1227,4 +1227,4 @@ class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
 
 final laneOfLustProvider =
     StateNotifierProvider<LaneOfLustNotifier, LaneOfLustState>(
-        (ref) => LaneOfLustNotifier());
+        (ref) => LaneOfLustNotifier(),);

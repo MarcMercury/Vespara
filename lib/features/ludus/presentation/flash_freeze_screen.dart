@@ -190,7 +190,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
               colors: [
                 FlashColors.electric,
                 FlashColors.green,
-                FlashColors.red
+                FlashColors.red,
               ],
             ).createShader(bounds),
             child: const Text(
@@ -238,7 +238,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(VesparaIcons.help,
-                      color: FlashColors.electric, size: 18),
+                      color: FlashColors.electric, size: 18,),
                   SizedBox(width: 8),
                   Text(
                     'How to Play',
@@ -403,7 +403,7 @@ class _FlashFreezeScreenState extends State<FlashFreezeScreen>
               colors: [
                 FlashColors.electric,
                 FlashColors.green,
-                FlashColors.red
+                FlashColors.red,
               ],
             ).createShader(bounds),
             child: const Text(

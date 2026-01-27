@@ -191,12 +191,15 @@ class MessageCoachService {
     final lower = text.toLowerCase();
 
     if (_isAllCaps(text)) return MessageTone.intense;
-    if (lower.contains('sorry') || lower.contains('my bad'))
+    if (lower.contains('sorry') || lower.contains('my bad')) {
       return MessageTone.apologetic;
-    if (text.contains('!') && text.contains('?'))
+    }
+    if (text.contains('!') && text.contains('?')) {
       return MessageTone.enthusiastic;
-    if (lower.contains('lol') || lower.contains('haha'))
+    }
+    if (lower.contains('lol') || lower.contains('haha')) {
       return MessageTone.playful;
+    }
     if (text.length < 10) return MessageTone.brief;
 
     return MessageTone.neutral;

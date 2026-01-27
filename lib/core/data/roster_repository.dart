@@ -42,7 +42,7 @@ class RosterRepository {
         .map(
           (data) => data
               .where((json) =>
-                  json['pipeline_stage'] == stage || json['stage'] == stage)
+                  json['pipeline_stage'] == stage || json['stage'] == stage,)
               .map(RosterMatch.fromJson)
               .toList(),
         );
@@ -236,11 +236,11 @@ class RosterRepository {
 
 /// Provider for RosterRepository
 final rosterRepositoryProvider = Provider<RosterRepository>(
-    (ref) => RosterRepository(Supabase.instance.client));
+    (ref) => RosterRepository(Supabase.instance.client),);
 
 /// Real-time stream of all matches
 final matchesStreamProvider = StreamProvider<List<RosterMatch>>(
-    (ref) => ref.watch(rosterRepositoryProvider).watchMatches());
+    (ref) => ref.watch(rosterRepositoryProvider).watchMatches(),);
 
 /// Matches grouped by pipeline stage (derived from stream)
 final pipelineMatchesStreamProvider =
@@ -281,4 +281,4 @@ bool _stageMatches(RosterMatch match, String stageName) {
 
 /// Stale matches stream for The Shredder
 final staleMatchesStreamProvider = FutureProvider<List<RosterMatch>>(
-    (ref) async => ref.watch(rosterRepositoryProvider).getStaleMatches());
+    (ref) async => ref.watch(rosterRepositoryProvider).getStaleMatches(),);

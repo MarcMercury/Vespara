@@ -173,7 +173,7 @@ class PlanEvent extends Equatable {
         location: json['location'] as String?,
         connections: (json['connections'] as List?)
                 ?.map(
-                    (c) => EventConnection.fromJson(c as Map<String, dynamic>))
+                    (c) => EventConnection.fromJson(c as Map<String, dynamic>),)
                 .toList() ??
             [],
         certainty:

@@ -296,7 +296,7 @@ class RelationshipProgressService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   RelationshipStage _calculateStage(
-      MatchStats stats, List<Milestone> milestones) {
+      MatchStats stats, List<Milestone> milestones,) {
     // Check milestones first (most reliable)
     final hasDated = milestones.any(
       (m) => m.type == MilestoneType.dateCompleted,
@@ -313,8 +313,9 @@ class RelationshipProgressService {
 
     if (hasDated) return RelationshipStage.dating;
     if (hasPlannedDate) return RelationshipStage.planningDate;
-    if (hasDateMentioned || hasPhoneMentioned)
+    if (hasDateMentioned || hasPhoneMentioned) {
       return RelationshipStage.escalating;
+    }
 
     // Fallback to message count
     if (stats.totalMessages >= 100) return RelationshipStage.deepConnection;

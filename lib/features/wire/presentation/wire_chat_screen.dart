@@ -371,7 +371,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
         'Thursday',
         'Friday',
         'Saturday',
-        'Sunday'
+        'Sunday',
       ];
       text = days[date.weekday - 1];
     } else {

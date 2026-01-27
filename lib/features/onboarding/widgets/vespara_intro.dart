@@ -174,7 +174,7 @@ class _VesparaIntroState extends State<VesparaIntro>
           onTap: _triggerEntry,
           child: AnimatedBuilder(
             animation: Listenable.merge(
-                [_mainController, _glowController, _textController]),
+                [_mainController, _glowController, _textController],),
             builder: (context, child) => Opacity(
               opacity: _fadeOutAnim.value,
               child: Container(

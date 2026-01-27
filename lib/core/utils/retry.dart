@@ -104,7 +104,7 @@ Future<T> withRetry<T>(
       // Notify retry callback
       config.onRetry?.call(attempt, actualDelay, error);
       debugPrint(
-          'Retry: Attempt $attempt failed, retrying in ${actualDelay.inMilliseconds}ms - $error');
+          'Retry: Attempt $attempt failed, retrying in ${actualDelay.inMilliseconds}ms - $error',);
 
       // Wait before retry
       await Future.delayed(actualDelay);
@@ -213,7 +213,7 @@ class CircuitBreaker {
       _state = CircuitState.open;
       _openedAt = DateTime.now();
       debugPrint(
-          'CircuitBreaker[$name]: OPENED after $failureThreshold failures');
+          'CircuitBreaker[$name]: OPENED after $failureThreshold failures',);
     }
   }
 

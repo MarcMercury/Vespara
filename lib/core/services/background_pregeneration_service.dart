@@ -139,11 +139,11 @@ Return one starter per line, no numbering.''',
               .map((line) => line.trim())
               .toList();
           debugPrint(
-              'BackgroundPregeneration: Generated ${_iceBreakersCache[scenario]!.length} ice breakers for $scenario');
+              'BackgroundPregeneration: Generated ${_iceBreakersCache[scenario]!.length} ice breakers for $scenario',);
         },
         onFailure: (error) {
           debugPrint(
-              'BackgroundPregeneration: Failed to generate ice breakers - $error');
+              'BackgroundPregeneration: Failed to generate ice breakers - $error',);
         },
       );
 
@@ -187,11 +187,11 @@ Return one per line.''',
               .map((line) => line.trim())
               .toList();
           debugPrint(
-              'BackgroundPregeneration: Generated ${_bioSuggestionsCache[style]!.length} bio starters for $style');
+              'BackgroundPregeneration: Generated ${_bioSuggestionsCache[style]!.length} bio starters for $style',);
         },
         onFailure: (error) {
           debugPrint(
-              'BackgroundPregeneration: Failed to generate bios - $error');
+              'BackgroundPregeneration: Failed to generate bios - $error',);
         },
       );
 
@@ -233,11 +233,11 @@ Return one per line.''',
               .map((line) => line.trim())
               .toList();
           debugPrint(
-              'BackgroundPregeneration: Generated ${_conversationStartersCache[situation]!.length} templates for $situation');
+              'BackgroundPregeneration: Generated ${_conversationStartersCache[situation]!.length} templates for $situation',);
         },
         onFailure: (error) {
           debugPrint(
-              'BackgroundPregeneration: Failed to generate templates - $error');
+              'BackgroundPregeneration: Failed to generate templates - $error',);
         },
       );
 

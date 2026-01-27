@@ -104,7 +104,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             IconButton(
               onPressed: _showCalendarPicker,
               icon: const Icon(Icons.calendar_month,
-                  color: VesparaColors.secondary),
+                  color: VesparaColors.secondary,),
             ),
           ],
         ),
@@ -127,11 +127,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildStatItem('This Week', state.thisWeekEvents.length.toString(),
-                Icons.event),
+                Icons.event,),
             Container(
                 width: 1,
                 height: 40,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildStatItem(
               'Experiences',
               state.experienceEventCount.toString(),
@@ -141,7 +141,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             Container(
                 width: 1,
                 height: 40,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildStatItem(
               'Locked',
               state.confirmedCount.toString(),
@@ -151,7 +151,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             Container(
                 width: 1,
                 height: 40,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildStatItem(
               'AI Ideas',
               state.aiSuggestions.length.toString(),
@@ -163,7 +163,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       );
 
   Widget _buildStatItem(String label, String value, IconData icon,
-          {Color? color}) =>
+          {Color? color,}) =>
       Column(
         children: [
           Icon(icon, size: 18, color: color ?? VesparaColors.secondary),
@@ -321,14 +321,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.event_available,
-                size: 64, color: VesparaColors.glow.withOpacity(0.3)),
+                size: 64, color: VesparaColors.glow.withOpacity(0.3),),
             const SizedBox(height: 16),
             const Text(
               'No plans for this day',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: VesparaColors.primary),
+                  color: VesparaColors.primary,),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -342,11 +342,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               },
               icon: const Icon(Icons.auto_awesome, color: VesparaColors.glow),
               label: const Text('Let Vespara find you a date',
-                  style: TextStyle(color: VesparaColors.glow)),
+                  style: TextStyle(color: VesparaColors.glow),),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: VesparaColors.glow),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
@@ -404,7 +404,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                             if (event.isAiSuggested)
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                    horizontal: 6, vertical: 2,),
                                 decoration: BoxDecoration(
                                   color: VesparaColors.glow.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(4),
@@ -413,12 +413,12 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.auto_awesome,
-                                        size: 10, color: VesparaColors.glow),
+                                        size: 10, color: VesparaColors.glow,),
                                     SizedBox(width: 2),
                                     Text('AI',
                                         style: TextStyle(
                                             fontSize: 9,
-                                            color: VesparaColors.glow)),
+                                            color: VesparaColors.glow,),),
                                   ],
                                 ),
                               ),
@@ -432,7 +432,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                                   : 'Hosted by ${event.experienceHostName ?? "Someone"}')
                               : event.connectionNames,
                           style: const TextStyle(
-                              fontSize: 13, color: VesparaColors.glow),
+                              fontSize: 13, color: VesparaColors.glow,),
                         ),
                       ],
                     ),
@@ -441,7 +441,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   if (event.isFromExperience)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                          horizontal: 8, vertical: 4,),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [
@@ -455,7 +455,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.celebration,
-                              size: 10, color: Colors.white),
+                              size: 10, color: Colors.white,),
                           SizedBox(width: 3),
                           Text(
                             'EXPERIENCE',
@@ -471,7 +471,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   else
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                          horizontal: 8, vertical: 4,),
                       decoration: BoxDecoration(
                         color: event.certainty.color.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
@@ -491,23 +491,23 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               Row(
                 children: [
                   const Icon(Icons.access_time,
-                      size: 14, color: VesparaColors.secondary),
+                      size: 14, color: VesparaColors.secondary,),
                   const SizedBox(width: 4),
                   Text(
                     event.formattedTimeRange,
                     style: const TextStyle(
-                        fontSize: 12, color: VesparaColors.secondary),
+                        fontSize: 12, color: VesparaColors.secondary,),
                   ),
                   if (event.location != null) ...[
                     const SizedBox(width: 16),
                     const Icon(Icons.location_on,
-                        size: 14, color: VesparaColors.secondary),
+                        size: 14, color: VesparaColors.secondary,),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         event.location!,
                         style: const TextStyle(
-                            fontSize: 12, color: VesparaColors.secondary),
+                            fontSize: 12, color: VesparaColors.secondary,),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -525,14 +525,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   child: Row(
                     children: [
                       const Icon(Icons.warning,
-                          size: 14, color: VesparaColors.warning),
+                          size: 14, color: VesparaColors.warning,),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           event.conflictReason ??
                               'Potential scheduling conflict',
                           style: const TextStyle(
-                              fontSize: 11, color: VesparaColors.warning),
+                              fontSize: 11, color: VesparaColors.warning,),
                         ),
                       ),
                     ],
@@ -576,7 +576,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                         ref.read(planProvider.notifier).findMeADate(),
                     child: const Text('Refresh',
                         style:
-                            TextStyle(color: VesparaColors.glow, fontSize: 12)),
+                            TextStyle(color: VesparaColors.glow, fontSize: 12),),
                   ),
                 ],
               ),
@@ -695,7 +695,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                  horizontal: 6, vertical: 2,),
                               decoration: BoxDecoration(
                                 color: VesparaColors.glow,
                                 borderRadius: BorderRadius.circular(4),
@@ -716,7 +716,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       Text(
                         '${(suggestion.compatibilityScore * 100).toInt()}% compatibility',
                         style: const TextStyle(
-                            fontSize: 12, color: VesparaColors.glow),
+                            fontSize: 12, color: VesparaColors.glow,),
                       ),
                     ],
                   ),
@@ -726,7 +726,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       .read(planProvider.notifier)
                       .dismissSuggestion(suggestion.id),
                   icon: const Icon(Icons.close,
-                      size: 18, color: VesparaColors.secondary),
+                      size: 18, color: VesparaColors.secondary,),
                 ),
               ],
             ),
@@ -741,13 +741,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               child: Row(
                 children: [
                   const Icon(Icons.auto_awesome,
-                      size: 16, color: VesparaColors.glow),
+                      size: 16, color: VesparaColors.glow,),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       suggestion.reason,
                       style: const TextStyle(
-                          fontSize: 12, color: VesparaColors.secondary),
+                          fontSize: 12, color: VesparaColors.secondary,),
                     ),
                   ),
                 ],
@@ -775,16 +775,16 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       onTap: () => _confirmAiSuggestion(suggestion, time),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                            horizontal: 12, vertical: 8,),
                         decoration: BoxDecoration(
                           border: Border.all(
-                              color: VesparaColors.glow.withOpacity(0.3)),
+                              color: VesparaColors.glow.withOpacity(0.3),),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _formatSuggestedTime(time),
                           style: const TextStyle(
-                              fontSize: 12, color: VesparaColors.primary),
+                              fontSize: 12, color: VesparaColors.primary,),
                         ),
                       ),
                     ),
@@ -800,7 +800,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.search_off,
-                size: 48, color: VesparaColors.secondary.withOpacity(0.5)),
+                size: 48, color: VesparaColors.secondary.withOpacity(0.5),),
             const SizedBox(height: 16),
             const Text(
               'No suggestions yet',
@@ -904,13 +904,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       Text(
                         'Last synced: ${_formatSyncTime(state.lastSyncTime!)}',
                         style: const TextStyle(
-                            fontSize: 13, color: VesparaColors.secondary),
+                            fontSize: 13, color: VesparaColors.secondary,),
                       )
                     else
                       const Text(
                         'Not synced yet',
                         style: TextStyle(
-                            fontSize: 13, color: VesparaColors.secondary),
+                            fontSize: 13, color: VesparaColors.secondary,),
                       ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -922,11 +922,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                                 ref.read(planProvider.notifier).syncCalendars(),
                         icon: const Icon(Icons.sync, color: VesparaColors.glow),
                         label: const Text('Sync Now',
-                            style: TextStyle(color: VesparaColors.glow)),
+                            style: TextStyle(color: VesparaColors.glow),),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: VesparaColors.glow),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
@@ -952,7 +952,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   const Row(
                     children: [
                       Icon(Icons.info_outline,
-                          size: 20, color: VesparaColors.glow),
+                          size: 20, color: VesparaColors.glow,),
                       SizedBox(width: 8),
                       Text(
                         'How Calendar Sync Works',
@@ -969,7 +969,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   _buildInfoItem('Suggests dates when you\'re both free'),
                   _buildInfoItem('Detects scheduling conflicts automatically'),
                   _buildInfoItem(
-                      'Events you create sync back to your calendar'),
+                      'Events you create sync back to your calendar',),
                 ],
               ),
             ),
@@ -1055,7 +1055,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               child: Text(
                 text,
                 style: const TextStyle(
-                    fontSize: 12, color: VesparaColors.secondary),
+                    fontSize: 12, color: VesparaColors.secondary,),
               ),
             ),
           ],
@@ -1194,7 +1194,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             ListTile(
               leading: const Icon(Icons.edit, color: VesparaColors.glow),
               title: const Text('Edit Event',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
                 // TODO: Open edit wizard
@@ -1203,7 +1203,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             ListTile(
               leading: const Icon(Icons.tune, color: VesparaColors.secondary),
               title: const Text('Change Certainty',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
                 _showCertaintyPicker(event);
@@ -1212,7 +1212,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             ListTile(
               leading: const Icon(Icons.delete, color: VesparaColors.error),
               title: const Text('Delete Event',
-                  style: TextStyle(color: VesparaColors.error)),
+                  style: TextStyle(color: VesparaColors.error),),
               onTap: () {
                 Navigator.pop(context);
                 ref.read(planProvider.notifier).deleteEvent(event.id);
@@ -1271,11 +1271,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                       : null,
                 ),
                 title: Text(certainty.label,
-                    style: const TextStyle(color: VesparaColors.primary)),
+                    style: const TextStyle(color: VesparaColors.primary),),
                 subtitle: Text(
                   certainty.description,
                   style: const TextStyle(
-                      fontSize: 11, color: VesparaColors.secondary),
+                      fontSize: 11, color: VesparaColors.secondary,),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1313,7 +1313,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             Text(
               _formatSuggestedTime(time),
               style: const TextStyle(
-                  color: VesparaColors.glow, fontWeight: FontWeight.w600),
+                  color: VesparaColors.glow, fontWeight: FontWeight.w600,),
             ),
           ],
         ),
@@ -1321,7 +1321,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1332,13 +1332,13 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      'Date scheduled with ${suggestion.connection.name}!'),
+                      'Date scheduled with ${suggestion.connection.name}!',),
                   backgroundColor: VesparaColors.success,
                 ),
               );
             },
             child: const Text('Schedule',
-                style: TextStyle(color: VesparaColors.glow)),
+                style: TextStyle(color: VesparaColors.glow),),
           ),
         ],
       ),
@@ -1410,7 +1410,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
                     IconButton(
                       onPressed: () => setState(() => _step--),
                       icon: const Icon(Icons.arrow_back,
-                          color: VesparaColors.primary),
+                          color: VesparaColors.primary,),
                     )
                   else
                     const SizedBox(width: 48),
@@ -1474,7 +1474,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
                         VesparaColors.glow.withOpacity(0.3),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),),
                   ),
                   child: Text(
                     _step == 2 ? 'Create Event' : 'Next',
@@ -1569,13 +1569,13 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: VesparaColors.glow.withOpacity(0.2)),
+                          color: VesparaColors.glow.withOpacity(0.2),),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.calendar_today,
-                            size: 20, color: VesparaColors.glow),
+                            size: 20, color: VesparaColors.glow,),
                         const SizedBox(width: 8),
                         Text(
                           _formatDate(_selectedDate),
@@ -1594,13 +1594,13 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: VesparaColors.glow.withOpacity(0.2)),
+                          color: VesparaColors.glow.withOpacity(0.2),),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.access_time,
-                            size: 20, color: VesparaColors.glow),
+                            size: 20, color: VesparaColors.glow,),
                         const SizedBox(width: 8),
                         Text(
                           _selectedTime.format(context),
@@ -1687,7 +1687,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
         Text(
           'You can skip this if it\'s a solo event',
           style: TextStyle(
-              fontSize: 12, color: VesparaColors.secondary.withOpacity(0.7)),
+              fontSize: 12, color: VesparaColors.secondary.withOpacity(0.7),),
         ),
         const SizedBox(height: 20),
         connectionsAsync.when(
@@ -1756,7 +1756,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
                       if (isSelected) ...[
                         const SizedBox(width: 4),
                         const Icon(Icons.check,
-                            size: 16, color: VesparaColors.background),
+                            size: 16, color: VesparaColors.background,),
                       ],
                     ],
                   ),
@@ -1805,7 +1805,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
           Text(
             'This helps you and your connections know what to expect',
             style: TextStyle(
-                fontSize: 12, color: VesparaColors.secondary.withOpacity(0.7)),
+                fontSize: 12, color: VesparaColors.secondary.withOpacity(0.7),),
           ),
           const SizedBox(height: 24),
           ...EventCertainty.values.map(
@@ -2092,7 +2092,7 @@ class EventDetailSheet extends StatelessWidget {
                               ? Text(
                                   c.name[0].toUpperCase(),
                                   style: const TextStyle(
-                                      fontSize: 10, color: VesparaColors.glow),
+                                      fontSize: 10, color: VesparaColors.glow,),
                                 )
                               : null,
                         ),
@@ -2137,14 +2137,14 @@ class EventDetailSheet extends StatelessWidget {
                 child: Row(
                   children: [
                     const Icon(Icons.auto_awesome,
-                        size: 18, color: VesparaColors.glow),
+                        size: 18, color: VesparaColors.glow,),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         event.aiSuggestionReason ??
                             'AI suggested this date based on your activity',
                         style: const TextStyle(
-                            fontSize: 12, color: VesparaColors.secondary),
+                            fontSize: 12, color: VesparaColors.secondary,),
                       ),
                     ),
                   ],

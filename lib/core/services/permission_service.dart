@@ -127,7 +127,7 @@ class PermissionService {
   }
 
   VesparaPermissionStatus _mapLocationPermission(
-      LocationPermission permission) {
+      LocationPermission permission,) {
     switch (permission) {
       case LocationPermission.always:
       case LocationPermission.whileInUse:

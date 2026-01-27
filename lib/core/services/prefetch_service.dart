@@ -63,7 +63,7 @@ class PrefetchService {
           }
 
           debugPrint(
-              'PrefetchService: Cached ${(response as List).length} profiles');
+              'PrefetchService: Cached ${(response as List).length} profiles',);
         },
       ),
     );
@@ -150,7 +150,7 @@ class PrefetchService {
           );
 
           debugPrint(
-              'PrefetchService: Cached ${(response as List).length} matches');
+              'PrefetchService: Cached ${(response as List).length} matches',);
         },
       ),
     );
@@ -200,7 +200,7 @@ class PrefetchService {
             );
 
             debugPrint(
-                'PrefetchService: Cached ${(response as List).length} $gameType cards ($level)');
+                'PrefetchService: Cached ${(response as List).length} $gameType cards ($level)',);
           },
         ),
       );
@@ -209,7 +209,7 @@ class PrefetchService {
 
   /// Get cached game content
   List<Map<String, dynamic>>? getCachedGameContent(
-      String gameType, String heatLevel) {
+      String gameType, String heatLevel,) {
     final cacheKey = '${gameType}_$heatLevel';
     final cached = _gameContentCache[cacheKey];
     if (cached != null && !cached.isExpired) {

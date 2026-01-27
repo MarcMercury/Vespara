@@ -6,6 +6,7 @@ import '../../../core/domain/models/tags_game.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
 import '../widgets/tag_rating_display.dart';
+import 'dice_breakers_screen.dart';
 import 'down_to_clown_screen.dart';
 import 'drama_sutra_screen.dart';
 import 'flash_freeze_screen.dart';
@@ -85,6 +86,14 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         description: 'Quick-fire decisions',
         maxPlayers: 6,
       ),
+      const TagsGame(
+        id: 'dice',
+        title: 'Dice Breakers',
+        category: GameCategory.diceBreakers,
+        description: 'Roll the dice, let fate decide',
+        minPlayers: 2,
+        maxPlayers: 10,
+      ),
     ];
   }
 
@@ -134,7 +143,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
             IconButton(
               onPressed: _showRandomGame,
               icon: const Icon(VesparaIcons.random,
-                  color: VesparaColors.tagsYellow),
+                  color: VesparaColors.tagsYellow,),
             ),
           ],
         ),
@@ -148,7 +157,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           children: [
             _buildCategoryChip(
-                null, 'All', VesparaIcons.games, VesparaColors.glow),
+                null, 'All', VesparaIcons.games, VesparaColors.glow,),
             ...GameCategory.values.map(
               (cat) => _buildCategoryChip(
                 cat,
@@ -162,7 +171,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       );
 
   Widget _buildCategoryChip(
-      GameCategory? category, String name, IconData icon, Color color) {
+      GameCategory? category, String name, IconData icon, Color color,) {
     final isSelected = _selectedCategory == category;
 
     return GestureDetector(
@@ -180,7 +189,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         child: Row(
           children: [
             Icon(icon,
-                size: 18, color: isSelected ? color : VesparaColors.secondary),
+                size: 18, color: isSelected ? color : VesparaColors.secondary,),
             const SizedBox(width: 6),
             Text(
               name,
@@ -311,6 +320,8 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return Icons.accessibility_new_rounded; // 🧘 Poses
       case GameCategory.flashFreeze:
         return Icons.flash_on_rounded; // ⚡ Flash
+      case GameCategory.diceBreakers:
+        return Icons.casino_rounded; // 🎲 Dice
     }
   }
 
@@ -446,6 +457,8 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return TagRating.dramaSutra;
       case GameCategory.flashFreeze:
         return TagRating.flashFreeze;
+      case GameCategory.diceBreakers:
+        return TagRating.diceBreakers;
     }
   }
 
@@ -527,6 +540,12 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const FlashFreezeScreen()),
+        );
+        break;
+      case GameCategory.diceBreakers:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DiceBreakersScreen()),
         );
         break;
     }

@@ -68,7 +68,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
         ),
         body: const Center(
           child: Text('Group not found',
-              style: TextStyle(color: VesparaColors.secondary)),
+              style: TextStyle(color: VesparaColors.secondary),),
         ),
       );
     }
@@ -349,7 +349,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
                 style: TextStyle(color: VesparaColors.primary),
               ),
               trailing: const Icon(Icons.chevron_right,
-                  color: VesparaColors.secondary),
+                  color: VesparaColors.secondary,),
               onTap: VesparaHaptics.lightTap,
             ),
           ],
@@ -539,7 +539,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
             if (_isAdmin)
               const ListTile(
                 leading: Icon(Icons.admin_panel_settings,
-                    color: VesparaColors.secondary),
+                    color: VesparaColors.secondary,),
                 title: Text(
                   'Group Permissions',
                   style: TextStyle(color: VesparaColors.primary),
@@ -733,7 +733,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -743,7 +743,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
               await Supabase.instance.client
                   .from('conversations')
                   .update({'description': newDesc.isEmpty ? null : newDesc}).eq(
-                      'id', widget.conversationId);
+                      'id', widget.conversationId,);
 
               await ref.read(wireProvider.notifier).loadConversations();
             },
@@ -792,7 +792,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.admin_panel_settings,
-                  color: VesparaColors.glow),
+                  color: VesparaColors.glow,),
               title: Text(
                 participant.role == ParticipantRole.admin
                     ? 'Remove Admin'
@@ -808,7 +808,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.remove_circle_outline,
-                  color: VesparaColors.tagsRed),
+                  color: VesparaColors.tagsRed,),
               title: const Text(
                 'Remove from Group',
                 style: TextStyle(color: VesparaColors.tagsRed),
@@ -850,7 +850,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () {
@@ -889,7 +889,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () async {

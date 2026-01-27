@@ -163,12 +163,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem(
-              'Total', totalMatches.toString(), VesparaColors.primary),
+              'Total', totalMatches.toString(), VesparaColors.primary,),
           _buildStatDivider(),
           _buildStatItem('New', newCount.toString(), VesparaColors.tagsYellow),
           _buildStatDivider(),
           _buildStatItem(
-              'Priority', priorityCount.toString(), VesparaColors.success),
+              'Priority', priorityCount.toString(), VesparaColors.success,),
         ],
       ),
     );
@@ -232,7 +232,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 6, vertical: 2,),
                       decoration: BoxDecoration(
                         color: VesparaColors.glow.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
@@ -305,7 +305,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
 
     if (groupsState.isLoading) {
       return const Center(
-          child: CircularProgressIndicator(color: VesparaColors.glow));
+          child: CircularProgressIndicator(color: VesparaColors.glow),);
     }
 
     if (groupsState.groups.isEmpty) {
@@ -314,7 +314,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.group_outlined,
-                size: 48, color: VesparaColors.secondary),
+                size: 48, color: VesparaColors.secondary,),
             const SizedBox(height: 16),
             const Text(
               'No circles yet',
@@ -325,7 +325,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               'Create a circle to organize your connections',
               style: TextStyle(
                   fontSize: 13,
-                  color: VesparaColors.secondary.withOpacity(0.7)),
+                  color: VesparaColors.secondary.withOpacity(0.7),),
             ),
           ],
         ),
@@ -377,7 +377,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             Image.network(group.avatarUrl!, fit: BoxFit.cover),
                       )
                     : const Icon(Icons.group,
-                        color: VesparaColors.glow, size: 24),
+                        color: VesparaColors.glow, size: 24,),
               ),
               const SizedBox(width: 12),
 
@@ -401,7 +401,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         if (group.isCreator)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                                horizontal: 6, vertical: 2,),
                             decoration: BoxDecoration(
                               color: VesparaColors.glow.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
@@ -421,11 +421,11 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     Row(
                       children: [
                         _buildStatChip(
-                            '${group.memberCount} members', VesparaColors.glow),
+                            '${group.memberCount} members', VesparaColors.glow,),
                         const SizedBox(width: 8),
                         if (idleCount > 0)
                           _buildStatChip(
-                              '$idleCount idle', VesparaColors.warning),
+                              '$idleCount idle', VesparaColors.warning,),
                       ],
                     ),
                   ],
@@ -455,7 +455,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.person_add,
-                              color: VesparaColors.background, size: 18),
+                              color: VesparaColors.background, size: 18,),
                           SizedBox(width: 6),
                           Text(
                             'Invite',
@@ -480,13 +480,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         color: VesparaColors.error.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: VesparaColors.error.withOpacity(0.3)),
+                            color: VesparaColors.error.withOpacity(0.3),),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.delete_outline,
-                              color: VesparaColors.error, size: 18),
+                              color: VesparaColors.error, size: 18,),
                           SizedBox(width: 6),
                           Text(
                             'Delete',
@@ -507,7 +507,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => GroupDetailScreen(groupId: group.id)),
+                          builder: (_) => GroupDetailScreen(groupId: group.id),),
                     ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -515,13 +515,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         color: VesparaColors.glow.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: VesparaColors.glow.withOpacity(0.3)),
+                            color: VesparaColors.glow.withOpacity(0.3),),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.visibility,
-                              color: VesparaColors.glow, size: 18),
+                              color: VesparaColors.glow, size: 18,),
                           SizedBox(width: 6),
                           Text(
                             'View Circle',
@@ -585,7 +585,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () async {
@@ -612,7 +612,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               }
             },
             child: const Text('Delete',
-                style: TextStyle(color: VesparaColors.error)),
+                style: TextStyle(color: VesparaColors.error),),
           ),
         ],
       ),
@@ -726,7 +726,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                                   ),
                                   decoration: BoxDecoration(
                                     color: _getCompatibilityColor(
-                                            match.compatibilityScore)
+                                            match.compatibilityScore,)
                                         .withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -736,7 +736,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                       color: _getCompatibilityColor(
-                                          match.compatibilityScore),
+                                          match.compatibilityScore,),
                                     ),
                                   ),
                                 ),
@@ -1086,7 +1086,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         child: Row(
                           children: [
                             const Icon(Icons.lightbulb,
-                                size: 16, color: VesparaColors.tagsYellow),
+                                size: 16, color: VesparaColors.tagsYellow,),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -1138,7 +1138,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 icon:
                     const Icon(Icons.delete_sweep, color: VesparaColors.error),
                 label: const Text('Move to Shredder',
-                    style: TextStyle(color: VesparaColors.error)),
+                    style: TextStyle(color: VesparaColors.error),),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: VesparaColors.error.withOpacity(0.5)),
                   padding:
@@ -1256,13 +1256,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
       backgroundColor: VesparaColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
             right: 24,
-            top: 24),
+            top: 24,),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1278,7 +1278,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 fillColor: VesparaColors.background,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none),
+                    borderSide: BorderSide.none,),
               ),
               onSubmitted: (query) {
                 Navigator.pop(context);
@@ -1288,12 +1288,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         m.matchedUserName
                             ?.toLowerCase()
                             .contains(query.toLowerCase()) ??
-                        false)
+                        false,)
                     .toList();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content:
                         Text('Found ${results.length} matches for "$query"'),
-                    backgroundColor: VesparaColors.glow));
+                    backgroundColor: VesparaColors.glow,),);
               },
             ),
             const SizedBox(height: 24),
@@ -1308,7 +1308,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
       context: context,
       backgroundColor: VesparaColors.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1321,40 +1321,40 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     height: 4,
                     decoration: BoxDecoration(
                         color: VesparaColors.secondary,
-                        borderRadius: BorderRadius.circular(2)))),
+                        borderRadius: BorderRadius.circular(2),),),),
             const SizedBox(height: 20),
             Text('Plan a Date with ${match.matchedUserName}',
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
+                    color: VesparaColors.primary,),),
             const SizedBox(height: 20),
             ...[
               'Drinks Tonight',
               'Dinner This Week',
               'Weekend Adventure',
-              'Something Special'
+              'Something Special',
             ].map(
               (option) => ListTile(
                 leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                         color: VesparaColors.success.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(8),),
                     child: const Icon(Icons.calendar_today,
-                        color: VesparaColors.success, size: 20)),
+                        color: VesparaColors.success, size: 20,),),
                 title: Text(option,
                     style: const TextStyle(
                         color: VesparaColors.primary,
-                        fontWeight: FontWeight.w500)),
+                        fontWeight: FontWeight.w500,),),
                 trailing: const Icon(Icons.chevron_right,
-                    color: VesparaColors.secondary),
+                    color: VesparaColors.secondary,),
                 onTap: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(
-                          'Scheduling "$option" with ${match.matchedUserName}...'),
-                      backgroundColor: VesparaColors.success));
+                          'Scheduling "$option" with ${match.matchedUserName}...',),
+                      backgroundColor: VesparaColors.success,),);
                 },
               ),
             ),
@@ -1370,7 +1370,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
       context: context,
       backgroundColor: VesparaColors.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1383,45 +1383,45 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     height: 4,
                     decoration: BoxDecoration(
                         color: VesparaColors.secondary,
-                        borderRadius: BorderRadius.circular(2)))),
+                        borderRadius: BorderRadius.circular(2),),),),
             const SizedBox(height: 20),
             Text('Play TAG with ${match.matchedUserName} 🎮',
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
+                    color: VesparaColors.primary,),),
             const SizedBox(height: 12),
             const Text('Choose a game to play together:',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
             const SizedBox(height: 16),
             ...[
               '🧊 Icebreakers',
               '🃏 Truth or Dare',
               '🔥 Spicy Edition',
-              '💜 Fantasy Exploration'
+              '💜 Fantasy Exploration',
             ].map(
               (game) => ListTile(
                 title: Text(game,
                     style: const TextStyle(
                         color: VesparaColors.primary,
-                        fontWeight: FontWeight.w500)),
+                        fontWeight: FontWeight.w500,),),
                 trailing: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                         color: VesparaColors.tagsYellow.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),),
                     child: const Text('Play',
                         style: TextStyle(
                             color: VesparaColors.tagsYellow,
                             fontWeight: FontWeight.w600,
-                            fontSize: 12))),
+                            fontSize: 12,),),),
                 onTap: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(
-                          'Starting $game with ${match.matchedUserName}...'),
-                      backgroundColor: VesparaColors.tagsYellow));
+                          'Starting $game with ${match.matchedUserName}...',),
+                      backgroundColor: VesparaColors.tagsYellow,),);
                 },
               ),
             ),
@@ -1443,16 +1443,16 @@ class _NestScreenState extends ConsumerState<NestScreen>
           Icon(Icons.delete_sweep, color: VesparaColors.error),
           SizedBox(width: 8),
           Text('Move to Shredder?',
-              style: TextStyle(color: VesparaColors.primary))
-        ]),
+              style: TextStyle(color: VesparaColors.primary),),
+        ],),
         content: Text(
             '${match.matchedUserName} will be flagged for review in The Shredder. You can always bring them back.',
-            style: const TextStyle(color: VesparaColors.secondary)),
+            style: const TextStyle(color: VesparaColors.secondary),),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Cancel',
-                  style: TextStyle(color: VesparaColors.secondary))),
+                  style: TextStyle(color: VesparaColors.secondary),),),
           ElevatedButton(
             onPressed: () {
               setState(() {
@@ -1462,7 +1462,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content:
                       Text('${match.matchedUserName} moved to On The Way Out'),
-                  backgroundColor: VesparaColors.error));
+                  backgroundColor: VesparaColors.error,),);
             },
             style:
                 ElevatedButton.styleFrom(backgroundColor: VesparaColors.error),

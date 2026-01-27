@@ -298,10 +298,10 @@ class AmbientIntelligence {
         return const QuickAction(id: 'games', label: 'Play', icon: '🎮');
       case 'date_planner':
         return const QuickAction(
-            id: 'date_planner', label: 'Plan Date', icon: '📅');
+            id: 'date_planner', label: 'Plan Date', icon: '📅',);
       case 'conversation_starters':
         return const QuickAction(
-            id: 'starters', label: 'Start Chat', icon: '💬');
+            id: 'starters', label: 'Start Chat', icon: '💬',);
       case 'profile_coach':
         return const QuickAction(id: 'profile', label: 'Profile', icon: '✨');
       default:
@@ -338,7 +338,7 @@ class AmbientIntelligence {
     'discover',
     'matches',
     'games',
-    'profile'
+    'profile',
   ];
 
   // ═══════════════════════════════════════════════════════════════════════════

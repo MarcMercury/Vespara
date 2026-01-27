@@ -279,7 +279,7 @@ class _HealthRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: Text(label)),
           Text(value,
-              style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+              style: TextStyle(color: color, fontWeight: FontWeight.w500),),
         ],
       );
 }

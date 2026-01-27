@@ -153,7 +153,7 @@ class TagRatingDisplay extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildCompactChip('🏎️', rating.velocity.display,
-              _getVelocityColor(rating.velocity)),
+              _getVelocityColor(rating.velocity),),
           const SizedBox(width: 8),
           _buildCompactChip('🔥', rating.heat.code, _getHeatColor(rating.heat)),
           const SizedBox(width: 8),
@@ -294,11 +294,11 @@ class TagRatingInfoSheet extends StatelessWidget {
                 items: [
                   _RatingItem('PG', 'Playful, suggestive, mostly teasing'),
                   _RatingItem(
-                      'PG-13', 'Light touching, kissing, bold flirting'),
+                      'PG-13', 'Light touching, kissing, bold flirting',),
                   _RatingItem('R', 'Risqué, passionate, hands-on'),
                   _RatingItem('X', 'Explicit, adventurous, clothing unlikely'),
                   _RatingItem(
-                      'XXX', 'Uninhibited, wild, gloriously unfiltered'),
+                      'XXX', 'Uninhibited, wild, gloriously unfiltered',),
                 ],
               ),
 
@@ -311,11 +311,11 @@ class TagRatingInfoSheet extends StatelessWidget {
                 subtitle: 'Every pleasure deserves its pace',
                 items: [
                   _RatingItem('Quickie',
-                      '5–15 min — Fast, fun, dangerous in the best way'),
+                      '5–15 min — Fast, fun, dangerous in the best way',),
                   _RatingItem('Foreplay',
-                      '20–45 min — Builds slowly, burns beautifully'),
+                      '20–45 min — Builds slowly, burns beautifully',),
                   _RatingItem('Full Session',
-                      '60+ min — Take your time; the night\'s young'),
+                      '60+ min — Take your time; the night\'s young',),
                 ],
               ),
 

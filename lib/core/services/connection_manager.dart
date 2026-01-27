@@ -184,7 +184,7 @@ class ConnectionManager {
       );
 
       debugPrint(
-          'ConnectionManager: Reconnect attempt $attempt in ${delay.inSeconds}s');
+          'ConnectionManager: Reconnect attempt $attempt in ${delay.inSeconds}s',);
 
       _reconnectTimer = Timer(delay, () async {
         try {
@@ -272,7 +272,7 @@ class OfflineQueue {
     );
 
     debugPrint(
-        'OfflineQueue: Enqueued operation $id (${_queue.length} pending)');
+        'OfflineQueue: Enqueued operation $id (${_queue.length} pending)',);
   }
 
   /// Number of pending operations
@@ -315,7 +315,7 @@ class OfflineQueue {
 
     _isProcessing = false;
     debugPrint(
-        'OfflineQueue: Processing complete (${_queue.length} remaining)');
+        'OfflineQueue: Processing complete (${_queue.length} remaining)',);
   }
 
   /// Clear all pending operations

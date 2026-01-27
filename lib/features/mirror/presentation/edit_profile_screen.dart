@@ -391,9 +391,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               _buildSectionHeader('Basic Info'),
               _buildTextField('Display Name', _displayNameController),
               _buildTextField('Headline', _headlineController,
-                  hint: 'A catchy tagline...'),
+                  hint: 'A catchy tagline...',),
               _buildTextField('Bio', _bioController,
-                  maxLines: 4, hint: 'Tell people about yourself...'),
+                  maxLines: 4, hint: 'Tell people about yourself...',),
               _buildTextField('Occupation', _occupationController),
 
               const SizedBox(height: 24),
@@ -403,7 +403,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               Row(
                 children: [
                   Expanded(
-                      flex: 2, child: _buildTextField('City', _cityController)),
+                      flex: 2, child: _buildTextField('City', _cityController),),
                   const SizedBox(width: 12),
                   Expanded(child: _buildTextField('State', _stateController)),
                 ],
@@ -422,17 +422,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
               _buildMultiSelect('Gender', _genderOptions, _selectedGender),
               _buildMultiSelect(
-                  'Orientation', _orientationOptions, _selectedOrientation),
+                  'Orientation', _orientationOptions, _selectedOrientation,),
 
               const SizedBox(height: 24),
 
               // Relationship Section
               _buildSectionHeader('Relationship'),
               _buildMultiSelect('Relationship Status',
-                  _relationshipStatusOptions, _selectedRelationshipStatus),
+                  _relationshipStatusOptions, _selectedRelationshipStatus,),
               _buildMultiSelect('Seeking', _seekingOptions, _selectedSeeking),
               _buildMultiSelect('Looking For (Traits)', _lookingForOptions,
-                  _selectedLookingFor),
+                  _selectedLookingFor,),
               _buildDropdown(
                 'Partner Involvement',
                 _partnerInvolvementOptions,
@@ -445,7 +445,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               // Logistics Section
               _buildSectionHeader('Logistics'),
               _buildMultiSelect(
-                  'Availability', _availabilityOptions, _selectedAvailability),
+                  'Availability', _availabilityOptions, _selectedAvailability,),
               _buildDropdown(
                 'Scheduling Style',
                 _schedulingOptions,
@@ -491,7 +491,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         )
                       : const Text('Save Changes',
                           style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 16)),
+                              fontWeight: FontWeight.w600, fontSize: 16,),),
                 ),
               ),
 
@@ -514,7 +514,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
   Widget _buildTextField(String label, TextEditingController controller,
-          {int maxLines = 1, String? hint}) =>
+          {int maxLines = 1, String? hint,}) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Column(
@@ -557,7 +557,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
   Widget _buildDropdown(String label, List<String> options, String? value,
-          Function(String?) onChanged) =>
+          Function(String?) onChanged,) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Column(
@@ -585,10 +585,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   dropdownColor: VesparaColors.surface,
                   hint: Text('Select...',
                       style: TextStyle(
-                          color: VesparaColors.secondary.withOpacity(0.5))),
+                          color: VesparaColors.secondary.withOpacity(0.5),),),
                   style: const TextStyle(color: VesparaColors.primary),
                   icon: const Icon(Icons.keyboard_arrow_down,
-                      color: VesparaColors.secondary),
+                      color: VesparaColors.secondary,),
                   items: options
                       .map(
                         (opt) => DropdownMenuItem(
@@ -606,7 +606,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
   Widget _buildMultiSelect(
-          String label, List<String> options, List<String> selected) =>
+          String label, List<String> options, List<String> selected,) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Column(

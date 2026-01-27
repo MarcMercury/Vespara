@@ -36,7 +36,7 @@ abstract class BaseRepository {
     final id = userId;
     if (id == null) {
       throw AppError.authentication(
-          message: 'You must be logged in to perform this action');
+          message: 'You must be logged in to perform this action',);
     }
     return id;
   }
@@ -110,7 +110,7 @@ abstract class BaseRepository {
 
         reconnectAttempts++;
         debugPrint(
-            'Stream: Reconnect attempt $reconnectAttempts after ${reconnectDelay.inSeconds}s');
+            'Stream: Reconnect attempt $reconnectAttempts after ${reconnectDelay.inSeconds}s',);
         await Future.delayed(reconnectDelay);
       }
     }
@@ -122,7 +122,7 @@ abstract class BaseRepository {
     required List<String> primaryKey,
     required T Function(Map<String, dynamic> json) fromJson,
     PostgrestTransformBuilder<List<Map<String, dynamic>>> Function(
-            SupabaseQueryBuilder query)?
+            SupabaseQueryBuilder query,)?
         queryBuilder,
   }) =>
       safeStream(() {
@@ -288,7 +288,7 @@ abstract class BaseRepository {
   // ═══════════════════════════════════════════════════════════════════════════
 
   AppError _transformError(
-      dynamic error, StackTrace? stackTrace, String? operationName) {
+      dynamic error, StackTrace? stackTrace, String? operationName,) {
     final context = operationName != null ? {'operation': operationName} : null;
 
     // PostgrestException (Supabase database errors)
@@ -333,7 +333,7 @@ abstract class BaseRepository {
   }
 
   AppError _transformPostgrestError(
-      PostgrestException error, Map<String, dynamic>? context) {
+      PostgrestException error, Map<String, dynamic>? context,) {
     final code = error.code;
     final message = error.message;
 

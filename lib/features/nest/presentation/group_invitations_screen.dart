@@ -263,7 +263,7 @@ class _InvitationCard extends StatelessWidget {
                             ),
                           )
                         : const Icon(Icons.group,
-                            size: 28, color: VesparaColors.glow),
+                            size: 28, color: VesparaColors.glow,),
                   ),
                   const SizedBox(width: 16),
                   // Group name and inviter

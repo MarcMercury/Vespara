@@ -276,7 +276,7 @@ class TagTimerState extends State<TagTimer> with TickerProviderStateMixin {
                       valueColor: AlwaysStoppedAnimation(
                         _remaining <= widget.lowTimeThreshold
                             ? Color.lerp(widget.color, Colors.red,
-                                _pulseController.value)!
+                                _pulseController.value,)!
                             : widget.color,
                       ),
                       strokeCap: StrokeCap.round,

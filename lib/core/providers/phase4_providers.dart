@@ -26,7 +26,7 @@ final messageCoachProvider =
 
 /// Relationship Progress - Auto-tracked milestones
 final relationshipProgressProvider = Provider<RelationshipProgressService>(
-    (ref) => RelationshipProgressService.instance);
+    (ref) => RelationshipProgressService.instance,);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ASYNC DATA PROVIDERS
@@ -177,7 +177,7 @@ class DatePlannerState {
 
 final datePlannerStateProvider =
     StateNotifierProvider<DatePlannerNotifier, DatePlannerState>(
-        (ref) => DatePlannerNotifier(ref.watch(datePlannerProvider)));
+        (ref) => DatePlannerNotifier(ref.watch(datePlannerProvider)),);
 
 /// Manages message coaching state
 class MessageCoachNotifier extends StateNotifier<MessageCoachState> {
@@ -226,7 +226,7 @@ class MessageCoachState {
 
 final messageCoachStateProvider =
     StateNotifierProvider<MessageCoachNotifier, MessageCoachState>(
-        (ref) => MessageCoachNotifier(ref.watch(messageCoachProvider)));
+        (ref) => MessageCoachNotifier(ref.watch(messageCoachProvider)),);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER CLASSES

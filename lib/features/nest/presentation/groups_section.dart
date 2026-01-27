@@ -28,7 +28,7 @@ class GroupsSection extends ConsumerWidget {
         const SizedBox(height: 16),
         if (groupsState.isLoading)
           const Center(
-              child: CircularProgressIndicator(color: VesparaColors.glow))
+              child: CircularProgressIndicator(color: VesparaColors.glow),)
         else if (groupsState.groups.isEmpty)
           _buildEmptyState(context)
         else
@@ -104,7 +104,7 @@ class GroupsSection extends ConsumerWidget {
             clipBehavior: Clip.none,
             children: [
               const Icon(Icons.mail_outline,
-                  color: VesparaColors.warning, size: 20),
+                  color: VesparaColors.warning, size: 20,),
               Positioned(
                 right: -8,
                 top: -8,
@@ -135,7 +135,7 @@ class GroupsSection extends ConsumerWidget {
   }
 
   Widget _buildGroupsList(
-          BuildContext context, WidgetRef ref, List<VesparaGroup> groups) =>
+          BuildContext context, WidgetRef ref, List<VesparaGroup> groups,) =>
       SizedBox(
         height: 180,
         child: ListView.builder(
@@ -170,7 +170,7 @@ class _GroupCard extends ConsumerWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => GroupDetailScreen(groupId: group.id)),
+                builder: (_) => GroupDetailScreen(groupId: group.id),),
           );
         },
         child: Container(
@@ -224,7 +224,7 @@ class _GroupCard extends ConsumerWidget {
                   if (group.isCreator)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 6, vertical: 2,),
                       decoration: BoxDecoration(
                         color: VesparaColors.glow.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),

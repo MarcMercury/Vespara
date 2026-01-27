@@ -451,7 +451,7 @@ class _MessageCoachOverlayState extends State<MessageCoachOverlay>
             Row(
               children: [
                 Text(_analysis!.toneEmoji,
-                    style: const TextStyle(fontSize: 16)),
+                    style: const TextStyle(fontSize: 16),),
                 const SizedBox(width: 8),
                 Text(
                   _analysis!.toneLabel,
@@ -676,7 +676,7 @@ class RelationshipProgressSheet extends StatelessWidget {
               Row(
                 children: [
                   Text(progress.stage.emoji,
-                      style: const TextStyle(fontSize: 32)),
+                      style: const TextStyle(fontSize: 32),),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(

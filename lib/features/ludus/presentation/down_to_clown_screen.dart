@@ -288,7 +288,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                           gameState.userStats!.totalGamesPlayed > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                              horizontal: 16, vertical: 8,),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
@@ -297,7 +297,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(VesparaIcons.trophy,
-                                  color: Colors.amber, size: 18),
+                                  color: Colors.amber, size: 18,),
                               const SizedBox(width: 8),
                               Text(
                                 'High Score: ${gameState.userStats!.highScore}',
@@ -321,7 +321,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                       if (gameState.isDemoMode)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                              horizontal: 12, vertical: 6,),
                           decoration: BoxDecoration(
                             color: Colors.orange.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
@@ -330,12 +330,12 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(VesparaIcons.play,
-                                  color: Colors.orange, size: 16),
+                                  color: Colors.orange, size: 16,),
                               SizedBox(width: 8),
                               Text(
                                 'Demo Mode • 100 Prompts',
                                 style: TextStyle(
-                                    color: Colors.orange, fontSize: 12),
+                                    color: Colors.orange, fontSize: 12,),
                               ),
                             ],
                           ),
@@ -354,7 +354,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                         onTap: () {
                           HapticFeedback.heavyImpact();
                           setState(
-                              () => _gameState = DownToClownState.heatSelect);
+                              () => _gameState = DownToClownState.heatSelect,);
                         },
                         child: Container(
                           width: double.infinity,
@@ -1128,7 +1128,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                            horizontal: 12, vertical: 6,),
                         decoration: BoxDecoration(
                           color: _getPromptHeatColor(currentPrompt.heatLevel)
                               .withOpacity(0.3),
@@ -1274,17 +1274,17 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                             .map(
                               (p) => Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                    horizontal: 12, vertical: 8,),
                                 decoration: BoxDecoration(
                                   color: Colors.green.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                      color: Colors.green.withOpacity(0.5)),
+                                      color: Colors.green.withOpacity(0.5),),
                                 ),
                                 child: Text(
                                   p.prompt,
                                   style: const TextStyle(
-                                      color: Colors.greenAccent),
+                                      color: Colors.greenAccent,),
                                 ),
                               ),
                             )
@@ -1317,17 +1317,17 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                             .map(
                               (p) => Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                    horizontal: 12, vertical: 8,),
                                 decoration: BoxDecoration(
                                   color: Colors.orange.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                      color: Colors.orange.withOpacity(0.5)),
+                                      color: Colors.orange.withOpacity(0.5),),
                                 ),
                                 child: Text(
                                   p.prompt,
                                   style: const TextStyle(
-                                      color: Colors.orangeAccent),
+                                      color: Colors.orangeAccent,),
                                 ),
                               ),
                             )

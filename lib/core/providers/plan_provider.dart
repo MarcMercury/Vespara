@@ -225,7 +225,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
 
   /// Convert a VesparaEvent JSON to PlanEvent
   PlanEvent _convertVesparaEventToPlanEvent(
-          Map<String, dynamic> json, bool isHosting) =>
+          Map<String, dynamic> json, bool isHosting,) =>
       PlanEvent(
         id: 'exp-${json['id']}',
         userId: _supabase?.auth.currentUser?.id ?? '',
@@ -348,7 +348,7 @@ class PlanNotifier extends StateNotifier<PlanState> {
 
   /// Accept an AI suggestion and create the event
   Future<void> acceptSuggestion(
-      AiDateSuggestion suggestion, DateTime selectedTime) async {
+      AiDateSuggestion suggestion, DateTime selectedTime,) async {
     final event = PlanEvent(
       id: 'event-${DateTime.now().millisecondsSinceEpoch}',
       userId: _supabase?.auth.currentUser?.id ?? '',
@@ -477,8 +477,8 @@ final planConnectionsProvider =
 
 /// Get AI suggestions
 final aiSuggestionsProvider = Provider<List<AiDateSuggestion>>(
-    (ref) => ref.watch(planProvider).aiSuggestions);
+    (ref) => ref.watch(planProvider).aiSuggestions,);
 
 /// Get events for a specific date
 final eventsForDateProvider = Provider.family<List<PlanEvent>, DateTime>(
-    (ref, date) => ref.watch(planProvider).eventsForDate(date));
+    (ref, date) => ref.watch(planProvider).eventsForDate(date),);

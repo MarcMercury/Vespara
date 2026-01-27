@@ -556,7 +556,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                     backgroundColor: VesparaColors.glow,
                     foregroundColor: VesparaColors.background,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
+                        horizontal: 24, vertical: 14,),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -570,9 +570,9 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                   style: OutlinedButton.styleFrom(
                     foregroundColor: VesparaColors.primary,
                     side: BorderSide(
-                        color: VesparaColors.secondary.withOpacity(0.3)),
+                        color: VesparaColors.secondary.withOpacity(0.3),),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
+                        horizontal: 24, vertical: 14,),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -601,7 +601,7 @@ class QrCodePainter extends CustomPainter {
     _drawPositionPattern(canvas, paint, 0, 0, cellSize);
     _drawPositionPattern(canvas, paint, size.width - 7 * cellSize, 0, cellSize);
     _drawPositionPattern(
-        canvas, paint, 0, size.height - 7 * cellSize, cellSize);
+        canvas, paint, 0, size.height - 7 * cellSize, cellSize,);
 
     // Draw random data pattern
     for (int i = 0; i < 21; i++) {
@@ -614,7 +614,7 @@ class QrCodePainter extends CustomPainter {
         if (random.nextBool()) {
           canvas.drawRect(
             Rect.fromLTWH(
-                j * cellSize, i * cellSize, cellSize * 0.9, cellSize * 0.9),
+                j * cellSize, i * cellSize, cellSize * 0.9, cellSize * 0.9,),
             paint,
           );
         }
@@ -623,7 +623,7 @@ class QrCodePainter extends CustomPainter {
   }
 
   void _drawPositionPattern(
-      Canvas canvas, Paint paint, double x, double y, double cellSize) {
+      Canvas canvas, Paint paint, double x, double y, double cellSize,) {
     // Outer square
     canvas.drawRect(Rect.fromLTWH(x, y, 7 * cellSize, 7 * cellSize), paint);
 
@@ -631,14 +631,14 @@ class QrCodePainter extends CustomPainter {
     paint.color = Colors.white;
     canvas.drawRect(
         Rect.fromLTWH(x + cellSize, y + cellSize, 5 * cellSize, 5 * cellSize),
-        paint);
+        paint,);
 
     // Black center
     paint.color = Colors.black;
     canvas.drawRect(
         Rect.fromLTWH(
-            x + 2 * cellSize, y + 2 * cellSize, 3 * cellSize, 3 * cellSize),
-        paint);
+            x + 2 * cellSize, y + 2 * cellSize, 3 * cellSize, 3 * cellSize,),
+        paint,);
   }
 
   @override

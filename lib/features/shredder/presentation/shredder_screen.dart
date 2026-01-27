@@ -162,7 +162,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.psychology,
-                      size: 16, color: VesparaColors.glow),
+                      size: 16, color: VesparaColors.glow,),
                   const SizedBox(width: 8),
                   Text(
                     '${_suggestions.length} connections flagged for review',
@@ -307,7 +307,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                 const Row(
                   children: [
                     Icon(Icons.auto_awesome,
-                        size: 14, color: VesparaColors.glow),
+                        size: 14, color: VesparaColors.glow,),
                     SizedBox(width: 8),
                     Text(
                       'AI Analysis',
@@ -389,19 +389,19 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildShredStat(
-                'Messages', suggestion['messageCount']?.toString() ?? '0'),
+                'Messages', suggestion['messageCount']?.toString() ?? '0',),
             Container(
                 width: 1,
                 height: 30,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildShredStat(
-                'Last Msg', '${suggestion['daysSinceLastMessage'] ?? 0}d ago'),
+                'Last Msg', '${suggestion['daysSinceLastMessage'] ?? 0}d ago',),
             Container(
                 width: 1,
                 height: 30,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildShredStat('Response',
-                '${((suggestion['responseRate'] ?? 0.0) * 100).toInt()}%'),
+                '${((suggestion['responseRate'] ?? 0.0) * 100).toInt()}%',),
           ],
         ),
       );
@@ -437,7 +437,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             const Icon(Icons.delete_forever, color: VesparaColors.error),
             const SizedBox(width: 8),
             Text('Shred ${suggestion['name']}?',
-                style: const TextStyle(color: VesparaColors.primary)),
+                style: const TextStyle(color: VesparaColors.primary),),
           ],
         ),
         content: Column(
@@ -467,7 +467,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () {
@@ -502,7 +502,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             const SizedBox(width: 8),
             Text(text,
                 style: const TextStyle(
-                    fontSize: 13, color: VesparaColors.primary)),
+                    fontSize: 13, color: VesparaColors.primary,),),
           ],
         ),
       );
@@ -518,7 +518,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             const Icon(Icons.favorite, color: VesparaColors.glow),
             const SizedBox(width: 8),
             Text('Keep ${suggestion['name']}?',
-                style: const TextStyle(color: VesparaColors.primary)),
+                style: const TextStyle(color: VesparaColors.primary),),
           ],
         ),
         content: const Column(
@@ -543,7 +543,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () {
@@ -564,7 +564,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
               backgroundColor: VesparaColors.glow,
             ),
             child: const Text('Keep',
-                style: TextStyle(color: VesparaColors.background)),
+                style: TextStyle(color: VesparaColors.background),),
           ),
         ],
       ),
@@ -595,7 +595,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: VesparaColors.primary)),
+                        color: VesparaColors.primary,),),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close, color: VesparaColors.secondary),
@@ -604,7 +604,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             ),
             const SizedBox(height: 8),
             const Text('Connections you\'ve moved on from',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
             const SizedBox(height: 20),
             Expanded(
               child: _shreddedHistory.isEmpty
@@ -614,16 +614,16 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                         children: [
                           Icon(Icons.auto_delete,
                               size: 48,
-                              color: VesparaColors.glow.withOpacity(0.5)),
+                              color: VesparaColors.glow.withOpacity(0.5),),
                           const SizedBox(height: 16),
                           const Text('No shredded connections yet',
-                              style: TextStyle(color: VesparaColors.secondary)),
+                              style: TextStyle(color: VesparaColors.secondary),),
                           const SizedBox(height: 8),
                           const Text(
                               'When you shred someone, they\'ll appear here',
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: VesparaColors.secondary)),
+                                  color: VesparaColors.secondary,),),
                         ],
                       ),
                     )
@@ -637,15 +637,15 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                                 VesparaColors.error.withOpacity(0.3),
                             child: Text(item['name'][0],
                                 style: const TextStyle(
-                                    color: VesparaColors.error)),
+                                    color: VesparaColors.error,),),
                           ),
                           title: Text(item['name'],
                               style: const TextStyle(
-                                  color: VesparaColors.primary)),
+                                  color: VesparaColors.primary,),),
                           subtitle: Text(item['reason'] ?? 'No reason given',
                               style: const TextStyle(
                                   color: VesparaColors.secondary,
-                                  fontSize: 12)),
+                                  fontSize: 12,),),
                           trailing: TextButton(
                             onPressed: () {
                               setState(() {
@@ -656,12 +656,12 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content: Text(
-                                        '${item['name']} restored to your roster'),
-                                    backgroundColor: VesparaColors.success),
+                                        '${item['name']} restored to your roster',),
+                                    backgroundColor: VesparaColors.success,),
                               );
                             },
                             child: const Text('Restore',
-                                style: TextStyle(color: VesparaColors.glow)),
+                                style: TextStyle(color: VesparaColors.glow),),
                           ),
                         );
                       },

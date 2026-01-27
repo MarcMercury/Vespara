@@ -483,7 +483,7 @@ class EventFeatureCard extends StatelessWidget {
                     // Date badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                          horizontal: 12, vertical: 6,),
                       decoration: BoxDecoration(
                         color: VesparaColors.glow,
                         borderRadius: BorderRadius.circular(8),
@@ -563,7 +563,7 @@ class EventFeatureCard extends StatelessWidget {
                         if (event.goingCount > 0)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                                horizontal: 10, vertical: 6,),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),

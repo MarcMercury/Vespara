@@ -489,7 +489,7 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
 
 // Provider
 final dtcGameProvider = StateNotifierProvider<DtcGameNotifier, DtcGameState>(
-    (ref) => DtcGameNotifier());
+    (ref) => DtcGameNotifier(),);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DOWN TO CLOWN PROMPTS

@@ -40,7 +40,7 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
     print('[userProfileProvider] Got response: ${response.keys.toList()}');
     print('[userProfileProvider] display_name: ${response['display_name']}');
     print(
-        '[userProfileProvider] city: ${response['city']}, state: ${response['state']}');
+        '[userProfileProvider] city: ${response['city']}, state: ${response['state']}',);
     return UserProfile.fromJson(response);
   } catch (e) {
     // Log error and return null

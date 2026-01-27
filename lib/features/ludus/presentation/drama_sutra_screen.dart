@@ -241,7 +241,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                   if (state.currentRound > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                          horizontal: 12, vertical: 6,),
                       decoration: BoxDecoration(
                         color: DramaColors.gold.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -530,16 +530,16 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
             const SizedBox(height: 24),
             _buildHowToRow('1️⃣', 'One player is the Director'),
             _buildHowToRow(
-                '2️⃣', 'Director chooses to work with 2 or 3 actors'),
+                '2️⃣', 'Director chooses to work with 2 or 3 actors',),
             _buildHowToRow('3️⃣', 'Director presses ACTION'),
             _buildHowToRow('4️⃣',
-                'Without using the name of sexual positions, body parts, touching players, or demonstrating the image - get your actors into the pose displayed'),
+                'Without using the name of sexual positions, body parts, touching players, or demonstrating the image - get your actors into the pose displayed',),
             _buildHowToRow('5️⃣',
-                'When you believe they are in the correct position, aim your phone at the actors and press CUT'),
+                'When you believe they are in the correct position, aim your phone at the actors and press CUT',),
             _buildHowToRow('',
-                'Alternately, point your camera at the actors as time expires'),
+                'Alternately, point your camera at the actors as time expires',),
             _buildHowToRow('6️⃣',
-                'The camera will capture your masterpiece - as a group, rate the Director\'s skills using the thumbs up and down buttons'),
+                'The camera will capture your masterpiece - as a group, rate the Director\'s skills using the thumbs up and down buttons',),
             const SizedBox(height: 24),
           ],
         ),
@@ -700,7 +700,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(VesparaIcons.camera,
-                                color: Colors.white38, size: 48),
+                                color: Colors.white38, size: 48,),
                             SizedBox(height: 8),
                             Text(
                               'Camera loading...',
@@ -905,7 +905,7 @@ class _DramaSutraScreenState extends ConsumerState<DramaSutraScreen>
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: DramaColors.crimson, width: 2),
+                                color: DramaColors.crimson, width: 2,),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),

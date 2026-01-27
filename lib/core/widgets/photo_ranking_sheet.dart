@@ -139,7 +139,7 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
               child: Row(
                 children: [
                   const Icon(Icons.tips_and_updates,
-                      color: VesparaColors.glow, size: 20),
+                      color: VesparaColors.glow, size: 20,),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -171,7 +171,7 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
                   final rank = index + 1;
 
                   return _buildRankablePhotoTile(photo, rank,
-                      key: ValueKey(photo.id));
+                      key: ValueKey(photo.id),);
                 },
               ),
             ),
@@ -217,7 +217,7 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
       );
 
   Widget _buildRankablePhotoTile(ProfilePhoto photo, int rank,
-      {required Key key}) {
+      {required Key key,}) {
     final color = _getRankColor(rank);
 
     return Container(
@@ -276,7 +276,7 @@ class _PhotoRankingSheetState extends ConsumerState<PhotoRankingSheet> {
                   height: 84,
                   color: VesparaColors.surface,
                   child: const Icon(Icons.broken_image,
-                      color: VesparaColors.secondary),
+                      color: VesparaColors.secondary,),
                 ),
               ),
             ),

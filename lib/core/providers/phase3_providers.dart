@@ -22,7 +22,7 @@ final aiProfileCoachProvider =
 
 /// Conversation Starters - Ready when chat opens
 final conversationStartersProvider = Provider<InstantConversationStarters>(
-    (ref) => InstantConversationStarters.instance);
+    (ref) => InstantConversationStarters.instance,);
 
 /// Match Insights - Compatibility at a glance
 final matchInsightsProvider =
@@ -153,7 +153,7 @@ class BioEditorState {
 
 final bioEditorProvider =
     StateNotifierProvider<BioEditorNotifier, BioEditorState>(
-        (ref) => BioEditorNotifier(ref.watch(aiProfileCoachProvider)));
+        (ref) => BioEditorNotifier(ref.watch(aiProfileCoachProvider)),);
 
 /// Manages conversation starter state for a chat
 class StarterChipsNotifier extends StateNotifier<StarterChipsState> {
@@ -161,7 +161,7 @@ class StarterChipsNotifier extends StateNotifier<StarterChipsState> {
   final InstantConversationStarters _service;
 
   Future<void> loadStarters(String matchId,
-      {bool isFirstMessage = true}) async {
+      {bool isFirstMessage = true,}) async {
     state = state.copyWith(isLoading: true, matchId: matchId);
 
     final starters = isFirstMessage
@@ -213,7 +213,7 @@ class StarterChipsState {
 
 final starterChipsProvider =
     StateNotifierProvider<StarterChipsNotifier, StarterChipsState>(
-        (ref) => StarterChipsNotifier(ref.watch(conversationStartersProvider)));
+        (ref) => StarterChipsNotifier(ref.watch(conversationStartersProvider)),);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREFETCH HELPER

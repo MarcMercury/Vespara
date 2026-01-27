@@ -115,7 +115,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back_ios,
-                      color: VesparaColors.primary),
+                      color: VesparaColors.primary,),
                 ),
                 const Spacer(),
                 TextButton(
@@ -209,7 +209,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 'Nearby matches',
                 'Local experiences',
                 'Tonight Mode',
-                'Distance filtering'
+                'Distance filtering',
               ],
             ),
             const SizedBox(height: VesparaSpacing.md),
@@ -223,7 +223,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 'Match alerts',
                 'Message notifications',
                 'Experience reminders',
-                'AI nudges'
+                'AI nudges',
               ],
             ),
             const SizedBox(height: VesparaSpacing.md),
@@ -296,7 +296,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               subtitle: Text(
                 subtitle,
                 style: const TextStyle(
-                    color: VesparaColors.secondary, fontSize: 12),
+                    color: VesparaColors.secondary, fontSize: 12,),
               ),
               trailing: Switch(
                 value: isEnabled,
@@ -314,23 +314,23 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       .map(
                         (feature) => Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                              horizontal: 12, vertical: 6,),
                           decoration: BoxDecoration(
                             color: VesparaColors.background,
                             borderRadius: BorderRadius.circular(
-                                VesparaBorderRadius.small),
+                                VesparaBorderRadius.small,),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.lock_outline,
-                                  size: 12, color: VesparaColors.secondary),
+                                  size: 12, color: VesparaColors.secondary,),
                               const SizedBox(width: 4),
                               Text(
                                 feature,
                                 style: const TextStyle(
                                     color: VesparaColors.secondary,
-                                    fontSize: 11),
+                                    fontSize: 11,),
                               ),
                             ],
                           ),
@@ -476,7 +476,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       );
 
   Widget _buildNotificationSection(
-          String title, IconData icon, List<_NotificationOption> options) =>
+          String title, IconData icon, List<_NotificationOption> options,) =>
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -505,10 +505,10 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   .map(
                     (option) => SwitchListTile(
                       title: Text(option.title,
-                          style: const TextStyle(color: VesparaColors.primary)),
+                          style: const TextStyle(color: VesparaColors.primary),),
                       subtitle: Text(option.subtitle,
                           style: const TextStyle(
-                              color: VesparaColors.secondary, fontSize: 12)),
+                              color: VesparaColors.secondary, fontSize: 12,),),
                       value: option.value,
                       onChanged: option.onChanged,
                       activeThumbColor: VesparaColors.glow,
@@ -649,12 +649,12 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 children: [
                   SwitchListTile(
                     title: const Text('Verified Only',
-                        style: TextStyle(color: VesparaColors.primary)),
+                        style: TextStyle(color: VesparaColors.primary),),
                     subtitle: const Text('Only show verified profiles',
                         style: TextStyle(
-                            color: VesparaColors.secondary, fontSize: 12)),
+                            color: VesparaColors.secondary, fontSize: 12,),),
                     secondary: const Icon(Icons.verified_rounded,
-                        color: VesparaColors.glow),
+                        color: VesparaColors.glow,),
                     value: _showVerifiedOnly,
                     onChanged: (v) => setState(() => _showVerifiedOnly = v),
                     activeThumbColor: VesparaColors.glow,
@@ -662,13 +662,13 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   const Divider(height: 1, color: VesparaColors.border),
                   SwitchListTile(
                     title: const Text('Recently Active',
-                        style: TextStyle(color: VesparaColors.primary)),
+                        style: TextStyle(color: VesparaColors.primary),),
                     subtitle: const Text(
                         'Prioritize people active in the last 24 hours',
                         style: TextStyle(
-                            color: VesparaColors.secondary, fontSize: 12)),
+                            color: VesparaColors.secondary, fontSize: 12,),),
                     secondary: const Icon(Icons.access_time_rounded,
-                        color: VesparaColors.glow),
+                        color: VesparaColors.glow,),
                     value: _showActiveRecently,
                     onChanged: (v) => setState(() => _showActiveRecently = v),
                     activeThumbColor: VesparaColors.glow,
@@ -858,7 +858,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               child: const Column(
                 children: [
                   Icon(Icons.rocket_launch,
-                      size: 48, color: VesparaColors.glow),
+                      size: 48, color: VesparaColors.glow,),
                   SizedBox(height: VesparaSpacing.md),
                   Text(
                     'Integrations Coming Soon',
@@ -1026,7 +1026,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 if (isPrivate) ...[
                   const SizedBox(width: VesparaSpacing.sm),
                   const Icon(Icons.lock_outline,
-                      size: 14, color: VesparaColors.secondary),
+                      size: 14, color: VesparaColors.secondary,),
                 ],
               ],
             ),
@@ -1101,7 +1101,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 ),
                 borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
                 border: Border.all(
-                    color: VesparaColors.glow.withValues(alpha: 0.5)),
+                    color: VesparaColors.glow.withValues(alpha: 0.5),),
               ),
               child: SwitchListTile(
                 title: const Text(
@@ -1117,7 +1117,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       TextStyle(color: VesparaColors.secondary, fontSize: 12),
                 ),
                 secondary: const Icon(Icons.psychology_rounded,
-                    color: VesparaColors.glow, size: 32),
+                    color: VesparaColors.glow, size: 32,),
                 value: _aiSuggestionsEnabled,
                 onChanged: (v) => setState(() => _aiSuggestionsEnabled = v),
                 activeThumbColor: VesparaColors.glow,
@@ -1137,12 +1137,12 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   children: [
                     SwitchListTile(
                       title: const Text('Match Insights',
-                          style: TextStyle(color: VesparaColors.primary)),
+                          style: TextStyle(color: VesparaColors.primary),),
                       subtitle: const Text('AI analysis of compatibility',
                           style: TextStyle(
-                              color: VesparaColors.secondary, fontSize: 12)),
+                              color: VesparaColors.secondary, fontSize: 12,),),
                       secondary: const Icon(Icons.insights_rounded,
-                          color: VesparaColors.glow),
+                          color: VesparaColors.glow,),
                       value: _aiMatchInsights,
                       onChanged: (v) => setState(() => _aiMatchInsights = v),
                       activeThumbColor: VesparaColors.glow,
@@ -1150,13 +1150,13 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     const Divider(height: 1, color: VesparaColors.border),
                     SwitchListTile(
                       title: const Text('Conversation Tips',
-                          style: TextStyle(color: VesparaColors.primary)),
+                          style: TextStyle(color: VesparaColors.primary),),
                       subtitle: const Text(
                           'Suggestions to keep conversations flowing',
                           style: TextStyle(
-                              color: VesparaColors.secondary, fontSize: 12)),
+                              color: VesparaColors.secondary, fontSize: 12,),),
                       secondary: const Icon(Icons.chat_bubble_outline_rounded,
-                          color: VesparaColors.glow),
+                          color: VesparaColors.glow,),
                       value: _aiConversationTips,
                       onChanged: (v) => setState(() => _aiConversationTips = v),
                       activeThumbColor: VesparaColors.glow,
@@ -1164,13 +1164,13 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     const Divider(height: 1, color: VesparaColors.border),
                     SwitchListTile(
                       title: const Text('Experience Recommendations',
-                          style: TextStyle(color: VesparaColors.primary)),
+                          style: TextStyle(color: VesparaColors.primary),),
                       subtitle: const Text(
                           'Personalized experience suggestions',
                           style: TextStyle(
-                              color: VesparaColors.secondary, fontSize: 12)),
+                              color: VesparaColors.secondary, fontSize: 12,),),
                       secondary: const Icon(Icons.local_fire_department_rounded,
-                          color: VesparaColors.glow),
+                          color: VesparaColors.glow,),
                       value: _aiExperienceRecommendations,
                       onChanged: (v) =>
                           setState(() => _aiExperienceRecommendations = v),
@@ -1195,7 +1195,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     const Row(
                       children: [
                         Icon(Icons.face_rounded,
-                            color: VesparaColors.glow, size: 20),
+                            color: VesparaColors.glow, size: 20,),
                         SizedBox(width: VesparaSpacing.sm),
                         Text(
                           'AI Personality',
@@ -1210,7 +1210,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     const Text(
                       'How should the AI communicate with you?',
                       style: TextStyle(
-                          color: VesparaColors.secondary, fontSize: 12),
+                          color: VesparaColors.secondary, fontSize: 12,),
                     ),
                     const SizedBox(height: VesparaSpacing.md),
                     Wrap(
@@ -1219,7 +1219,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       children: [
                         _buildPersonalityChip('playful', '😏 Playful'),
                         _buildPersonalityChip(
-                            'professional', '💼 Professional'),
+                            'professional', '💼 Professional',),
                         _buildPersonalityChip('supportive', '🤗 Supportive'),
                         _buildPersonalityChip('direct', '💪 Direct'),
                         _buildPersonalityChip('mysterious', '🌙 Mysterious'),
@@ -1265,12 +1265,12 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   OutlinedButton.icon(
                     onPressed: _resetAIData,
                     icon: const Icon(Icons.refresh_rounded,
-                        color: VesparaColors.error),
+                        color: VesparaColors.error,),
                     label: const Text('Reset AI Data',
-                        style: TextStyle(color: VesparaColors.error)),
+                        style: TextStyle(color: VesparaColors.error),),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                          color: VesparaColors.error.withValues(alpha: 0.5)),
+                          color: VesparaColors.error.withValues(alpha: 0.5),),
                     ),
                   ),
                 ],
@@ -1336,7 +1336,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 Text(
                   subtitle,
                   style: const TextStyle(
-                      color: VesparaColors.secondary, fontSize: 12),
+                      color: VesparaColors.secondary, fontSize: 12,),
                 ),
               ],
             ),
@@ -1434,7 +1434,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         title: const Text('Reset AI Data?',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: const Text(
           'This will clear all AI learning data. The AI will need to relearn your preferences.',
           style: TextStyle(color: VesparaColors.secondary),
@@ -1443,7 +1443,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () {

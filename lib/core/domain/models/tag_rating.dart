@@ -8,17 +8,29 @@ import 'package:equatable/equatable.dart';
 
 /// 🏎️ Velocity Meter - How fast might this get you going? (0-100 mph)
 enum VelocityRating {
-  /// 0 mph - Innocent fun — safe for brunch
-  innocent(0, 'Innocent Fun', 'Safe for brunch', '🏎️'),
+  /// 25 mph - Warm up the engines
+  warmUp(25, 'Warm Up', 'Getting started', '🏘️'),
 
-  /// 40 mph - Flirty tension and teasing
-  flirty(40, 'Flirty Tension', 'Teasing energy', '🏎️'),
+  /// 30 mph - Light cruising
+  cruising(30, 'Cruising', 'Light cruising', '🏘️'),
 
-  /// 70 mph - Expect sparks — possibly skin
-  sparks(70, 'Expect Sparks', 'Possibly skin', '🏎️'),
+  /// 50 mph - Picking up speed
+  speeding(50, 'Speeding', 'Picking up speed', '🏘️'),
 
-  /// 100 mph - Full throttle. Buckle up.
-  fullThrottle(100, 'Full Throttle', 'Buckle up', '🏎️');
+  /// 55 mph - Highway speed
+  highway(55, 'Highway', 'Steady pace', '🏘️'),
+
+  /// 60 mph - Fast lane
+  fastLane(60, 'Fast Lane', 'Moving quick', '🏘️'),
+
+  /// 75 mph - Racing
+  racing(75, 'Racing', 'High speed', '🏘️'),
+
+  /// 80 mph - Full speed
+  fullSpeed(80, 'Full Speed', 'Almost there', '🏘️'),
+
+  /// 99 mph - Redline
+  redline(99, 'Redline', 'Maximum intensity', '🏘️');
 
   final int mph;
   final String label;
@@ -65,7 +77,7 @@ enum DurationRating {
 
   /// 60+ min — Take your time; the night's young
   fullSession(
-      'Full Session', '60+ min', 'Take your time; the night\'s young', '🌟');
+      'Full Session', '60+ min', 'Take your time; the night\'s young', '🌟',);
 
   final String label;
   final String timeRange;
@@ -73,7 +85,7 @@ enum DurationRating {
   final String emoji;
 
   const DurationRating(
-      this.label, this.timeRange, this.description, this.emoji);
+      this.label, this.timeRange, this.description, this.emoji,);
 }
 
 /// Complete TAG Rating for a game
@@ -87,53 +99,60 @@ class TagRating extends Equatable {
   final HeatRating heat;
   final DurationRating duration;
 
-  /// Down to Clown game rating - 40 mph / PG-13 / Quickie
+  /// Down to Clown game rating - 30 mph / PG-13 / Quickie
   static const downToClown = TagRating(
-    velocity: VelocityRating.flirty,
+    velocity: VelocityRating.cruising,
     heat: HeatRating.pg13,
     duration: DurationRating.quickie,
   );
 
-  /// Ice Breakers game rating - 0 mph / PG / Quickie
+  /// Ice Breakers game rating - 25 mph / PG-13 / Quickie
   static const iceBreakers = TagRating(
-    velocity: VelocityRating.innocent,
-    heat: HeatRating.pg,
+    velocity: VelocityRating.warmUp,
+    heat: HeatRating.pg13,
     duration: DurationRating.quickie,
   );
 
-  /// Share or Dare game rating - 70 mph / R / Foreplay
+  /// Share or Dare game rating - 50 mph / PG-13 to X / Foreplay
   static const shareOrDare = TagRating(
-    velocity: VelocityRating.sparks,
-    heat: HeatRating.r,
+    velocity: VelocityRating.speeding,
+    heat: HeatRating.r, // PG-13 to X range
     duration: DurationRating.foreplay,
   );
 
-  /// Path of Pleasure game rating - 40 mph / PG-13 / Foreplay
+  /// Path of Pleasure game rating - 55 mph / PG-13 / Foreplay
   static const pathOfPleasure = TagRating(
-    velocity: VelocityRating.flirty,
+    velocity: VelocityRating.highway,
     heat: HeatRating.pg13,
     duration: DurationRating.foreplay,
   );
 
-  /// Lane of Lust game rating - 70 mph / R / Foreplay
+  /// Lane of Lust game rating - 60 mph / R / Foreplay
   static const laneOfLust = TagRating(
-    velocity: VelocityRating.sparks,
+    velocity: VelocityRating.fastLane,
     heat: HeatRating.r,
     duration: DurationRating.foreplay,
   );
 
-  /// Drama-Sutra game rating - 100 mph / XXX / Full Session
+  /// Drama-Sutra game rating - 80 mph / X / Quickie
   static const dramaSutra = TagRating(
-    velocity: VelocityRating.fullThrottle,
-    heat: HeatRating.xxx,
-    duration: DurationRating.fullSession,
-  );
-
-  /// Flash & Freeze game rating - 70 mph / X / Quickie
-  static const flashFreeze = TagRating(
-    velocity: VelocityRating.sparks,
+    velocity: VelocityRating.fullSpeed,
     heat: HeatRating.x,
     duration: DurationRating.quickie,
+  );
+
+  /// Flash & Freeze game rating - 75 mph / X / Quickie
+  static const flashFreeze = TagRating(
+    velocity: VelocityRating.racing,
+    heat: HeatRating.x,
+    duration: DurationRating.quickie,
+  );
+
+  /// Dice Breakers game rating - 99 mph / XXX / Foreplay
+  static const diceBreakers = TagRating(
+    velocity: VelocityRating.redline,
+    heat: HeatRating.xxx,
+    duration: DurationRating.foreplay,
   );
 
   @override

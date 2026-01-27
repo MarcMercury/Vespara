@@ -134,7 +134,7 @@ class _TagGameEntryState extends State<TagGameEntry>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(VesparaIcons.games,
-                      size: 14, color: widget.primaryColor),
+                      size: 14, color: widget.primaryColor,),
                   const SizedBox(width: 6),
                   const Text(
                     'TAG',

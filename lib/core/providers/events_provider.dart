@@ -141,7 +141,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
       final hostedEvents = (hostedResponse as List<dynamic>)
           .map((json) =>
-              _vesparaEventFromJson(json as Map<String, dynamic>, isHost: true))
+              _vesparaEventFromJson(json as Map<String, dynamic>, isHost: true),)
           .toList();
 
       final invitedEvents = (invitedResponse as List<dynamic>)
@@ -194,7 +194,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
     );
 
     debugPrint(
-        'Event added to state. Total hosted: ${state.hostedEvents.length}');
+        'Event added to state. Total hosted: ${state.hostedEvents.length}',);
 
     if (_currentUserId.isEmpty) {
       debugPrint('No user - event saved locally only');
@@ -641,8 +641,9 @@ class EventsNotifier extends StateNotifier<EventsState> {
     try {
       final updateData = <String, dynamic>{};
       if (title != null) updateData['title'] = title;
-      if (startTime != null)
+      if (startTime != null) {
         updateData['start_time'] = startTime.toIso8601String();
+      }
       if (endTime != null) updateData['end_time'] = endTime.toIso8601String();
       if (matchId != null) updateData['match_id'] = matchId;
       if (matchName != null) updateData['match_name'] = matchName;
@@ -726,19 +727,19 @@ final eventsProvider =
 
 /// Calendar events for a specific date
 final eventsForDateProvider = Provider.family<List<CalendarEvent>, DateTime>(
-    (ref, date) => ref.watch(eventsProvider).eventsForDate(date));
+    (ref, date) => ref.watch(eventsProvider).eventsForDate(date),);
 
 /// This week's events
 final thisWeekEventsProvider = Provider<List<CalendarEvent>>(
-    (ref) => ref.watch(eventsProvider).thisWeekEvents);
+    (ref) => ref.watch(eventsProvider).thisWeekEvents,);
 
 /// Events with conflicts
 final conflictEventsProvider = Provider<List<CalendarEvent>>(
-    (ref) => ref.watch(eventsProvider).conflictEvents);
+    (ref) => ref.watch(eventsProvider).conflictEvents,);
 
 /// All calendar events
 final calendarEventsProvider = Provider<List<CalendarEvent>>(
-    (ref) => ref.watch(eventsProvider).calendarEvents);
+    (ref) => ref.watch(eventsProvider).calendarEvents,);
 
 /// All VesparaEvents (hosted + invited)
 final allVesparaEventsProvider =
@@ -746,15 +747,15 @@ final allVesparaEventsProvider =
 
 /// Hosted events only
 final hostedEventsProvider = Provider<List<VesparaEvent>>(
-    (ref) => ref.watch(eventsProvider).hostedEvents);
+    (ref) => ref.watch(eventsProvider).hostedEvents,);
 
 /// Invited events only
 final invitedEventsProvider = Provider<List<VesparaEvent>>(
-    (ref) => ref.watch(eventsProvider).invitedEvents);
+    (ref) => ref.watch(eventsProvider).invitedEvents,);
 
 /// Upcoming VesparaEvents
 final upcomingVesparaEventsProvider = Provider<List<VesparaEvent>>(
-    (ref) => ref.watch(eventsProvider).upcomingEvents);
+    (ref) => ref.watch(eventsProvider).upcomingEvents,);
 
 /// Past VesparaEvents
 final pastVesparaEventsProvider =

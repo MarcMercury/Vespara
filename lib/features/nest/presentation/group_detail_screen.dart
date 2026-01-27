@@ -113,7 +113,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
               IconButton(
                 onPressed: () => _showEditGroup(group),
                 icon: const Icon(Icons.edit_outlined,
-                    color: VesparaColors.secondary),
+                    color: VesparaColors.secondary,),
               )
             else
               const SizedBox(width: 48),
@@ -153,7 +153,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                       child: Image.network(group.avatarUrl!, fit: BoxFit.cover),
                     )
                   : const Icon(Icons.group,
-                      size: 40, color: VesparaColors.glow),
+                      size: 40, color: VesparaColors.glow,),
             ),
             const SizedBox(height: 16),
             // Name
@@ -437,7 +437,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 TextButton.icon(
                   onPressed: () => _showInviteDialog(group),
                   icon: const Icon(Icons.add,
-                      size: 18, color: VesparaColors.glow),
+                      size: 18, color: VesparaColors.glow,),
                   label: const Text(
                     'Invite',
                     style: TextStyle(
@@ -460,7 +460,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             child: const Row(
               children: [
                 Icon(Icons.info_outline,
-                    color: VesparaColors.secondary, size: 18),
+                    color: VesparaColors.secondary, size: 18,),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -636,7 +636,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () {
@@ -766,7 +766,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () async {

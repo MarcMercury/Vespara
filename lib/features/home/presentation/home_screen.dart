@@ -135,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return CurvedAnimation(
         parent: _staggerController,
         curve: Interval(startTime, endTime.clamp(0.0, 1.0),
-            curve: Curves.easeOutBack),
+            curve: Curves.easeOutBack,),
       );
     });
 
@@ -292,25 +292,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildQuickStat(
-                '${analytics.totalMatches}', 'Matches', Icons.favorite),
+                '${analytics.totalMatches}', 'Matches', Icons.favorite,),
             Container(
                 width: 1,
                 height: 30,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildQuickStat('${analytics.activeConversations}', 'Active',
-                Icons.chat_bubble),
+                Icons.chat_bubble,),
             Container(
                 width: 1,
                 height: 30,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildQuickStat(
-                '${analytics.datesScheduled}', 'Dates', Icons.calendar_today),
+                '${analytics.datesScheduled}', 'Dates', Icons.calendar_today,),
             Container(
                 width: 1,
                 height: 30,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildQuickStat(
-                '${analytics.matchRate.toInt()}%', 'Rate', Icons.trending_up),
+                '${analytics.matchRate.toInt()}%', 'Rate', Icons.trending_up,),
           ],
         ),
       );
@@ -370,7 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
 
   Widget _buildModuleRow(
-          List<int> indices, double width, double height, double spacing) =>
+          List<int> indices, double width, double height, double spacing,) =>
       Row(
         children: [
           Expanded(child: _buildModuleTile(indices[0], height)),

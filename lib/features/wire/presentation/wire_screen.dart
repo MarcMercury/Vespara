@@ -155,7 +155,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                   child: Center(
                     child: isGroup
                         ? const Icon(Icons.group,
-                            size: 26, color: VesparaColors.glow)
+                            size: 26, color: VesparaColors.glow,)
                         : Text(
                             conversation.displayName[0].toUpperCase(),
                             style: const TextStyle(
@@ -207,7 +207,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                             if (isGroup) ...[
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
+                                    horizontal: 4, vertical: 2,),
                                 decoration: BoxDecoration(
                                   color: VesparaColors.glow.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(4),
@@ -287,7 +287,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                          horizontal: 8, vertical: 4,),
                       decoration: BoxDecoration(
                         color: VesparaColors.warning.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -296,7 +296,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.lightbulb,
-                              size: 12, color: VesparaColors.warning),
+                              size: 12, color: VesparaColors.warning,),
                           SizedBox(width: 4),
                           Text(
                             'Resuscitate this conversation?',
@@ -362,7 +362,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
       context: context,
       backgroundColor: VesparaColors.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -375,13 +375,13 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                     height: 4,
                     decoration: BoxDecoration(
                         color: VesparaColors.secondary,
-                        borderRadius: BorderRadius.circular(2)))),
+                        borderRadius: BorderRadius.circular(2),),),),
             const SizedBox(height: 20),
             const Text('New Message',
                 style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
+                    color: VesparaColors.primary,),),
             const SizedBox(height: 16),
             TextField(
               style: const TextStyle(color: VesparaColors.primary),
@@ -393,7 +393,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                 fillColor: VesparaColors.background,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none),
+                    borderSide: BorderSide.none,),
               ),
             ),
             const SizedBox(height: 16),
@@ -402,7 +402,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: VesparaColors.secondary,
-                    letterSpacing: 1)),
+                    letterSpacing: 1,),),
             const SizedBox(height: 12),
             ...(_conversations.take(3).map(
                   (c) => ListTile(
@@ -410,9 +410,9 @@ class _WireScreenState extends ConsumerState<WireScreen> {
                         backgroundColor: VesparaColors.glow.withOpacity(0.2),
                         child: Text(c.otherUserName?[0] ?? '?',
                             style:
-                                const TextStyle(color: VesparaColors.primary))),
+                                const TextStyle(color: VesparaColors.primary),),),
                     title: Text(c.otherUserName ?? 'Unknown',
-                        style: const TextStyle(color: VesparaColors.primary)),
+                        style: const TextStyle(color: VesparaColors.primary),),
                     onTap: () {
                       Navigator.pop(context);
                       setState(() => _selectedConversationId = c.id);
@@ -583,7 +583,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
   }
 
   Future<void> _ensureConversationExists(
-      String conversationId, String userId) async {
+      String conversationId, String userId,) async {
     try {
       // Check if conversation exists
       final existing = await _supabase
@@ -657,7 +657,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            'Starting video call with ${widget.conversation.otherUserName}...'),
+                            'Starting video call with ${widget.conversation.otherUserName}...',),
                         backgroundColor: VesparaColors.glow,
                       ),
                     );
@@ -668,7 +668,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            'Starting voice call with ${widget.conversation.otherUserName}...'),
+                            'Starting voice call with ${widget.conversation.otherUserName}...',),
                         backgroundColor: VesparaColors.success,
                       ),
                     );
@@ -679,7 +679,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Cancel',
-                    style: TextStyle(color: VesparaColors.secondary)),
+                    style: TextStyle(color: VesparaColors.secondary),),
               ),
             ],
           ),
@@ -689,7 +689,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
   }
 
   Widget _buildCallOption(
-          IconData icon, String label, Color color, VoidCallback onTap) =>
+          IconData icon, String label, Color color, VoidCallback onTap,) =>
       GestureDetector(
         onTap: onTap,
         child: Column(
@@ -735,7 +735,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text(
-                          'Opening ${widget.conversation.otherUserName}\'s profile...')),
+                          'Opening ${widget.conversation.otherUserName}\'s profile...',),),
                 );
               }),
               _buildOptionTile(Icons.notifications_off, 'Mute Notifications',
@@ -743,7 +743,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text('Notifications muted for 8 hours')),
+                      content: Text('Notifications muted for 8 hours'),),
                 );
               }),
               _buildOptionTile(Icons.search, 'Search in Chat', () {
@@ -783,7 +783,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
   }
 
   Widget _buildOptionTile(IconData icon, String title, VoidCallback onTap,
-      {bool isDestructive = false}) {
+      {bool isDestructive = false,}) {
     final color = isDestructive ? VesparaColors.error : VesparaColors.primary;
     return ListTile(
       leading: Icon(icon, color: color),
@@ -799,7 +799,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Search in Chat',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: TextField(
           autofocus: true,
           decoration: InputDecoration(
@@ -818,7 +818,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -828,7 +828,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
               );
             },
             child: const Text('Search',
-                style: TextStyle(color: VesparaColors.glow)),
+                style: TextStyle(color: VesparaColors.glow),),
           ),
         ],
       ),
@@ -842,7 +842,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Block ${widget.conversation.otherUserName}?',
-            style: const TextStyle(color: VesparaColors.primary)),
+            style: const TextStyle(color: VesparaColors.primary),),
         content: const Text(
           'They won\'t be able to message you or see your profile.',
           style: TextStyle(color: VesparaColors.secondary),
@@ -851,7 +851,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -860,13 +860,13 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      '${widget.conversation.otherUserName} has been blocked'),
+                      '${widget.conversation.otherUserName} has been blocked',),
                   backgroundColor: VesparaColors.error,
                 ),
               );
             },
             child: const Text('Block',
-                style: TextStyle(color: VesparaColors.error)),
+                style: TextStyle(color: VesparaColors.error),),
           ),
         ],
       ),
@@ -880,7 +880,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete this chat?',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: const Text(
           'This will permanently delete all messages in this conversation.',
           style: TextStyle(color: VesparaColors.secondary),
@@ -889,7 +889,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -903,7 +903,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
               );
             },
             child: const Text('Delete',
-                style: TextStyle(color: VesparaColors.error)),
+                style: TextStyle(color: VesparaColors.error),),
           ),
         ],
       ),
@@ -1012,7 +1012,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                     if (isGroup) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 2),
+                            horizontal: 4, vertical: 2,),
                         decoration: BoxDecoration(
                           color: VesparaColors.glow.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
@@ -1061,7 +1061,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
             IconButton(
               onPressed: _showVideoCallDialog,
               icon: const Icon(Icons.videocam_outlined,
-                  color: VesparaColors.secondary),
+                  color: VesparaColors.secondary,),
             ),
           IconButton(
             onPressed: _showChatOptionsMenu,

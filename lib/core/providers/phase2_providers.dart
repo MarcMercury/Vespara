@@ -76,7 +76,7 @@ final gameSuggestionProvider =
 
 /// Conversation health monitor singleton
 final conversationHealthMonitorProvider = Provider<ConversationHealthMonitor>(
-    (ref) => ConversationHealthMonitor.instance);
+    (ref) => ConversationHealthMonitor.instance,);
 
 /// Health of a specific conversation
 final conversationHealthProvider =
@@ -105,7 +105,7 @@ final conversationSuggestionsProvider =
 
 /// Game personalization service singleton
 final gamePersonalizationServiceProvider = Provider<GamePersonalizationService>(
-    (ref) => GamePersonalizationService.instance);
+    (ref) => GamePersonalizationService.instance,);
 
 /// Get next personalized prompt
 final personalizedPromptProvider = FutureProvider.family<

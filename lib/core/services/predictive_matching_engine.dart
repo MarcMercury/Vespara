@@ -571,11 +571,11 @@ class PredictiveMatchingEngine {
   }
 
   Future<void> _updateLearnedWeights(
-      String matchId, MatchOutcome outcome) async {
+      String matchId, MatchOutcome outcome,) async {
     // This would be a background job in production
     // For now, just log the intent
     debugPrint(
-        'Would update weights for match $matchId with outcome ${outcome.name}');
+        'Would update weights for match $matchId with outcome ${outcome.name}',);
   }
 }
 

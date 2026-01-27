@@ -359,7 +359,7 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
       final otherProfile = await _supabase
           .from('profiles')
           .select(
-              'id, display_name, bio, interests, occupation, looking_for, photos')
+              'id, display_name, bio, interests, occupation, looking_for, photos',)
           .eq('id', otherUserId)
           .maybeSingle();
 

@@ -250,21 +250,25 @@ Just the prompt text, nothing else.''',
     // Playful indicators
     if (allText.contains('lol') || allText.contains('haha')) playfulScore += 2;
     if (allText.contains('😂') || allText.contains('🤣')) playfulScore += 2;
-    if (allText.contains('joke') || allText.contains('funny'))
+    if (allText.contains('joke') || allText.contains('funny')) {
       playfulScore += 1;
+    }
 
     // Deep indicators
-    if (allText.contains('feel') || allText.contains('think about'))
+    if (allText.contains('feel') || allText.contains('think about')) {
       deepScore += 2;
-    if (allText.contains('believe') || allText.contains('value'))
+    }
+    if (allText.contains('believe') || allText.contains('value')) {
       deepScore += 2;
+    }
     if (allText.contains('life') || allText.contains('meaning')) deepScore += 1;
 
     // Flirty indicators
     if (allText.contains('😏') || allText.contains('😘')) flirtyScore += 2;
     if (allText.contains('cute') || allText.contains('hot')) flirtyScore += 2;
-    if (allText.contains('miss you') || allText.contains('can\'t wait'))
+    if (allText.contains('miss you') || allText.contains('can\'t wait')) {
       flirtyScore += 1;
+    }
 
     if (playfulScore > deepScore && playfulScore > flirtyScore) {
       return RelationshipDynamic.playful;
@@ -425,87 +429,87 @@ Keep each under 100 characters.''';
           DynamicPrompt(
               text: "What's something you've never told anyone?",
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'Dare: Send a voice message saying what you like about me',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'What was your first impression of me?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'Dare: Share a childhood photo',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: "What's your biggest dating pet peeve?",
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
         ];
       case GameType.wouldYouRather:
         return [
           DynamicPrompt(
               text: 'Would you rather have a fancy dinner or a cozy night in?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'Would you rather travel the world or build a dream home?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'Would you rather know my thoughts or feel my emotions?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
         ];
       case GameType.neverHaveIEver:
         return [
           DynamicPrompt(
               text: 'Never have I ever had a secret crush on a friend',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'Never have I ever been on a blind date',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: "Never have I ever said 'I love you' first",
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
         ];
       case GameType.iceBreakers:
         return [
           DynamicPrompt(
               text: "What's something that always makes you smile?",
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text:
                   'If you could master any skill instantly, what would it be?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
         ];
       case GameType.deepQuestions:
         return [
           DynamicPrompt(
               text: "What's a belief you held that completely changed?",
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'What does your ideal life look like in 10 years?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
         ];
       case GameType.flirtyQuestions:
         return [
           DynamicPrompt(
               text: "What's something about me that you find attractive?",
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
           DynamicPrompt(
               text: 'What would your ideal date with me look like?',
               gameType: gameType,
-              heatLevel: heatLevel),
+              heatLevel: heatLevel,),
         ];
     }
   }

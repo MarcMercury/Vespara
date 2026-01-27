@@ -103,7 +103,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
 
   /// Super-like a profile (always creates a match for demo)
   void superLikeProfile(
-      String profileId, String profileName, String? avatarUrl) {
+      String profileId, String profileName, String? avatarUrl,) {
     final newSuperLiked = {...state.superLikedProfiles, profileId};
 
     // Super-likes always result in a match for demo purposes
@@ -210,7 +210,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
 /// Global match state provider
 final matchStateProvider =
     StateNotifierProvider<MatchStateNotifier, MatchState>(
-        (ref) => MatchStateNotifier());
+        (ref) => MatchStateNotifier(),);
 
 /// Provider for matches by priority
 final matchesByPriorityProvider =
@@ -230,5 +230,5 @@ final allConversationsProvider = Provider<List<ChatConversation>>((ref) {
   final state = ref.watch(matchStateProvider);
   return state.conversations.values.toList()
     ..sort((a, b) => (b.lastMessageAt ?? DateTime(1970))
-        .compareTo(a.lastMessageAt ?? DateTime(1970)));
+        .compareTo(a.lastMessageAt ?? DateTime(1970)),);
 });

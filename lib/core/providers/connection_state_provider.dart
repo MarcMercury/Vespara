@@ -205,7 +205,7 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
 
   /// Connect via event (swipe on event attendee)
   void connectViaEvent(String userId, String? userName, String? avatar,
-      String eventId, String? eventName) {
+      String eventId, String? eventName,) {
     if (state.connectedUserIds.contains(userId)) return;
 
     final newConnection = UserConnection(
@@ -297,7 +297,7 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
 /// Providers
 final connectionStateProvider =
     StateNotifierProvider<ConnectionStateNotifier, VesparaConnectionState>(
-        (ref) => ConnectionStateNotifier());
+        (ref) => ConnectionStateNotifier(),);
 
 final publicEventsProvider = Provider<List<VesparaEvent>>((ref) {
   final state = ref.watch(connectionStateProvider);

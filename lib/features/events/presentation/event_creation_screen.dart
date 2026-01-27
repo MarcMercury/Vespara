@@ -209,7 +209,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.chevron_right,
-                      size: 18, color: VesparaColors.primary),
+                      size: 18, color: VesparaColors.primary,),
                 ],
               ),
             ),
@@ -254,7 +254,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                     onTap: () => setState(() => _titleStyle = style),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                          horizontal: 16, vertical: 10,),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? VesparaColors.primary
@@ -362,7 +362,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
             Row(
               children: [
                 const Icon(Icons.person_outline,
-                    color: VesparaColors.glow, size: 20),
+                    color: VesparaColors.glow, size: 20,),
                 const SizedBox(width: 8),
                 const Text(
                   'Hosted by',
@@ -401,7 +401,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                           ? Text(displayName[0].toUpperCase(),
                               style: const TextStyle(
                                   color: VesparaColors.glow,
-                                  fontWeight: FontWeight.w600))
+                                  fontWeight: FontWeight.w600,),)
                           : null,
                     );
                   },
@@ -430,7 +430,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                       const Row(
                         children: [
                           Icon(Icons.verified,
-                              size: 14, color: VesparaColors.success),
+                              size: 14, color: VesparaColors.success,),
                           SizedBox(width: 4),
                           Text(
                             'Verified Host',
@@ -449,13 +449,13 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                 OutlinedButton.icon(
                   onPressed: _addCoHost,
                   icon: const Icon(Icons.add,
-                      size: 18, color: VesparaColors.glow),
+                      size: 18, color: VesparaColors.glow,),
                   label: const Text('Add cohosts',
-                      style: TextStyle(color: VesparaColors.glow)),
+                      style: TextStyle(color: VesparaColors.glow),),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: VesparaColors.glow),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
+                        borderRadius: BorderRadius.circular(20),),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
@@ -644,7 +644,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                   onTap: _showMoreLinks,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                        horizontal: 16, vertical: 10,),
                     decoration: BoxDecoration(
                       color: VesparaColors.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -680,7 +680,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                       child: Row(
                         children: [
                           Text(link.type.icon,
-                              style: const TextStyle(fontSize: 20)),
+                              style: const TextStyle(fontSize: 20),),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -707,7 +707,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close,
-                                size: 18, color: VesparaColors.secondary),
+                                size: 18, color: VesparaColors.secondary,),
                             onPressed: () =>
                                 setState(() => _links.remove(link)),
                           ),
@@ -818,7 +818,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                         ),
                       ),
                       const Icon(Icons.arrow_drop_down,
-                          color: VesparaColors.glow),
+                          color: VesparaColors.glow,),
                     ],
                   ),
                 ),
@@ -983,7 +983,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       );
 
   Widget _buildHostActionChip(
-          IconData icon, String label, bool isActive, VoidCallback onTap) =>
+          IconData icon, String label, bool isActive, VoidCallback onTap,) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
@@ -1128,14 +1128,14 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                             ],
                           ),
                           borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(20)),
+                              top: Radius.circular(20),),
                         ),
                         child: Stack(
                           children: [
                             if (_coverImageUrl != null)
                               ClipRRect(
                                 borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(20)),
+                                    top: Radius.circular(20),),
                                 child: Image.network(
                                   _coverImageUrl!,
                                   width: double.infinity,
@@ -1152,7 +1152,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                               bottom: 12,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
+                                    horizontal: 12, vertical: 6,),
                                 decoration: BoxDecoration(
                                   color:
                                       VesparaColors.background.withOpacity(0.8),
@@ -1162,7 +1162,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.edit,
-                                        size: 16, color: VesparaColors.primary),
+                                        size: 16, color: VesparaColors.primary,),
                                     SizedBox(width: 4),
                                     Text(
                                       'Edit',
@@ -1327,7 +1327,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final hour = _eventDate!.hour > 12
@@ -1397,7 +1397,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text('Confirm Location',
-                    style: TextStyle(color: VesparaColors.background)),
+                    style: TextStyle(color: VesparaColors.background),),
               ),
             ),
             const SizedBox(height: 24),
@@ -1422,7 +1422,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Add $type',
-            style: const TextStyle(color: VesparaColors.primary)),
+            style: const TextStyle(color: VesparaColors.primary),),
         content: TextField(
           controller: urlController,
           autofocus: true,
@@ -1437,7 +1437,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1485,7 +1485,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       '🥀',
       '💔',
       '🫠',
-      '❌'
+      '❌',
     ];
 
     showModalBottomSheet(
@@ -1565,9 +1565,9 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
             ListTile(
               leading: const Icon(Icons.visibility, color: VesparaColors.glow),
               title: const Text('Visibility Settings',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: Text(_visibility.label,
-                  style: const TextStyle(color: VesparaColors.secondary)),
+                  style: const TextStyle(color: VesparaColors.secondary),),
               onTap: () {
                 Navigator.pop(context);
                 _showVisibilitySettings();
@@ -1576,26 +1576,26 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
             ListTile(
               leading: const Icon(Icons.timer, color: VesparaColors.glow),
               title: const Text('RSVP Deadline',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: const Text('No deadline set',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.message, color: VesparaColors.glow),
               title: const Text('Guest Messages',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: const Text('Allow guests to message each other',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading:
                   const Icon(Icons.warning_amber, color: VesparaColors.warning),
               title: const Text('Content Rating',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: const Text('PG (default)',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
               onTap: () => Navigator.pop(context),
             ),
           ],
@@ -1637,10 +1637,10 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                   },
                   activeColor: VesparaColors.glow,
                   title: Text(v.label,
-                      style: const TextStyle(color: VesparaColors.primary)),
+                      style: const TextStyle(color: VesparaColors.primary),),
                   subtitle: Text(v.description,
                       style: const TextStyle(
-                          color: VesparaColors.secondary, fontSize: 12)),
+                          color: VesparaColors.secondary, fontSize: 12,),),
                 ),
               ),
             ],

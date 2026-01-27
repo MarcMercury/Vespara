@@ -171,7 +171,7 @@ class StrategistRepository {
   /// Get nearby users in Tonight Mode
   /// PHASE 6: Uses geohash sharding instead of global query
   Future<List<Map<String, dynamic>>> getNearbyUsers(
-      {double radiusKm = 10}) async {
+      {double radiusKm = 10,}) async {
     if (_userId == null) return [];
 
     try {
@@ -371,7 +371,7 @@ class StrategistRepository {
 
 /// Provider for StrategistRepository
 final strategistRepositoryProvider = Provider<StrategistRepository>(
-    (ref) => StrategistRepository(Supabase.instance.client));
+    (ref) => StrategistRepository(Supabase.instance.client),);
 
 /// Tonight Mode state provider with persistence
 final tonightModeStateProvider =
@@ -415,7 +415,7 @@ class TonightModeNotifier extends StateNotifier<bool> {
 
 /// Ghost rate provider
 final ghostRateProvider = FutureProvider<double>(
-    (ref) async => ref.watch(strategistRepositoryProvider).getGhostRate());
+    (ref) async => ref.watch(strategistRepositoryProvider).getGhostRate(),);
 
 /// Nearby users provider (only active when Tonight Mode is ON)
 final nearbyUsersProvider =

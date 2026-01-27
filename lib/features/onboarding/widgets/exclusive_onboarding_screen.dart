@@ -151,73 +151,73 @@ class _ExclusiveOnboardingScreenState
       'id': 'dating',
       'label': 'Dating',
       'emoji': '💫',
-      'desc': 'Casually dating, not exclusive'
+      'desc': 'Casually dating, not exclusive',
     },
     {
       'id': 'partnered',
       'label': 'Partnered',
       'emoji': '💕',
-      'desc': 'In a relationship'
+      'desc': 'In a relationship',
     },
     {
       'id': 'partnered_open',
       'label': 'Open Relationship',
       'emoji': '💜',
-      'desc': 'Partnered, ethically non-monogamous'
+      'desc': 'Partnered, ethically non-monogamous',
     },
     {
       'id': 'married',
       'label': 'Married',
       'emoji': '💍',
-      'desc': 'Married, monogamous'
+      'desc': 'Married, monogamous',
     },
     {
       'id': 'married_open',
       'label': 'Married (Open)',
       'emoji': '🔓',
-      'desc': 'Married, open/ENM'
+      'desc': 'Married, open/ENM',
     },
     {
       'id': 'divorced',
       'label': 'Divorced',
       'emoji': '🌅',
-      'desc': 'Divorced or separated'
+      'desc': 'Divorced or separated',
     },
     {
       'id': 'poly_solo',
       'label': 'Solo Poly',
       'emoji': '🦄',
-      'desc': 'Polyamorous, no primary'
+      'desc': 'Polyamorous, no primary',
     },
     {
       'id': 'poly_nested',
       'label': 'Nested Poly',
       'emoji': '🏡',
-      'desc': 'Poly with live-in partner(s)'
+      'desc': 'Poly with live-in partner(s)',
     },
     {
       'id': 'poly_network',
       'label': 'Polycule',
       'emoji': '🕸️',
-      'desc': 'Part of a poly network'
+      'desc': 'Part of a poly network',
     },
     {
       'id': 'situationship',
       'label': 'Situationship',
       'emoji': '🌊',
-      'desc': 'It\'s complicated'
+      'desc': 'It\'s complicated',
     },
     {
       'id': 'exploring',
       'label': 'Exploring',
       'emoji': '🧭',
-      'desc': 'Figuring things out'
+      'desc': 'Figuring things out',
     },
     {
       'id': 'relationship_anarchist',
       'label': 'Relationship Anarchist',
       'emoji': '⚡',
-      'desc': 'No labels, no rules'
+      'desc': 'No labels, no rules',
     },
   ];
 
@@ -226,67 +226,67 @@ class _ExclusiveOnboardingScreenState
       'id': 'friends',
       'label': 'Friends',
       'emoji': '🤝',
-      'desc': 'New friends & community'
+      'desc': 'New friends & community',
     },
     {
       'id': 'dates',
       'label': 'Casual Dates',
       'emoji': '🥂',
-      'desc': 'Coffee, drinks, good times'
+      'desc': 'Coffee, drinks, good times',
     },
     {
       'id': 'fwb',
       'label': 'FWB',
       'emoji': '🔥',
-      'desc': 'Friends with benefits'
+      'desc': 'Friends with benefits',
     },
     {
       'id': 'ongoing',
       'label': 'Ongoing Connection',
       'emoji': '♾️',
-      'desc': 'Regular thing, not one-off'
+      'desc': 'Regular thing, not one-off',
     },
     {
       'id': 'relationship',
       'label': 'Relationship',
       'emoji': '❤️‍🔥',
-      'desc': 'Something serious'
+      'desc': 'Something serious',
     },
     {
       'id': 'play_partners',
       'label': 'Play Partners',
       'emoji': '🎭',
-      'desc': 'For scenes & play'
+      'desc': 'For scenes & play',
     },
     {
       'id': 'third',
       'label': 'Third',
       'emoji': '🦄',
-      'desc': 'Looking to join a couple'
+      'desc': 'Looking to join a couple',
     },
     {
       'id': 'couple',
       'label': 'Couples',
       'emoji': '💑',
-      'desc': 'Looking for couples'
+      'desc': 'Looking for couples',
     },
     {
       'id': 'group',
       'label': 'Group Experiences',
       'emoji': '🫦',
-      'desc': 'Moresomes, parties'
+      'desc': 'Moresomes, parties',
     },
     {
       'id': 'events',
       'label': 'Events & Parties',
       'emoji': '🪩',
-      'desc': 'Social gatherings'
+      'desc': 'Social gatherings',
     },
     {
       'id': 'exploring',
       'label': 'Just Exploring',
       'emoji': '🔮',
-      'desc': 'See what happens'
+      'desc': 'See what happens',
     },
   ];
 
@@ -296,43 +296,43 @@ class _ExclusiveOnboardingScreenState
       'id': 'solo_only',
       'label': 'Solo Only',
       'emoji': '👤',
-      'desc': 'Partner not involved'
+      'desc': 'Partner not involved',
     },
     {
       'id': 'sometimes',
       'label': 'Sometimes Together',
       'emoji': '🤝',
-      'desc': 'Flexible'
+      'desc': 'Flexible',
     },
     {
       'id': 'always_together',
       'label': 'Always Together',
       'emoji': '👫',
-      'desc': 'Package deal'
+      'desc': 'Package deal',
     },
     {
       'id': 'parallel',
       'label': 'Parallel Play',
       'emoji': '🔀',
-      'desc': 'Same room, separate'
+      'desc': 'Same room, separate',
     },
     {
       'id': 'soft_swap',
       'label': 'Soft Swap',
       'emoji': '💋',
-      'desc': 'Everything but intercourse'
+      'desc': 'Everything but intercourse',
     },
     {
       'id': 'full_swap',
       'label': 'Full Swap',
       'emoji': '🔄',
-      'desc': 'The whole experience'
+      'desc': 'The whole experience',
     },
     {
       'id': 'watch',
       'label': 'Partner Watches',
       'emoji': '👀',
-      'desc': 'Voyeur/cuckold dynamic'
+      'desc': 'Voyeur/cuckold dynamic',
     },
   ];
 
@@ -341,49 +341,49 @@ class _ExclusiveOnboardingScreenState
       'id': 'weekday_days',
       'label': 'Weekday Days',
       'emoji': '☀️',
-      'desc': 'Mon-Fri daytime'
+      'desc': 'Mon-Fri daytime',
     },
     {
       'id': 'weekday_evenings',
       'label': 'Weekday Evenings',
       'emoji': '🌆',
-      'desc': 'Mon-Fri after work'
+      'desc': 'Mon-Fri after work',
     },
     {
       'id': 'weekday_nights',
       'label': 'Weekday Late Nights',
       'emoji': '🌙',
-      'desc': 'Mon-Fri after 10pm'
+      'desc': 'Mon-Fri after 10pm',
     },
     {
       'id': 'weekend_days',
       'label': 'Weekend Days',
       'emoji': '🌤️',
-      'desc': 'Sat-Sun daytime'
+      'desc': 'Sat-Sun daytime',
     },
     {
       'id': 'weekend_evenings',
       'label': 'Weekend Evenings',
       'emoji': '🌇',
-      'desc': 'Sat-Sun evening'
+      'desc': 'Sat-Sun evening',
     },
     {
       'id': 'weekend_nights',
       'label': 'Weekend Late Nights',
       'emoji': '🌃',
-      'desc': 'Sat-Sun after 10pm'
+      'desc': 'Sat-Sun after 10pm',
     },
     {
       'id': 'spontaneous',
       'label': 'Spontaneous',
       'emoji': '⚡',
-      'desc': 'Flexible schedule'
+      'desc': 'Flexible schedule',
     },
     {
       'id': 'planned_only',
       'label': 'Planned Only',
       'emoji': '📅',
-      'desc': 'Need advance notice'
+      'desc': 'Need advance notice',
     },
   ];
 
@@ -393,7 +393,7 @@ class _ExclusiveOnboardingScreenState
     {
       'id': 'week_ahead',
       'label': 'Week Ahead',
-      'desc': 'Need to plan in advance'
+      'desc': 'Need to plan in advance',
     },
     {'id': 'flexible', 'label': 'Flexible', 'desc': 'Depends on the situation'},
   ];
@@ -403,37 +403,37 @@ class _ExclusiveOnboardingScreenState
       'id': 'can_host',
       'label': 'Can Host',
       'emoji': '🏠',
-      'desc': 'My place works'
+      'desc': 'My place works',
     },
     {
       'id': 'sometimes_host',
       'label': 'Sometimes',
       'emoji': '🤷',
-      'desc': 'Depends on timing'
+      'desc': 'Depends on timing',
     },
     {
       'id': 'cannot_host',
       'label': 'Cannot Host',
       'emoji': '🚫',
-      'desc': 'Need to go elsewhere'
+      'desc': 'Need to go elsewhere',
     },
     {
       'id': 'prefer_not',
       'label': 'Prefer Not',
       'emoji': '😬',
-      'desc': 'Rather not host'
+      'desc': 'Rather not host',
     },
     {
       'id': 'hotel',
       'label': 'Hotel Only',
       'emoji': '🏨',
-      'desc': 'Neutral ground preferred'
+      'desc': 'Neutral ground preferred',
     },
     {
       'id': 'adventurous',
       'label': 'Adventurous',
       'emoji': '🌲',
-      'desc': 'Creative locations'
+      'desc': 'Creative locations',
     },
   ];
 
@@ -442,19 +442,19 @@ class _ExclusiveOnboardingScreenState
       'id': 'very_discreet',
       'label': 'Very Discreet',
       'emoji': '🤫',
-      'desc': 'Zero public acknowledgment'
+      'desc': 'Zero public acknowledgment',
     },
     {
       'id': 'discreet',
       'label': 'Discreet',
       'emoji': '🔐',
-      'desc': 'Keep it private'
+      'desc': 'Keep it private',
     },
     {
       'id': 'casual',
       'label': 'Casual',
       'emoji': '😌',
-      'desc': 'Not advertising, not hiding'
+      'desc': 'Not advertising, not hiding',
     },
     {'id': 'open', 'label': 'Open', 'emoji': '🌈', 'desc': 'Everyone knows'},
   ];
@@ -544,28 +544,28 @@ class _ExclusiveOnboardingScreenState
       'label': 'Mild',
       'emoji': '🌸',
       'desc': 'Romance & connection first',
-      'color': 0xFF4CAF50
+      'color': 0xFF4CAF50,
     },
     {
       'id': 'medium',
       'label': 'Medium',
       'emoji': '🌶️',
       'desc': 'Open to experimentation',
-      'color': 0xFFFFC107
+      'color': 0xFFFFC107,
     },
     {
       'id': 'hot',
       'label': 'Hot',
       'emoji': '🔥',
       'desc': 'Kink friendly',
-      'color': 0xFFFF9800
+      'color': 0xFFFF9800,
     },
     {
       'id': 'nuclear',
       'label': 'Nuclear',
       'emoji': '☢️',
       'desc': 'Anything goes',
-      'color': 0xFFF44336
+      'color': 0xFFF44336,
     },
   ];
 
@@ -773,7 +773,7 @@ class _ExclusiveOnboardingScreenState
 
     try {
       await Future.delayed(
-          const Duration(milliseconds: 800)); // Simulate thinking
+          const Duration(milliseconds: 800),); // Simulate thinking
 
       final name = _displayNameController.text.trim();
       final bio = _buildBioFromSelections(name);
@@ -824,8 +824,9 @@ class _ExclusiveOnboardingScreenState
     if (isMischievous) personalityBits.add('trouble in the best way');
     if (isPassionate) personalityBits.add('intensity is my love language');
     if (isCalm) personalityBits.add('unfairly calm under pressure');
-    if (isHighEnergy)
+    if (isHighEnergy) {
       personalityBits.add('powered by an internal espresso machine');
+    }
 
     // Build vibe snippet
     final vibeSnippet = personalityBits.isNotEmpty
@@ -1243,7 +1244,7 @@ class _ExclusiveOnboardingScreenState
                   IconButton(
                     onPressed: _previousStep,
                     icon: const Icon(Icons.arrow_back,
-                        color: VesparaColors.primary),
+                        color: VesparaColors.primary,),
                   ),
                 Expanded(
                   child: Column(
@@ -1508,7 +1509,7 @@ class _ExclusiveOnboardingScreenState
                         ),
                         child: _ageConfirmed
                             ? const Icon(Icons.check,
-                                size: 16, color: VesparaColors.background)
+                                size: 16, color: VesparaColors.background,)
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -1689,7 +1690,7 @@ class _ExclusiveOnboardingScreenState
                 child: Row(
                   children: [
                     const Icon(Icons.location_on,
-                        color: VesparaColors.secondary),
+                        color: VesparaColors.secondary,),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -1705,7 +1706,7 @@ class _ExclusiveOnboardingScreenState
                       ),
                     ),
                     const Icon(Icons.chevron_right,
-                        color: VesparaColors.secondary),
+                        color: VesparaColors.secondary,),
                   ],
                 ),
               ),
@@ -1939,7 +1940,7 @@ class _ExclusiveOnboardingScreenState
             ListTile(
               leading: const Icon(Icons.delete, color: VesparaColors.error),
               title: const Text('Remove Photo',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
                 _removePhoto(index);
@@ -2030,7 +2031,7 @@ class _ExclusiveOnboardingScreenState
                     isSelected: isSelected,
                     onTap: () {
                       setState(
-                          () => _partnerInvolvement = option['id'] as String);
+                          () => _partnerInvolvement = option['id'] as String,);
                     },
                   );
                 }).toList(),
@@ -2172,10 +2173,10 @@ class _ExclusiveOnboardingScreenState
               children: [
                 Text('🐢 Just Lurking',
                     style: TextStyle(
-                        fontSize: 11, color: VesparaColors.secondary)),
+                        fontSize: 11, color: VesparaColors.secondary,),),
                 Text('🔥 Ravenous',
                     style: TextStyle(
-                        fontSize: 11, color: VesparaColors.secondary)),
+                        fontSize: 11, color: VesparaColors.secondary,),),
               ],
             ),
             Slider(
@@ -2334,7 +2335,7 @@ class _ExclusiveOnboardingScreenState
                     child: Row(
                       children: [
                         Text(option['emoji'] as String,
-                            style: const TextStyle(fontSize: 28)),
+                            style: const TextStyle(fontSize: 28),),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -2415,7 +2416,7 @@ class _ExclusiveOnboardingScreenState
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 12, vertical: 8,),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? VesparaColors.tagsRed.withOpacity(0.2)
@@ -2483,7 +2484,7 @@ class _ExclusiveOnboardingScreenState
                       child: const Text(
                         'Clear all',
                         style: TextStyle(
-                            color: VesparaColors.secondary, fontSize: 12),
+                            color: VesparaColors.secondary, fontSize: 12,),
                       ),
                     ),
                 ],
@@ -2585,7 +2586,7 @@ class _ExclusiveOnboardingScreenState
                           ),
                         )
                       : const Icon(Icons.auto_awesome,
-                          size: 18, color: VesparaColors.glow),
+                          size: 18, color: VesparaColors.glow,),
                   label: const Text(
                     'Regenerate',
                     style: TextStyle(color: VesparaColors.glow),
@@ -2807,7 +2808,7 @@ class _ExclusiveOnboardingScreenState
               ),
               if (isSelected)
                 const Icon(Icons.check_circle,
-                    color: VesparaColors.glow, size: 24),
+                    color: VesparaColors.glow, size: 24,),
             ],
           ),
         ),
@@ -2933,7 +2934,7 @@ class _LocationInputDialogState extends State<_LocationInputDialog> {
                 child: Row(
                   children: [
                     const Icon(Icons.location_on,
-                        color: VesparaColors.glow, size: 20),
+                        color: VesparaColors.glow, size: 20,),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -2945,7 +2946,7 @@ class _LocationInputDialogState extends State<_LocationInputDialog> {
                       ),
                     ),
                     const Icon(Icons.check_circle,
-                        color: VesparaColors.glow, size: 18),
+                        color: VesparaColors.glow, size: 18,),
                   ],
                 ),
               ),
@@ -2955,7 +2956,7 @@ class _LocationInputDialogState extends State<_LocationInputDialog> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: _city != null && _state != null

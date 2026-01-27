@@ -488,7 +488,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                       const Row(
                         children: [
                           Icon(Icons.verified,
-                              size: 14, color: VesparaColors.success),
+                              size: 14, color: VesparaColors.success,),
                           SizedBox(width: 4),
                           Text(
                             'Verified Host',
@@ -634,7 +634,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                     ),
                   ),
                   const Icon(Icons.open_in_new,
-                      color: VesparaColors.glow, size: 20),
+                      color: VesparaColors.glow, size: 20,),
                 ],
               ),
             ),
@@ -695,10 +695,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             _buildGuestChip('👍 ${going.length} Going', VesparaColors.success),
             const SizedBox(width: 8),
             _buildGuestChip(
-                '🤔 ${maybe.length} Maybe', VesparaColors.tagsYellow),
+                '🤔 ${maybe.length} Maybe', VesparaColors.tagsYellow,),
             const SizedBox(width: 8),
             _buildGuestChip(
-                '💌 ${invited.length} Invited', VesparaColors.secondary),
+                '💌 ${invited.length} Invited', VesparaColors.secondary,),
           ],
         ),
 
@@ -737,7 +737,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       );
 
   Widget _buildGuestSection(
-          String title, List<EventRsvp> guests, Color color) =>
+          String title, List<EventRsvp> guests, Color color,) =>
       Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -798,7 +798,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
 
   Widget _buildBottomBar() => Container(
         padding: EdgeInsets.fromLTRB(
-            20, 16, 20, 16 + MediaQuery.of(context).padding.bottom),
+            20, 16, 20, 16 + MediaQuery.of(context).padding.bottom,),
         decoration: BoxDecoration(
           color: VesparaColors.surface,
           border: const Border(
@@ -822,7 +822,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               onPressed: _editEvent,
               icon: const Icon(Icons.edit, color: VesparaColors.glow),
               label: const Text('Edit',
-                  style: TextStyle(color: VesparaColors.glow)),
+                  style: TextStyle(color: VesparaColors.glow),),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: VesparaColors.glow),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -840,7 +840,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               icon:
                   const Icon(Icons.person_add, color: VesparaColors.background),
               label: const Text('Invite Guests',
-                  style: TextStyle(color: VesparaColors.background)),
+                  style: TextStyle(color: VesparaColors.background),),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VesparaColors.glow,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -891,7 +891,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       );
 
   Widget _buildRsvpButton(String emoji, String label, Color color,
-          bool isSelected, VoidCallback onTap) =>
+          bool isSelected, VoidCallback onTap,) =>
       GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
@@ -950,7 +950,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     const months = [
       'January',
@@ -1010,7 +1010,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               ListTile(
                 leading: const Icon(Icons.edit, color: VesparaColors.glow),
                 title: const Text('Edit Event',
-                    style: TextStyle(color: VesparaColors.primary)),
+                    style: TextStyle(color: VesparaColors.primary),),
                 onTap: () {
                   Navigator.pop(context);
                   _editEvent();
@@ -1020,20 +1020,20 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 leading:
                     const Icon(Icons.content_copy, color: VesparaColors.glow),
                 title: const Text('Duplicate Event',
-                    style: TextStyle(color: VesparaColors.primary)),
+                    style: TextStyle(color: VesparaColors.primary),),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
                 leading: const Icon(Icons.cancel, color: VesparaColors.error),
                 title: const Text('Cancel Event',
-                    style: TextStyle(color: VesparaColors.error)),
+                    style: TextStyle(color: VesparaColors.error),),
                 onTap: () => Navigator.pop(context),
               ),
             ] else ...[
               ListTile(
                 leading: const Icon(Icons.share, color: VesparaColors.glow),
                 title: const Text('Share',
-                    style: TextStyle(color: VesparaColors.primary)),
+                    style: TextStyle(color: VesparaColors.primary),),
                 onTap: () {
                   Navigator.pop(context);
                   _shareEvent();
@@ -1043,7 +1043,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 leading:
                     const Icon(Icons.calendar_today, color: VesparaColors.glow),
                 title: const Text('Add to Calendar',
-                    style: TextStyle(color: VesparaColors.primary)),
+                    style: TextStyle(color: VesparaColors.primary),),
                 onTap: () {
                   Navigator.pop(context);
                   _addToCalendar();
@@ -1052,7 +1052,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
               ListTile(
                 leading: const Icon(Icons.report, color: VesparaColors.error),
                 title: const Text('Report Event',
-                    style: TextStyle(color: VesparaColors.error)),
+                    style: TextStyle(color: VesparaColors.error),),
                 onTap: () => Navigator.pop(context),
               ),
             ],
@@ -1125,7 +1125,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                       hintStyle:
                           const TextStyle(color: VesparaColors.secondary),
                       prefixIcon: const Icon(Icons.search,
-                          color: VesparaColors.secondary),
+                          color: VesparaColors.secondary,),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide:
@@ -1173,7 +1173,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(
-                  24, 16, 24, 16 + MediaQuery.of(context).padding.bottom),
+                  24, 16, 24, 16 + MediaQuery.of(context).padding.bottom,),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

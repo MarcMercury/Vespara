@@ -352,7 +352,7 @@ extension VesparaAnimateExtensions on Widget {
     final staggerDelay = delay ?? VesparaMotion.staggerDelay;
     return animate(delay: staggerDelay * index)
         .fadeIn(
-            duration: VesparaMotion.standard, curve: VesparaMotion.standard_)
+            duration: VesparaMotion.standard, curve: VesparaMotion.standard_,)
         .slideY(
           begin: 0.1,
           end: 0,

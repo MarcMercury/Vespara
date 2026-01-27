@@ -469,7 +469,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
   }
 
   SortResult _calculateSortResult(
-      List<KinkCard> submitted, List<KinkCard> correct) {
+      List<KinkCard> submitted, List<KinkCard> correct,) {
     final positionCorrect = <bool>[];
     int correctCount = 0;
 
@@ -541,7 +541,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         currentRound: round,
         currentTurn: TeamTurn.teamB,
         playerSorting: [
-          ...round.teamAFirstAttempt!.submittedOrder
+          ...round.teamAFirstAttempt!.submittedOrder,
         ], // Start with Team A's order
         showHandoffScreen: true,
         phase: GamePhase.stealing,
@@ -566,7 +566,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     state = state.copyWith(
       currentRound: round,
       playerSorting: [
-        ...round.teamAFirstAttempt!.submittedOrder
+        ...round.teamAFirstAttempt!.submittedOrder,
       ], // Start with their previous order
       phase: GamePhase.sorting,
     );

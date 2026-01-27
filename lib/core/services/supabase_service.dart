@@ -94,7 +94,7 @@ class SupabaseService {
   }
 
   static Future<List<RosterMatch>> getStaleMatches(
-      {int daysSinceContact = 7}) async {
+      {int daysSinceContact = 7,}) async {
     if (currentUser == null) return [];
 
     final cutoffDate = DateTime.now()

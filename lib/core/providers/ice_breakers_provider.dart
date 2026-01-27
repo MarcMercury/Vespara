@@ -820,4 +820,4 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
 
 final iceBreakersProvider =
     StateNotifierProvider<IceBreakersNotifier, IceBreakersState>(
-        (ref) => IceBreakersNotifier());
+        (ref) => IceBreakersNotifier(),);

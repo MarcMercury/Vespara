@@ -257,7 +257,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(VesparaIcons.help,
-                                color: VelvetColors.lavender, size: 18),
+                                color: VelvetColors.lavender, size: 18,),
                             SizedBox(width: 8),
                             Text(
                               'How to Play',
@@ -317,7 +317,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                     ...List.generate(
                         state.players.length,
                         (index) =>
-                            _buildPlayerRow(state.players[index], index)),
+                            _buildPlayerRow(state.players[index], index),),
                     if (state.players.length < 8) _buildAddPlayerRow(),
 
                     const SizedBox(height: 24),
@@ -340,7 +340,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                             gradient: const LinearGradient(
                               colors: [
                                 VelvetColors.shareBlue,
-                                VelvetColors.dareCrimson
+                                VelvetColors.dareCrimson,
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
@@ -359,7 +359,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                                     width: 24,
                                     height: 24,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white),
+                                        strokeWidth: 2, color: Colors.white,),
                                   )
                                 : const Text(
                                     'START GAME',
@@ -521,7 +521,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                 ref.read(shareOrDareProvider.notifier).removePlayer(index);
               },
               icon: const Icon(VesparaIcons.close,
-                  color: Colors.white38, size: 20),
+                  color: Colors.white38, size: 20,),
             ),
           ],
         ),
@@ -545,7 +545,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                 shape: BoxShape.circle,
               ),
               child: const Icon(VesparaIcons.addMember,
-                  color: Colors.white38, size: 18),
+                  color: Colors.white38, size: 18,),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -607,7 +607,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                           ref.read(shareOrDareProvider.notifier).endGame();
                         },
                         icon: const Icon(VesparaIcons.stop,
-                            color: Colors.white54),
+                            color: Colors.white54,),
                       ),
                       Text(
                         'Spin: ${state.totalSpins + 1}',
@@ -659,13 +659,13 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                               boxShadow: [
                                 BoxShadow(
                                   color: VelvetColors.shareBlue.withOpacity(
-                                      0.2 + _pulseController.value * 0.2),
+                                      0.2 + _pulseController.value * 0.2,),
                                   blurRadius: 40 + _pulseController.value * 20,
                                   spreadRadius: 10,
                                 ),
                                 BoxShadow(
                                   color: VelvetColors.dareCrimson.withOpacity(
-                                      0.2 + _pulseController.value * 0.2),
+                                      0.2 + _pulseController.value * 0.2,),
                                   blurRadius: 40 + _pulseController.value * 20,
                                   spreadRadius: 10,
                                 ),
@@ -707,7 +707,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                           ),
                           child: Center(
                             child: Text('🎭',
-                                style: TextStyle(fontSize: centerSize * 0.4)),
+                                style: TextStyle(fontSize: centerSize * 0.4),),
                           ),
                         ),
 
@@ -1014,7 +1014,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                           ? [VelvetColors.surface, VelvetColors.background]
                           : [
                               card.typeColor.withOpacity(0.2),
-                              VelvetColors.surface
+                              VelvetColors.surface,
                             ],
                     ),
                     borderRadius: BorderRadius.circular(24),
@@ -1129,7 +1129,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                         gradient: LinearGradient(
                           colors: [
                             card.typeColor,
-                            card.typeColor.withOpacity(0.7)
+                            card.typeColor.withOpacity(0.7),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -1198,11 +1198,11 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildStatItem('🔮', 'Shares', state.totalShares,
-                        VelvetColors.shareBlue),
+                        VelvetColors.shareBlue,),
                     _buildStatItem('🔥', 'Dares', state.totalDares,
-                        VelvetColors.dareCrimson),
+                        VelvetColors.dareCrimson,),
                     _buildStatItem(
-                        '⏭️', 'Skipped', state.totalSkips, Colors.grey),
+                        '⏭️', 'Skipped', state.totalSkips, Colors.grey,),
                   ],
                 ),
                 const Divider(color: Colors.white12, height: 32),
@@ -1283,7 +1283,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                     child: const Center(
                       child: Text('EXIT',
                           style:
-                              TextStyle(color: Colors.white70, fontSize: 16)),
+                              TextStyle(color: Colors.white70, fontSize: 16),),
                     ),
                   ),
                 ),
@@ -1302,7 +1302,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                       gradient: const LinearGradient(
                         colors: [
                           VelvetColors.shareBlue,
-                          VelvetColors.dareCrimson
+                          VelvetColors.dareCrimson,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -1341,7 +1341,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
             ),
           ),
           Text(label,
-              style: const TextStyle(fontSize: 12, color: Colors.white54)),
+              style: const TextStyle(fontSize: 12, color: Colors.white54),),
         ],
       );
 
@@ -1491,7 +1491,7 @@ class _ShareOrDareScreenState extends ConsumerState<ShareOrDareScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('•',
-                        style: TextStyle(color: Colors.white54, fontSize: 14)),
+                        style: TextStyle(color: Colors.white54, fontSize: 14),),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

@@ -67,6 +67,7 @@ enum GameCategory {
   laneOfLust, // Timeline/Shit Happens style game with desire index
   dramaSutra, // Kama Sutra meets Improv Comedy
   flashFreeze, // Flash & Freeze - Red Light Green Light adult edition
+  diceBreakers, // Dice Breakers - Naughty dice rolling game
 }
 
 extension GameCategoryExtension on GameCategory {
@@ -86,6 +87,8 @@ extension GameCategoryExtension on GameCategory {
         return 'Drama-Sutra';
       case GameCategory.flashFreeze:
         return 'Flash & Freeze';
+      case GameCategory.diceBreakers:
+        return 'Dice Breakers';
     }
   }
 
@@ -105,6 +108,8 @@ extension GameCategoryExtension on GameCategory {
         return 'Strike a pose! Director describes, group performs.';
       case GameCategory.flashFreeze:
         return 'Red Light, Green Light evolved. Exposure requires endurance.';
+      case GameCategory.diceBreakers:
+        return 'Roll the dice and let fate decide what happens next.';
     }
   }
 
@@ -121,6 +126,8 @@ extension GameCategoryExtension on GameCategory {
         return ConsentLevel.yellow;
       case GameCategory.dramaSutra:
         return ConsentLevel.red;
+      case GameCategory.diceBreakers:
+        return ConsentLevel.yellow; // Can scale to RED with 3 dice
     }
   }
 
@@ -135,6 +142,8 @@ extension GameCategoryExtension on GameCategory {
         return 2;
       case GameCategory.flashFreeze:
         return 3; // Need at least 1 Signal + 2 players
+      case GameCategory.diceBreakers:
+        return 2;
     }
   }
 
@@ -148,6 +157,8 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.dramaSutra:
       case GameCategory.flashFreeze:
         return 8;
+      case GameCategory.diceBreakers:
+        return 10;
     }
   }
 
@@ -155,46 +166,47 @@ extension GameCategoryExtension on GameCategory {
   int get velocityMph {
     switch (this) {
       case GameCategory.icebreakers:
-        return 0; // Innocent fun — safe for brunch
+        return 25; // Warm up
       case GameCategory.downToClown:
-        return 40; // Flirty tension and teasing
+        return 30; // Light cruising
       case GameCategory.shareOrDare:
-        return 70; // Expect sparks — possibly skin
+        return 50; // Picking up speed
       case GameCategory.pathOfPleasure:
-        return 40; // Flirty tension and teasing
+        return 55; // Highway speed
       case GameCategory.laneOfLust:
-        return 70; // Expect sparks — possibly skin
+        return 60; // Fast lane
       case GameCategory.flashFreeze:
-        return 100; // Full throttle. Buckle up.
+        return 75; // Racing
       case GameCategory.dramaSutra:
-        return 100; // Full throttle. Buckle up.
+        return 80; // Full speed
+      case GameCategory.diceBreakers:
+        return 99; // Redline
     }
   }
 
   String get velocityLabel {
-    if (velocityMph == 0) return '0 mph';
-    if (velocityMph <= 40) return '40 mph';
-    if (velocityMph <= 70) return '70 mph';
-    return '100 mph';
+    return '$velocityMph mph';
   }
 
   /// Heat Rating (PG-XXX) - "What kind of action might you see?"
   String get heatRating {
     switch (this) {
       case GameCategory.icebreakers:
-        return 'PG'; // Playful, suggestive, mostly teasing
+        return 'PG-13'; // Conversation starters
       case GameCategory.downToClown:
-        return 'PG-13'; // Light touching, kissing, bold flirting
+        return 'PG-13'; // Fun challenges
       case GameCategory.shareOrDare:
-        return 'R'; // Risqué, passionate, hands-on
+        return 'PG-13-X'; // Ranges from mild to wild
       case GameCategory.pathOfPleasure:
-        return 'PG-13'; // Light touching, kissing, bold flirting
+        return 'PG-13'; // Light touching, kissing
       case GameCategory.laneOfLust:
-        return 'R'; // Risqué, passionate, hands-on
+        return 'R'; // Risqué, passionate
       case GameCategory.flashFreeze:
-        return 'X'; // Explicit, adventurous, clothing unlikely
+        return 'X'; // Explicit, adventurous
       case GameCategory.dramaSutra:
-        return 'XXX'; // Uninhibited, wild, gloriously unfiltered
+        return 'X'; // Uninhibited, wild
+      case GameCategory.diceBreakers:
+        return 'XXX'; // Fast, direct, risqué
     }
   }
 
@@ -204,13 +216,13 @@ extension GameCategoryExtension on GameCategory {
       case GameCategory.icebreakers:
       case GameCategory.downToClown:
       case GameCategory.flashFreeze:
-        return 'Quickie'; // 5-15 min
+      case GameCategory.dramaSutra:
+        return 'Quickie'; // 5-10 min
       case GameCategory.shareOrDare:
       case GameCategory.pathOfPleasure:
       case GameCategory.laneOfLust:
-        return 'Foreplay'; // 20-45 min
-      case GameCategory.dramaSutra:
-        return 'Full Session'; // 60+ min
+      case GameCategory.diceBreakers:
+        return 'Foreplay'; // 10-20 min
     }
   }
 

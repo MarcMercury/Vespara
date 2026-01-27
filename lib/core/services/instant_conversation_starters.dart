@@ -66,7 +66,7 @@ class InstantConversationStarters {
 
   /// Get starters for first message (when chat is empty)
   Future<List<ConversationStarter>> getFirstMessageStarters(
-      String matchId) async {
+      String matchId,) async {
     final starters = await getStarters(matchId);
 
     // Mark as first message type

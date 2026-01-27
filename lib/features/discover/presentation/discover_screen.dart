@@ -81,7 +81,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         // Check for mutual match (simulated - 50% chance)
         isMatch = DateTime.now().millisecond % 2 == 0;
         matchNotifier.likeProfile(profile.id, profile.displayName ?? 'Someone',
-            profile.photos.isNotEmpty ? profile.photos.first : null);
+            profile.photos.isNotEmpty ? profile.photos.first : null,);
         message = isMatch
             ? "It's a match with ${profile.displayName}! 💜"
             : 'Liked ${profile.displayName}! 💜';
@@ -90,7 +90,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         matchNotifier.superLikeProfile(
             profile.id,
             profile.displayName ?? 'Someone',
-            profile.photos.isNotEmpty ? profile.photos.first : null);
+            profile.photos.isNotEmpty ? profile.photos.first : null,);
         message = 'Super Match with ${profile.displayName}! ⭐';
         isMatch = true;
         break;
@@ -169,7 +169,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   final Set<String> _selectedRelTypes = {
     'casual',
     'exploring',
-    'ethicalNonMonogamy'
+    'ethicalNonMonogamy',
   };
 
   void _showFiltersDialog() {
@@ -202,7 +202,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary)),
+                      color: VesparaColors.primary,),),
               const SizedBox(height: 24),
 
               // Age Range
@@ -211,7 +211,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.secondary)),
+                      color: VesparaColors.secondary,),),
               RangeSlider(
                 values: _ageRange,
                 min: 18,
@@ -230,7 +230,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.secondary)),
+                      color: VesparaColors.secondary,),),
               Slider(
                 value: _maxDistance,
                 min: 1,
@@ -248,7 +248,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.secondary)),
+                      color: VesparaColors.secondary,),),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -258,7 +258,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   'exploring',
                   'ethicalNonMonogamy',
                   'polyamory',
-                  'monogamy'
+                  'monogamy',
                 ].map((type) {
                   final selected = _selectedRelTypes.contains(type);
                   return GestureDetector(
@@ -274,7 +274,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                          horizontal: 16, vertical: 8,),
                       decoration: BoxDecoration(
                         color: selected
                             ? VesparaColors.glow.withOpacity(0.2)
@@ -283,14 +283,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         border: Border.all(
                             color: selected
                                 ? VesparaColors.glow
-                                : VesparaColors.secondary.withOpacity(0.3)),
+                                : VesparaColors.secondary.withOpacity(0.3),),
                       ),
                       child: Text(_formatType(type),
                           style: TextStyle(
                               fontSize: 13,
                               color: selected
                                   ? VesparaColors.glow
-                                  : VesparaColors.secondary)),
+                                  : VesparaColors.secondary,),),
                     ),
                   );
                 }).toList(),
@@ -304,12 +304,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text('Filters updated!'),
-                        backgroundColor: VesparaColors.success));
+                        backgroundColor: VesparaColors.success,),);
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: VesparaColors.glow,
                       foregroundColor: VesparaColors.background,
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),),
                   child: const Text('Apply Filters'),
                 ),
               ),
@@ -508,7 +508,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                            horizontal: 6, vertical: 2,),
                         decoration: BoxDecoration(
                           color: VesparaColors.success,
                           borderRadius: BorderRadius.circular(10),
@@ -554,7 +554,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             child: Opacity(
               opacity: 0.5,
               child: _buildProfileCard(_profiles[_currentIndex + 1],
-                  isBackground: true),
+                  isBackground: true,),
             ),
           ),
 
@@ -625,7 +625,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildProfileCard(DiscoverableProfile profile,
-          {bool isBackground = false}) =>
+          {bool isBackground = false,}) =>
       Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -1229,7 +1229,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         content: Row(
                           children: [
                             const Icon(Icons.favorite,
-                                color: VesparaColors.success),
+                                color: VesparaColors.success,),
                             const SizedBox(width: 12),
                             Text('Connected with ${attendee.name}!'),
                           ],
@@ -1253,7 +1253,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   Widget _buildMetIrlCard(
-      EventAttendee attendee, VesparaConnectionState connectionState) {
+      EventAttendee attendee, VesparaConnectionState connectionState,) {
     // Find event details for this attendee
     String? eventName;
     DateTime? eventDate;

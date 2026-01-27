@@ -20,7 +20,7 @@ final dynamicGameGeneratorProvider =
 
 /// Predictive matching engine - learns from successful couples
 final predictiveMatchingEngineProvider = Provider<PredictiveMatchingEngine>(
-    (ref) => PredictiveMatchingEngine.instance);
+    (ref) => PredictiveMatchingEngine.instance,);
 
 /// Ambient intelligence - app simplifies itself over time
 final ambientIntelligenceProvider =
@@ -274,14 +274,14 @@ class UsageTracker extends StateNotifier<void> {
 
   /// Track feature usage - call this everywhere
   void track(String userId, String featureId,
-      {Map<String, dynamic>? metadata}) {
+      {Map<String, dynamic>? metadata,}) {
     // Fire and forget
     _ambient.trackUsage(userId, featureId, metadata: metadata);
   }
 
   /// Track match outcome - for learning
   void trackMatchOutcome(String matchId, String outcome,
-      {Map<String, dynamic>? signals}) {
+      {Map<String, dynamic>? signals,}) {
     // Fire and forget
     PredictiveMatchingEngine.instance.recordMatchOutcome(
       matchId: matchId,
@@ -302,7 +302,7 @@ class UsageTracker extends StateNotifier<void> {
 }
 
 final usageTrackerProvider = StateNotifierProvider<UsageTracker, void>(
-    (ref) => UsageTracker(ref.read(ambientIntelligenceProvider)));
+    (ref) => UsageTracker(ref.read(ambientIntelligenceProvider)),);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONVENIENCE EXTENSIONS
@@ -311,7 +311,7 @@ final usageTrackerProvider = StateNotifierProvider<UsageTracker, void>(
 /// Extension for easy tracking in any widget
 extension UsageTrackingRef on WidgetRef {
   void trackUsage(String userId, String featureId,
-      {Map<String, dynamic>? metadata}) {
+      {Map<String, dynamic>? metadata,}) {
     read(usageTrackerProvider.notifier)
         .track(userId, featureId, metadata: metadata);
   }
@@ -372,7 +372,7 @@ final gameIntelligenceProvider =
   final visibility = await ref.watch(
     featureVisibilityProvider(
       FeatureVisibilityRequest(
-          userId: request.userId, featureId: 'game_${request.gameType}'),
+          userId: request.userId, featureId: 'game_${request.gameType}',),
     ).future,
   );
 

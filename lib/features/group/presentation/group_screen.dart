@@ -63,7 +63,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
           label: const Text(
             'Create Experience',
             style: TextStyle(
-                color: VesparaColors.background, fontWeight: FontWeight.w600),
+                color: VesparaColors.background, fontWeight: FontWeight.w600,),
           ),
         ),
       );
@@ -100,7 +100,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
             IconButton(
               onPressed: _showNotificationsDialog,
               icon: const Icon(Icons.notifications_outlined,
-                  color: VesparaColors.secondary),
+                  color: VesparaColors.secondary,),
             ),
           ],
         ),
@@ -240,7 +240,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                     left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                          horizontal: 12, vertical: 8,),
                       decoration: BoxDecoration(
                         color: VesparaColors.background.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(8),
@@ -274,7 +274,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                       right: 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                            horizontal: 8, vertical: 4,),
                         decoration: BoxDecoration(
                           color: VesparaColors.warning.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(4),
@@ -313,7 +313,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                       if (isHost)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                              horizontal: 8, vertical: 4,),
                           decoration: BoxDecoration(
                             color: VesparaColors.glow.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
@@ -331,7 +331,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                       // Public/Private indicator
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                            horizontal: 8, vertical: 4,),
                         decoration: BoxDecoration(
                           color: event.isPublic
                               ? VesparaColors.success.withOpacity(0.2)
@@ -380,7 +380,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                   Row(
                     children: [
                       const Icon(Icons.access_time,
-                          size: 14, color: VesparaColors.secondary),
+                          size: 14, color: VesparaColors.secondary,),
                       const SizedBox(width: 4),
                       Text(
                         _formatEventTime(event.startTime),
@@ -391,7 +391,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                       ),
                       const SizedBox(width: 16),
                       const Icon(Icons.location_on,
-                          size: 14, color: VesparaColors.secondary),
+                          size: 14, color: VesparaColors.secondary,),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -646,7 +646,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Create $type',
-              style: const TextStyle(color: VesparaColors.glow)),
+              style: const TextStyle(color: VesparaColors.glow),),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -656,7 +656,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                   hintText: 'Event name',
                   hintStyle: const TextStyle(color: VesparaColors.secondary),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),),
                 ),
                 style: const TextStyle(color: VesparaColors.primary),
               ),
@@ -764,7 +764,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
 
               const SizedBox(height: 12),
               const Text('When?',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -779,7 +779,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  '$visibility: ${titleController.text} scheduled for $time!'),
+                                  '$visibility: ${titleController.text} scheduled for $time!',),
                               backgroundColor: VesparaColors.success,
                             ),
                           );
@@ -814,29 +814,29 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
+                    color: VesparaColors.primary,),),
             SizedBox(height: 16),
             ListTile(
               leading: Icon(Icons.person_add, color: VesparaColors.success),
               title: Text('Sarah accepted your invite!',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: Text('2 hours ago',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
             ),
             ListTile(
               leading: Icon(Icons.event, color: VesparaColors.glow),
               title: Text('New event: Game Night',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: Text('5 hours ago',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
             ),
             ListTile(
               leading:
                   Icon(Icons.question_mark, color: VesparaColors.tagsYellow),
               title: Text('Mark marked "maybe" for Dinner',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               subtitle: Text('Yesterday',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
             ),
           ],
         ),
@@ -862,45 +862,45 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
+                    color: VesparaColors.primary,),),
             const SizedBox(height: 8),
             Text(event.title,
-                style: const TextStyle(color: VesparaColors.glow)),
+                style: const TextStyle(color: VesparaColors.glow),),
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.edit, color: VesparaColors.glow),
               title: const Text('Edit Details',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Opening event editor...')));
+                    const SnackBar(content: Text('Opening event editor...')),);
               },
             ),
             ListTile(
               leading: const Icon(Icons.share, color: VesparaColors.glow),
               title: const Text('Share Event',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Sharing event link...')));
+                    const SnackBar(content: Text('Sharing event link...')),);
               },
             ),
             ListTile(
               leading: const Icon(Icons.message, color: VesparaColors.glow),
               title: const Text('Message Guests',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Opening group chat...')));
+                    const SnackBar(content: Text('Opening group chat...')),);
               },
             ),
             ListTile(
               leading: const Icon(Icons.cancel, color: VesparaColors.error),
               title: const Text('Cancel Event',
-                  style: TextStyle(color: VesparaColors.error)),
+                  style: TextStyle(color: VesparaColors.error),),
               onTap: () {
                 Navigator.pop(context);
                 _showCancelEventConfirmation(event);
@@ -919,7 +919,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Cancel Event?',
-            style: TextStyle(color: VesparaColors.error)),
+            style: TextStyle(color: VesparaColors.error),),
         content: Text(
           'This will notify all ${event.invites.length} guests that "${event.title}" has been cancelled.',
           style: const TextStyle(color: VesparaColors.secondary),
@@ -928,16 +928,16 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Keep Event',
-                  style: TextStyle(color: VesparaColors.secondary))),
+                  style: TextStyle(color: VesparaColors.secondary),),),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Event cancelled. Guests notified.'),
-                  backgroundColor: VesparaColors.error));
+                  backgroundColor: VesparaColors.error,),);
             },
             child: const Text('Cancel Event',
-                style: TextStyle(color: VesparaColors.error)),
+                style: TextStyle(color: VesparaColors.error),),
           ),
         ],
       ),
@@ -963,28 +963,28 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: VesparaColors.glow)),
+                    color: VesparaColors.glow,),),
             const SizedBox(height: 8),
             Text(event.description ?? '',
-                style: const TextStyle(color: VesparaColors.secondary)),
+                style: const TextStyle(color: VesparaColors.secondary),),
             const SizedBox(height: 20),
             Row(
               children: [
                 const Icon(Icons.calendar_today,
-                    size: 16, color: VesparaColors.glow),
+                    size: 16, color: VesparaColors.glow,),
                 const SizedBox(width: 8),
                 Text(_formatDate(event.startTime),
-                    style: const TextStyle(color: VesparaColors.primary)),
+                    style: const TextStyle(color: VesparaColors.primary),),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
                 const Icon(Icons.location_on,
-                    size: 16, color: VesparaColors.glow),
+                    size: 16, color: VesparaColors.glow,),
                 const SizedBox(width: 8),
                 Text(event.venueAddress ?? 'TBD',
-                    style: const TextStyle(color: VesparaColors.primary)),
+                    style: const TextStyle(color: VesparaColors.primary),),
               ],
             ),
             const SizedBox(height: 8),
@@ -993,7 +993,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 const Icon(Icons.group, size: 16, color: VesparaColors.glow),
                 const SizedBox(width: 8),
                 Text('${event.invites.length} invited',
-                    style: const TextStyle(color: VesparaColors.primary)),
+                    style: const TextStyle(color: VesparaColors.primary),),
               ],
             ),
             const SizedBox(height: 24),
@@ -1011,7 +1011,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 child: const Text('RSVP Now',
                     style: TextStyle(
                         color: VesparaColors.background,
-                        fontWeight: FontWeight.w600)),
+                        fontWeight: FontWeight.w600,),),
               ),
             ),
           ],
@@ -1042,7 +1042,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                   style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary)),
+                      color: VesparaColors.primary,),),
               const SizedBox(height: 16),
               if (contacts.isEmpty)
                 Padding(
@@ -1052,15 +1052,15 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                       children: [
                         Icon(Icons.people_outline,
                             size: 48,
-                            color: VesparaColors.secondary.withOpacity(0.5)),
+                            color: VesparaColors.secondary.withOpacity(0.5),),
                         const SizedBox(height: 12),
                         const Text('No connections yet',
-                            style: TextStyle(color: VesparaColors.secondary)),
+                            style: TextStyle(color: VesparaColors.secondary),),
                         const SizedBox(height: 4),
                         Text('Add connections to invite them',
                             style: TextStyle(
                                 color: VesparaColors.secondary.withOpacity(0.7),
-                                fontSize: 12)),
+                                fontSize: 12,),),
                       ],
                     ),
                   ),
@@ -1075,14 +1075,14 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                           label: Text(name),
                           selected: selected.contains(name),
                           onSelected: (v) => setModalState(() =>
-                              v ? selected.add(name) : selected.remove(name)),
+                              v ? selected.add(name) : selected.remove(name),),
                           selectedColor: VesparaColors.glow.withOpacity(0.3),
                           checkmarkColor: VesparaColors.glow,
                           backgroundColor: VesparaColors.background,
                           labelStyle: TextStyle(
                               color: selected.contains(name)
                                   ? VesparaColors.glow
-                                  : VesparaColors.primary),
+                                  : VesparaColors.primary,),
                         ),
                       )
                       .toList(),
@@ -1103,14 +1103,14 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                             SnackBar(
                                 content:
                                     Text('Invited ${selected.length} people!'),
-                                backgroundColor: VesparaColors.success),
+                                backgroundColor: VesparaColors.success,),
                           );
                         },
                   child: Text(
                     'Send ${selected.isEmpty ? '' : selected.length} Invite${selected.length == 1 ? '' : 's'}',
                     style: const TextStyle(
                         color: VesparaColors.background,
-                        fontWeight: FontWeight.w600),
+                        fontWeight: FontWeight.w600,),
                   ),
                 ),
               ),
@@ -1138,17 +1138,17 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
+                    color: VesparaColors.primary,),),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildRSVPOption(
-                    'Going', Icons.check_circle, VesparaColors.success, event),
+                    'Going', Icons.check_circle, VesparaColors.success, event,),
                 _buildRSVPOption('Maybe', Icons.help_outline,
-                    VesparaColors.tagsYellow, event),
+                    VesparaColors.tagsYellow, event,),
                 _buildRSVPOption(
-                    'Can\'t Go', Icons.cancel, VesparaColors.error, event),
+                    'Can\'t Go', Icons.cancel, VesparaColors.error, event,),
               ],
             ),
           ],
@@ -1158,7 +1158,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
   }
 
   Widget _buildRSVPOption(
-          String label, IconData icon, Color color, GroupEvent event) =>
+          String label, IconData icon, Color color, GroupEvent event,) =>
       GestureDetector(
         onTap: () {
           Navigator.pop(context);
@@ -1198,7 +1198,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day} at ${date.hour}:${date.minute.toString().padLeft(2, '0')} ${date.hour >= 12 ? 'PM' : 'AM'}';
   }

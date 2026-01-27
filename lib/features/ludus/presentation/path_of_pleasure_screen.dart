@@ -350,7 +350,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                   if (state.connectionMode == ConnectionMode.multiScreen) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
+                          horizontal: 24, vertical: 16,),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
@@ -371,10 +371,10 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                           ),
                           IconButton(
                             icon: const Icon(VesparaIcons.copy,
-                                color: Colors.white70),
+                                color: Colors.white70,),
                             onPressed: () {
                               Clipboard.setData(
-                                  ClipboardData(text: state.roomCode ?? ''));
+                                  ClipboardData(text: state.roomCode ?? ''),);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Code copied!')),
                               );
@@ -443,7 +443,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                         _buildSettingRow('Cards per round', '8'),
                         const Divider(color: Colors.white12),
                         _buildSettingRow(
-                            'Points to win', '${state.winningScore}'),
+                            'Points to win', '${state.winningScore}',),
                       ],
                     ),
                   ),
@@ -540,9 +540,9 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
-                style: AppTheme.bodyMedium.copyWith(color: Colors.white70)),
+                style: AppTheme.bodyMedium.copyWith(color: Colors.white70),),
             Text(value,
-                style: AppTheme.bodyLarge.copyWith(color: Colors.white)),
+                style: AppTheme.bodyLarge.copyWith(color: Colors.white),),
           ],
         ),
       );
@@ -780,7 +780,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
             gradient: LinearGradient(
               colors: [
                 Color.lerp(Colors.pink.shade200, Colors.red.shade400,
-                        gradientStart)!
+                        gradientStart,)!
                     .withOpacity(0.2),
                 Colors.white.withOpacity(0.05),
               ],
@@ -1123,7 +1123,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(VesparaIcons.trophy,
-                      color: Colors.amber, size: 80),
+                      color: Colors.amber, size: 80,),
                   const SizedBox(height: 24),
 
                   Text(

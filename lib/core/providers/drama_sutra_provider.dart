@@ -401,196 +401,196 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172305.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p2',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172312.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p3',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172317.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p4',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172323.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p5',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172328.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p6',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172333.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p7',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172339.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p8',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172344.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p9',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172348.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p10',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172400.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p11',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172410.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p12',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172423.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p13',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172437.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p14',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172444.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p15',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172449.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p16',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172458.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p17',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172503.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p18',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172508.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p19',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172514.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p20',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172521.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p21',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172526.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p22',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172537.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p23',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172545.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p24',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172552.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p25',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172600.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p26',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172605.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p27',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172620.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
     DramaPosition(
         id: '2p28',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/2 People/Screenshot 2026-01-22 172631.png',
         difficulty: 2,
-        intensity: PositionIntensity.romantic),
+        intensity: PositionIntensity.romantic,),
   ];
 
   // 3 PEOPLE POSITIONS (32 images)
@@ -601,84 +601,84 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172734.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p2',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172754.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p3',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172806.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p4',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172817.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p5',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172829.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p6',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172840.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p7',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172851.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p8',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172904.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p9',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172913.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p10',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172930.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p11',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172940.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p12',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-22 172950.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     // New 3-person positions added Jan 23
     DramaPosition(
         id: '3p13',
@@ -686,98 +686,98 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135424.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p14',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135432.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p15',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135441.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p16',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135447.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p17',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135459.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p18',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135505.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p19',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135513.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p20',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135520.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p21',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135529.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p22',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135536.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p23',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135543.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p24',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135549.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p25',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135555.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p26',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135601.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     // Additional 3-person positions
     DramaPosition(
         id: '3p27',
@@ -785,42 +785,42 @@ class DramaSutraNotifier extends StateNotifier<DramaSutraState> {
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135822.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p28',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135829.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p29',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135837.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p30',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135843.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p31',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135851.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
     DramaPosition(
         id: '3p32',
         name: '',
         imageUrl:
             'assets/images/drama_sutra/3 people/Screenshot 2026-01-23 135859.png',
         difficulty: 3,
-        intensity: PositionIntensity.intimate),
+        intensity: PositionIntensity.intimate,),
   ];
 }
 

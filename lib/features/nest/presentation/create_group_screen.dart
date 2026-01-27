@@ -376,7 +376,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             child: Row(
               children: [
                 const Icon(Icons.check_circle,
-                    color: VesparaColors.success, size: 18),
+                    color: VesparaColors.success, size: 18,),
                 const SizedBox(width: 8),
                 Text(
                   '${_selectedMemberIds.length} selected',
@@ -533,7 +533,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
               ),
               child: isSelected
                   ? const Icon(Icons.check,
-                      size: 18, color: VesparaColors.background)
+                      size: 18, color: VesparaColors.background,)
                   : null,
             ),
           ],
@@ -669,7 +669,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             child: const Row(
               children: [
                 Icon(Icons.info_outline,
-                    color: VesparaColors.warning, size: 20),
+                    color: VesparaColors.warning, size: 20,),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -761,7 +761,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       ),
                     )
                   : const Icon(Icons.person,
-                      size: 14, color: VesparaColors.glow),
+                      size: 14, color: VesparaColors.glow,),
             ),
             const SizedBox(width: 8),
             Text(

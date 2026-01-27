@@ -160,7 +160,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                     if (state.isDemoMode)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                            horizontal: 12, vertical: 6,),
                         decoration: BoxDecoration(
                           color: Colors.orange.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
@@ -169,11 +169,11 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(VesparaIcons.play,
-                                color: Colors.orange, size: 16),
+                                color: Colors.orange, size: 16,),
                             SizedBox(width: 6),
                             Text('Demo',
                                 style: TextStyle(
-                                    color: Colors.orange, fontSize: 12)),
+                                    color: Colors.orange, fontSize: 12,),),
                           ],
                         ),
                       ),
@@ -199,7 +199,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                             boxShadow: [
                               BoxShadow(
                                 color: IceColors.primary.withOpacity(
-                                    0.3 + (_glowController.value * 0.3)),
+                                    0.3 + (_glowController.value * 0.3),),
                                 blurRadius: 50 + (_glowController.value * 30),
                                 spreadRadius: 15,
                               ),
@@ -265,7 +265,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                                 colors: [
                                   IceColors.primary,
                                   IceColors.primary.withOpacity(
-                                      0.7 + (_pulseController.value * 0.3)),
+                                      0.7 + (_pulseController.value * 0.3),),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(16),
@@ -310,7 +310,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                             child: Text(
                               'How It Works',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.white70),
+                                  fontSize: 16, color: Colors.white70,),
                             ),
                           ),
                         ),
@@ -401,7 +401,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
             Text(emoji, style: const TextStyle(fontSize: 24)),
             const SizedBox(width: 16),
             Text(text,
-                style: const TextStyle(fontSize: 15, color: Colors.white70)),
+                style: const TextStyle(fontSize: 15, color: Colors.white70),),
           ],
         ),
       );
@@ -498,8 +498,9 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                       itemBuilder: (context, index) {
                         if (index == state.players.length) {
                           // Add player button
-                          if (state.players.length >= 12)
+                          if (state.players.length >= 12) {
                             return const SizedBox();
+                          }
                           return _buildAddPlayerRow();
                         }
                         return _buildPlayerRow(state.players[index], index);
@@ -526,8 +527,8 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                     gradient: state.players.length >= 2
                         ? LinearGradient(colors: [
                             IceColors.primary,
-                            IceColors.primary.withOpacity(0.7)
-                          ])
+                            IceColors.primary.withOpacity(0.7),
+                          ],)
                         : null,
                     color: state.players.length < 2 ? Colors.white24 : null,
                     borderRadius: BorderRadius.circular(16),
@@ -538,7 +539,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.black),
+                                strokeWidth: 2, color: Colors.black,),
                           )
                         : Text(
                             'START GAME',
@@ -583,8 +584,8 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
             gradient: isSelected
                 ? LinearGradient(colors: [
                     IceColors.primary.withOpacity(0.3),
-                    IceColors.primary.withOpacity(0.1)
-                  ])
+                    IceColors.primary.withOpacity(0.1),
+                  ],)
                 : null,
             color: isSelected ? null : Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(16),
@@ -653,7 +654,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 ref.read(iceBreakersProvider.notifier).removePlayer(index);
               },
               icon: const Icon(VesparaIcons.close,
-                  color: Colors.white38, size: 20),
+                  color: Colors.white38, size: 20,),
             ),
           ],
         ),
@@ -677,7 +678,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 shape: BoxShape.circle,
               ),
               child: const Icon(VesparaIcons.addMember,
-                  color: Colors.white38, size: 18),
+                  color: Colors.white38, size: 18,),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -891,12 +892,12 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                           colors: isFront
                               ? [
                                   IceColors.cardBack,
-                                  IceColors.cardBack.withOpacity(0.8)
+                                  IceColors.cardBack.withOpacity(0.8),
                                 ]
                               : card.isWild
                                   ? [
                                       IceColors.wildCard.withOpacity(0.3),
-                                      IceColors.cardFront
+                                      IceColors.cardFront,
                                     ]
                                   : [IceColors.cardFront, IceColors.background],
                         ),
@@ -946,21 +947,21 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                   Row(
                     children: [
                       Icon(VesparaIcons.skip,
-                          color: IceColors.skip.withOpacity(0.7)),
+                          color: IceColors.skip.withOpacity(0.7),),
                       const SizedBox(width: 8),
                       Text('Skip',
                           style: TextStyle(
-                              color: IceColors.skip.withOpacity(0.7))),
+                              color: IceColors.skip.withOpacity(0.7),),),
                     ],
                   ),
                   Row(
                     children: [
                       Text('Done',
                           style: TextStyle(
-                              color: IceColors.success.withOpacity(0.7))),
+                              color: IceColors.success.withOpacity(0.7),),),
                       const SizedBox(width: 8),
                       Icon(VesparaIcons.like,
-                          color: IceColors.success.withOpacity(0.7)),
+                          color: IceColors.success.withOpacity(0.7),),
                     ],
                   ),
                 ],
@@ -1205,15 +1206,15 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
               child: Column(
                 children: [
                   _buildStatRow('Cards Completed',
-                      '${state.completedCards.length}', IceColors.success),
+                      '${state.completedCards.length}', IceColors.success,),
                   const Divider(color: Colors.white12, height: 24),
                   _buildStatRow('Cards Skipped', '${state.skippedCards.length}',
-                      IceColors.skip),
+                      IceColors.skip,),
                   const Divider(color: Colors.white12, height: 24),
                   _buildStatRow(
                       'Time Played',
                       '${(state.gameDurationSeconds / 60).toStringAsFixed(1)} min',
-                      IceColors.primary),
+                      IceColors.primary,),
                 ],
               ),
             ),
@@ -1232,8 +1233,8 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [
                     IceColors.primary,
-                    IceColors.primary.withOpacity(0.7)
-                  ]),
+                    IceColors.primary.withOpacity(0.7),
+                  ],),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Center(
@@ -1258,7 +1259,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 Navigator.pop(context);
               },
               child: const Text('Back to Arcade',
-                  style: TextStyle(color: Colors.white54)),
+                  style: TextStyle(color: Colors.white54),),
             ),
           ],
         ),
@@ -1268,7 +1269,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(fontSize: 16, color: Colors.white70)),
+              style: const TextStyle(fontSize: 16, color: Colors.white70),),
           Text(
             value,
             style: TextStyle(
@@ -1352,7 +1353,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                      colors: [Colors.orange, Colors.deepOrange]),
+                      colors: [Colors.orange, Colors.deepOrange],),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Center(
@@ -1388,7 +1389,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                      colors: [VesparaColors.glow, Colors.pinkAccent]),
+                      colors: [VesparaColors.glow, Colors.pinkAccent],),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Center(
@@ -1413,7 +1414,7 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                 // Go to results
               },
               child: const Text('Finish Game',
-                  style: TextStyle(color: Colors.white54, fontSize: 16)),
+                  style: TextStyle(color: Colors.white54, fontSize: 16),),
             ),
 
             const SizedBox(height: 24),

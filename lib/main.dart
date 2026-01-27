@@ -29,7 +29,7 @@ Future<void> main() async {
 
     if (hasOAuthCallback) {
       debugPrint(
-          'Vespara Main: OAuth callback detected, waiting for session...');
+          'Vespara Main: OAuth callback detected, waiting for session...',);
 
       // Wait for Supabase to complete the PKCE code exchange
       // Increase timeout and check more frequently
@@ -40,7 +40,7 @@ Future<void> main() async {
         session = Supabase.instance.client.auth.currentSession;
         if (session != null) {
           debugPrint(
-              'Vespara Main: Session established after ${(i + 1) * 200}ms');
+              'Vespara Main: Session established after ${(i + 1) * 200}ms',);
           break;
         }
         debugPrint('Vespara Main: Waiting for session... attempt ${i + 1}/50');
@@ -109,7 +109,7 @@ class _AuthGateState extends State<AuthGate> {
       _authSubscription =
           Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         debugPrint(
-            'Vespara Auth: ${data.event} - session: ${data.session != null}');
+            'Vespara Auth: ${data.event} - session: ${data.session != null}',);
 
         if (mounted) {
           // Only update if session actually changed
@@ -182,7 +182,7 @@ class _AuthGateState extends State<AuthGate> {
               CircularProgressIndicator(color: VesparaColors.primary),
               SizedBox(height: 16),
               Text('Loading...',
-                  style: TextStyle(color: VesparaColors.secondary)),
+                  style: TextStyle(color: VesparaColors.secondary),),
             ],
           ),
         ),
@@ -197,10 +197,10 @@ class _AuthGateState extends State<AuthGate> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.error_outline,
-                  color: VesparaColors.error, size: 48),
+                  color: VesparaColors.error, size: 48,),
               const SizedBox(height: 16),
               Text('Error: $_error',
-                  style: const TextStyle(color: VesparaColors.error)),
+                  style: const TextStyle(color: VesparaColors.error),),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
@@ -271,12 +271,12 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeIn = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
           parent: _animController,
-          curve: const Interval(0, 0.6, curve: Curves.easeOut)),
+          curve: const Interval(0, 0.6, curve: Curves.easeOut),),
     );
     _slideUp = Tween<double>(begin: 30, end: 0).animate(
       CurvedAnimation(
           parent: _animController,
-          curve: const Interval(0.2, 0.8, curve: Curves.easeOut)),
+          curve: const Interval(0.2, 0.8, curve: Curves.easeOut),),
     );
     _animController.forward();
   }
@@ -322,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen>
       builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         title: const Text('Enter your email',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: TextField(
           controller: emailController,
           style: const TextStyle(color: VesparaColors.primary),
@@ -331,16 +331,16 @@ class _LoginScreenState extends State<LoginScreen>
             hintStyle:
                 TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
             enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: VesparaColors.secondary)),
+                borderSide: BorderSide(color: VesparaColors.secondary),),
             focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: VesparaColors.primary)),
+                borderSide: BorderSide(color: VesparaColors.primary),),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () async {
@@ -348,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen>
               await _signInWithEmail(emailController.text);
             },
             child: const Text('Send Magic Link',
-                style: TextStyle(color: VesparaColors.primary)),
+                style: TextStyle(color: VesparaColors.primary),),
           ),
         ],
       ),
@@ -387,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message,
-            style: const TextStyle(color: VesparaColors.background)),
+            style: const TextStyle(color: VesparaColors.background),),
         backgroundColor: VesparaColors.primary,
       ),
     );
@@ -422,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen>
                       gradient: RadialGradient(
                         colors: [
                           VesparaColors.primary,
-                          VesparaColors.primary.withOpacity(0.6)
+                          VesparaColors.primary.withOpacity(0.6),
                         ],
                       ),
                       boxShadow: [
@@ -469,10 +469,10 @@ class _LoginScreenState extends State<LoginScreen>
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2))
+                              child: CircularProgressIndicator(strokeWidth: 2),)
                           : const Text('Continue with Apple',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                                  fontSize: 16, fontWeight: FontWeight.w600,),),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: VesparaColors.primary,
                         foregroundColor: VesparaColors.background,
@@ -480,7 +480,7 @@ class _LoginScreenState extends State<LoginScreen>
                             VesparaColors.primary.withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                VesparaBorderRadius.button)),
+                                VesparaBorderRadius.button,),),
                       ),
                     ),
                   ),
@@ -496,16 +496,16 @@ class _LoginScreenState extends State<LoginScreen>
                       icon: const Icon(Icons.g_mobiledata, size: 28),
                       label: const Text('Continue with Google',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                              fontSize: 16, fontWeight: FontWeight.w600,),),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: VesparaColors.primary,
                         disabledForegroundColor:
                             VesparaColors.primary.withOpacity(0.5),
                         side: BorderSide(
-                            color: VesparaColors.primary.withOpacity(0.3)),
+                            color: VesparaColors.primary.withOpacity(0.3),),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                VesparaBorderRadius.button)),
+                                VesparaBorderRadius.button,),),
                       ),
                     ),
                   ),
@@ -521,16 +521,16 @@ class _LoginScreenState extends State<LoginScreen>
                       icon: const Icon(Icons.email_outlined, size: 24),
                       label: const Text('Continue with Email',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                              fontSize: 16, fontWeight: FontWeight.w600,),),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: VesparaColors.primary,
                         disabledForegroundColor:
                             VesparaColors.primary.withOpacity(0.5),
                         side: BorderSide(
-                            color: VesparaColors.primary.withOpacity(0.3)),
+                            color: VesparaColors.primary.withOpacity(0.3),),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                VesparaBorderRadius.button)),
+                                VesparaBorderRadius.button,),),
                       ),
                     ),
                   ),
@@ -546,18 +546,18 @@ class _LoginScreenState extends State<LoginScreen>
                         // Navigate directly to home screen in demo mode
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
-                              builder: (context) => const HomeScreen()),
+                              builder: (context) => const HomeScreen(),),
                         );
                       },
                       icon: const Icon(Icons.play_circle_outline, size: 24),
                       label: const Text('Explore Demo Mode',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                              fontSize: 16, fontWeight: FontWeight.w600,),),
                       style: TextButton.styleFrom(
                         foregroundColor: VesparaColors.glow,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                VesparaBorderRadius.button)),
+                                VesparaBorderRadius.button,),),
                       ),
                     ),
                   ),

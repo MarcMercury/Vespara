@@ -396,7 +396,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
                               padding: const EdgeInsets.only(right: 4),
                               child: Icon(
                                 _getMessageTypeIcon(
-                                    conversation.lastMessageType!),
+                                    conversation.lastMessageType!,),
                                 size: 16,
                                 color: VesparaColors.secondary,
                               ),
@@ -457,7 +457,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                  horizontal: 8, vertical: 2,),
                               decoration: BoxDecoration(
                                 color: VesparaColors.glow,
                                 borderRadius: BorderRadius.circular(12),
@@ -742,7 +742,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
   }
 
   void _showConversationOptions(
-      BuildContext context, WireConversation conversation) {
+      BuildContext context, WireConversation conversation,) {
     VesparaHaptics.mediumTap();
     showModalBottomSheet(
       context: context,
@@ -856,7 +856,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
           backgroundColor: VesparaColors.surface,
           title: const Text('Leave Group?'),
           content: const Text(
-              'You will no longer receive messages from this group.'),
+              'You will no longer receive messages from this group.',),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),

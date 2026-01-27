@@ -204,7 +204,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'first_game',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('first_game');
       }
     }
@@ -223,7 +223,7 @@ class TagAchievementsService {
         if (await unlockAchievement(
             achievementId: entry.value,
             sessionId: sessionId,
-            progressSnapshot: snapshot)) {
+            progressSnapshot: snapshot,)) {
           unlockedIds.add(entry.value);
         }
       }
@@ -241,7 +241,7 @@ class TagAchievementsService {
         if (await unlockAchievement(
             achievementId: entry.value,
             sessionId: sessionId,
-            progressSnapshot: snapshot)) {
+            progressSnapshot: snapshot,)) {
           unlockedIds.add(entry.value);
         }
       }
@@ -280,7 +280,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'explorer_3',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('explorer_3');
       }
     }
@@ -288,7 +288,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'explorer_5',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('explorer_5');
       }
     }
@@ -296,7 +296,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'explorer_7',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('explorer_7');
       }
     }
@@ -350,7 +350,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'party_4',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('party_4');
       }
     }
@@ -358,7 +358,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'party_6',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('party_6');
       }
     }
@@ -366,7 +366,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'party_8',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('party_8');
       }
     }
@@ -380,7 +380,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'perfectionist',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('perfectionist');
       }
     }
@@ -390,7 +390,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'marathon',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('marathon');
       }
     }
@@ -400,7 +400,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'speed_demon',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('speed_demon');
       }
     }
@@ -411,7 +411,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'night_owl',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('night_owl');
       }
     }
@@ -419,7 +419,7 @@ class TagAchievementsService {
       if (await unlockAchievement(
           achievementId: 'early_bird',
           sessionId: sessionId,
-          progressSnapshot: snapshot)) {
+          progressSnapshot: snapshot,)) {
         unlockedIds.add('early_bird');
       }
     }
@@ -432,7 +432,7 @@ class TagAchievementsService {
         TagGameType.downToClown => {
             10: 'dtc_10',
             50: 'dtc_50',
-            100: 'dtc_master'
+            100: 'dtc_master',
           },
         TagGameType.iceBreakers => {10: 'icebreakers_10', 50: 'icebreakers_50'},
         TagGameType.shareOrDare => {10: 'velvet_10', 50: 'velvet_50'},

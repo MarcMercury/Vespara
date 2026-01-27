@@ -140,7 +140,7 @@ class GamePersonalizationService {
 
     // Sort by score
     scored.sort(
-        (a, b) => (b['_score'] as double).compareTo(a['_score'] as double));
+        (a, b) => (b['_score'] as double).compareTo(a['_score'] as double),);
 
     // Weighted random from top 10
     final top = scored.take(10).toList();

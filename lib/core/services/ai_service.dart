@@ -457,7 +457,7 @@ enum AIModel {
   final double outputPricePer1M;
 
   const AIModel(
-      this.id, this.displayName, this.inputPricePer1M, this.outputPricePer1M);
+      this.id, this.displayName, this.inputPricePer1M, this.outputPricePer1M,);
 }
 
 enum AIRole {

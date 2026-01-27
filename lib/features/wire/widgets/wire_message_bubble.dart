@@ -319,7 +319,7 @@ class WireMessageBubble extends ConsumerWidget {
                   color: VesparaColors.background,
                   child: const Center(
                     child: Icon(Icons.broken_image,
-                        color: VesparaColors.secondary),
+                        color: VesparaColors.secondary,),
                   ),
                 ),
               ),
@@ -738,7 +738,7 @@ class WireMessageBubble extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(reaction.emoji,
-                          style: const TextStyle(fontSize: 14)),
+                          style: const TextStyle(fontSize: 14),),
                       if (reaction.count > 1) ...[
                         const SizedBox(width: 2),
                         Text(
@@ -886,7 +886,7 @@ class WireMessageBubble extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline,
-                  color: VesparaColors.tagsRed),
+                  color: VesparaColors.tagsRed,),
               title: const Text('Delete'),
               onTap: () {
                 Navigator.pop(context);

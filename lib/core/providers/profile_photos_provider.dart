@@ -11,7 +11,7 @@ import '../domain/models/profile_photo.dart';
 
 final profilePhotosProvider =
     StateNotifierProvider<ProfilePhotosNotifier, ProfilePhotosState>(
-        (ref) => ProfilePhotosNotifier(Supabase.instance.client));
+        (ref) => ProfilePhotosNotifier(Supabase.instance.client),);
 
 /// Provider for fetching another user's photos (for ranking)
 final userPhotosProvider =
@@ -155,7 +155,7 @@ class ProfilePhotosNotifier extends StateNotifier<ProfilePhotosState> {
   // ═══════════════════════════════════════════════════════════════════════
 
   Future<bool> uploadPhoto(Uint8List imageBytes, int position,
-      {String extension = 'jpg'}) async {
+      {String extension = 'jpg',}) async {
     if (_userId == null) return false;
     if (position < 1 || position > 5) return false;
 
@@ -323,8 +323,9 @@ class ProfilePhotosNotifier extends StateNotifier<ProfilePhotosState> {
 
   Future<bool> applyAIRecommendation() async {
     final recommendation = state.recommendation;
-    if (recommendation == null || !recommendation.hasRecommendation)
+    if (recommendation == null || !recommendation.hasRecommendation) {
       return false;
+    }
 
     // Reorder photos according to AI recommendation
     final success = await reorderPhotos(recommendation.recommendedOrder);
@@ -430,7 +431,7 @@ class ProfilePhotosNotifier extends StateNotifier<ProfilePhotosState> {
       insights.add('Get more profile views to receive photo rankings');
     } else if (totalRankings < 5) {
       insights.add(
-          '${5 - totalRankings} more rankings needed for AI recommendations');
+          '${5 - totalRankings} more rankings needed for AI recommendations',);
     }
 
     if (bestPhoto != null) {

@@ -261,7 +261,7 @@ class LudusRepository {
 
     // Increment play count
     await _supabase.rpc('increment_play_count',
-        params: {'game_id': gameId}).catchError((_) {
+        params: {'game_id': gameId},).catchError((_) {
       // Fallback if function doesn't exist
       return null;
     });
@@ -288,7 +288,7 @@ class LudusRepository {
 
   /// Update game session state
   Future<void> updateSessionState(
-      String sessionId, Map<String, dynamic> state) async {
+      String sessionId, Map<String, dynamic> state,) async {
     await _supabase.from('game_sessions').update({
       'game_state': state,
       'current_round': state['round'] ?? 0,
@@ -366,7 +366,7 @@ class LudusRepository {
 
 /// Provider for LudusRepository
 final ludusRepositoryProvider = Provider<LudusRepository>(
-    (ref) => LudusRepository(Supabase.instance.client));
+    (ref) => LudusRepository(Supabase.instance.client),);
 
 /// Current consent level state
 final consentLevelProvider = StateProvider<String>((ref) => 'green');
@@ -385,4 +385,4 @@ final filteredGameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
 
 /// Active game session
 final activeGameSessionProvider = FutureProvider<GameSession?>(
-    (ref) async => ref.watch(ludusRepositoryProvider).getActiveSession());
+    (ref) async => ref.watch(ludusRepositoryProvider).getActiveSession(),);

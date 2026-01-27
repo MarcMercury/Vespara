@@ -215,7 +215,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                  'Camera access needed for freeze photos. Game will continue without photo capture.'),
+                  'Camera access needed for freeze photos. Game will continue without photo capture.',),
             ),
           ],
         ),
@@ -323,8 +323,9 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
   }
 
   Future<void> _captureFreeze() async {
-    if (!_isCameraInitialized || _cameraController == null || _isTakingPhoto)
+    if (!_isCameraInitialized || _cameraController == null || _isTakingPhoto) {
       return;
+    }
     if (_phase != GamePhase.playing) return;
 
     _isTakingPhoto = true;
@@ -527,7 +528,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                             boxShadow: [
                               BoxShadow(
                                 color: FlashColors.green.withOpacity(
-                                    0.2 + _pulseController.value * 0.2),
+                                    0.2 + _pulseController.value * 0.2,),
                                 blurRadius: 40 + _pulseController.value * 20,
                                 spreadRadius: 10,
                               ),
@@ -610,12 +611,12 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                           color: FlashColors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: FlashColors.red.withOpacity(0.3)),
+                              color: FlashColors.red.withOpacity(0.3),),
                         ),
                         child: const Row(
                           children: [
                             Icon(VesparaIcons.camera,
-                                color: FlashColors.red, size: 24),
+                                color: FlashColors.red, size: 24,),
                             SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -771,7 +772,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                       // Instruction
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
+                            horizontal: 24, vertical: 12,),
                         decoration: BoxDecoration(
                           color: _getContrastColor().withOpacity(0.2),
                           borderRadius: BorderRadius.circular(30),
@@ -802,7 +803,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                         // Round counter
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                              horizontal: 16, vertical: 8,),
                           decoration: BoxDecoration(
                             color: _getContrastColor().withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
@@ -821,7 +822,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                         if (_captures.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
+                                horizontal: 16, vertical: 8,),
                             decoration: BoxDecoration(
                               color: _getContrastColor().withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
@@ -880,7 +881,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                          horizontal: 20, vertical: 10,),
                       decoration: BoxDecoration(
                         color: _getContrastColor().withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -1039,7 +1040,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                   IconButton(
                     onPressed: _saveAllPhotos,
                     icon: const Icon(VesparaIcons.download,
-                        color: FlashColors.green),
+                        color: FlashColors.green,),
                     tooltip: 'Save All',
                   ),
                 ],
@@ -1263,7 +1264,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+                        horizontal: 24, vertical: 12,),
                     decoration: BoxDecoration(
                       color: FlashColors.green,
                       borderRadius: BorderRadius.circular(30),
@@ -1288,7 +1289,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+                        horizontal: 24, vertical: 12,),
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(30),
@@ -1352,7 +1353,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                   _buildStatItem('🔄', 'Rounds', _totalRounds),
                   _buildStatItem('📸', 'Photos', _captures.length),
                   _buildStatItem('⏱️', 'Duration', _gameDurationMinutes,
-                      suffix: 'min'),
+                      suffix: 'min',),
                 ],
               ),
             ),
@@ -1450,7 +1451,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       );
 
   Widget _buildStatItem(String emoji, String label, int value,
-          {String? suffix}) =>
+          {String? suffix,}) =>
       Column(
         children: [
           Text(emoji, style: const TextStyle(fontSize: 28)),

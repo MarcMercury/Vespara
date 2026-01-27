@@ -23,7 +23,7 @@ class ChatMessage extends Equatable {
   });
 
   factory ChatMessage.fromJson(
-          Map<String, dynamic> json, String currentUserId) =>
+          Map<String, dynamic> json, String currentUserId,) =>
       ChatMessage(
         id: json['id'] as String,
         conversationId: json['conversation_id'] as String,

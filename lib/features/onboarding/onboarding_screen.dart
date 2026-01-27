@@ -364,8 +364,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   String _getTraitPhrase(List<String> traits) {
     if (traits.isEmpty) return 'good vibes';
-    if (traits.length == 1)
+    if (traits.length == 1) {
       return traits.first.replaceAll(RegExp(r'^[^\w]*'), '').trim();
+    }
 
     final clean =
         traits.map((t) => t.replaceAll(RegExp(r'^[^\w]*'), '').trim()).toList();
@@ -461,7 +462,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           IconButton(
                             onPressed: _previousPage,
                             icon: const Icon(Icons.arrow_back,
-                                color: VesparaColors.primary),
+                                color: VesparaColors.primary,),
                           ),
                         Expanded(
                           child: Text(
@@ -606,7 +607,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   gradient: RadialGradient(
                     colors: [
                       VesparaColors.primary,
-                      VesparaColors.primary.withOpacity(0.3)
+                      VesparaColors.primary.withOpacity(0.3),
                     ],
                   ),
                   boxShadow: [
@@ -788,7 +789,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                              horizontal: 6, vertical: 2,),
                           decoration: BoxDecoration(
                             color: VesparaColors.tagsYellow.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(4),
@@ -824,7 +825,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
+                            horizontal: 14, vertical: 10,),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? VesparaColors.primary
@@ -893,7 +894,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                         )
                       : const Icon(Icons.auto_awesome,
-                          size: 18, color: VesparaColors.glow),
+                          size: 18, color: VesparaColors.glow,),
                   label: const Text(
                     'Regenerate',
                     style: TextStyle(color: VesparaColors.glow),

@@ -43,7 +43,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
         return events
             .where(
               (e) => e.rsvps.any(
-                  (r) => r.userId == 'current-user' && r.status == 'invited'),
+                  (r) => r.userId == 'current-user' && r.status == 'invited',),
             )
             .toList();
       case 'Hosting':
@@ -58,7 +58,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               (e) =>
                   e.isPast &&
                   e.rsvps.any(
-                      (r) => r.userId == 'current-user' && r.status == 'going'),
+                      (r) => r.userId == 'current-user' && r.status == 'going',),
             )
             .toList();
       case 'All past events':
@@ -147,7 +147,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back,
-                      color: VesparaColors.primary),
+                      color: VesparaColors.primary,),
                 ),
                 IconButton(
                   onPressed: _showSearch,
@@ -279,7 +279,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                            horizontal: 6, vertical: 2,),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? VesparaColors.background.withOpacity(0.2)
@@ -534,7 +534,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   }
 
   Widget _buildOptionTile(IconData icon, String label, VoidCallback onTap,
-          {bool isDestructive = false}) =>
+          {bool isDestructive = false,}) =>
       ListTile(
         leading: Icon(
           icon,

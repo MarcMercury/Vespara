@@ -139,7 +139,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.qr_code_scanner,
-                    color: Colors.white, size: 20),
+                    color: Colors.white, size: 20,),
               ),
             ),
           ],
@@ -170,7 +170,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             Tab(icon: Icon(Icons.auto_awesome, size: 16), text: 'BUILD'),
             Tab(
                 icon: Icon(Icons.settings_outlined, size: 16),
-                text: 'SETTINGS'),
+                text: 'SETTINGS',),
           ],
         ),
       );
@@ -189,14 +189,14 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline,
-                color: VesparaColors.error, size: 48),
+                color: VesparaColors.error, size: 48,),
             const SizedBox(height: 16),
             const Text('Failed to load profile',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
             TextButton(
               onPressed: () => ref.invalidate(userProfileProvider),
               child: const Text('Retry',
-                  style: TextStyle(color: VesparaColors.glow)),
+                  style: TextStyle(color: VesparaColors.glow),),
             ),
           ],
         ),
@@ -208,14 +208,14 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.person_off_outlined,
-                      color: VesparaColors.secondary, size: 48),
+                      color: VesparaColors.secondary, size: 48,),
                   const SizedBox(height: 16),
                   const Text('No profile found',
-                      style: TextStyle(color: VesparaColors.secondary)),
+                      style: TextStyle(color: VesparaColors.secondary),),
                   TextButton(
                     onPressed: () => ref.invalidate(userProfileProvider),
                     child: const Text('Retry',
-                        style: TextStyle(color: VesparaColors.glow)),
+                        style: TextStyle(color: VesparaColors.glow),),
                   ),
                 ],
               ),
@@ -240,7 +240,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                       gradient: LinearGradient(
                         colors: [
                           VesparaColors.glow,
-                          VesparaColors.glow.withOpacity(0.5)
+                          VesparaColors.glow.withOpacity(0.5),
                         ],
                       ),
                       border: Border.all(color: VesparaColors.glow, width: 3),
@@ -267,7 +267,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                         border: Border.all(color: VesparaColors.glow),
                       ),
                       child: const Icon(Icons.edit,
-                          size: 16, color: VesparaColors.glow),
+                          size: 16, color: VesparaColors.glow,),
                     ),
                   ),
                 ],
@@ -302,73 +302,73 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
             // Profile sections
             _buildProfileSection(
-                'About Me', profile.bio ?? 'No bio yet', Icons.person_outline),
+                'About Me', profile.bio ?? 'No bio yet', Icons.person_outline,),
             _buildProfileSection(
                 'Location',
                 profile.displayLocation.isNotEmpty
                     ? profile.displayLocation
                     : 'Not set',
-                Icons.location_on_outlined),
+                Icons.location_on_outlined,),
             _buildProfileSection('Pronouns', profile.pronouns ?? 'Not set',
-                Icons.person_pin_outlined),
+                Icons.person_pin_outlined,),
             _buildProfileSection(
                 'Gender',
                 profile.gender.isNotEmpty
                     ? profile.gender.join(', ')
                     : 'Not set',
-                Icons.face_outlined),
+                Icons.face_outlined,),
             _buildProfileSection(
                 'Orientation',
                 profile.orientation.isNotEmpty
                     ? profile.orientation.join(', ')
                     : 'Not set',
-                Icons.favorite_border),
+                Icons.favorite_border,),
             _buildProfileSection(
                 'Relationship Status',
                 profile.relationshipStatus.isNotEmpty
                     ? profile.relationshipStatus.join(', ')
                     : 'Not set',
-                Icons.people_outline),
+                Icons.people_outline,),
             _buildProfileSection(
                 'Seeking',
                 profile.seeking.isNotEmpty
                     ? profile.seeking.join(', ')
                     : 'Not set',
-                Icons.search),
+                Icons.search,),
             _buildProfileSection(
                 'Looking For',
                 profile.lookingFor.isNotEmpty
                     ? profile.lookingFor.join(', ')
                     : 'Not set',
-                Icons.favorite_outline),
+                Icons.favorite_outline,),
             _buildProfileSection(
                 'Kinks & Interests',
                 profile.kinks.isNotEmpty ? profile.kinks.join(', ') : 'Not set',
-                Icons.whatshot_outlined),
+                Icons.whatshot_outlined,),
             _buildProfileSection(
                 'Boundaries',
                 profile.boundaries.isNotEmpty
                     ? profile.boundaries.join(', ')
                     : 'Not set',
-                Icons.shield_outlined),
+                Icons.shield_outlined,),
             _buildProfileSection(
                 'Love Languages',
                 profile.loveLanguages.isNotEmpty
                     ? profile.loveLanguages.join(', ')
                     : 'Not set',
-                Icons.language),
+                Icons.language,),
             _buildProfileSection(
                 'Availability',
                 profile.availabilityGeneral.isNotEmpty
                     ? profile.availabilityGeneral.join(', ')
                     : 'Not set',
-                Icons.schedule_outlined),
+                Icons.schedule_outlined,),
             _buildProfileSection('Hosting Status',
-                profile.hostingStatus ?? 'Not set', Icons.home_outlined),
+                profile.hostingStatus ?? 'Not set', Icons.home_outlined,),
             _buildProfileSection(
                 'Discretion Level',
                 profile.discretionLevel ?? 'Not set',
-                Icons.visibility_outlined),
+                Icons.visibility_outlined,),
 
             const SizedBox(height: 24),
 
@@ -386,7 +386,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   ),
                 ),
                 child: const Text('Edit Profile',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                    style: TextStyle(fontWeight: FontWeight.w600),),
               ),
             ),
           ],
@@ -412,13 +412,13 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             Container(
                 width: 1,
                 height: 40,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildStatColumn(
-                '${((_analytics?.responseRate ?? 0.0) * 100).toInt()}%', 'Response'),
+                '${((_analytics?.responseRate ?? 0.0) * 100).toInt()}%', 'Response',),
             Container(
                 width: 1,
                 height: 40,
-                color: VesparaColors.glow.withOpacity(0.2)),
+                color: VesparaColors.glow.withOpacity(0.2),),
             _buildStatColumn((_analytics?.activeDays ?? 0).toString(), 'Days Active'),
           ],
         ),
@@ -481,7 +481,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ),
             ),
             const Icon(Icons.chevron_right,
-                color: VesparaColors.secondary, size: 20),
+                color: VesparaColors.secondary, size: 20,),
           ],
         ),
       );
@@ -598,7 +598,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             const Row(
               children: [
                 Icon(Icons.heart_broken,
-                    color: VesparaColors.tagsYellow, size: 18),
+                    color: VesparaColors.tagsYellow, size: 18,),
                 SizedBox(width: 8),
                 Text(
                   'Your Dating Style',
@@ -651,13 +651,13 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             const SizedBox(height: 16),
             _buildMetricRow(
-                'Ghost Rate', _analytics?.ghostRate ?? 0.0, VesparaColors.error),
+                'Ghost Rate', _analytics?.ghostRate ?? 0.0, VesparaColors.error,),
             _buildMetricRow(
-                'Flake Rate', _analytics?.flakeRate ?? 0.0, VesparaColors.warning),
+                'Flake Rate', _analytics?.flakeRate ?? 0.0, VesparaColors.warning,),
             _buildMetricRow('Response Rate', _analytics?.responseRate ?? 0.0,
-                VesparaColors.success),
+                VesparaColors.success,),
             _buildMetricRow(
-                'Match Rate', _analytics?.matchRate ?? 0.0, VesparaColors.glow),
+                'Match Rate', _analytics?.matchRate ?? 0.0, VesparaColors.glow,),
           ],
         ),
       );
@@ -741,7 +741,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           const Row(
             children: [
               Icon(Icons.lightbulb_outline,
-                  color: VesparaColors.success, size: 18),
+                  color: VesparaColors.success, size: 18,),
               SizedBox(width: 8),
               Text(
                 'How to Not Suck',
@@ -761,7 +761,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.check_circle,
-                      size: 16, color: VesparaColors.success),
+                      size: 16, color: VesparaColors.success,),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -821,7 +821,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.warning_amber,
-                size: 14, color: VesparaColors.error),
+                size: 14, color: VesparaColors.error,),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -847,11 +847,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => const Center(
           child: Text('Error loading profile',
-              style: TextStyle(color: VesparaColors.error))),
+              style: TextStyle(color: VesparaColors.error),),),
       data: (profile) => profile == null
           ? const Center(
               child: Text('No profile found',
-                  style: TextStyle(color: VesparaColors.secondary)))
+                  style: TextStyle(color: VesparaColors.secondary),),)
           : _buildBuildContent(profile),
     );
   }
@@ -917,7 +917,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             gradient: LinearGradient(
               colors: [
                 VesparaColors.glow.withOpacity(0.2),
-                VesparaColors.surface
+                VesparaColors.surface,
               ],
             ),
             borderRadius: BorderRadius.circular(16),
@@ -925,7 +925,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           child: Row(
             children: [
               const Icon(Icons.auto_awesome,
-                  color: VesparaColors.glow, size: 32),
+                  color: VesparaColors.glow, size: 32,),
               const SizedBox(width: 12),
               const Expanded(
                 child: Column(
@@ -942,7 +942,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     Text(
                       'Help AI understand you better',
                       style: TextStyle(
-                          fontSize: 12, color: VesparaColors.secondary),
+                          fontSize: 12, color: VesparaColors.secondary,),
                     ),
                   ],
                 ),
@@ -974,7 +974,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   const Row(
                     children: [
                       Icon(Icons.auto_fix_high,
-                          color: VesparaColors.glow, size: 20),
+                          color: VesparaColors.glow, size: 20,),
                       SizedBox(width: 8),
                       Text(
                         'CHECK ME',
@@ -998,7 +998,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                       style: TextStyle(
                           fontSize: 10,
                           color: VesparaColors.glow,
-                          fontWeight: FontWeight.bold),
+                          fontWeight: FontWeight.bold,),
                     ),
                   ),
                 ],
@@ -1011,7 +1011,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               const SizedBox(height: 12),
               const Text('You might also like:',
                   style:
-                      TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                      TextStyle(fontSize: 12, color: VesparaColors.secondary),),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1043,7 +1043,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 final isSelected =
                     selectedVibes.any((v) => v.contains(vibe['label']!));
                 return _buildVibeChip(
-                    vibe['emoji']!, vibe['label']!, isSelected);
+                    vibe['emoji']!, vibe['label']!, isSelected,);
               }).toList(),
             ),
           ],
@@ -1065,7 +1065,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 final isSelected =
                     selectedInterests.contains(interest['label']);
                 return _buildVibeChip(
-                    interest['emoji']!, interest['label']!, isSelected);
+                    interest['emoji']!, interest['label']!, isSelected,);
               }).toList(),
             ),
           ],
@@ -1135,7 +1135,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           ),
           icon: const Icon(Icons.edit),
           label: const Text('Edit Your Experience',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+              style: TextStyle(fontWeight: FontWeight.bold),),
         ),
 
         const SizedBox(height: 32),
@@ -1173,14 +1173,14 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               Text(
                 '$selectedCount selected',
                 style: const TextStyle(
-                    fontSize: 12, color: VesparaColors.secondary),
+                    fontSize: 12, color: VesparaColors.secondary,),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(subtitle,
               style: const TextStyle(
-                  fontSize: 12, color: VesparaColors.secondary)),
+                  fontSize: 12, color: VesparaColors.secondary,),),
           const SizedBox(height: 12),
           ...children,
         ],
@@ -1266,13 +1266,13 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         children: [
           _buildSettingsSection('Discovery Preferences', [
             _buildSettingTile(
-                'Age Range', '21-45', Icons.cake_outlined, _showAgeRangeDialog),
+                'Age Range', '21-45', Icons.cake_outlined, _showAgeRangeDialog,),
             _buildSettingTile('Distance', 'Within 25 miles',
-                Icons.location_on_outlined, _showDistanceDialog),
+                Icons.location_on_outlined, _showDistanceDialog,),
             _buildSettingTile('Show Me', 'Everyone', Icons.people_outline,
-                _showGenderPreferenceDialog),
+                _showGenderPreferenceDialog,),
             _buildSettingTile('Relationship Types', '3 selected',
-                Icons.favorite_outline, _showRelationshipTypesDialog),
+                Icons.favorite_outline, _showRelationshipTypesDialog,),
           ]),
           const SizedBox(height: 16),
           _buildSettingsSection('Notifications', [
@@ -1290,21 +1290,21 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           const SizedBox(height: 16),
           _buildSettingsSection('Calendar Sync', [
             _buildSettingTile('Google Calendar', 'Connected',
-                Icons.calendar_today, () => _showCalendarSyncDialog('Google')),
+                Icons.calendar_today, () => _showCalendarSyncDialog('Google'),),
             _buildSettingTile('Apple Calendar', 'Not Connected', Icons.event,
-                () => _showCalendarSyncDialog('Apple')),
+                () => _showCalendarSyncDialog('Apple'),),
           ]),
           const SizedBox(height: 16),
           _buildSettingsSection('Account', [
             _buildSettingTile('Subscription', 'Free', Icons.star_outline,
-                _showSubscriptionDialog),
+                _showSubscriptionDialog,),
             _buildSettingTile(
                 'Email',
                 ref.watch(userProfileProvider).valueOrNull?.email ?? 'Not set',
                 Icons.email_outlined,
-                _showEditEmailDialog),
+                _showEditEmailDialog,),
             _buildSettingTile('Phone', '+1 555-****', Icons.phone_outlined,
-                _showEditPhoneDialog),
+                _showEditPhoneDialog,),
           ]),
           const SizedBox(height: 24),
           _buildDangerZone(),
@@ -1330,7 +1330,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary)),
+                      color: VesparaColors.primary,),),
               const SizedBox(height: 24),
               Text(
                 '${range.start.toInt()} - ${range.end.toInt()} years',
@@ -1353,19 +1353,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     backgroundColor: VesparaColors.glow,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content: Text(
-                              'Age range updated to ${range.start.toInt()}-${range.end.toInt()}')),
+                              'Age range updated to ${range.start.toInt()}-${range.end.toInt()}',),),
                     );
                   },
                   child: const Text('Save',
                       style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.w600)),
+                          color: Colors.black, fontWeight: FontWeight.w600,),),
                 ),
               ),
             ],
@@ -1394,11 +1394,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary)),
+                      color: VesparaColors.primary,),),
               const SizedBox(height: 24),
               Text('${distance.toInt()} miles',
                   style:
-                      const TextStyle(fontSize: 24, color: VesparaColors.glow)),
+                      const TextStyle(fontSize: 24, color: VesparaColors.glow),),
               Slider(
                 value: distance,
                 min: 1,
@@ -1416,19 +1416,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     backgroundColor: VesparaColors.glow,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content: Text(
-                              'Distance updated to ${distance.toInt()} miles')),
+                              'Distance updated to ${distance.toInt()} miles',),),
                     );
                   },
                   child: const Text('Save',
                       style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.w600)),
+                          color: Colors.black, fontWeight: FontWeight.w600,),),
                 ),
               ),
             ],
@@ -1457,12 +1457,12 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary)),
+                      color: VesparaColors.primary,),),
               const SizedBox(height: 24),
               ...['Women', 'Men', 'Everyone'].map(
                 (option) => RadioListTile<String>(
                   title: Text(option,
-                      style: const TextStyle(color: VesparaColors.primary)),
+                      style: const TextStyle(color: VesparaColors.primary),),
                   value: option,
                   groupValue: selected,
                   activeColor: VesparaColors.glow,
@@ -1502,7 +1502,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary)),
+                      color: VesparaColors.primary,),),
               const SizedBox(height: 24),
               Wrap(
                 spacing: 8,
@@ -1523,7 +1523,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                         labelStyle: TextStyle(
                             color: selected.contains(type)
                                 ? VesparaColors.glow
-                                : VesparaColors.primary),
+                                : VesparaColors.primary,),
                       ),
                     )
                     .toList(),
@@ -1536,19 +1536,19 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     backgroundColor: VesparaColors.glow,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content: Text(
-                              '${selected.length} relationship types selected')),
+                              '${selected.length} relationship types selected',),),
                     );
                   },
                   child: const Text('Save',
                       style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.w600)),
+                          color: Colors.black, fontWeight: FontWeight.w600,),),
                 ),
               ),
             ],
@@ -1565,7 +1565,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('$provider Calendar',
-            style: const TextStyle(color: VesparaColors.primary)),
+            style: const TextStyle(color: VesparaColors.primary),),
         content: Text(
           provider == 'Google'
               ? 'Your Google Calendar is connected. Disconnect?'
@@ -1576,7 +1576,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1585,11 +1585,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 SnackBar(
                     content: Text(provider == 'Google'
                         ? 'Disconnected from Google Calendar'
-                        : 'Connecting to Apple Calendar...')),
+                        : 'Connecting to Apple Calendar...',),),
               );
             },
             child: Text(provider == 'Google' ? 'Disconnect' : 'Connect',
-                style: const TextStyle(color: VesparaColors.glow)),
+                style: const TextStyle(color: VesparaColors.glow),),
           ),
         ],
       ),
@@ -1616,10 +1616,10 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: VesparaColors.glow)),
+                    color: VesparaColors.glow,),),
             const SizedBox(height: 8),
             const Text('You\'re on the Plus plan!',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
             const SizedBox(height: 24),
             _buildSubscriptionFeature('Unlimited swipes'),
             _buildSubscriptionFeature('See who likes you'),
@@ -1631,7 +1631,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text('Opening subscription management...')),
+                      content: Text('Opening subscription management...'),),
                 );
               },
               style: OutlinedButton.styleFrom(
@@ -1639,10 +1639,10 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),),
               ),
               child: const Text('Manage Subscription',
-                  style: TextStyle(color: VesparaColors.glow)),
+                  style: TextStyle(color: VesparaColors.glow),),
             ),
           ],
         ),
@@ -1655,7 +1655,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         child: Row(
           children: [
             const Icon(Icons.check_circle,
-                color: VesparaColors.success, size: 20),
+                color: VesparaColors.success, size: 20,),
             const SizedBox(width: 12),
             Text(feature, style: const TextStyle(color: VesparaColors.primary)),
           ],
@@ -1671,7 +1671,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Update Email',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(
@@ -1684,7 +1684,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1692,7 +1692,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content:
-                        Text('Verification email sent to ${controller.text}')),
+                        Text('Verification email sent to ${controller.text}'),),
               );
             },
             child:
@@ -1710,7 +1710,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Update Phone',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: TextField(
           keyboardType: TextInputType.phone,
           decoration: InputDecoration(
@@ -1725,14 +1725,14 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('Verification code sent to your phone')),
+                    content: Text('Verification code sent to your phone'),),
               );
             },
             child:
@@ -1769,7 +1769,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
       );
 
   Widget _buildSettingTile(
-          String title, String value, IconData icon, VoidCallback onTap) =>
+          String title, String value, IconData icon, VoidCallback onTap,) =>
       ListTile(
         leading: Icon(icon, color: VesparaColors.glow, size: 20),
         title: Text(
@@ -1791,7 +1791,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right,
-                color: VesparaColors.secondary, size: 18),
+                color: VesparaColors.secondary, size: 18,),
           ],
         ),
         onTap: onTap,
@@ -1830,22 +1830,22 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.pause_circle_outline,
-                  color: VesparaColors.warning),
+                  color: VesparaColors.warning,),
               title: const Text('Pause Account',
-                  style: TextStyle(color: VesparaColors.primary)),
+                  style: TextStyle(color: VesparaColors.primary),),
               onTap: _showPauseAccountDialog,
             ),
             ListTile(
               leading:
                   const Icon(Icons.delete_outline, color: VesparaColors.error),
               title: const Text('Delete Account',
-                  style: TextStyle(color: VesparaColors.error)),
+                  style: TextStyle(color: VesparaColors.error),),
               onTap: _showDeleteAccountDialog,
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: VesparaColors.error),
               title: const Text('Log Out',
-                  style: TextStyle(color: VesparaColors.error)),
+                  style: TextStyle(color: VesparaColors.error),),
               onTap: _showLogoutDialog,
             ),
           ],
@@ -1859,7 +1859,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Pause Your Account?',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: const Text(
           'Your profile will be hidden and you won\'t receive new matches. You can unpause anytime.',
           style: TextStyle(color: VesparaColors.secondary),
@@ -1868,7 +1868,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1882,7 +1882,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               );
             },
             child: const Text('Pause',
-                style: TextStyle(color: VesparaColors.warning)),
+                style: TextStyle(color: VesparaColors.warning),),
           ),
         ],
       ),
@@ -1896,7 +1896,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Account?',
-            style: TextStyle(color: VesparaColors.error)),
+            style: TextStyle(color: VesparaColors.error),),
         content: const Text(
           'This action cannot be undone. All your data, matches, and messages will be permanently deleted.',
           style: TextStyle(color: VesparaColors.secondary),
@@ -1905,7 +1905,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1919,7 +1919,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               );
             },
             child: const Text('Delete Forever',
-                style: TextStyle(color: VesparaColors.error)),
+                style: TextStyle(color: VesparaColors.error),),
           ),
         ],
       ),
@@ -1933,7 +1933,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Log Out?',
-            style: TextStyle(color: VesparaColors.primary)),
+            style: TextStyle(color: VesparaColors.primary),),
         content: const Text(
           'You\'ll need to sign in again to access your account.',
           style: TextStyle(color: VesparaColors.secondary),
@@ -1942,7 +1942,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary)),
+                style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
             onPressed: () {
@@ -1953,7 +1953,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               );
             },
             child: const Text('Log Out',
-                style: TextStyle(color: VesparaColors.error)),
+                style: TextStyle(color: VesparaColors.error),),
           ),
         ],
       ),

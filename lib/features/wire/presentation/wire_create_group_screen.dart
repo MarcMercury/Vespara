@@ -243,7 +243,7 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.delete_outline,
-                      color: VesparaColors.tagsRed),
+                      color: VesparaColors.tagsRed,),
                 ),
                 title: const Text('Remove Photo'),
                 onTap: () {
@@ -353,7 +353,7 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
                   final connection = _connections.firstWhere(
                     (c) => c['connected_user']?['id'] == participantId,
                     orElse: () => {
-                      'connected_user': {'name': 'Unknown'}
+                      'connected_user': {'name': 'Unknown'},
                     },
                   );
                   final name =
@@ -662,7 +662,7 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
                   final connection = _connections.firstWhere(
                     (c) => c['connected_user']?['id'] == participantId,
                     orElse: () => {
-                      'connected_user': {'name': 'Unknown', 'avatar_url': null}
+                      'connected_user': {'name': 'Unknown', 'avatar_url': null},
                     },
                   );
                   final user =

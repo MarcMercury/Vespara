@@ -598,7 +598,7 @@ class _InsightPanelState extends ConsumerState<InsightPanel> {
                   .map(
                     (interest) => Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                          horizontal: 10, vertical: 4,),
                       decoration: BoxDecoration(
                         color: Theme.of(context)
                             .colorScheme
@@ -712,7 +712,7 @@ class QuickActionChip extends StatelessWidget {
                 )
               else
                 Icon(icon,
-                    size: 14, color: Theme.of(context).colorScheme.primary),
+                    size: 14, color: Theme.of(context).colorScheme.primary,),
               const SizedBox(width: 6),
               Text(
                 label,

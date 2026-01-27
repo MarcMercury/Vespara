@@ -165,7 +165,7 @@ class WireNotifier extends StateNotifier<WireState> {
 
       final conversations = (response as List<dynamic>)
           .map(
-              (json) => WireConversation.fromJson(json as Map<String, dynamic>))
+              (json) => WireConversation.fromJson(json as Map<String, dynamic>),)
           .toList();
 
       state = state.copyWith(
@@ -390,7 +390,7 @@ class WireNotifier extends StateNotifier<WireState> {
 
   /// Load messages for a conversation
   Future<void> loadMessages(String conversationId,
-      {int limit = 50, String? before}) async {
+      {int limit = 50, String? before,}) async {
     try {
       final baseQuery = _supabase.from('messages').select('''
             *,
@@ -761,7 +761,7 @@ class WireNotifier extends StateNotifier<WireState> {
 
   /// Star/unstar a message
   Future<void> toggleStarMessage(
-      String messageId, String conversationId) async {
+      String messageId, String conversationId,) async {
     final messages = state.messagesByConversation[conversationId] ?? [];
     final message = messages.firstWhere((m) => m.id == messageId);
     final isStarred = message.starredBy.contains(_currentUserId);
@@ -885,7 +885,7 @@ class WireNotifier extends StateNotifier<WireState> {
 
       final participants = (response as List<dynamic>)
           .map((json) =>
-              ConversationParticipant.fromJson(json as Map<String, dynamic>))
+              ConversationParticipant.fromJson(json as Map<String, dynamic>),)
           .toList();
 
       state = state.copyWith(
@@ -901,7 +901,7 @@ class WireNotifier extends StateNotifier<WireState> {
 
   /// Add participants to a group
   Future<bool> addParticipants(
-      String conversationId, List<String> userIds) async {
+      String conversationId, List<String> userIds,) async {
     try {
       for (final userId in userIds) {
         await _supabase.rpc(
@@ -1214,19 +1214,19 @@ final wireProvider = StateNotifierProvider<WireNotifier, WireState>((ref) {
 
 /// Provider for active conversation messages
 final activeMessagesProvider = Provider<List<WireMessage>>(
-    (ref) => ref.watch(wireProvider).activeMessages);
+    (ref) => ref.watch(wireProvider).activeMessages,);
 
 /// Provider for active conversation participants
 final activeParticipantsProvider = Provider<List<ConversationParticipant>>(
-    (ref) => ref.watch(wireProvider).activeParticipants);
+    (ref) => ref.watch(wireProvider).activeParticipants,);
 
 /// Provider for conversation list
 final conversationsProvider = Provider<List<WireConversation>>(
-    (ref) => ref.watch(wireProvider).activeConversations);
+    (ref) => ref.watch(wireProvider).activeConversations,);
 
 /// Provider for group conversations only
 final groupConversationsProvider = Provider<List<WireConversation>>(
-    (ref) => ref.watch(wireProvider).groupConversations);
+    (ref) => ref.watch(wireProvider).groupConversations,);
 
 /// Provider for total unread count
 final totalUnreadProvider =

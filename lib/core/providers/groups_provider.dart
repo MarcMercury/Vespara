@@ -491,7 +491,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     try {
       await _supabase.from('notifications').update({
         'is_read': true,
-        'read_at': DateTime.now().toIso8601String()
+        'read_at': DateTime.now().toIso8601String(),
       }).eq('id', notificationId);
 
       await loadNotifications();

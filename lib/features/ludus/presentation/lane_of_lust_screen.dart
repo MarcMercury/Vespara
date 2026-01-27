@@ -161,7 +161,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                             boxShadow: [
                               BoxShadow(
                                 color: LaneColors.crimson.withOpacity(
-                                    0.2 + _glowController.value * 0.2),
+                                    0.2 + _glowController.value * 0.2,),
                                 blurRadius: 40 + _glowController.value * 20,
                                 spreadRadius: 10,
                               ),
@@ -196,14 +196,14 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                         style: TextStyle(
                             fontSize: 16,
                             fontStyle: FontStyle.italic,
-                            color: Colors.white54),
+                            color: Colors.white54,),
                       ),
 
                       const SizedBox(height: 16),
 
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
+                            horizontal: 20, vertical: 10,),
                         decoration: BoxDecoration(
                           color: LaneColors.surface,
                           borderRadius: BorderRadius.circular(20),
@@ -212,13 +212,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(VesparaIcons.trophy,
-                                color: LaneColors.gold, size: 20),
+                                color: LaneColors.gold, size: 20,),
                             SizedBox(width: 8),
                             Text(
                               'First to 10 Cards Wins!',
                               style: TextStyle(
                                   color: LaneColors.gold,
-                                  fontWeight: FontWeight.w600),
+                                  fontWeight: FontWeight.w600,),
                             ),
                           ],
                         ),
@@ -254,7 +254,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(VesparaIcons.add,
-                                  color: Colors.white, size: 24),
+                                  color: Colors.white, size: 24,),
                               SizedBox(width: 12),
                               Text(
                                 'START GAME',
@@ -286,7 +286,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                             child: Text(
                               'How It Works',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.white70),
+                                  fontSize: 16, color: Colors.white70,),
                             ),
                           ),
                         ),
@@ -348,13 +348,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                 height: 4,
                 decoration: BoxDecoration(
                     color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2))),
+                    borderRadius: BorderRadius.circular(2),),),
             const SizedBox(height: 24),
             const Text('Enter Your Name',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white)),
+                    color: Colors.white,),),
             const SizedBox(height: 24),
             TextField(
               controller: _nameController,
@@ -366,7 +366,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                 fillColor: LaneColors.background,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none),
+                    borderSide: BorderSide.none,),
                 prefixIcon:
                     const Icon(VesparaIcons.person, color: LaneColors.crimson),
               ),
@@ -390,11 +390,11 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),),
                 ),
                 child: const Text('CREATE GAME',
                     style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700),),
               ),
             ),
           ],
@@ -409,7 +409,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
       backgroundColor: LaneColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         maxChildSize: 0.9,
@@ -427,27 +427,27 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                       height: 4,
                       decoration: BoxDecoration(
                           color: Colors.white24,
-                          borderRadius: BorderRadius.circular(2)))),
+                          borderRadius: BorderRadius.circular(2),),),),
               const SizedBox(height: 24),
               const Center(
                   child: Text('How to Play',
                       style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white))),
+                          color: Colors.white,),),),
               const SizedBox(height: 24),
               _buildHowToStep('1', 'The Deal',
-                  'Each player starts with 3 cards in their Lane, sorted by Desire Index'),
+                  'Each player starts with 3 cards in their Lane, sorted by Desire Index',),
               _buildHowToStep('2', 'Draw a Card',
-                  'On your turn, you draw a Mystery Card - you see the scenario but NOT the index!'),
+                  'On your turn, you draw a Mystery Card - you see the scenario but NOT the index!',),
               _buildHowToStep('3', 'Place It',
-                  'Drag the card to where you think it belongs in your sorted Lane'),
+                  'Drag the card to where you think it belongs in your sorted Lane',),
               _buildHowToStep('4', 'Reveal',
-                  'The card flips to reveal its true Desire Index (1-100)'),
+                  'The card flips to reveal its true Desire Index (1-100)',),
               _buildHowToStep('5', 'Success?',
-                  'If you placed it correctly, it stays! If not, the next player can steal it'),
+                  'If you placed it correctly, it stays! If not, the next player can steal it',),
               _buildHowToStep('🏆', 'Win',
-                  'First player to collect 10 cards in their Lane wins!'),
+                  'First player to collect 10 cards in their Lane wins!',),
               const SizedBox(height: 24),
               const Center(
                 child: Text(
@@ -474,11 +474,11 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
               height: 32,
               decoration: BoxDecoration(
                   color: LaneColors.crimson,
-                  borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),),
               child: Center(
                   child: Text(number,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, color: Colors.white))),
+                          fontWeight: FontWeight.w700, color: Colors.white,),),),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -489,11 +489,11 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                       style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white)),
+                          color: Colors.white,),),
                   const SizedBox(height: 2),
                   Text(description,
                       style:
-                          const TextStyle(fontSize: 14, color: Colors.white54)),
+                          const TextStyle(fontSize: 14, color: Colors.white54),),
                 ],
               ),
             ),
@@ -523,7 +523,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
-                        color: Colors.white70)),
+                        color: Colors.white70,),),
                 const Spacer(),
                 const SizedBox(width: 48),
               ],
@@ -540,13 +540,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [
                     LaneColors.crimson.withOpacity(0.2),
-                    LaneColors.gold.withOpacity(0.2)
-                  ]),
+                    LaneColors.gold.withOpacity(0.2),
+                  ],),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                       color: LaneColors.crimson
                           .withOpacity(0.5 + _pulseController.value * 0.3),
-                      width: 2),
+                      width: 2,),
                 ),
                 child: Column(
                   children: [
@@ -554,17 +554,17 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                         style: TextStyle(
                             fontSize: 12,
                             letterSpacing: 2,
-                            color: Colors.white54)),
+                            color: Colors.white54,),),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () {
                         Clipboard.setData(
-                            ClipboardData(text: state.roomCode ?? ''));
+                            ClipboardData(text: state.roomCode ?? ''),);
                         HapticFeedback.lightImpact();
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Code copied!'),
-                                duration: Duration(seconds: 1)));
+                                duration: Duration(seconds: 1),),);
                       },
                       child: Text(
                         state.roomCode ?? '----',
@@ -572,7 +572,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                             fontSize: 40,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 8,
-                            color: LaneColors.crimson),
+                            color: LaneColors.crimson,),
                       ),
                     ),
                   ],
@@ -592,7 +592,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1,
-                          color: Colors.white54)),
+                          color: Colors.white54,),),
                   const SizedBox(height: 12),
                   Expanded(
                     child: ListView.builder(
@@ -626,7 +626,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                          colors: [LaneColors.crimson, Color(0xFFFF6B6B)]),
+                          colors: [LaneColors.crimson, Color(0xFFFF6B6B)],),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Row(
@@ -639,7 +639,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
-                                letterSpacing: 2)),
+                                letterSpacing: 2,),),
                       ],
                     ),
                   ),
@@ -650,7 +650,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
               const Padding(
                 padding: EdgeInsets.only(top: 16),
                 child: Text('Need at least 2 players',
-                    style: TextStyle(color: Colors.white38, fontSize: 14)),
+                    style: TextStyle(color: Colors.white38, fontSize: 14),),
               ),
           ],
         ),
@@ -665,7 +665,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           border: Border.all(
               color: player.isHost
                   ? LaneColors.gold.withOpacity(0.5)
-                  : player.avatarColor.withOpacity(0.3)),
+                  : player.avatarColor.withOpacity(0.3),),
         ),
         child: Row(
           children: [
@@ -675,13 +675,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
               decoration: BoxDecoration(
                   color: player.avatarColor.withOpacity(0.2),
                   shape: BoxShape.circle,
-                  border: Border.all(color: player.avatarColor, width: 2)),
+                  border: Border.all(color: player.avatarColor, width: 2),),
               child: Center(
                   child: Text(player.displayName[0].toUpperCase(),
                       style: TextStyle(
                           fontSize: 18,
                           color: player.avatarColor,
-                          fontWeight: FontWeight.w700))),
+                          fontWeight: FontWeight.w700,),),),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -692,14 +692,14 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                       style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white)),
+                          color: Colors.white,),),
                   if (player.isHost)
                     const Text('HOST',
                         style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: LaneColors.gold,
-                            letterSpacing: 1)),
+                            letterSpacing: 1,),),
                 ],
               ),
             ),
@@ -708,7 +708,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                 onPressed: () =>
                     ref.read(laneOfLustProvider.notifier).removePlayer(index),
                 icon: const Icon(VesparaIcons.close,
-                    color: Colors.white38, size: 20),
+                    color: Colors.white38, size: 20,),
               ),
           ],
         ),
@@ -747,13 +747,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           style: const TextStyle(color: Colors.white),
           decoration: const InputDecoration(
               hintText: 'Player name',
-              hintStyle: TextStyle(color: Colors.white38)),
+              hintStyle: TextStyle(color: Colors.white38),),
           autofocus: true,
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+              child: const Text('Cancel'),),
           ElevatedButton(
             onPressed: () {
               if (_nameController.text.trim().isNotEmpty) {
@@ -788,13 +788,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white)),
+                      color: Colors.white,),),
               SizedBox(height: 16),
               SizedBox(
                   width: 100,
                   child: LinearProgressIndicator(
                       color: LaneColors.crimson,
-                      backgroundColor: LaneColors.surface)),
+                      backgroundColor: LaneColors.surface,),),
             ],
           ),
         ),
@@ -884,7 +884,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                           style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 12),
+                              fontSize: 12,),
                         ),
                       ),
                     ),
@@ -896,7 +896,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                           Text(
                             p.displayName,
                             style: const TextStyle(
-                                color: Colors.white70, fontSize: 11),
+                                color: Colors.white70, fontSize: 11,),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -1060,7 +1060,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
   }
 
   Widget _buildMysteryCard(LaneCard card, bool isRevealed,
-          {bool isDragging = false}) =>
+          {bool isDragging = false,}) =>
       AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         width: isDragging ? 150 : 170,
@@ -1100,7 +1100,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     colors: isRevealed
                         ? [
                             card.indexColor.withOpacity(0.15),
-                            card.indexColor.withOpacity(0.05)
+                            card.indexColor.withOpacity(0.05),
                           ]
                         : [LaneColors.mystery.withOpacity(0.1), Colors.white],
                   ),
@@ -1118,7 +1118,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     alignment: Alignment.topLeft,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                          horizontal: 10, vertical: 5,),
                       decoration: BoxDecoration(
                         color:
                             isRevealed ? card.indexColor : LaneColors.mystery,
@@ -1171,7 +1171,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                       color: card.category.color.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                          color: card.category.color.withOpacity(0.3)),
+                          color: card.category.color.withOpacity(0.3),),
                     ),
                     child: Text(
                       card.category.displayName,
@@ -1254,13 +1254,13 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
-                        color: Colors.white54)),
+                        color: Colors.white54,),),
                 const SizedBox(width: 8),
                 Text('${cards.length}/${state.winTarget}',
                     style: const TextStyle(
                         fontSize: 12,
                         color: LaneColors.gold,
-                        fontWeight: FontWeight.w700)),
+                        fontWeight: FontWeight.w700,),),
               ],
             ),
           ),
@@ -1416,7 +1416,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           child: isHovered
               ? const Center(
                   child: Icon(VesparaIcons.add,
-                      color: LaneColors.success, size: 32),
+                      color: LaneColors.success, size: 32,),
                 )
               : null,
         );
@@ -1452,11 +1452,11 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white)),
+                      color: Colors.white,),),
             ],
           ),
           Text(label,
-              style: const TextStyle(fontSize: 10, color: Colors.white38)),
+              style: const TextStyle(fontSize: 10, color: Colors.white38),),
         ],
       );
 
@@ -1548,18 +1548,18 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   child: Row(
                     children: [
                       Text(medal.isNotEmpty ? medal : '${index + 1}',
-                          style: const TextStyle(fontSize: 24)),
+                          style: const TextStyle(fontSize: 24),),
                       const SizedBox(width: 12),
                       Container(
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                            color: player.avatarColor, shape: BoxShape.circle),
+                            color: player.avatarColor, shape: BoxShape.circle,),
                         child: Center(
                             child: Text(player.displayName[0].toUpperCase(),
                                 style: const TextStyle(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700))),
+                                    fontWeight: FontWeight.w700,),),),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1569,12 +1569,12 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                                   fontWeight: FontWeight.w600,
                                   color: isMe
                                       ? player.avatarColor
-                                      : Colors.white))),
+                                      : Colors.white,),),),
                       Text('${player.laneLength} cards',
                           style: TextStyle(
                               color: index == 0
                                   ? LaneColors.gold
-                                  : Colors.white54)),
+                                  : Colors.white54,),),
                     ],
                   ),
                 );
@@ -1595,12 +1595,12 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
                         color: LaneColors.surface,
-                        borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),),
                     child: const Center(
                         child: Text('EXIT',
                             style: TextStyle(
                                 color: Colors.white54,
-                                fontWeight: FontWeight.w600))),
+                                fontWeight: FontWeight.w600,),),),
                   ),
                 ),
               ),
@@ -1616,7 +1616,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                          colors: [LaneColors.crimson, Color(0xFFFF6B6B)]),
+                          colors: [LaneColors.crimson, Color(0xFFFF6B6B)],),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Center(
@@ -1624,7 +1624,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 16))),
+                                fontSize: 16,),),),
                   ),
                 ),
               ),

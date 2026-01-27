@@ -33,7 +33,7 @@ final prefetchStatsProvider = Provider<Map<String, int>>((ref) {
 
 /// Engagement analytics service singleton
 final engagementAnalyticsProvider = Provider<EngagementAnalyticsService>(
-    (ref) => EngagementAnalyticsService.instance);
+    (ref) => EngagementAnalyticsService.instance,);
 
 /// User's most active hours (learned from behavior)
 final userActiveHoursProvider = FutureProvider<List<int>>((ref) async {
@@ -63,7 +63,7 @@ final preferredHeatForGameProvider =
 /// Background pregeneration service singleton
 final backgroundPregenerationProvider =
     Provider<BackgroundPregenerationService>(
-        (ref) => BackgroundPregenerationService.instance);
+        (ref) => BackgroundPregenerationService.instance,);
 
 /// Pregenerated ice breakers for a scenario
 final pregeneratedIceBreakersProvider =
