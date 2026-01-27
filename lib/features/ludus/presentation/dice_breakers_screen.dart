@@ -70,7 +70,14 @@ const List<String> redDieFaces = [
 
 enum DiceGameMode { justDice, namePlayers }
 
-enum DiceGamePhase { discovery, modeSelect, diceSelect, playerSetup, playing, result }
+enum DiceGamePhase {
+  discovery,
+  modeSelect,
+  diceSelect,
+  playerSetup,
+  playing,
+  result
+}
 
 enum DiceCount { two, three }
 
@@ -443,7 +450,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                       icon: '🎯',
                       title: 'JUST DICE',
                       subtitle: 'Quick & anonymous',
-                      description: 'Roll the dice and see what fate decides.\nNo names, just action.',
+                      description:
+                          'Roll the dice and see what fate decides.\nNo names, just action.',
                       color: DiceColors.bodyDie,
                       onTap: () {
                         HapticFeedback.mediumImpact();
@@ -461,7 +469,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                       icon: '👥',
                       title: 'NAME PLAYERS',
                       subtitle: 'Turn-based with assignments',
-                      description: 'Add player names and take turns.\nDice assigns who does what to whom!',
+                      description:
+                          'Add player names and take turns.\nDice assigns who does what to whom!',
                       color: DiceColors.primary,
                       onTap: () {
                         HapticFeedback.mediumImpact();
@@ -599,7 +608,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                       count: 3,
                       title: '3 DICE',
                       subtitle: 'Body + Action + RED',
-                      description: 'Add the RED die for escalation!\nX • XXX • THREESOME • ORGY',
+                      description:
+                          'Add the RED die for escalation!\nX • XXX • THREESOME • ORGY',
                       dice: ['🔵', '🟡', '🔴'],
                       isSelected: _diceCount == DiceCount.three,
                       onTap: () {
@@ -731,7 +741,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                 ),
               ),
               if (isSelected)
-                const Icon(Icons.check_circle, color: DiceColors.primary, size: 28),
+                const Icon(Icons.check_circle,
+                    color: DiceColors.primary, size: 28),
             ],
           ),
         ),
@@ -883,7 +894,10 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [DiceColors.primary, DiceColors.actionDie],
+                                colors: [
+                                  DiceColors.primary,
+                                  DiceColors.actionDie
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
@@ -964,7 +978,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Current player indicator (Name Players mode)
-                    if (_gameMode == DiceGameMode.namePlayers && _players.isNotEmpty) ...[
+                    if (_gameMode == DiceGameMode.namePlayers &&
+                        _players.isNotEmpty) ...[
                       Text(
                         "${_players[_currentPlayerIndex]}'s Turn",
                         style: TextStyle(
@@ -998,7 +1013,10 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                                   ],
                                 )
                               : const LinearGradient(
-                                  colors: [DiceColors.primary, DiceColors.actionDie],
+                                  colors: [
+                                    DiceColors.primary,
+                                    DiceColors.actionDie
+                                  ],
                                 ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
@@ -1080,7 +1098,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
     return AnimatedBuilder(
       animation: _diceRollController,
       builder: (context, child) {
-        final shake = isRolling ? sin(_diceRollController.value * pi * 8) * 5 : 0.0;
+        final shake =
+            isRolling ? sin(_diceRollController.value * pi * 8) * 5 : 0.0;
         return Transform.translate(
           offset: Offset(shake, 0),
           child: Transform.rotate(
@@ -1272,7 +1291,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                     ],
 
                     // Red die result
-                    if (_diceCount == DiceCount.three && _redResult != null) ...[
+                    if (_diceCount == DiceCount.three &&
+                        _redResult != null) ...[
                       const SizedBox(height: 24),
                       _buildRedDieResult(),
                     ],
@@ -1289,7 +1309,10 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [DiceColors.primary, DiceColors.actionDie],
+                                  colors: [
+                                    DiceColors.primary,
+                                    DiceColors.actionDie
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -1319,7 +1342,8 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: Colors.white24),
                             ),
-                            child: const Icon(Icons.stop, color: Colors.white54),
+                            child:
+                                const Icon(Icons.stop, color: Colors.white54),
                           ),
                         ),
                       ],

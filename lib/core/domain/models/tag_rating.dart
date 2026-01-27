@@ -77,7 +77,11 @@ enum DurationRating {
 
   /// 60+ min — Take your time; the night's young
   fullSession(
-      'Full Session', '60+ min', 'Take your time; the night\'s young', '🌟',);
+    'Full Session',
+    '60+ min',
+    'Take your time; the night\'s young',
+    '🌟',
+  );
 
   final String label;
   final String timeRange;
@@ -85,7 +89,11 @@ enum DurationRating {
   final String emoji;
 
   const DurationRating(
-      this.label, this.timeRange, this.description, this.emoji,);
+    this.label,
+    this.timeRange,
+    this.description,
+    this.emoji,
+  );
 }
 
 /// Complete TAG Rating for a game

@@ -142,8 +142,10 @@ class _TagScreenState extends ConsumerState<TagScreen> {
             ),
             IconButton(
               onPressed: _showRandomGame,
-              icon: const Icon(VesparaIcons.random,
-                  color: VesparaColors.tagsYellow,),
+              icon: const Icon(
+                VesparaIcons.random,
+                color: VesparaColors.tagsYellow,
+              ),
             ),
           ],
         ),
@@ -157,7 +159,11 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           children: [
             _buildCategoryChip(
-                null, 'All', VesparaIcons.games, VesparaColors.glow,),
+              null,
+              'All',
+              VesparaIcons.games,
+              VesparaColors.glow,
+            ),
             ...GameCategory.values.map(
               (cat) => _buildCategoryChip(
                 cat,
@@ -171,7 +177,11 @@ class _TagScreenState extends ConsumerState<TagScreen> {
       );
 
   Widget _buildCategoryChip(
-      GameCategory? category, String name, IconData icon, Color color,) {
+    GameCategory? category,
+    String name,
+    IconData icon,
+    Color color,
+  ) {
     final isSelected = _selectedCategory == category;
 
     return GestureDetector(
@@ -188,8 +198,11 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon,
-                size: 18, color: isSelected ? color : VesparaColors.secondary,),
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? color : VesparaColors.secondary,
+            ),
             const SizedBox(width: 6),
             Text(
               name,

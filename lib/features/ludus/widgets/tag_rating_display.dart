@@ -152,8 +152,11 @@ class TagRatingDisplay extends StatelessWidget {
   Widget _buildCompactView() => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildCompactChip('🏎️', rating.velocity.display,
-              _getVelocityColor(rating.velocity),),
+          _buildCompactChip(
+            '🏎️',
+            rating.velocity.display,
+            _getVelocityColor(rating.velocity),
+          ),
           const SizedBox(width: 8),
           _buildCompactChip('🔥', rating.heat.code, _getHeatColor(rating.heat)),
           const SizedBox(width: 8),
@@ -186,15 +189,15 @@ class TagRatingDisplay extends StatelessWidget {
       );
 
   Color _getVelocityColor(VelocityRating velocity) {
-    switch (velocity) {
-      case VelocityRating.innocent:
-        return Colors.green;
-      case VelocityRating.flirty:
-        return Colors.yellow;
-      case VelocityRating.sparks:
-        return Colors.orange;
-      case VelocityRating.fullThrottle:
-        return Colors.red;
+    // Color based on MPH value ranges
+    if (velocity.mph <= 30) {
+      return Colors.green;
+    } else if (velocity.mph <= 55) {
+      return Colors.yellow;
+    } else if (velocity.mph <= 75) {
+      return Colors.orange;
+    } else {
+      return Colors.red;
     }
   }
 
@@ -294,11 +297,15 @@ class TagRatingInfoSheet extends StatelessWidget {
                 items: [
                   _RatingItem('PG', 'Playful, suggestive, mostly teasing'),
                   _RatingItem(
-                      'PG-13', 'Light touching, kissing, bold flirting',),
+                    'PG-13',
+                    'Light touching, kissing, bold flirting',
+                  ),
                   _RatingItem('R', 'Risqué, passionate, hands-on'),
                   _RatingItem('X', 'Explicit, adventurous, clothing unlikely'),
                   _RatingItem(
-                      'XXX', 'Uninhibited, wild, gloriously unfiltered',),
+                    'XXX',
+                    'Uninhibited, wild, gloriously unfiltered',
+                  ),
                 ],
               ),
 
@@ -310,12 +317,18 @@ class TagRatingInfoSheet extends StatelessWidget {
                 title: 'Duration',
                 subtitle: 'Every pleasure deserves its pace',
                 items: [
-                  _RatingItem('Quickie',
-                      '5–15 min — Fast, fun, dangerous in the best way',),
-                  _RatingItem('Foreplay',
-                      '20–45 min — Builds slowly, burns beautifully',),
-                  _RatingItem('Full Session',
-                      '60+ min — Take your time; the night\'s young',),
+                  _RatingItem(
+                    'Quickie',
+                    '5–15 min — Fast, fun, dangerous in the best way',
+                  ),
+                  _RatingItem(
+                    'Foreplay',
+                    '20–45 min — Builds slowly, burns beautifully',
+                  ),
+                  _RatingItem(
+                    'Full Session',
+                    '60+ min — Take your time; the night\'s young',
+                  ),
                 ],
               ),
 

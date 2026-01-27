@@ -77,18 +77,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Apple Sign In coming soon'),),
+                          content: Text('Apple Sign In coming soon'),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.apple, size: 24),
-                    label: const Text('Continue with Apple',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600,),),
+                    label: const Text(
+                      'Continue with Apple',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primary,
                       foregroundColor: _background,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -103,18 +109,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Google Sign In coming soon'),),
+                          content: Text('Google Sign In coming soon'),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.g_mobiledata, size: 28),
-                    label: const Text('Continue with Google',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600,),),
+                    label: const Text(
+                      'Continue with Google',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primary,
                       side: BorderSide(color: _primary.withOpacity(0.3)),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -129,18 +141,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Email Sign In coming soon'),),
+                          content: Text('Email Sign In coming soon'),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.email_outlined, size: 24),
-                    label: const Text('Continue with Email',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600,),),
+                    label: const Text(
+                      'Continue with Email',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primary,
                       side: BorderSide(color: _primary.withOpacity(0.3)),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
