@@ -319,45 +319,124 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _showEmailDialog() {
     final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    bool showPassword = false;
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        title: const Text('Enter your email',
-            style: TextStyle(color: VesparaColors.primary),),
-        content: TextField(
-          controller: emailController,
-          style: const TextStyle(color: VesparaColors.primary),
-          decoration: InputDecoration(
-            hintText: 'your@email.com',
-            hintStyle:
-                TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
-            enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: VesparaColors.secondary),),
-            focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: VesparaColors.primary),),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: VesparaColors.surface,
+          title: const Text('Sign In with Email',
+              style: TextStyle(color: VesparaColors.primary),),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: VesparaColors.primary),
+                decoration: InputDecoration(
+                  hintText: 'your@email.com',
+                  labelText: 'Email',
+                  labelStyle: const TextStyle(color: VesparaColors.secondary),
+                  hintStyle:
+                      TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+                  enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: VesparaColors.secondary),),
+                  focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: VesparaColors.primary),),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: !showPassword,
+                style: const TextStyle(color: VesparaColors.primary),
+                decoration: InputDecoration(
+                  hintText: 'Password',
+                  labelText: 'Password',
+                  labelStyle: const TextStyle(color: VesparaColors.secondary),
+                  hintStyle:
+                      TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+                  enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: VesparaColors.secondary),),
+                  focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: VesparaColors.primary),),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      showPassword ? Icons.visibility_off : Icons.visibility,
+                      color: VesparaColors.secondary,
+                    ),
+                    onPressed: () => setDialogState(() => showPassword = !showPassword),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Leave password empty for magic link',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: VesparaColors.secondary.withOpacity(0.7),
+                ),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel',
+                  style: TextStyle(color: VesparaColors.secondary),),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                final email = emailController.text.trim();
+                final password = passwordController.text;
+                
+                if (password.isNotEmpty) {
+                  await _signInWithEmailPassword(email, password);
+                } else {
+                  await _signInWithMagicLink(email);
+                }
+              },
+              child: const Text('Sign In',
+                  style: TextStyle(color: VesparaColors.primary),),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary),),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _signInWithEmail(emailController.text);
-            },
-            child: const Text('Send Magic Link',
-                style: TextStyle(color: VesparaColors.primary),),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _signInWithEmail(String email) async {
+  Future<void> _signInWithEmailPassword(String email, String password) async {
+    if (email.isEmpty || !email.contains('@')) {
+      _showError('Please enter a valid email');
+      return;
+    }
+    if (password.isEmpty) {
+      _showError('Please enter your password');
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      if (response.session != null) {
+        _showSuccess('Welcome back! ✨');
+      }
+    } on AuthException catch (e) {
+      _showError('Login failed: ${e.message}');
+    } catch (e) {
+      _showError('Login failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithMagicLink(String email) async {
     if (email.isEmpty || !email.contains('@')) {
       _showError('Please enter a valid email');
       return;
