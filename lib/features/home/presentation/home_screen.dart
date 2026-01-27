@@ -352,16 +352,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Column(
               children: [
                 // Row 1: Mirror + Discover
-                _buildModuleRow([0, 1], tileWidth, tileHeight, spacing),
+                _buildModuleRow([0, 1], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: spacing),
                 // Row 2: Nest + Wire
-                _buildModuleRow([2, 3], tileWidth, tileHeight, spacing),
+                _buildModuleRow([2, 3], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: spacing),
                 // Row 3: Planner + Group
-                _buildModuleRow([4, 5], tileWidth, tileHeight, spacing),
+                _buildModuleRow([4, 5], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: spacing),
                 // Row 4: Shredder + TAG
-                _buildModuleRow([6, 7], tileWidth, tileHeight, spacing),
+                _buildModuleRow([6, 7], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: 24),
               ],
             ),
@@ -419,12 +419,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   borderRadius: BorderRadius.circular(19),
                   child: Image.asset(
                     _getModuleIconPath(moduleName),
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     cacheWidth: 400,
                     filterQuality: FilterQuality.high,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback to gradient + icon if image not found
-                      return Container(
+                      return DecoratedBox(
                         decoration: BoxDecoration(
                           color: VesparaColors.surface,
                           gradient: LinearGradient(
