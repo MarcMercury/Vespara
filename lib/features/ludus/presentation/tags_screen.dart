@@ -261,7 +261,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
             child: Image.asset(
               _getGameIconPath(game.title),
               fit: BoxFit.cover,
-              cacheWidth: 512,
+              cacheWidth: 300,
               filterQuality: FilterQuality.high,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback if image not found

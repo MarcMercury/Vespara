@@ -345,7 +345,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         builder: (context, constraints) {
           const spacing = 12.0;
           final tileWidth = (constraints.maxWidth - spacing) / 2;
-          final tileHeight = tileWidth * 0.75;
+          final tileHeight = tileWidth * 0.65;
 
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -420,6 +420,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   child: Image.asset(
                     _getModuleIconPath(moduleName),
                     fit: BoxFit.cover,
+                    cacheWidth: 400,
+                    filterQuality: FilterQuality.high,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback to gradient + icon if image not found
                       return Container(
@@ -536,18 +538,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   bool _hasNotification(int index) {
-    // Show notifications for certain modules
-    switch (index) {
-      case 1:
-        return true; // Discover - new profiles
-      case 2:
-        return true; // Nest - new match
-      case 3:
-        return true; // Wire - unread messages
-      case 6:
-        return true; // Shredder - suggestions
-      default:
-        return false;
-    }
+    // Notification dots disabled for now
+    return false;
   }
 }
