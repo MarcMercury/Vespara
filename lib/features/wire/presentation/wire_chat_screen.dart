@@ -736,31 +736,24 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
   }
 
   Future<void> _pickDocument() async {
-    // File picking is not yet supported on web - coming soon
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Document sharing coming soon')),
-    );
+    // Document picking requires native platform support
+    // On web, this feature is not available yet
+    if (kIsWeb) return;
+    
+    // On mobile/desktop, would use file_picker but it has web compatibility issues
+    // TODO: Implement with platform-specific code when needed
   }
 
   void _shareLocation() {
     // TODO: Implement location sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Location sharing coming soon')),
-    );
   }
 
   void _shareContact() {
     // TODO: Implement contact sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contact sharing coming soon')),
-    );
   }
 
   void _createPoll() {
     // TODO: Implement poll creation
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Polls coming soon')),
-    );
   }
 
   void _setReplyingTo(WireMessage message) {
