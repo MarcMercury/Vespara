@@ -112,6 +112,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     }
   }
 
+  /// Get filtered profiles based on current tab
+  List<DiscoverableProfile> get _filteredProfiles => _profiles
+      .where(
+        (p) => _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch,
+      )
+      .toList();
+
   @override
   void dispose() {
     _cardController.dispose();
@@ -120,9 +127,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   void _onSwipe(SwipeDirection direction) {
-    if (_currentIndex >= _profiles.length) return;
+    final profiles = _filteredProfiles;
+    if (_currentIndex >= profiles.length) return;
 
-    final profile = _profiles[_currentIndex];
+    final profile = profiles[_currentIndex];
     final matchNotifier = ref.read(matchStateProvider.notifier);
 
     // Process swipe action and update global state
@@ -630,13 +638,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       );
     }
 
-    final filteredProfiles = _profiles
-        .where(
-          (p) => _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch,
-        )
-        .toList();
+    final filteredProfiles = _filteredProfiles;
 
-    if (_currentIndex >= _profiles.length) {
+    if (filteredProfiles.isEmpty || _currentIndex >= filteredProfiles.length) {
       return _buildEmptyState();
     }
 
@@ -644,12 +648,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       alignment: Alignment.center,
       children: [
         // Background cards (preview of next)
-        if (_currentIndex + 1 < _profiles.length)
+        if (_currentIndex + 1 < filteredProfiles.length)
           Transform.scale(
             scale: 0.9,
             child: Opacity(
               opacity: 0.5,
-              child: _buildProfileCard(_profiles[_currentIndex + 1],
+              child: _buildProfileCard(filteredProfiles[_currentIndex + 1],
                   isBackground: true,),
             ),
           ),
@@ -664,7 +668,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               angle: _dragRotation,
               child: Stack(
                 children: [
-                  _buildProfileCard(_profiles[_currentIndex]),
+                  _buildProfileCard(filteredProfiles[_currentIndex]),
 
                   // Swipe indicators
                   if (_dragOffset.abs() > 50)
