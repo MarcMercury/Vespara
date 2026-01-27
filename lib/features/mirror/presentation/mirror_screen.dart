@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/services/supabase_service.dart';
 import '../../../core/domain/models/analytics.dart';
 import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
@@ -2620,12 +2621,18 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to home
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Logged out successfully')),
-              );
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              try {
+                await SupabaseService.signOut();
+                // Auth state listener will handle navigation to login
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error logging out: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Log Out',
                 style: TextStyle(color: VesparaColors.error),),
