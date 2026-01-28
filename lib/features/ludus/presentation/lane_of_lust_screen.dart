@@ -855,14 +855,27 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
   Widget _buildPlaceCardButton(LaneOfLustState state) {
     final hasSelectedSpot = _selectedDropIndex != null;
     
+    debugPrint('LANE BUILD: _buildPlaceCardButton called');
+    debugPrint('LANE BUILD: isMyTurn=${state.isMyTurn}, isRevealed=${state.isRevealed}, hasSelectedSpot=$hasSelectedSpot, selectedIndex=$_selectedDropIndex');
+    
     if (!state.isMyTurn || state.isRevealed) {
+      debugPrint('LANE BUILD: Returning shrink - not my turn or revealed');
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+    if (!hasSelectedSpot && state.gameState != LaneGameState.stealing) {
+      debugPrint('LANE BUILD: Returning shrink - no spot selected and not stealing');
+      return const SizedBox.shrink();
+    }
+
+    debugPrint('LANE BUILD: Showing button area');
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      color: Colors.transparent, // Explicit background for hit testing
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Skip/Pass button during steal
           if (state.gameState == LaneGameState.stealing)
@@ -870,6 +883,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
               padding: const EdgeInsets.only(right: 12),
               child: TextButton.icon(
                 onPressed: () {
+                  debugPrint('LANE: Pass button pressed');
                   HapticFeedback.lightImpact();
                   setState(() => _selectedDropIndex = null);
                   ref.read(laneOfLustProvider.notifier).skipSteal();
@@ -882,40 +896,73 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           
           // Place Card button (only shown when a spot is selected)
           if (hasSelectedSpot)
-            ElevatedButton.icon(
-              onPressed: () {
-                final index = _selectedDropIndex;
-                if (index == null) return;
-                
-                HapticFeedback.heavyImpact();
-                final capturedIndex = index;
-                setState(() => _selectedDropIndex = null);
-                ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
-              },
-              icon: const Icon(VesparaIcons.confirm, color: Colors.white, size: 20),
-              label: const Text(
-                'PLACE CARD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
-                  fontSize: 14,
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _handlePlaceCard,
+                onTapDown: (_) => debugPrint('LANE: onTapDown received'),
+                onTapUp: (_) => debugPrint('LANE: onTapUp received'),
+                onTapCancel: () => debugPrint('LANE: onTapCancel received'),
+                child: Container(
+                  height: 56,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [LaneColors.crimson, Color(0xFFE91E63)],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: LaneColors.crimson.withOpacity(0.5),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(VesparaIcons.confirm, color: Colors.white, size: 22),
+                      SizedBox(width: 10),
+                      Text(
+                        'PLACE CARD',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: LaneColors.crimson,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                elevation: 8,
-                shadowColor: LaneColors.crimson.withOpacity(0.4),
               ),
             ),
         ],
       ),
     );
+  }
+
+  void _handlePlaceCard() {
+    debugPrint('LANE: _handlePlaceCard called');
+    debugPrint('LANE: _selectedDropIndex = $_selectedDropIndex');
+    
+    final index = _selectedDropIndex;
+    if (index == null) {
+      debugPrint('LANE: index is null, returning');
+      return;
+    }
+    
+    debugPrint('LANE: Attempting placement at index $index');
+    HapticFeedback.heavyImpact();
+    
+    final capturedIndex = index;
+    setState(() => _selectedDropIndex = null);
+    
+    debugPrint('LANE: Calling attemptPlacement($capturedIndex)');
+    ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
+    debugPrint('LANE: attemptPlacement called successfully');
   }
 
   Widget _buildOpponentsBar(LaneOfLustState state) {
