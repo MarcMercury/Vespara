@@ -611,26 +611,42 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
         ),
       );
 
-  Widget _buildFAB(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // New group button
-          FloatingActionButton.small(
+  Widget _buildFAB(BuildContext context) {
+    // Show different FAB based on current tab
+    // Tab 0: Chats (individual) - show new chat button
+    // Tab 1: Groups - show new group button
+    // Tab 2: Archived - no FAB
+    
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, child) {
+        final currentTab = _tabController.index;
+        
+        // No FAB on archived tab
+        if (currentTab == 2) {
+          return const SizedBox.shrink();
+        }
+        
+        // Groups tab - show group creation button
+        if (currentTab == 1) {
+          return FloatingActionButton(
             heroTag: 'group',
-            backgroundColor: VesparaColors.surface,
-            onPressed: () => _navigateToCreateGroup(context),
-            child: const Icon(Icons.group_add, color: VesparaColors.glow),
-          ),
-          const SizedBox(height: 12),
-          // New chat button
-          FloatingActionButton(
-            heroTag: 'chat',
             backgroundColor: VesparaColors.glow,
-            onPressed: () => _showNewChatSheet(context),
-            child: const Icon(Icons.chat, color: VesparaColors.background),
-          ),
-        ],
-      );
+            onPressed: () => _navigateToCreateGroup(context),
+            child: const Icon(Icons.group_add, color: VesparaColors.background),
+          );
+        }
+        
+        // Chats tab (default) - show individual chat button
+        return FloatingActionButton(
+          heroTag: 'chat',
+          backgroundColor: VesparaColors.glow,
+          onPressed: () => _showNewChatSheet(context),
+          child: const Icon(Icons.chat, color: VesparaColors.background),
+        );
+      },
+    );
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // ACTIONS
@@ -701,25 +717,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
               'New Chat',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: VesparaSpacing.lg),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.group_add, color: VesparaColors.glow),
-              ),
-              title: const Text('New Group'),
-              subtitle: const Text('Create a group with multiple connections'),
-              onTap: () {
-                Navigator.pop(context);
-                _navigateToCreateGroup(context);
-              },
-            ),
-            const Divider(color: VesparaColors.border),
-            const SizedBox(height: VesparaSpacing.sm),
+            const SizedBox(height: VesparaSpacing.md),
             Text(
               'Select a connection to start chatting',
               style: Theme.of(context).textTheme.bodySmall,
