@@ -836,6 +836,9 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
             child: _buildMysteryCardArea(state),
           ),
 
+          // Place Card Button - separate from mystery card area for better hit testing
+          _buildPlaceCardButton(state),
+
           // My Lane
           Expanded(
             flex: 3,
@@ -844,6 +847,72 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
 
           // My stats bar
           _buildMyStatsBar(me, state),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceCardButton(LaneOfLustState state) {
+    final hasSelectedSpot = _selectedDropIndex != null;
+    
+    if (!state.isMyTurn || state.isRevealed) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Skip/Pass button during steal
+          if (state.gameState == LaneGameState.stealing)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  setState(() => _selectedDropIndex = null);
+                  ref.read(laneOfLustProvider.notifier).skipSteal();
+                },
+                icon: const Icon(VesparaIcons.forward, size: 18),
+                label: const Text('Pass'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white54),
+              ),
+            ),
+          
+          // Place Card button (only shown when a spot is selected)
+          if (hasSelectedSpot)
+            ElevatedButton.icon(
+              onPressed: () {
+                final index = _selectedDropIndex;
+                if (index == null) return;
+                
+                HapticFeedback.heavyImpact();
+                final capturedIndex = index;
+                setState(() => _selectedDropIndex = null);
+                ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
+              },
+              icon: const Icon(VesparaIcons.confirm, color: Colors.white, size: 20),
+              label: const Text(
+                'PLACE CARD',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                  fontSize: 14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: LaneColors.crimson,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                elevation: 8,
+                shadowColor: LaneColors.crimson.withOpacity(0.4),
+              ),
+            ),
         ],
       ),
     );
@@ -1059,62 +1128,17 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
 
             const SizedBox(height: 16),
 
-            // Action buttons row
-            if (state.isMyTurn && !state.isRevealed)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Skip/Pass button during steal
-                  if (state.gameState == LaneGameState.stealing)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: TextButton.icon(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _selectedDropIndex = null);
-                          ref.read(laneOfLustProvider.notifier).skipSteal();
-                        },
-                        icon: const Icon(VesparaIcons.forward, size: 18),
-                        label: const Text('Pass'),
-                        style: TextButton.styleFrom(foregroundColor: Colors.white54),
-                      ),
-                    ),
-                  
-                  // Place Card button (only shown when a spot is selected)
-                  if (hasSelectedSpot)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // Safely check for null inside callback
-                        final index = _selectedDropIndex;
-                        if (index == null) return;
-                        
-                        HapticFeedback.heavyImpact();
-                        final capturedIndex = index;
-                        setState(() => _selectedDropIndex = null);
-                        ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
-                      },
-                      icon: const Icon(VesparaIcons.confirm, color: Colors.white, size: 20),
-                      label: const Text(
-                        'PLACE CARD',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
-                          fontSize: 14,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: LaneColors.crimson,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 8,
-                        shadowColor: LaneColors.crimson.withOpacity(0.4),
-                      ),
-                    ),
-                ],
+            // Pass button during steal only
+            if (state.isMyTurn && !state.isRevealed && state.gameState == LaneGameState.stealing)
+              TextButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  setState(() => _selectedDropIndex = null);
+                  ref.read(laneOfLustProvider.notifier).skipSteal();
+                },
+                icon: const Icon(VesparaIcons.forward, size: 18),
+                label: const Text('Pass'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white54),
               ),
           ],
         ),
