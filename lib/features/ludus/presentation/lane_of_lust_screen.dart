@@ -1081,22 +1081,21 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                     ),
                   
                   // Place Card button (only shown when a spot is selected)
-                  AnimatedOpacity(
-                    duration: const Duration(milliseconds: 200),
-                    opacity: hasSelectedSpot ? 1.0 : 0.0,
-                    child: AnimatedScale(
-                      duration: const Duration(milliseconds: 200),
-                      scale: hasSelectedSpot ? 1.0 : 0.8,
-                      child: GestureDetector(
+                  if (hasSelectedSpot)
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
                         onTap: () {
                           // Safely check for null inside callback
                           final index = _selectedDropIndex;
                           if (index == null) return;
                           
                           HapticFeedback.heavyImpact();
+                          final capturedIndex = index;
                           setState(() => _selectedDropIndex = null);
-                          ref.read(laneOfLustProvider.notifier).attemptPlacement(index);
+                          ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
                         },
+                        borderRadius: BorderRadius.circular(24),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           decoration: BoxDecoration(
@@ -1131,7 +1130,6 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
           ],
