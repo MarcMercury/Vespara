@@ -39,29 +39,54 @@ class DiceColors {
 // DICE DATA
 // ═══════════════════════════════════════════════════════════════════════════
 
-const List<String> bodyParts = [
+// Body Dice Options
+const List<String> bodyPartsPG13 = [
   'Mouth',
-  'Chest',
   'Neck',
-  'Ass',
   'Back',
-  'Crotch',
+  'Thigh',
+  'Chest',
+  'Ass',
 ];
 
-const List<String> actions = [
+const List<String> bodyPartsX = [
+  'Mouth',
+  'Nipples',
+  'Cock',
+  'Pussy',
+  'Asshole',
+  'Neck',
+  'Chest',
+];
+
+// Action Dice Options
+const List<String> actionsPG13 = [
   'Kiss',
-  'Lick',
+  'Rub',
   'Squeeze',
+  'Lick',
   'Pinch',
-  'Caress',
   'Suck',
 ];
 
-const List<String> redDieFaces = [
+const List<String> actionsX = [
+  'Kiss',
+  'Lick',
+  'Suck',
+  'Stroke',
+  'Tease',
+  'Devour',
+];
+
+// Modifier Die Options
+const List<String> modifierDieFaces = [
   'X',
   'XXX',
-  'THREESOME',
-  'ORGY',
+  'Orgy',
+  'Threesome',
+  'Private Play',
+  'Director',
+  'Penetrate',
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -78,6 +103,10 @@ enum DiceGamePhase {
   playing,
   result
 }
+
+enum BodyDieType { pg13, x }
+
+enum ActionDieType { pg13, x }
 
 enum DiceCount { two, three }
 
@@ -98,6 +127,9 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
   DiceGamePhase _phase = DiceGamePhase.discovery;
   DiceGameMode? _gameMode;
   DiceCount _diceCount = DiceCount.two;
+  BodyDieType _bodyDieType = BodyDieType.pg13;
+  ActionDieType _actionDieType = ActionDieType.pg13;
+  bool _useModifierDie = false;
   final List<String> _players = [];
   int _currentPlayerIndex = 0;
   final TextEditingController _playerNameController = TextEditingController();
@@ -318,21 +350,21 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
             _buildDiceInfo(
               '🔵',
               'Body Die',
-              'Mouth • Chest • Neck • Ass • Back • Crotch',
+              'PG-13 or X-rated body parts',
               DiceColors.bodyDie,
             ),
             const SizedBox(height: 12),
             _buildDiceInfo(
               '🟡',
               'Action Die',
-              'Kiss • Lick • Squeeze • Pinch • Caress • Suck',
+              'PG-13 or X-rated actions',
               DiceColors.actionDie,
             ),
             const SizedBox(height: 12),
             _buildDiceInfo(
               '🔴',
-              'RED Die (Optional)',
-              'X • XXX • THREESOME • ORGY',
+              'Modifier Die (Optional)',
+              'X • XXX • Orgy • Threesome • and more!',
               DiceColors.redDie,
             ),
           ],
@@ -570,52 +602,108 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '🎲🎲',
-                      style: TextStyle(fontSize: 60),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'HOW MANY DICE?',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 4,
+                    const Center(
+                      child: Text(
+                        '🎲🎲',
+                        style: TextStyle(fontSize: 60),
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
+                    const Center(
+                      child: Text(
+                        'SELECT DICE',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
 
-                    // 2 Dice Option
-                    _buildDiceCountCard(
-                      count: 2,
-                      title: '2 DICE',
-                      subtitle: 'Body + Action',
-                      description: 'Classic mode: Roll what to do and where.',
-                      dice: ['🔵', '🟡'],
-                      isSelected: _diceCount == DiceCount.two,
+                    // BODY DICE SECTION
+                    _buildSectionHeader(
+                      '🔵 BODY DICE',
+                      'Must select 1',
+                      DiceColors.bodyDie,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDiceOptionCard(
+                      title: 'Die 1 - Body (PG-13)',
+                      items: bodyPartsPG13.join(' • '),
+                      color: DiceColors.bodyDie,
+                      isSelected: _bodyDieType == BodyDieType.pg13,
                       onTap: () {
                         HapticFeedback.lightImpact();
-                        setState(() => _diceCount = DiceCount.two);
+                        setState(() => _bodyDieType = BodyDieType.pg13);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDiceOptionCard(
+                      title: 'Die 2 - Body (X)',
+                      items: bodyPartsX.join(' • '),
+                      color: DiceColors.bodyDie,
+                      isSelected: _bodyDieType == BodyDieType.x,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _bodyDieType = BodyDieType.x);
                       },
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 32),
 
-                    // 3 Dice Option
-                    _buildDiceCountCard(
-                      count: 3,
-                      title: '3 DICE',
-                      subtitle: 'Body + Action + RED',
-                      description:
-                          'Add the RED die for escalation!\nX • XXX • THREESOME • ORGY',
-                      dice: ['🔵', '🟡', '🔴'],
-                      isSelected: _diceCount == DiceCount.three,
+                    // ACTION DICE SECTION
+                    _buildSectionHeader(
+                      '🟡 ACTION DICE',
+                      'Must select 1',
+                      DiceColors.actionDie,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDiceOptionCard(
+                      title: 'Die 1 - Action (PG-13)',
+                      items: actionsPG13.join(' • '),
+                      color: DiceColors.actionDie,
+                      isSelected: _actionDieType == ActionDieType.pg13,
                       onTap: () {
                         HapticFeedback.lightImpact();
-                        setState(() => _diceCount = DiceCount.three);
+                        setState(() => _actionDieType = ActionDieType.pg13);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDiceOptionCard(
+                      title: 'Die 2 - Action (X)',
+                      items: actionsX.join(' • '),
+                      color: DiceColors.actionDie,
+                      isSelected: _actionDieType == ActionDieType.x,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() => _actionDieType = ActionDieType.x);
+                      },
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // MODIFIER DICE SECTION (Optional)
+                    _buildSectionHeader(
+                      '🔴 MODIFIER DICE',
+                      'Optional 3rd Dice',
+                      DiceColors.redDie,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildModifierToggleCard(
+                      title: 'Add Modifier Die',
+                      items: modifierDieFaces.join(' • '),
+                      color: DiceColors.redDie,
+                      isEnabled: _useModifierDie,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _useModifierDie = !_useModifierDie;
+                          _diceCount = _useModifierDie ? DiceCount.three : DiceCount.two;
+                        });
                       },
                     ),
 
@@ -671,12 +759,42 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
         ),
       );
 
-  Widget _buildDiceCountCard({
-    required int count,
+  Widget _buildSectionHeader(String title, String subtitle, Color color) =>
+      Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withOpacity(0.5)),
+            ),
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildDiceOptionCard({
     required String title,
-    required String subtitle,
-    required String description,
-    required List<String> dice,
+    required String items,
+    required Color color,
     required bool isSelected,
     required VoidCallback onTap,
   }) =>
@@ -685,29 +803,31 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isSelected
-                ? DiceColors.primary.withOpacity(0.2)
-                : DiceColors.cardBg,
-            borderRadius: BorderRadius.circular(20),
+            color: isSelected ? color.withOpacity(0.2) : DiceColors.cardBg,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected
-                  ? DiceColors.primary
-                  : Colors.white.withOpacity(0.2),
-              width: isSelected ? 3 : 1,
+              color: isSelected ? color : Colors.white.withOpacity(0.2),
+              width: isSelected ? 2 : 1,
             ),
           ),
           child: Row(
             children: [
-              // Dice preview
-              Row(
-                children: dice
-                    .map((d) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(d, style: const TextStyle(fontSize: 32)),
-                        ))
-                    .toList(),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? color : Colors.transparent,
+                  border: Border.all(
+                    color: isSelected ? color : Colors.white38,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -717,34 +837,97 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: isSelected ? DiceColors.primary : Colors.white,
-                        letterSpacing: 2,
+                        color: isSelected ? color : Colors.white,
                       ),
                     ),
+                    const SizedBox(height: 4),
                     Text(
-                      subtitle,
+                      items,
                       style: TextStyle(
-                        fontSize: 14,
-                        color: isSelected ? DiceColors.primary : Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      description,
-                      style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.white54,
-                        height: 1.4,
+                        color: isSelected ? color.withOpacity(0.8) : Colors.white54,
+                        height: 1.3,
                       ),
                     ),
                   ],
                 ),
               ),
-              if (isSelected)
-                const Icon(Icons.check_circle,
-                    color: DiceColors.primary, size: 28),
+            ],
+          ),
+        ),
+      );
+
+  Widget _buildModifierToggleCard({
+    required String title,
+    required String items,
+    required Color color,
+    required bool isEnabled,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isEnabled ? color.withOpacity(0.2) : DiceColors.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isEnabled ? color : Colors.white.withOpacity(0.2),
+              width: isEnabled ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 28,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: isEnabled ? color : Colors.white24,
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  alignment: isEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isEnabled ? color : Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      items,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isEnabled ? color.withOpacity(0.8) : Colors.white54,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -1053,18 +1236,22 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
       );
 
   Widget _buildDiceArea() {
+    // Get the correct body and action lists based on selection
+    final bodyList = _bodyDieType == BodyDieType.pg13 ? bodyPartsPG13 : bodyPartsX;
+    final actionList = _actionDieType == ActionDieType.pg13 ? actionsPG13 : actionsX;
+
     final diceWidgets = <Widget>[
       _buildDie(
         color: DiceColors.bodyDie,
         label: 'BODY',
-        value: _isRolling ? bodyParts[_random.nextInt(bodyParts.length)] : '?',
+        value: _isRolling ? bodyList[_random.nextInt(bodyList.length)] : '?',
         isRolling: _isRolling,
       ),
       const SizedBox(width: 16),
       _buildDie(
         color: DiceColors.actionDie,
         label: 'ACTION',
-        value: _isRolling ? actions[_random.nextInt(actions.length)] : '?',
+        value: _isRolling ? actionList[_random.nextInt(actionList.length)] : '?',
         isRolling: _isRolling,
       ),
     ];
@@ -1074,9 +1261,9 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
         const SizedBox(width: 16),
         _buildDie(
           color: DiceColors.redDie,
-          label: 'RED',
+          label: 'MODIFIER',
           value: _isRolling
-              ? redDieFaces[_random.nextInt(redDieFaces.length)]
+              ? modifierDieFaces[_random.nextInt(modifierDieFaces.length)]
               : '?',
           isRolling: _isRolling,
           isDiamond: true,
@@ -1097,55 +1284,182 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
     required bool isRolling,
     bool isDiamond = false,
   }) {
+    final size = isDiamond ? 85.0 : 95.0;
+    final borderRadius = isDiamond ? 14.0 : 18.0;
+    
     return AnimatedBuilder(
       animation: _diceRollController,
       builder: (context, child) {
         final shake =
             isRolling ? sin(_diceRollController.value * pi * 8) * 5 : 0.0;
+        final pulse = isRolling ? 1.0 + sin(_diceRollController.value * pi * 4) * 0.05 : 1.0;
+        
         return Transform.translate(
           offset: Offset(shake, 0),
-          child: Transform.rotate(
-            angle: isDiamond ? pi / 4 : 0,
-            child: Container(
-              width: isDiamond ? 80 : 90,
-              height: isDiamond ? 80 : 90,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(isDiamond ? 12 : 16),
-                border: Border.all(color: color, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Transform.rotate(
-                angle: isDiamond ? -pi / 4 : 0,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: color,
-                        letterSpacing: 1,
-                      ),
+          child: Transform.scale(
+            scale: pulse,
+            child: Transform.rotate(
+              angle: isDiamond ? pi / 4 : 0,
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                  // Outer glow
+                  boxShadow: [
+                    // Primary glow
+                    BoxShadow(
+                      color: color.withOpacity(isRolling ? 0.8 : 0.5),
+                      blurRadius: isRolling ? 30 : 20,
+                      spreadRadius: isRolling ? 4 : 2,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: value.length > 4 ? 11 : 14,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
+                    // Bottom shadow for depth
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
                   ],
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    // 3D gradient - top-left highlight to bottom-right shadow
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withOpacity(0.4),
+                        color.withOpacity(0.2),
+                        color.withOpacity(0.05),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    ),
+                    border: Border.all(
+                      width: 2,
+                      color: color.withOpacity(0.8),
+                    ),
+                  ),
+                  child: Container(
+                    margin: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(borderRadius - 4),
+                      // Inner bevel effect
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.15),
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.2),
+                        ],
+                        stops: const [0.0, 0.4, 1.0],
+                      ),
+                      // Inner shadow simulation
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                        left: BorderSide(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                        bottom: BorderSide(
+                          color: Colors.black.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                        right: BorderSide(
+                          color: Colors.black.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(borderRadius - 6),
+                        // Glossy center
+                        gradient: RadialGradient(
+                          center: const Alignment(-0.3, -0.3),
+                          radius: 1.2,
+                          colors: [
+                            color.withOpacity(0.3),
+                            color.withOpacity(0.15),
+                            DiceColors.background.withOpacity(0.8),
+                          ],
+                          stops: const [0.0, 0.4, 1.0],
+                        ),
+                      ),
+                      child: Transform.rotate(
+                        angle: isDiamond ? -pi / 4 : 0,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Label with glow
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: color,
+                                letterSpacing: 1.5,
+                                shadows: [
+                                  Shadow(
+                                    color: color.withOpacity(0.8),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            // Value with embossed effect
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: color.withOpacity(0.4),
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: color.withOpacity(0.3),
+                                    blurRadius: 6,
+                                    spreadRadius: -2,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                value,
+                                style: TextStyle(
+                                  fontSize: value.length > 6 ? 10 : (value.length > 4 ? 12 : 15),
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                  shadows: [
+                                    Shadow(
+                                      color: color,
+                                      blurRadius: 10,
+                                    ),
+                                    const Shadow(
+                                      color: Colors.black,
+                                      blurRadius: 2,
+                                      offset: Offset(1, 1),
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1178,11 +1492,15 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
     _diceRollController.stop();
     HapticFeedback.heavyImpact();
 
+    // Get the correct lists based on selection
+    final bodyList = _bodyDieType == BodyDieType.pg13 ? bodyPartsPG13 : bodyPartsX;
+    final actionList = _actionDieType == ActionDieType.pg13 ? actionsPG13 : actionsX;
+
     // Final results
-    _bodyResult = bodyParts[_random.nextInt(bodyParts.length)];
-    _actionResult = actions[_random.nextInt(actions.length)];
+    _bodyResult = bodyList[_random.nextInt(bodyList.length)];
+    _actionResult = actionList[_random.nextInt(actionList.length)];
     if (_diceCount == DiceCount.three) {
-      _redResult = redDieFaces[_random.nextInt(redDieFaces.length)];
+      _redResult = modifierDieFaces[_random.nextInt(modifierDieFaces.length)];
     }
 
     // Assign target player(s) for Name Players mode
@@ -1190,9 +1508,9 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
       final otherPlayers = List<String>.from(_players)
         ..removeAt(_currentPlayerIndex);
 
-      if (_diceCount == DiceCount.three && _redResult == 'ORGY') {
+      if (_diceCount == DiceCount.three && _redResult == 'Orgy') {
         _targetPlayers = otherPlayers; // Everyone plays!
-      } else if (_diceCount == DiceCount.three && _redResult == 'THREESOME') {
+      } else if (_diceCount == DiceCount.three && _redResult == 'Threesome') {
         // Pick 2 random players (including potential duplicates from other players)
         if (otherPlayers.length >= 2) {
           otherPlayers.shuffle();
@@ -1459,12 +1777,21 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
       case 'XXX':
         description = 'Maximum intensity!';
         emoji = '🔥🔥🔥';
-      case 'THREESOME':
+      case 'Threesome':
         description = 'Bring in a third!';
         emoji = '👥';
-      case 'ORGY':
+      case 'Orgy':
         description = 'Everyone plays!';
         emoji = '🎉';
+      case 'Private Play':
+        description = 'Complete in private!';
+        emoji = '🚪';
+      case 'Director':
+        description = 'Roller directs 2 players!';
+        emoji = '🎬';
+      case 'Penetrate':
+        description = 'Take it all the way!';
+        emoji = '💥';
       default:
         description = '';
         emoji = '';
@@ -1542,6 +1869,9 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
       _phase = DiceGamePhase.discovery;
       _gameMode = null;
       _diceCount = DiceCount.two;
+      _bodyDieType = BodyDieType.pg13;
+      _actionDieType = ActionDieType.pg13;
+      _useModifierDie = false;
       _players.clear();
       _currentPlayerIndex = 0;
       _bodyResult = null;
