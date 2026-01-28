@@ -173,44 +173,58 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
               icon: const Icon(Icons.close, color: VesparaColors.primary),
             ),
             const Spacer(),
-            // Make it public button
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: VesparaColors.glow.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.success,
-                      borderRadius: BorderRadius.circular(4),
+            // Make it public toggle button
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _visibility = _visibility == EventVisibility.public
+                      ? EventVisibility.private
+                      : EventVisibility.public;
+                });
+                HapticFeedback.mediumImpact();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _visibility == EventVisibility.public
+                      ? VesparaColors.success.withOpacity(0.2)
+                      : VesparaColors.glow.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _visibility == EventVisibility.public
+                        ? VesparaColors.success
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _visibility == EventVisibility.public
+                          ? Icons.public
+                          : Icons.lock_outline,
+                      size: 16,
+                      color: _visibility == EventVisibility.public
+                          ? VesparaColors.success
+                          : VesparaColors.glow,
                     ),
-                    child: const Text(
-                      'New!',
+                    const SizedBox(width: 6),
+                    Text(
+                      _visibility == EventVisibility.public
+                          ? 'Public event'
+                          : 'Make it public',
                       style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: VesparaColors.background,
+                        fontSize: 14,
+                        fontWeight: _visibility == EventVisibility.public
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                        color: _visibility == EventVisibility.public
+                            ? VesparaColors.success
+                            : VesparaColors.primary,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Make it public',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: VesparaColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right,
-                      size: 18, color: VesparaColors.primary,),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -322,30 +336,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
 
           const SizedBox(height: 12),
 
-          // Date poll option
-          GestureDetector(
-            onTap: () => setState(() => _hasDatePoll = !_hasDatePoll),
-            child: const Row(
-              children: [
-                Text(
-                  "Can't decide when?",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: VesparaColors.secondary,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'Poll your guests →',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.glow,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Date poll option - removed as not implemented
         ],
       );
 
@@ -628,37 +619,26 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   Widget _buildLinksSection() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Add Links',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildLinkButton('Link', Icons.link),
+                _buildLinkButton('Website', Icons.link),
                 const SizedBox(width: 8),
                 _buildLinkButton('Playlist', Icons.music_note),
                 const SizedBox(width: 8),
-                _buildLinkButton('Registry', Icons.card_giftcard),
+                _buildLinkButton('Tickets', Icons.confirmation_number),
                 const SizedBox(width: 8),
-                _buildLinkButton('Dress code', Icons.checkroom),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _showMoreLinks,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10,),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: VesparaColors.border),
-                    ),
-                    child: const Text(
-                      'Show more',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: VesparaColors.secondary,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildLinkButton('Menu', Icons.restaurant_menu),
               ],
             ),
           ),
@@ -780,54 +760,33 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const Row(
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.settings, color: VesparaColors.glow, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'RSVP Options',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                // Emoji selector dropdown
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: VesparaColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_goingEmoji, style: const TextStyle(fontSize: 16)),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Emojis',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: VesparaColors.glow,
-                        ),
-                      ),
-                      const Icon(Icons.arrow_drop_down,
-                          color: VesparaColors.glow,),
-                    ],
+                Icon(Icons.how_to_vote, color: VesparaColors.glow, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'RSVP Options',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary,
                   ),
                 ),
               ],
             ),
+            
+            const SizedBox(height: 8),
+            const Text(
+              'Tap an emoji to customize it',
+              style: TextStyle(
+                fontSize: 12,
+                color: VesparaColors.secondary,
+              ),
+            ),
 
             const SizedBox(height: 20),
 
-            // RSVP buttons preview
+            // RSVP buttons preview - clickable to change emoji
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -935,50 +894,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
             ),
           ),
 
-          const SizedBox(height: 24),
-
-          // Add section button
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'More to say?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: VesparaColors.secondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _addSection,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: VesparaColors.glow.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, size: 16, color: VesparaColors.glow),
-                        SizedBox(width: 4),
-                        Text(
-                          'New section',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: VesparaColors.glow,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Removed "More to say" section - description field already handles this
         ],
       );
 
@@ -1077,19 +993,40 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
         ),
         child: Column(
           children: [
-            // Preview header
+            // Preview header - simplified, just show preview button that scrolls to preview
             Padding(
               padding: const EdgeInsets.all(24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _buildPreviewButton(Icons.palette_outlined, 'Theme'),
-                  const SizedBox(width: 16),
-                  _buildPreviewButton(Icons.auto_fix_high, 'Effect'),
-                  const SizedBox(width: 16),
-                  _buildPreviewButton(Icons.settings_outlined, 'Settings'),
-                  const SizedBox(width: 16),
-                  _buildPreviewButton(Icons.visibility_outlined, 'Preview'),
+                  GestureDetector(
+                    onTap: () {
+                      // Just a visual preview - the panel already shows a live preview
+                      HapticFeedback.lightImpact();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.glow.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.visibility_outlined, size: 18, color: VesparaColors.glow),
+                          SizedBox(width: 8),
+                          Text(
+                            'Live Preview',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1248,28 +1185,6 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
         ),
       );
 
-  Widget _buildPreviewButton(IconData icon, String label) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: VesparaColors.surface.withOpacity(0.5),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: VesparaColors.primary, size: 24),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: VesparaColors.secondary,
-            ),
-          ),
-        ],
-      );
-
   // Action methods
   Future<void> _selectDateTime() async {
     final date = await showDatePicker(
@@ -1408,8 +1323,91 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   }
 
   void _addCoHost() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Co-host picker would open here')),
+    final nameController = TextEditingController();
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 24,
+          right: 24,
+          top: 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Add Co-Host',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Enter the name of your co-host',
+              style: TextStyle(
+                fontSize: 14,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Co-host name',
+                hintStyle: const TextStyle(color: VesparaColors.secondary),
+                prefixIcon: const Icon(Icons.person_add, color: VesparaColors.glow),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: VesparaColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: VesparaColors.glow),
+                ),
+              ),
+              style: const TextStyle(color: VesparaColors.primary),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.isNotEmpty) {
+                    setState(() {
+                      _coHosts.add(EventCoHost(
+                        id: 'cohost-${_coHosts.length}',
+                        userId: 'user-${_coHosts.length}',
+                        name: nameController.text,
+                        role: 'cohost',
+                      ));
+                    });
+                    Navigator.pop(context);
+                    HapticFeedback.mediumImpact();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.glow,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Add Co-Host',
+                    style: TextStyle(color: VesparaColors.background)),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1465,12 +1463,6 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
     );
   }
 
-  void _showMoreLinks() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('More link options...')),
-    );
-  }
-
   void _customizeEmoji(String label) {
     // Curated emoji options - sophisticated and alluring for events
     final emojis = [
@@ -1478,7 +1470,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       '🔥',
       '❤️‍🔥',
       '🥂',
-      '✧',
+      '✨',
       '🤔',
       '🤭',
       '💌',
@@ -1530,6 +1522,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                           }
                         });
                         Navigator.pop(context);
+                        HapticFeedback.lightImpact();
                       },
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -1647,12 +1640,6 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _addSection() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add custom section...')),
     );
   }
 

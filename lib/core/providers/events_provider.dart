@@ -397,6 +397,64 @@ class EventsNotifier extends StateNotifier<EventsState> {
     }
   }
 
+  /// Check if an event has reached its RSVP capacity
+  bool isEventFull(String eventId) {
+    final event = state.allEvents.firstWhere(
+      (e) => e.id == eventId,
+      orElse: () => throw Exception('Event not found'),
+    );
+    
+    // Unlimited spots = never full
+    if (event.maxSpots == null) return false;
+    
+    // Count "going" RSVPs
+    final goingCount = event.rsvps.where((r) => r.status == 'going').length;
+    return goingCount >= event.maxSpots!;
+  }
+
+  /// Get remaining spots for an event
+  int? getRemainingSpots(String eventId) {
+    final event = state.allEvents.firstWhere(
+      (e) => e.id == eventId,
+      orElse: () => throw Exception('Event not found'),
+    );
+    
+    if (event.maxSpots == null) return null; // Unlimited
+    
+    final goingCount = event.rsvps.where((r) => r.status == 'going').length;
+    return event.maxSpots! - goingCount;
+  }
+
+  /// RSVP to an event (with capacity check)
+  Future<bool> rsvpToEvent({
+    required String eventId,
+    required String status, // 'going', 'maybe', 'not_going'
+    String? message,
+  }) async {
+    // Check capacity if trying to go
+    if (status == 'going') {
+      final event = state.allEvents.firstWhere(
+        (e) => e.id == eventId,
+        orElse: () => throw Exception('Event not found'),
+      );
+      
+      if (event.maxSpots != null) {
+        final goingCount = event.rsvps.where((r) => r.status == 'going').length;
+        if (goingCount >= event.maxSpots!) {
+          debugPrint('Event is full - cannot RSVP');
+          return false;
+        }
+      }
+    }
+    
+    // Update via the invite system
+    return respondToInvite(
+      eventId: eventId,
+      status: status == 'going' ? 'accepted' : status,
+      message: message,
+    );
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS
   // ══════════════════════════════════════════════════════════════════════════
