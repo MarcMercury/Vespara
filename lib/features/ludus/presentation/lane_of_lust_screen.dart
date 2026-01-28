@@ -45,7 +45,8 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
 
   final TextEditingController _nameController = TextEditingController();
 
-  int? _hoveredDropIndex;
+  // Click-to-place: track where the user wants to drop the card
+  int? _selectedDropIndex;
 
   @override
   void initState() {
@@ -84,12 +85,22 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
     ref.listen(laneOfLustProvider.select((s) => s.lastPlacementResult),
         (prev, next) {
       if (next != null) {
+        // Clear selection when result comes in
+        setState(() => _selectedDropIndex = null);
         if (next.success) {
           HapticFeedback.heavyImpact();
         } else {
           HapticFeedback.vibrate();
           _shakeController.forward().then((_) => _shakeController.reset());
         }
+      }
+    });
+
+    // Clear selection when mystery card changes (new turn)
+    ref.listen(laneOfLustProvider.select((s) => s.mysteryCard?.id),
+        (prev, next) {
+      if (prev != next) {
+        setState(() => _selectedDropIndex = null);
       }
     });
 
@@ -974,6 +985,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
 
     final result = state.lastPlacementResult;
     final showResult = result != null && state.isRevealed;
+    final hasSelectedSpot = _selectedDropIndex != null;
 
     return Center(
       child: AnimatedBuilder(
@@ -1022,37 +1034,102 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                 ),
               ),
 
-            // The Mystery Card
-            Draggable<LaneCard>(
-              data: card,
-              feedback: Material(
-                color: Colors.transparent,
-                child:
-                    _buildMysteryCard(card, state.isRevealed, isDragging: true),
+            // Instruction text when it's my turn
+            if (state.isMyTurn && !state.isRevealed && !showResult)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  hasSelectedSpot 
+                      ? 'Tap PLACE CARD or choose a different spot'
+                      : 'Tap a slot below to place this card',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: hasSelectedSpot ? LaneColors.gold : Colors.white54,
+                    fontWeight: hasSelectedSpot ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
               ),
-              childWhenDragging: Opacity(
-                opacity: 0.3,
-                child: _buildMysteryCard(card, state.isRevealed),
-              ),
-              onDragStarted: HapticFeedback.selectionClick,
+
+            // The Mystery Card (no longer draggable)
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: hasSelectedSpot ? 0.6 : 1.0,
               child: _buildMysteryCard(card, state.isRevealed),
             ),
 
-            // Skip button during steal
-            if (state.gameState == LaneGameState.stealing &&
-                state.isMyTurn &&
-                !state.isRevealed)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(laneOfLustProvider.notifier).skipSteal();
-                  },
-                  icon: const Icon(VesparaIcons.forward, size: 18),
-                  label: const Text('Pass'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.white54),
-                ),
+            const SizedBox(height: 16),
+
+            // Action buttons row
+            if (state.isMyTurn && !state.isRevealed)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Skip/Pass button during steal
+                  if (state.gameState == LaneGameState.stealing)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: TextButton.icon(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _selectedDropIndex = null);
+                          ref.read(laneOfLustProvider.notifier).skipSteal();
+                        },
+                        icon: const Icon(VesparaIcons.forward, size: 18),
+                        label: const Text('Pass'),
+                        style: TextButton.styleFrom(foregroundColor: Colors.white54),
+                      ),
+                    ),
+                  
+                  // Place Card button (only shown when a spot is selected)
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: hasSelectedSpot ? 1.0 : 0.0,
+                    child: AnimatedScale(
+                      duration: const Duration(milliseconds: 200),
+                      scale: hasSelectedSpot ? 1.0 : 0.8,
+                      child: GestureDetector(
+                        onTap: hasSelectedSpot ? () {
+                          HapticFeedback.heavyImpact();
+                          final index = _selectedDropIndex!;
+                          setState(() => _selectedDropIndex = null);
+                          ref.read(laneOfLustProvider.notifier).attemptPlacement(index);
+                        } : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [LaneColors.crimson, Color(0xFFFF6B6B)],
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: LaneColors.crimson.withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(VesparaIcons.confirm, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'PLACE CARD',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
@@ -1153,46 +1230,92 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
       return const SizedBox(width: 8);
     }
 
-    return DragTarget<LaneCard>(
-      onWillAcceptWithDetails: (details) {
-        setState(() => _hoveredDropIndex = index);
-        HapticFeedback.selectionClick();
-        return true;
-      },
-      onLeave: (data) {
-        setState(() => _hoveredDropIndex = null);
-      },
-      onAcceptWithDetails: (details) {
-        setState(() => _hoveredDropIndex = null);
-        ref.read(laneOfLustProvider.notifier).attemptPlacement(index);
-      },
-      builder: (context, candidateData, rejectedData) {
-        final isHovered = _hoveredDropIndex == index;
+    final isSelected = _selectedDropIndex == index;
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: isHovered ? 80 : 24,
-          height: isHovered ? 120 : 80,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-            color: isHovered
-                ? LaneColors.success.withOpacity(0.3)
-                : Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(isHovered ? 12 : 8),
-            border: Border.all(
-              color: isHovered ? LaneColors.success : Colors.white24,
-              width: isHovered ? 3 : 1,
-              strokeAlign: BorderSide.strokeAlignCenter,
-            ),
-          ),
-          child: isHovered
-              ? const Center(
-                  child: Icon(VesparaIcons.add,
-                      color: LaneColors.success, size: 32,),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          // Toggle selection - tap same spot to deselect, or select new spot
+          _selectedDropIndex = isSelected ? null : index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        width: isSelected ? 85 : 32,
+        height: isSelected ? 130 : 90,
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    LaneColors.success.withOpacity(0.4),
+                    LaneColors.success.withOpacity(0.2),
+                  ],
                 )
               : null,
-        );
-      },
+          color: isSelected ? null : Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(isSelected ? 14 : 10),
+          border: Border.all(
+            color: isSelected ? LaneColors.success : Colors.white38,
+            width: isSelected ? 3 : 2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: LaneColors.success.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: isSelected
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: LaneColors.success.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        VesparaIcons.confirm,
+                        color: LaneColors.success,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'HERE',
+                      style: TextStyle(
+                        color: LaneColors.success,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                )
+              : Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.3),
+                    border: Border.all(
+                      color: Colors.white54,
+                      width: 2,
+                    ),
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
