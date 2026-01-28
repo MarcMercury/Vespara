@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 
@@ -17,13 +19,202 @@ class ShredderScreen extends ConsumerStatefulWidget {
 }
 
 class _ShredderScreenState extends ConsumerState<ShredderScreen> {
-  final List<Map<String, dynamic>> _suggestions = [];
+  List<Map<String, dynamic>> _suggestions = [];
   final List<Map<String, dynamic>> _shreddedHistory = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Suggestions will be loaded from database/AI
+    _loadStaleMatches();
+  }
+
+  /// Load matches with no recent interaction from the database
+  Future<void> _loadStaleMatches() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        setState(() {
+          _suggestions = [];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Get matches older than 14 days with no first_message (never messaged)
+      // or where first_message is older than 30 days
+      final staleDate = DateTime.now().subtract(const Duration(days: 14));
+      final veryStaleDate = DateTime.now().subtract(const Duration(days: 30));
+
+      // Query matches where user is user_a
+      final matchesAsA = await supabase
+          .from('matches')
+          .select('''
+            id,
+            matched_at,
+            first_message_at,
+            user_b_id,
+            user_a_archived,
+            matched_user:profiles!matches_user_b_id_fkey (
+              id,
+              display_name,
+              avatar_url
+            )
+          ''')
+          .eq('user_a_id', userId)
+          .eq('user_a_archived', false)
+          .lt('matched_at', staleDate.toIso8601String());
+
+      // Query matches where user is user_b
+      final matchesAsB = await supabase
+          .from('matches')
+          .select('''
+            id,
+            matched_at,
+            first_message_at,
+            user_a_id,
+            user_b_archived,
+            matched_user:pro_isLoading
+      ? const Center(
+          child: CircularProgressIndicator(color: VesparaColors.error),
+        )
+      : RefreshIndicator(
+          onRefresh: _loadStaleMatches,
+          color: VesparaColors.error,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildIntroCard(),
+                const SizedBox(height: 24),
+                if (_suggestions.isEmpty)
+                  _buildEmptyState()
+                else ...[
+                  const Text(
+                    'AI SUGGESTS YOU LET GO OF',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.secondary,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ..._suggestions.map(_buildSuggestionCard),
+                ],
+              ],
+            ),
+          ),
+          String urgency;
+        String reason;
+        
+        if (firstMessageAt == null) {
+          // Never messaged
+          if (daysSinceMatch > 30) {
+            urgency = 'high';
+            reason = 'Matched over a month ago with zero messages exchanged';
+          } else {
+            urgency = 'medium';
+            reason = 'No conversation started since matching';
+          }
+        } else if (firstMessageAt.isBefore(veryStaleDate)) {
+          urgency = 'high';
+          reason = 'Last message was over a month ago';
+        } else {
+          urgency = 'low';
+          reason = 'Conversation has gone quiet';
+        }
+
+        suggestions.add({
+          'id': match['id'],
+          'matchedUserId': matchedUser['id'],
+          'name': matchedUser['display_name'] ?? 'Someone',
+          'avatarUrl': matchedUser['avatar_url'],
+          'daysSinceMatch': daysSinceMatch,
+          'urgency': urgency,
+          'reason': reason,
+          'hasNeverMessaged': firstMessageAt == null,
+        });
+      }
+
+      // Sort by urgency (high first) then by days since match
+      suggestions.sort((a, b) {
+        final urgencyOrder = {'high': 0, 'medium': 1, 'low': 2};
+        final aOrder = urgencyOrder[a['urgency']] ?? 2;
+        final bOrder = urgencyOrder[b['urgency']] ?? 2;
+        if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+        return (b['daysSinceMatch'] as int).compareTo(a['daysSinceMatch'] as int);
+      });
+
+      setState(() {
+        _suggestions = suggestions;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading stale matches: $e');
+      setState(() {
+        _suggestions = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Archive a match in the database (shred it)
+  Future<void> _shredMatch(Map<String, dynamic> suggestion) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final matchId = suggestion['id'] as String;
+
+      // Determine which column to update based on which user we are
+      final match = await supabase
+          .from('matches')
+          .select('user_a_id, user_b_id')
+          .eq('id', matchId)
+          .single();
+
+      final isUserA = match['user_a_id'] == userId;
+      
+      // Archive the match for the current user
+      await supabase
+          .from('matches')
+          .update({
+            if (isUserA) 'user_a_archived': true else 'user_b_archived': true,
+          })
+          .eq('id', matchId);
+
+      // Update local state
+      setState(() {
+        _shreddedHistory.add(suggestion);
+        _suggestions.removeWhere((s) => s['id'] == matchId);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${suggestion['name']} has been shredded'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error shredding match: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to shred connection'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -279,19 +470,9 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: urgencyColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    urgency.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: VesparaColors.background,
-                    ),
+                  padding:async {
+              Navigator.pop(context);
+              await _shredMatch(suggestion      ),
                   ),
                 ),
               ],

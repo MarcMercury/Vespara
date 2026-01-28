@@ -466,59 +466,13 @@ class PlanNotifier extends StateNotifier<PlanState> {
         if (matchedUser == null) continue;
 
         final matchedUserId = matchedUser['id'] as String;
-        
-        // Skip if not in preferred list ( (from matches table)
-final planConnectionsProvider =
-    FutureProvider<List<EventConnection>>((ref) async {
-  try {
-    final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) return [];
 
-    // Query matches where current user is user_a or user_b
-    final matchesAsA = await supabase
-        .from('matches')
-        .select('''
-          user_b_id,
-          matched_user:profiles!matches_user_b_id_fkey (
-            id,
-            display_name,
-            avatar_url
-          )
-        ''')
-        .eq('user_a_id', userId)
-        .eq('user_a_archived', false);
-
-    final matchesAsB = await supabase
-        .from('matches')
-        .select('''
-          user_a_id,
-          matched_user:profiles!matches_user_a_id_fkey (
-            id,
-            display_name,
-            avatar_url
-          )
-        ''')
-        .eq('user_b_id', userId)
-        .eq('user_b_archived', false);
-
-    final connections = <EventConnection>[];
-    
-    for (final match in [...matchesAsA as List, ...matchesAsB as List]) {
-      final matchedUser = match['matched_user'] as Map<String, dynamic>?;
-      if (matchedUser == null) continue;
-      
-      connections.add(EventConnection(
-        id: matchedUser['id'] as String,
-        name: matchedUser['display_name'] as String? ?? 'Someone',
-        avatarUrl: matchedUser['avatar_url'] as String?,
-      ));
-    }
-
-    return connections;
-  } catch (_) {
-    return [];
-  }
+        // Skip if not in preferred list (when specified)
+        if (preferredConnectionIds != null &&
+            preferredConnectionIds.isNotEmpty &&
+            !preferredConnectionIds.contains(matchedUserId)) {
+          continue;
+        }
 
         final connection = EventConnection(
           id: matchedUserId,
@@ -526,13 +480,15 @@ final planConnectionsProvider =
           avatarUrl: matchedUser['avatar_url'] as String?,
         );
 
-        final compatScore = (match['compatibility_score'] as num?)?.toDouble() ?? 0.5;
-        
+        final compatScore =
+            (match['compatibility_score'] as num?)?.toDouble() ?? 0.5;
+
         // Generate suggested times (next 7 days, evenings and weekends)
         final suggestedTimes = <DateTime>[];
         for (int i = 1; i <= 7; i++) {
           final day = now.add(Duration(days: i));
-          if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
+          if (day.weekday == DateTime.saturday ||
+              day.weekday == DateTime.sunday) {
             // Weekend - suggest afternoon and evening
             suggestedTimes.add(DateTime(day.year, day.month, day.day, 14, 0));
             suggestedTimes.add(DateTime(day.year, day.month, day.day, 19, 0));
@@ -545,10 +501,12 @@ final planConnectionsProvider =
         // Filter by preferred date if specified
         List<DateTime> filteredTimes;
         if (preferredDate != null) {
-          filteredTimes = suggestedTimes.where((t) => 
-              t.year == preferredDate.year && 
-              t.month == preferredDate.month && 
-              t.day == preferredDate.day).toList();
+          filteredTimes = suggestedTimes
+              .where((t) =>
+                  t.year == preferredDate.year &&
+                  t.month == preferredDate.month &&
+                  t.day == preferredDate.day)
+              .toList();
         } else {
           filteredTimes = suggestedTimes.take(5).toList();
         }
@@ -566,7 +524,8 @@ final planConnectionsProvider =
       }
 
       // Sort by compatibility score
-      suggestions.sort((a, b) => b.compatibilityScore.compareTo(a.compatibilityScore));
+      suggestions
+          .sort((a, b) => b.compatibilityScore.compareTo(a.compatibilityScore));
 
       return suggestions.take(5).toList();
     } catch (e) {
@@ -614,12 +573,58 @@ final planProvider = StateNotifierProvider<PlanNotifier, PlanState>((ref) {
   }
 });
 
-/// Get connections available for planning
+/// Get connections available for planning (from matches table)
 final planConnectionsProvider =
     FutureProvider<List<EventConnection>>((ref) async {
-  // TODO: Fetch real matches from database
-  // For now return empty list until real data is available
-  return [];
+  try {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    // Query matches where current user is user_a or user_b
+    final matchesAsA = await supabase
+        .from('matches')
+        .select('''
+          user_b_id,
+          matched_user:profiles!matches_user_b_id_fkey (
+            id,
+            display_name,
+            avatar_url
+          )
+        ''')
+        .eq('user_a_id', userId)
+        .eq('user_a_archived', false);
+
+    final matchesAsB = await supabase
+        .from('matches')
+        .select('''
+          user_a_id,
+          matched_user:profiles!matches_user_a_id_fkey (
+            id,
+            display_name,
+            avatar_url
+          )
+        ''')
+        .eq('user_b_id', userId)
+        .eq('user_b_archived', false);
+
+    final connections = <EventConnection>[];
+
+    for (final match in [...matchesAsA as List, ...matchesAsB as List]) {
+      final matchedUser = match['matched_user'] as Map<String, dynamic>?;
+      if (matchedUser == null) continue;
+
+      connections.add(EventConnection(
+        id: matchedUser['id'] as String,
+        name: matchedUser['display_name'] as String? ?? 'Someone',
+        avatarUrl: matchedUser['avatar_url'] as String?,
+      ));
+    }
+
+    return connections;
+  } catch (_) {
+    return [];
+  }
 });
 
 /// Get AI suggestions
