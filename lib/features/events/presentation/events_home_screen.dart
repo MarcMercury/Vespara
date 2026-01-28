@@ -24,10 +24,10 @@ class EventsHomeScreen extends ConsumerStatefulWidget {
 
 class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   String _selectedFilter = 'Upcoming';
-currentUserId =>
+
+  String get _currentUserId =>
       Supabase.instance.client.auth.currentUser?.id ?? '';
 
-  String get _
   String get _userName {
     final profile = ref.watch(userProfileProvider).valueOrNull;
     return profile?.displayName ?? 'Friend';

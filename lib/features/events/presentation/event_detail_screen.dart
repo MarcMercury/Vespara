@@ -1086,7 +1086,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           builder: (context) => WireChatScreen(
             conversation: WireConversation(
               id: conversationId,
-              name: _event.hostName,
+              type: ConversationType.group,
+              groupName: _event.title,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
