@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/domain/models/tag_rating.dart';
 import '../../../core/providers/lane_of_lust_provider.dart';
 import '../../../core/theme/vespara_icons.dart';
+import '../widgets/lane_playing_card.dart';
 import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -1061,166 +1062,12 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
 
   Widget _buildMysteryCard(LaneCard card, bool isRevealed,
           {bool isDragging = false,}) =>
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: isDragging ? 150 : 170,
-        height: isDragging ? 220 : 240,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isRevealed ? card.indexColor : LaneColors.mystery,
-            width: 4,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(2, 4),
-            ),
-            BoxShadow(
-              color: (isRevealed ? card.indexColor : LaneColors.mystery)
-                  .withOpacity(0.3),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Card pattern background
-            Positioned.fill(
-              child: Container(
-                margin: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isRevealed
-                        ? [
-                            card.indexColor.withOpacity(0.15),
-                            card.indexColor.withOpacity(0.05),
-                          ]
-                        : [LaneColors.mystery.withOpacity(0.1), Colors.white],
-                  ),
-                ),
-              ),
-            ),
-
-            // Card content
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                children: [
-                  // Top corner index
-                  Align(
-                    alignment: Alignment.topLeft,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5,),
-                      decoration: BoxDecoration(
-                        color:
-                            isRevealed ? card.indexColor : LaneColors.mystery,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isRevealed ? '${card.desireIndex}' : '?',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Center icon/emoji based on category
-                  Text(
-                    _getCategoryEmoji(card.category),
-                    style: const TextStyle(fontSize: 36),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Card text
-                  Text(
-                    card.text,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isRevealed
-                          ? card.indexColor.withOpacity(0.9)
-                          : LaneColors.mystery,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const Spacer(),
-
-                  // Bottom category label
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: card.category.color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                          color: card.category.color.withOpacity(0.3),),
-                    ),
-                    child: Text(
-                      card.category.displayName,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: card.category.color,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Corner decorations for card feel
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: (isRevealed ? card.indexColor : LaneColors.mystery)
-                        .withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 6,
-              left: 6,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: (isRevealed ? card.indexColor : LaneColors.mystery)
-                        .withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+      LanePlayingCard(
+        card: card,
+        isRevealed: isRevealed,
+        isSmall: false,
+        isDragging: isDragging,
+        showGlow: true,
       );
 
   String _getCategoryEmoji(LaneCardCategory category) {
@@ -1290,89 +1137,14 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
     );
   }
 
-  Widget _buildLaneCard(LaneCard card, int index) => Container(
-        width: 90,
-        height: 130,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: card.indexColor, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 6,
-              offset: const Offset(1, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Background gradient
-            Positioned.fill(
-              child: Container(
-                margin: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      card.indexColor.withOpacity(0.08),
-                      Colors.white,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Card content
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                children: [
-                  // Index badge at top
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: card.indexColor,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${card.desireIndex}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // Category emoji
-                  Text(
-                    _getCategoryEmoji(card.category),
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  const SizedBox(height: 4),
-                  // Text
-                  Expanded(
-                    child: Text(
-                      card.text,
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w500,
-                        color: card.indexColor.withOpacity(0.9),
-                        height: 1.1,
-                      ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.fade,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget _buildLaneCard(LaneCard card, int index) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: LanePlayingCard(
+          card: card,
+          isRevealed: true,
+          isSmall: true,
+          isDragging: false,
+          showGlow: false,
         ),
       );
 
