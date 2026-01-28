@@ -94,6 +94,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           .map((s) => s['swiped_id'] as String)
           .toSet();
 
+      // Get matched user IDs to exclude them (matches where user is user_a or user_b)
+      final matchesAsA = await supabase
+          .from('matches')
+          .select('user_b_id')
+          .eq('user_a_id', currentUserId);
+      
+      final matchesAsB = await supabase
+          .from('matches')
+          .select('user_a_id')
+          .eq('user_b_id', currentUserId);
+      
+      final matchedIds = <String>{
+        ...(matchesAsA as List).map((m) => m['user_b_id'] as String),
+        ...(matchesAsB as List).map((m) => m['user_a_id'] as String),
+      };
+
       // Fetch discoverable profiles (excluding current user and already swiped)
       final response = await supabase
           .from('profiles')
@@ -104,7 +120,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           .limit(50);
 
       final profiles = (response as List)
-          .where((json) => !swipedIds.contains(json['id'])) // Filter out swiped profiles
+          .where((json) => !swipedIds.contains(json['id']) && !matchedIds.contains(json['id'])) // Filter out swiped AND matched profiles
           .map((json) {
             // Add avatar_url to photos array if photos is empty
             final photos = List<String>.from(json['photos'] ?? []);
@@ -122,7 +138,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         _currentIndex = 0; // Reset index when reloading
       });
 
-      debugPrint('Discover: Loaded ${profiles.length} profiles (excluded ${swipedIds.length} already swiped)');
+      debugPrint('Discover: Loaded ${profiles.length} profiles (excluded ${swipedIds.length} swiped, ${matchedIds.length} matched)');
     } catch (e) {
       debugPrint('Discover: Error loading profiles: $e');
       setState(() {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -58,23 +59,53 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
-      // Fetch user's connections from roster
-      final response = await Supabase.instance.client.from('roster').select('''
+      // Fetch user's connections from matches table (where they are user_a or user_b)
+      final matchesAsA = await Supabase.instance.client
+          .from('matches')
+          .select('''
             id,
-            connected_user_id,
-            connected_user:users!roster_connected_user_id_fkey (
+            user_b_id,
+            matched_user:profiles!matches_user_b_id_fkey (
               id,
-              name,
-              avatar_url,
-              last_seen
+              display_name,
+              avatar_url
             )
-          ''').eq('user_id', userId).eq('status', 'accepted');
+          ''')
+          .eq('user_a_id', userId);
+
+      final matchesAsB = await Supabase.instance.client
+          .from('matches')
+          .select('''
+            id,
+            user_a_id,
+            matched_user:profiles!matches_user_a_id_fkey (
+              id,
+              display_name,
+              avatar_url
+            )
+          ''')
+          .eq('user_b_id', userId);
+
+      // Normalize both results into a consistent format
+      final connections = <Map<String, dynamic>>[
+        ...(matchesAsA as List).map((m) => {
+          'id': m['id'],
+          'connected_user_id': m['user_b_id'],
+          'connected_user': m['matched_user'],
+        }),
+        ...(matchesAsB as List).map((m) => {
+          'id': m['id'],
+          'connected_user_id': m['user_a_id'],
+          'connected_user': m['matched_user'],
+        }),
+      ];
 
       setState(() {
-        _connections = List<Map<String, dynamic>>.from(response);
+        _connections = connections;
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('Error loading connections: $e');
       setState(() => _isLoading = false);
       // No connections found - show empty state
       _connections = [];
@@ -86,8 +117,8 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
     if (_searchQuery.isEmpty) return _connections;
 
     return _connections.where((conn) {
-      final name =
-          (conn['connected_user']?['name'] ?? '').toString().toLowerCase();
+      final user = conn['connected_user'] as Map<String, dynamic>?;
+      final name = (user?['display_name'] ?? user?['name'] ?? '').toString().toLowerCase();
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
   }
@@ -406,8 +437,8 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
 
   Widget _buildConnectionTile(Map<String, dynamic> connection) {
     final user = connection['connected_user'] as Map<String, dynamic>?;
-    final userId = user?['id'] ?? '';
-    final name = user?['name'] ?? 'Unknown';
+    final userId = user?['id'] ?? connection['connected_user_id'] ?? '';
+    final name = user?['display_name'] ?? user?['name'] ?? 'Unknown';
     final avatarUrl = user?['avatar_url'];
     final isSelected = _selectedParticipants.contains(userId);
 
