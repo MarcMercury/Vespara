@@ -247,16 +247,42 @@ class _TagScreenState extends ConsumerState<TagScreen> {
     );
   }
 
-  Widget _buildGameCard(TagsGame game) => GestureDetector(
+  Widget _buildGameCard(TagsGame game) {
+    final categoryColor = _getCategoryColor(game.category);
+    
+    return GestureDetector(
         onTap: () => _showGameDetails(game),
-        child: DecoratedBox(
+        child: Container(
           decoration: BoxDecoration(
             color: VesparaColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
+            boxShadow: [
+              // Primary shadow for depth/elevation
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 8,
+                spreadRadius: 1,
+                offset: const Offset(0, 4),
+              ),
+              // Secondary softer shadow for more natural 3D look
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
+              ),
+              // Subtle color glow based on game category
+              BoxShadow(
+                color: categoryColor.withOpacity(0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
+          clipBehavior: Clip.antiAlias,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
             child: Image.asset(
               _getGameIconPath(game.title),
               fit: BoxFit.cover,
@@ -280,6 +306,7 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           ),
         ),
       );
+  }
 
   String _getGameIconPath(String gameTitle) {
     // Map game titles to their new icon file names (version 2)

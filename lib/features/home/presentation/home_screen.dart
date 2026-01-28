@@ -404,19 +404,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: color.withOpacity(0.3)),
             boxShadow: [
+              // Primary shadow for depth/elevation
               BoxShadow(
-                color: color.withOpacity(0.1),
-                blurRadius: 10,
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 8,
+                spreadRadius: 1,
                 offset: const Offset(0, 4),
+              ),
+              // Secondary softer shadow for more natural 3D look
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
+              ),
+              // Subtle color glow
+              BoxShadow(
+                color: color.withOpacity(0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
               // Full tile icon image
               Positioned.fill(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(19),
+                  borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
                     _getModuleIconPath(moduleName),
                     fit: BoxFit.contain,
