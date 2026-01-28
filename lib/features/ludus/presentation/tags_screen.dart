@@ -256,27 +256,28 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           decoration: BoxDecoration(
             color: VesparaColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
+            border: Border.all(color: categoryColor.withOpacity(0.4), width: 1.5),
             boxShadow: [
-              // Primary shadow for depth/elevation
+              // Bottom shadow for 3D lifted effect
               BoxShadow(
-                color: Colors.black.withOpacity(0.25),
-                blurRadius: 8,
-                spreadRadius: 1,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 12,
+                spreadRadius: 2,
+                offset: const Offset(0, 6),
               ),
-              // Secondary softer shadow for more natural 3D look
+              // Ambient shadow
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 0,
+                offset: const Offset(0, 10),
+              ),
+              // Color accent glow
+              BoxShadow(
+                color: categoryColor.withOpacity(0.25),
                 blurRadius: 16,
                 spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-              // Subtle color glow based on game category
-              BoxShadow(
-                color: categoryColor.withOpacity(0.15),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
