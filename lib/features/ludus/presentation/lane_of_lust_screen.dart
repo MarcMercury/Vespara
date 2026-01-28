@@ -1088,12 +1088,15 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                       duration: const Duration(milliseconds: 200),
                       scale: hasSelectedSpot ? 1.0 : 0.8,
                       child: GestureDetector(
-                        onTap: hasSelectedSpot ? () {
+                        onTap: () {
+                          // Safely check for null inside callback
+                          final index = _selectedDropIndex;
+                          if (index == null) return;
+                          
                           HapticFeedback.heavyImpact();
-                          final index = _selectedDropIndex!;
                           setState(() => _selectedDropIndex = null);
                           ref.read(laneOfLustProvider.notifier).attemptPlacement(index);
-                        } : null,
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           decoration: BoxDecoration(
