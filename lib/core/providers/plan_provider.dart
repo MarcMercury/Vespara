@@ -418,14 +418,158 @@ class PlanNotifier extends StateNotifier<PlanState> {
     DateTime? preferredDate,
     List<String>? preferredConnectionIds,
   }) async {
-    // In production, fetch matches from the database
-    // For now, return empty suggestions until real data is available
-    final suggestions = <AiDateSuggestion>[];
+    final userId = _supabase?.auth.currentUser?.id;
+    if (userId == null || _supabase == null) return [];
 
-    // TODO: Implement real AI suggestion generation from database
-    // This would query roster_matches table for active rotation and bench matches
+    try {
+      // Query matches where current user is user_a or user_b
+      final matchesAsA = await _supabase!
+          .from('matches')
+          .select('''
+            id,
+            user_b_id,
+            compatibility_score,
+            matched_at,
+            matched_user:profiles!matches_user_b_id_fkey (
+              id,
+              display_name,
+              avatar_url,
+              availability_general
+            )
+          ''')
+          .eq('user_a_id', userId)
+          .eq('user_a_archived', false);
 
-    return suggestions;
+      final matchesAsB = await _supabase!
+          .from('matches')
+          .select('''
+            id,
+            user_a_id,
+            compatibility_score,
+            matched_at,
+            matched_user:profiles!matches_user_a_id_fkey (
+              id,
+              display_name,
+              avatar_url,
+              availability_general
+            )
+          ''')
+          .eq('user_b_id', userId)
+          .eq('user_b_archived', false);
+
+      final suggestions = <AiDateSuggestion>[];
+      final now = DateTime.now();
+
+      // Process all matches
+      for (final match in [...matchesAsA as List, ...matchesAsB as List]) {
+        final matchedUser = match['matched_user'] as Map<String, dynamic>?;
+        if (matchedUser == null) continue;
+
+        final matchedUserId = matchedUser['id'] as String;
+        
+        // Skip if not in preferred list ( (from matches table)
+final planConnectionsProvider =
+    FutureProvider<List<EventConnection>>((ref) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    // Query matches where current user is user_a or user_b
+    final matchesAsA = await supabase
+        .from('matches')
+        .select('''
+          user_b_id,
+          matched_user:profiles!matches_user_b_id_fkey (
+            id,
+            display_name,
+            avatar_url
+          )
+        ''')
+        .eq('user_a_id', userId)
+        .eq('user_a_archived', false);
+
+    final matchesAsB = await supabase
+        .from('matches')
+        .select('''
+          user_a_id,
+          matched_user:profiles!matches_user_a_id_fkey (
+            id,
+            display_name,
+            avatar_url
+          )
+        ''')
+        .eq('user_b_id', userId)
+        .eq('user_b_archived', false);
+
+    final connections = <EventConnection>[];
+    
+    for (final match in [...matchesAsA as List, ...matchesAsB as List]) {
+      final matchedUser = match['matched_user'] as Map<String, dynamic>?;
+      if (matchedUser == null) continue;
+      
+      connections.add(EventConnection(
+        id: matchedUser['id'] as String,
+        name: matchedUser['display_name'] as String? ?? 'Someone',
+        avatarUrl: matchedUser['avatar_url'] as String?,
+      ));
+    }
+
+    return connections;
+  } catch (_) {
+    return [];
+  }
+
+        final connection = EventConnection(
+          id: matchedUserId,
+          name: matchedUser['display_name'] as String? ?? 'Someone',
+          avatarUrl: matchedUser['avatar_url'] as String?,
+        );
+
+        final compatScore = (match['compatibility_score'] as num?)?.toDouble() ?? 0.5;
+        
+        // Generate suggested times (next 7 days, evenings and weekends)
+        final suggestedTimes = <DateTime>[];
+        for (int i = 1; i <= 7; i++) {
+          final day = now.add(Duration(days: i));
+          if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
+            // Weekend - suggest afternoon and evening
+            suggestedTimes.add(DateTime(day.year, day.month, day.day, 14, 0));
+            suggestedTimes.add(DateTime(day.year, day.month, day.day, 19, 0));
+          } else {
+            // Weekday - suggest evening only
+            suggestedTimes.add(DateTime(day.year, day.month, day.day, 19, 0));
+          }
+        }
+
+        // Filter by preferred date if specified
+        final filteredTimes = preferredDate != null
+            ? suggestedTimes.where((t) => 
+                t.year == preferredDate.year && 
+                t.month == preferredDate.month && 
+                t.day == preferredDate.day).toList()
+            : suggestedTimes.take(5).toList();
+
+        if (filteredTimes.isEmpty) continue;
+
+        suggestions.add(AiDateSuggestion(
+          id: match['id'] as String,
+          connection: connection,
+          suggestedTimes: filteredTimes,
+          reason: _generateSuggestionReason(matchedUserId, []),
+          compatibilityScore: compatScore,
+          isHotMatch: compatScore > 0.75,
+        ));
+      }
+
+      // Sort by compatibility score
+      suggestions.sort((a, b) => b.compatibilityScore.compareTo(a.compatibilityScore));
+
+      return suggestions.take(5).toList();
+    } catch (e) {
+      // Return empty on error
+      return [];
+    }
   }
 
   String _generateSuggestionReason(String matchId, List<String> interests) {
