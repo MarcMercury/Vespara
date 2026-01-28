@@ -431,15 +431,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
-              // Full tile icon image
+              // Full tile icon image - scaled down to fit within tile
               Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    _getModuleIconPath(moduleName),
-                    fit: BoxFit.cover,
-                    cacheWidth: 400,
-                    filterQuality: FilterQuality.high,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      _getModuleIconPath(moduleName),
+                      fit: BoxFit.contain,
+                      cacheWidth: 400,
+                      filterQuality: FilterQuality.high,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback to gradient + icon if image not found
                       return DecoratedBox(
