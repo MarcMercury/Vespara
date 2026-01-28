@@ -1001,7 +1001,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       label: 'Message',
                       color: VesparaColors.glow,
                       onTap: () async {
-                        Navigator.pop(context);
+                        // Save navigator before popping
+                        final navigator = Navigator.of(context);
+                        navigator.pop();
+                        
                         // Get or create direct conversation with this match
                         final conversationId = await ref
                             .read(wireProvider.notifier)
@@ -1021,7 +1024,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             ),
                           );
                           
-                          Navigator.of(context).push(
+                          navigator.push(
                             MaterialPageRoute(
                               builder: (context) => WireChatScreen(conversation: conversation),
                             ),
@@ -1113,27 +1116,55 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ...match.suggestedDateIdeas.map(
-                      (idea) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.lightbulb,
-                                size: 16, color: VesparaColors.tagsYellow,),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                idea,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: VesparaColors.primary,
-                                ),
+                    if (match.suggestedDateIdeas.isEmpty) ...[
+                      // Show placeholder when no AI insights yet
+                      Row(
+                        children: [
+                          Icon(Icons.auto_awesome,
+                              size: 16, color: VesparaColors.glow.withOpacity(0.5)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'AI insights will appear as you interact more with ${match.matchedUserName}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: VesparaColors.secondary.withOpacity(0.7),
+                                fontStyle: FontStyle.italic,
                               ),
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Try sending a message or planning a date to unlock personalized suggestions!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: VesparaColors.secondary.withOpacity(0.5),
                         ),
                       ),
-                    ),
+                    ] else
+                      ...match.suggestedDateIdeas.map(
+                        (idea) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.lightbulb,
+                                  size: 16, color: VesparaColors.tagsYellow,),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  idea,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: VesparaColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/domain/models/match.dart';
 import '../../../core/providers/groups_provider.dart';
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -93,6 +94,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 message: 'Join my new group: ${group.name}!',
               );
         }
+
+        // Reload Wire conversations so group appears in Wire tab
+        await ref.read(wireProvider.notifier).loadConversations();
 
         if (mounted) {
           HapticFeedback.heavyImpact();

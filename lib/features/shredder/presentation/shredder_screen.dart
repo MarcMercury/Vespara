@@ -17,7 +17,8 @@ class ShredderScreen extends ConsumerStatefulWidget {
   ConsumerState<ShredderScreen> createState() => _ShredderScreenState();
 }
 
-clList<Map<String, dynamic>> _suggestions = [];
+class _ShredderScreenState extends ConsumerState<ShredderScreen> {
+  List<Map<String, dynamic>> _suggestions = [];
   final List<Map<String, dynamic>> _shreddedHistory = [];
   bool _isLoading = true;
 
@@ -38,7 +39,7 @@ clList<Map<String, dynamic>> _suggestions = [];
         return;
       }
 
-      // Query matches older than 14 days
+      // Query matches older than 14 days with no recent activity
       final cutoffDate =
           DateTime.now().subtract(const Duration(days: 14)).toIso8601String();
 
@@ -77,56 +78,16 @@ clList<Map<String, dynamic>> _suggestions = [];
             )
           ''')
           .eq('user_b_id', userId)
-          .eq('user_b_arc{
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: VesparaColors.glow),
-      );
-    }
+          .eq('user_b_archived', false)
+          .lt('matched_at', cutoffDate);
 
-    return RefreshIndicator(
-      onRefresh: _loadStaleMatches,
-      color: VesparaColors.glow,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildIntroCard(),
-            const SizedBox(height: 24),
-            if (_suggestions.isEmpty)
-              _buildEmptyState()
-            else ...[
-              const Text(
-                'AI SUGGESTS YOU LET GO OF',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.secondary,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ..._suggestions.map(_buildSuggestionCard),
-            ],
-          ],
-        ),
-      ),
-    );
-  }  'urgency': daysSinceMatch > 30 ? 'high' : 'medium',
-          'reason': hasMessages
-              ? 'Conversation stalled after initial messages'
-              : 'No messages exchanged since matching',
-        });
-      }
-
-      // Sort by days since match (oldest first)
-      suggestions.sort((a, b) =>
-          (b['daysSinceMatch'] as int).compareTo(a['daysSinceMatch'] as int));
+      final allStaleMatches = [
+        ...matchesAsA.map((m) => {...m, 'is_user_a': true}),
+        ...matchesAsB.map((m) => {...m, 'is_user_a': false}),
+      ];
 
       setState(() {
-        _suggestions = suggestions;
+        _suggestions = allStaleMatches;
         _isLoading = false;
       });
     } catch (e) {
@@ -135,54 +96,40 @@ clList<Map<String, dynamic>> _suggestions = [];
     }
   }
 
-  Future<void> _shredMatch(Map<String, dynamic> suggestion) async {
+  Future<void> _shredMatch(Map<String, dynamic> match) async {
+    final supabase = Supabase.instance.client;
+    final matchId = match['id'] as String;
+    final isUserA = match['is_user_a'] as bool? ?? true;
+
     try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-
-      final matchId = suggestion['id'] as String;
-      final matchedUserId = suggestion['matchedUserId'] as String;
-
-      // Determine which column to update based on user position
-      final match = await supabase
-          .from('matches')
-          .select('user_a_id')
-          .eq('id', matchId)
-          .single();
-
-      final isUserA = match['user_a_id'] == userId;
-
       // Archive the match for the current user
       await supabase.from('matches').update({
         isUserA ? 'user_a_archived' : 'user_b_archived': true,
       }).eq('id', matchId);
 
-      // Log to shredder_archive
-      await supabase.from('shredder_archive').insert({
-        'user_id': userId,
-        'shredded_user_id': matchedUserId,
-        'reason': suggestion['reason'],
-      });
-
-      // Remove from local list
       setState(() {
         _suggestions.removeWhere((s) => s['id'] == matchId);
-        _shreddedHistory.add(suggestion);
+        _shreddedHistory.add(match);
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${suggestion['name']} has been shredded'),
-            backgroundColor: VesparaColors.error,
+          const SnackBar(
+            content: Text('Match archived successfully'),
+            backgroundColor: VesparaColors.success,
           ),
         );
       }
     } catch (e) {
-      debugPrint('Error shredding match: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to archive: $e'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
     }
-    // Suggestions will be loaded from database/AI
   }
 
   @override
@@ -236,7 +183,18 @@ clList<Map<String, dynamic>> _suggestions = [];
         ),
       );
 
-  Widget _buildContent() => SingleChildScrollView(
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: VesparaColors.glow),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadStaleMatches,
+      color: VesparaColors.glow,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +218,9 @@ clList<Map<String, dynamic>> _suggestions = [];
             ],
           ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _buildIntroCard() => Container(
         padding: const EdgeInsets.all(20),
@@ -369,7 +329,31 @@ clList<Map<String, dynamic>> _suggestions = [];
       );
 
   Widget _buildSuggestionCard(Map<String, dynamic> suggestion) {
-    final urgency = suggestion['urgency'] as String;
+    // Extract data from database format
+    final matchedUser = suggestion['matched_user'] as Map<String, dynamic>?;
+    final name = matchedUser?['display_name'] as String? ?? 'Unknown';
+    final avatarUrl = matchedUser?['avatar_url'] as String?;
+    final matchedAt = DateTime.tryParse(suggestion['matched_at'] as String? ?? '') ?? DateTime.now();
+    final daysSinceMatch = DateTime.now().difference(matchedAt).inDays;
+    final firstMessageAt = suggestion['first_message_at'] as String?;
+    
+    // Calculate urgency based on activity
+    String urgency;
+    String reason;
+    if (firstMessageAt == null) {
+      urgency = 'high';
+      reason = 'No messages exchanged in $daysSinceMatch days. This connection may have gone cold.';
+    } else if (daysSinceMatch > 30) {
+      urgency = 'high';
+      reason = 'Last activity was over a month ago. Time to either reconnect or let go.';
+    } else if (daysSinceMatch > 21) {
+      urgency = 'medium';
+      reason = 'Conversation stalled after initial contact. Consider reaching out or moving on.';
+    } else {
+      urgency = 'low';
+      reason = 'Match is getting stale. Send a message or plan something soon!';
+    }
+    
     final urgencyColor = urgency == 'high'
         ? VesparaColors.error
         : (urgency == 'medium'
@@ -402,17 +386,25 @@ clList<Map<String, dynamic>> _suggestions = [];
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: VesparaColors.glow.withOpacity(0.2),
+                    image: avatarUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(avatarUrl),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Center(
-                    child: Text(
-                      (suggestion['name'] as String)[0].toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.primary,
-                      ),
-                    ),
-                  ),
+                  child: avatarUrl == null
+                      ? Center(
+                          child: Text(
+                            name[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -420,7 +412,7 @@ clList<Map<String, dynamic>> _suggestions = [];
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        suggestion['name'] as String,
+                        name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -428,7 +420,7 @@ clList<Map<String, dynamic>> _suggestions = [];
                         ),
                       ),
                       Text(
-                        'Matched ${suggestion['daysSinceMatch']} days ago',
+                        'Matched $daysSinceMatch days ago',
                         style: const TextStyle(
                           fontSize: 12,
                           color: VesparaColors.secondary,
@@ -471,8 +463,18 @@ clList<Map<String, dynamic>> _suggestions = [];
                     Text(
                       'AI Analysis',
                       style: TextStyle(
-              Navigator.pop(context);
-              _shredMatch(suggestion      fontSize: 14,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.glow,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  reason,
+                  style: const TextStyle(
+                    fontSize: 14,
                     color: VesparaColors.primary,
                     height: 1.4,
                   ),
@@ -528,7 +530,13 @@ clList<Map<String, dynamic>> _suggestions = [];
     );
   }
 
-  Widget _buildShredStats(Map<String, dynamic> suggestion) => Container(
+  Widget _buildShredStats(Map<String, dynamic> suggestion) {
+    final matchedAt = DateTime.tryParse(suggestion['matched_at'] as String? ?? '') ?? DateTime.now();
+    final daysSinceMatch = DateTime.now().difference(matchedAt).inDays;
+    final firstMessageAt = suggestion['first_message_at'] as String?;
+    final compatibilityScore = (suggestion['compatibility_score'] as num?)?.toDouble() ?? 0.0;
+    
+    return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: VesparaColors.background,
@@ -538,22 +546,23 @@ clList<Map<String, dynamic>> _suggestions = [];
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildShredStat(
-                'Messages', suggestion['messageCount']?.toString() ?? '0',),
+                'Days', '$daysSinceMatch',),
             Container(
                 width: 1,
                 height: 30,
                 color: VesparaColors.glow.withOpacity(0.2),),
             _buildShredStat(
-                'Last Msg', '${suggestion['daysSinceLastMessage'] ?? 0}d ago',),
+                'Messages', firstMessageAt != null ? 'Sent' : 'None',),
             Container(
                 width: 1,
                 height: 30,
                 color: VesparaColors.glow.withOpacity(0.2),),
-            _buildShredStat('Response',
-                '${((suggestion['responseRate'] ?? 0.0) * 100).toInt()}%',),
+            _buildShredStat('Match',
+                '${(compatibilityScore * 100).toInt()}%',),
           ],
         ),
       );
+  }
 
   Widget _buildShredStat(String label, String value) => Column(
         children: [
@@ -576,16 +585,19 @@ clList<Map<String, dynamic>> _suggestions = [];
       );
 
   void _showShredConfirmation(Map<String, dynamic> suggestion) {
+    final matchedUser = suggestion['matched_user'] as Map<String, dynamic>?;
+    final name = matchedUser?['display_name'] as String? ?? 'this connection';
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             const Icon(Icons.delete_forever, color: VesparaColors.error),
             const SizedBox(width: 8),
-            Text('Shred ${suggestion['name']}?',
+            Text('Shred $name?',
                 style: const TextStyle(color: VesparaColors.primary),),
           ],
         ),
@@ -614,24 +626,14 @@ clList<Map<String, dynamic>> _suggestions = [];
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel',
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                _shreddedHistory.add(suggestion);
-                _suggestions
-                    .removeWhere((s) => s['name'] == suggestion['name']);
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${suggestion['name']} has been shredded'),
-                  backgroundColor: VesparaColors.error,
-                ),
-              );
+              Navigator.pop(ctx);
+              _shredMatch(suggestion);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: VesparaColors.error,
