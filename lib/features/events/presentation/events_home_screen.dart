@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/app_providers.dart';
@@ -23,7 +24,10 @@ class EventsHomeScreen extends ConsumerStatefulWidget {
 
 class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   String _selectedFilter = 'Upcoming';
+currentUserId =>
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
+  String get _
   String get _userName {
     final profile = ref.watch(userProfileProvider).valueOrNull;
     return profile?.displayName ?? 'Friend';
@@ -43,11 +47,11 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
         return events
             .where(
               (e) => e.rsvps.any(
-                  (r) => r.userId == 'current-user' && r.status == 'invited',),
+                  (r) => r.userId == _currentUserId && r.status == 'invited',),
             )
             .toList();
       case 'Hosting':
-        return events.where((e) => e.hostId == 'current-user').toList();
+        return events.where((e) => e.hostId == _currentUserId).toList();
       case 'Open invite':
         return events
             .where((e) => e.visibility == EventVisibility.openInvite)
@@ -58,7 +62,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               (e) =>
                   e.isPast &&
                   e.rsvps.any(
-                      (r) => r.userId == 'current-user' && r.status == 'going',),
+                      (r) => r.userId == _currentUserId && r.status == 'going',),
             )
             .toList();
       case 'All past events':
@@ -75,17 +79,17 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   int get _invitesCount => _allEvents
       .where(
         (e) => e.rsvps
-            .any((r) => r.userId == 'current-user' && r.status == 'invited'),
+            .any((r) => r.userId == _currentUserId && r.status == 'invited'),
       )
       .length;
   int get _hostingCount =>
-      _allEvents.where((e) => e.hostId == 'current-user').length;
+      _allEvents.where((e) => e.hostId == _currentUserId).length;
   int get _attendedCount => _allEvents
       .where(
         (e) =>
             e.isPast &&
             e.rsvps
-                .any((r) => r.userId == 'current-user' && r.status == 'going'),
+                .any((r) => r.userId == _currentUserId && r.status == 'going'),
       )
       .length;
   int get _pastCount => _allEvents.where((e) => e.isPast).length;
@@ -339,7 +343,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
           final event = events[index];
           return EventTileCard(
             event: event,
-            currentUserId: 'current-user',
+            currentUserId: _currentUserId,
             onTap: () => _openEvent(event),
             onMoreTap: () => _showEventOptions(event),
           );
@@ -465,7 +469,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   }
 
   void _showEventOptions(VesparaEvent event) {
-    final isHost = event.hostId == 'current-user';
+    final isHost = event.hostId == _currentUserId;
 
     showModalBottomSheet(
       context: context,

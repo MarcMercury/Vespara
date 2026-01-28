@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/vespara_event.dart';
+import '../../../core/domain/models/wire_models.dart';
 import '../../../core/providers/events_provider.dart';
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../wire/presentation/wire_chat_screen.dart';
+import 'event_creation_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// EVENT DETAIL SCREEN - Full Event View with RSVP
@@ -23,7 +28,9 @@ class EventDetailScreen extends ConsumerStatefulWidget {
 
 class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   late VesparaEvent _event;
-  final String _currentUserId = 'current-user';
+
+  String get _currentUserId =>
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {
@@ -97,17 +104,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: _shareEvent,
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.share, color: Colors.white),
-            ),
-          ),
           IconButton(
             onPressed: _showEventOptions,
             icon: Container(
@@ -989,13 +985,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   }
 
   // Action methods
-  void _shareEvent() {
-    HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sharing event link...')),
-    );
-  }
-
   void _showEventOptions() {
     showModalBottomSheet(
       context: context,
@@ -1032,15 +1021,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 onTap: () => Navigator.pop(context),
               ),
             ] else ...[
-              ListTile(
-                leading: const Icon(Icons.share, color: VesparaColors.glow),
-                title: const Text('Share',
-                    style: TextStyle(color: VesparaColors.primary),),
-                onTap: () {
-                  Navigator.pop(context);
-                  _shareEvent();
-                },
-              ),
               ListTile(
                 leading:
                     const Icon(Icons.calendar_today, color: VesparaColors.glow),
@@ -1080,16 +1060,62 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     );
   }
 
-  void _messageHost() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening chat with ${_event.hostName}...')),
-    );
+  void _messageHost() async {
+    // Get or create a direct conversation with the host
+    final conversationId = await ref
+        .read(wireProvider.notifier)
+        .getOrCreateDirectConversation(_event.hostId);
+
+    if (conversationId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open chat. Please try again.'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Navigate to the Wire chat screen
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WireChatScreen(
+            conversation: WireConversation(
+              id: conversationId,
+              name: _event.hostName,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ),
+        ),
+      );
+    }
   }
 
-  void _editEvent() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening event editor...')),
+  void _editEvent() async {
+    final result = await Navigator.push<VesparaEvent>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventCreationScreen(eventToEdit: _event),
+      ),
     );
+
+    // If the event was updated, refresh the local state
+    if (result != null && mounted) {
+      setState(() {
+        _event = result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Event updated!'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
   }
 
   void _inviteGuests() {

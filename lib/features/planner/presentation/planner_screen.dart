@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/domain/models/plan_event.dart';
+import '../../../core/domain/models/vespara_event.dart';
+import '../../../core/providers/events_provider.dart';
 import '../../../core/providers/plan_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -1986,26 +1990,55 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
     }
   }
 
-  void _createEvent() {
-    final event = PlanEvent(
-      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
-      userId: 'current-user', // Would come from auth
+  void _createEvent() async {
+    final currentUserId =
+        Supabase.instance.client.auth.currentUser?.id ?? 'current-user';
+    final userName = Supabase
+            .instance.client.auth.currentUser?.userMetadata?['display_name'] ??
+        'Host';
+
+    final startTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    final endTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour + 2,
+      _selectedTime.minute,
+    );
+
+    // Create a VesparaEvent for unified events system
+    final vesparaEvent = VesparaEvent(
+      id: const Uuid().v4(),
+      title: _titleController.text,
+      description: _notesController.text.isEmpty ? null : _notesController.text,
+      hostId: currentUserId,
+      hostName: userName,
+      startTime: startTime,
+      endTime: endTime,
+      venueAddress:
+          _locationController.text.isEmpty ? null : _locationController.text,
+      visibility: EventVisibility.private, // Planner events are private
+      createdAt: DateTime.now(),
+    );
+
+    // Create in Events provider (saves to group_events table)
+    await ref.read(eventsProvider.notifier).createVesparaEvent(vesparaEvent);
+
+    // Also create in Plan provider for calendar view
+    final planEvent = PlanEvent(
+      id: vesparaEvent.id,
+      userId: currentUserId,
       title: _titleController.text,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
-      startTime: DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
-      ),
-      endTime: DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        _selectedTime.hour + 2,
-        _selectedTime.minute,
-      ),
+      startTime: startTime,
+      endTime: endTime,
       location:
           _locationController.text.isEmpty ? null : _locationController.text,
       connections: _selectedConnections,
@@ -2013,15 +2046,17 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
       createdAt: DateTime.now(),
     );
 
-    ref.read(planProvider.notifier).createEvent(event);
+    ref.read(planProvider.notifier).createEvent(planEvent);
 
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Event "${event.title}" created!'),
-        backgroundColor: VesparaColors.success,
-      ),
-    );
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Event "${vesparaEvent.title}" created!'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
   }
 
   String _formatDate(DateTime date) {
