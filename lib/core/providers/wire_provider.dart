@@ -87,6 +87,7 @@ class WireState {
     Map<String, List<WireMessage>>? messagesByConversation,
     Map<String, List<ConversationParticipant>>? participantsByConversation,
     String? activeConversationId,
+    bool clearActiveConversation = false,
     bool? isLoading,
     String? error,
     Map<String, List<TypingUser>>? typingByConversation,
@@ -97,7 +98,9 @@ class WireState {
             messagesByConversation ?? this.messagesByConversation,
         participantsByConversation:
             participantsByConversation ?? this.participantsByConversation,
-        activeConversationId: activeConversationId ?? this.activeConversationId,
+        activeConversationId: clearActiveConversation 
+            ? null 
+            : (activeConversationId ?? this.activeConversationId),
         isLoading: isLoading ?? this.isLoading,
         error: error,
         typingByConversation: typingByConversation ?? this.typingByConversation,
@@ -275,7 +278,7 @@ class WireNotifier extends StateNotifier<WireState> {
 
   /// Close the active conversation
   void closeConversation() {
-    state = state.copyWith();
+    state = state.copyWith(clearActiveConversation: true);
   }
 
   /// Archive a conversation
@@ -1055,16 +1058,21 @@ class WireNotifier extends StateNotifier<WireState> {
   // ══════════════════════════════════════════════════════════════════════════
 
   void _subscribeToRealtime() {
-    // Subscribe to new messages
+    // Subscribe to new messages for user's conversations
     _messagesChannel = _supabase
-        .channel('messages')
+        .channel('wire-messages-$_currentUserId')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'messages',
           callback: (payload) {
             final newMessage = WireMessage.fromJson(payload.newRecord);
-            _handleNewMessage(newMessage);
+            // Only process if this conversation belongs to user
+            final isUserConversation = state.conversations
+                .any((c) => c.id == newMessage.conversationId);
+            if (isUserConversation) {
+              _handleNewMessage(newMessage);
+            }
           },
         )
         .onPostgresChanges(
@@ -1073,14 +1081,19 @@ class WireNotifier extends StateNotifier<WireState> {
           table: 'messages',
           callback: (payload) {
             final updatedMessage = WireMessage.fromJson(payload.newRecord);
-            _handleUpdatedMessage(updatedMessage);
+            // Only process if this conversation belongs to user
+            final isUserConversation = state.conversations
+                .any((c) => c.id == updatedMessage.conversationId);
+            if (isUserConversation) {
+              _handleUpdatedMessage(updatedMessage);
+            }
           },
         )
         .subscribe();
 
     // Subscribe to typing indicators
     _typingChannel = _supabase
-        .channel('typing')
+        .channel('wire-typing-$_currentUserId')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
@@ -1130,11 +1143,58 @@ class WireNotifier extends StateNotifier<WireState> {
   }
 
   void _handleTypingChange(PostgresChangePayload payload) {
-    final conversationId = payload.newRecord['conversation_id'] as String?;
-    if (conversationId == null) return;
-
-    // Reload typing indicators for this conversation
-    // In a real app, maintain state more efficiently
+    // Handle typing indicator changes
+    if (payload.eventType == PostgresChangeEvent.delete) {
+      // User stopped typing - remove from state
+      final conversationId = payload.oldRecord['conversation_id'] as String?;
+      final userId = payload.oldRecord['user_id'] as String?;
+      if (conversationId == null || userId == null) return;
+      
+      // Only update if this is a conversation we're tracking
+      final isUserConversation = state.conversations
+          .any((c) => c.id == conversationId);
+      if (!isUserConversation) return;
+      
+      final currentTyping = state.typingByConversation[conversationId] ?? [];
+      final updated = currentTyping.where((t) => t.id != userId).toList();
+      state = state.copyWith(
+        typingByConversation: {
+          ...state.typingByConversation,
+          conversationId: updated,
+        },
+      );
+    } else if (payload.eventType == PostgresChangeEvent.insert) {
+      // User started typing - add to state
+      final conversationId = payload.newRecord['conversation_id'] as String?;
+      final userId = payload.newRecord['user_id'] as String?;
+      if (conversationId == null || userId == null) return;
+      
+      // Don't show own typing indicator
+      if (userId == _currentUserId) return;
+      
+      // Only update if this is a conversation we're tracking
+      final isUserConversation = state.conversations
+          .any((c) => c.id == conversationId);
+      if (!isUserConversation) return;
+      
+      // Create typing user entry
+      final typingUser = TypingUser(
+        id: userId,
+        displayName: 'Someone', // Would need to fetch actual name
+        startedAt: DateTime.now(),
+      );
+      
+      final currentTyping = state.typingByConversation[conversationId] ?? [];
+      // Avoid duplicates
+      if (currentTyping.any((t) => t.id == userId)) return;
+      
+      state = state.copyWith(
+        typingByConversation: {
+          ...state.typingByConversation,
+          conversationId: [...currentTyping, typingUser],
+        },
+      );
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
