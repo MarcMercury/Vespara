@@ -543,12 +543,15 @@ final planConnectionsProvider =
         }
 
         // Filter by preferred date if specified
-        final filteredTimes = preferredDate != null
-            ? suggestedTimes.where((t) => 
-                t.year == preferredDate.year && 
-                t.month == preferredDate.month && 
-                t.day == preferredDate.day).toList()
-            : suggestedTimes.take(5).toList();
+        List<DateTime> filteredTimes;
+        if (preferredDate != null) {
+          filteredTimes = suggestedTimes.where((t) => 
+              t.year == preferredDate.year && 
+              t.month == preferredDate.month && 
+              t.day == preferredDate.day).toList();
+        } else {
+          filteredTimes = suggestedTimes.take(5).toList();
+        }
 
         if (filteredTimes.isEmpty) continue;
 

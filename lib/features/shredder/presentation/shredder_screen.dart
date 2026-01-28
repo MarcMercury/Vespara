@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 
@@ -18,149 +17,13 @@ class ShredderScreen extends ConsumerStatefulWidget {
 }
 
 class _ShredderScreenState extends ConsumerState<ShredderScreen> {
-  List<Map<String, dynamic>> _suggestions = [];
+  final List<Map<String, dynamic>> _suggestions = [];
   final List<Map<String, dynamic>> _shreddedHistory = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadStaleMatches();
-  }
-
-  /// Load matches with no recent interaction from the database
-  Future<void> _loadStaleMatches() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) {
-        setState(() {
-          _suggestions = [];
-          _isLoading = false;
-        });
-        return;
-      }
-
-      // Get matches older than 14 days with no first_message (never messaged)
-      // or where first_message is older than 30 days
-      final staleDate = DateTime.now().subtract(const Duration(days: 14));
-      final veryStaleDate = DateTime.now().subtract(const Duration(days: 30));
-
-      // Query matches where user is user_a
-      final matchesAsA = await supabase
-          .from('matches')
-          .select('''
-            id,
-            matched_at,
-            first_message_at,
-            user_b_id,
-            user_a_archived,
-            matched_user:profiles!matches_user_b_id_fkey (
-              id,
-              display_name,
-              avatar_url
-            )
-          ''')
-          .eq('user_a_id', userId)
-          .eq('user_a_archived', false)
-          .lt('matched_at', staleDate.toIso8601String());
-
-      // Query matches where user is user_b
-      final matchesAsB = await supabase
-          .from('matches')
-          .select('''
-            id,
-            matched_at,
-            first_message_at,
-            user_a_id,
-            user_b_archived,
-            matched_user:profiles!matches_user_a_id_fkey (
-              id,_isLoading
-      ? const Center(
-          child: CircularProgressIndicator(color: VesparaColors.error),
-        )
-      : RefreshIndicator(
-          onRefresh: _loadStaleMatches,
-          color: VesparaColors.error,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildIntroCard(),
-                const SizedBox(height: 24),
-                if (_suggestions.isEmpty)
-                  _buildEmptyState()
-                else ...[
-                  const Text(
-                    'AI SUGGESTS YOU LET GO OF',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.secondary,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ..._suggestions.map(_buildSuggestionCard),
-                ],
-              ],
-            ),
-          ),
-          String reason;
-        
-        if (firstMessageAt == null) {
-          // Never messaged
-          if (daysSinceMatch > 30) {
-            urgency = 'high';
-            reason = 'Matched over a month ago with zero messages exchanged';
-          } else {
-            urgency = 'medium';
-            reason = 'No conversation started since matching';
-          }
-        } else if (firstMessageAt.isBefore(veryStaleDate)) {
-          urgency = 'high';
-          reason = 'Last message was over a month ago';
-        } else {
-          urgency = 'low';
-          reason = 'Conversation has gone quiet';
-        }
-
-        suggestions.add({
-          'id': match['id'],
-          'matchedUserId': matchedUser['id'],
-          'name': matchedUser['display_name'] ?? 'Someone',
-          'avatarUrl': matchedUser['avatar_url'],
-          'daysSinceMatch': daysSinceMatch,
-          'urgency': urgency,
-          'reason': reason,
-          'hasNeverMessaged': firstMessageAt == null,
-        });
-      }
-
-      // Sort by urgency (high first) then by days since match
-      suggestions.sort((a, b) {
-        final urgencyOrder = {'high': 0, 'medium': 1, 'low': 2};
-        final aOrder = urgencyOrder[a['urgency']] ?? 2;
-        final bOrder = urgencyOrder[b['urgency']] ?? 2;
-        if (aOrder != bOrder) return aOrder.compareTo(bOrder);
-        return (b['daysSinceMatch'] as int).compareTo(a['daysSinceMatch'] as int);
-      });
-
-      setState(() {
-        _suggestions = suggestions;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error loading stale matches: $e');
-      setState(() {
-        _suggestions = [];
-        _isLoading = false;
-      });
-    }
+    // Suggestions will be loaded from database/AI
   }
 
   @override
@@ -470,9 +333,19 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
 
                 // Stats
                 _buildShredStats(suggestion),
-async {
-              Navigator.pop(context);
-              await _shredMatch(suggestion            padding: const EdgeInsets.symmetric(vertical: 12),
+
+                const SizedBox(height: 16),
+
+                // Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _showKeepDialog(suggestion),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: VesparaColors.glow,
+                          side: const BorderSide(color: VesparaColors.glow),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: const Text('Keep'),
                       ),
