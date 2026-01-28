@@ -1082,52 +1082,36 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
                   
                   // Place Card button (only shown when a spot is selected)
                   if (hasSelectedSpot)
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          // Safely check for null inside callback
-                          final index = _selectedDropIndex;
-                          if (index == null) return;
-                          
-                          HapticFeedback.heavyImpact();
-                          final capturedIndex = index;
-                          setState(() => _selectedDropIndex = null);
-                          ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
-                        },
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [LaneColors.crimson, Color(0xFFFF6B6B)],
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: LaneColors.crimson.withOpacity(0.4),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(VesparaIcons.confirm, color: Colors.white, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'PLACE CARD',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // Safely check for null inside callback
+                        final index = _selectedDropIndex;
+                        if (index == null) return;
+                        
+                        HapticFeedback.heavyImpact();
+                        final capturedIndex = index;
+                        setState(() => _selectedDropIndex = null);
+                        ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
+                      },
+                      icon: const Icon(VesparaIcons.confirm, color: Colors.white, size: 20),
+                      label: const Text(
+                        'PLACE CARD',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                          fontSize: 14,
                         ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: LaneColors.crimson,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        elevation: 8,
+                        shadowColor: LaneColors.crimson.withOpacity(0.4),
                       ),
                     ),
                 ],
