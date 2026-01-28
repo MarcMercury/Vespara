@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/events_provider.dart';
+import '../../../core/providers/match_state_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -1098,114 +1100,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Invite Guests',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search your roster...',
-                      hintStyle:
-                          const TextStyle(color: VesparaColors.secondary),
-                      prefixIcon: const Icon(Icons.search,
-                          color: VesparaColors.secondary,),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: VesparaColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: VesparaColors.glow),
-                      ),
-                    ),
-                    style: const TextStyle(color: VesparaColors.primary),
-                  ),
-                ],
-              ),
+      builder: (context) => _InviteGuestsSheet(
+        event: _event,
+        onInvitesSent: (invitedCount) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sent $invitedCount invite${invitedCount == 1 ? '' : 's'}! 🎉'),
+              backgroundColor: VesparaColors.success,
             ),
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 64,
-                      color: VesparaColors.secondary.withOpacity(0.5),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No connections yet',
-                      style: TextStyle(
-                        color: VesparaColors.secondary,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Add connections to invite them to events',
-                      style: TextStyle(
-                        color: VesparaColors.secondary.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                  24, 16, 24, 16 + MediaQuery.of(context).padding.bottom,),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Invites sent!'),
-                        backgroundColor: VesparaColors.success,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VesparaColors.glow,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Send Invites',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.background,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1290,5 +1194,322 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         ),
       );
     }
+  }
+}
+
+/// ════════════════════════════════════════════════════════════════════════════
+/// INVITE GUESTS SHEET - Shows matches to invite to event
+/// ════════════════════════════════════════════════════════════════════════════
+
+class _InviteGuestsSheet extends ConsumerStatefulWidget {
+  const _InviteGuestsSheet({
+    required this.event,
+    required this.onInvitesSent,
+  });
+
+  final VesparaEvent event;
+  final void Function(int invitedCount) onInvitesSent;
+
+  @override
+  ConsumerState<_InviteGuestsSheet> createState() => _InviteGuestsSheetState();
+}
+
+class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
+  final Set<String> _selectedIds = {};
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Match> get _filteredMatches {
+    final matchState = ref.watch(matchStateProvider);
+    final matches = matchState.matches.where((m) => !m.isArchived).toList();
+    
+    if (_searchQuery.isEmpty) return matches;
+    
+    return matches.where((m) {
+      final name = m.matchedUserName?.toLowerCase() ?? '';
+      return name.contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final matches = _filteredMatches;
+    
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Invite from Sanctum',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
+                      ),
+                    ),
+                    if (_selectedIds.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.glow.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          '${_selectedIds.length} selected',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.glow,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  decoration: InputDecoration(
+                    hintText: 'Search matches...',
+                    hintStyle: const TextStyle(color: VesparaColors.secondary),
+                    prefixIcon: const Icon(Icons.search, color: VesparaColors.secondary),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: VesparaColors.secondary),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: VesparaColors.background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: VesparaColors.glow),
+                    ),
+                  ),
+                  style: const TextStyle(color: VesparaColors.primary),
+                ),
+              ],
+            ),
+          ),
+
+          // Matches list
+          Expanded(
+            child: matches.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: matches.length,
+                    itemBuilder: (context, index) {
+                      final match = matches[index];
+                      final isSelected = _selectedIds.contains(match.matchedUserId);
+                      
+                      return _buildMatchTile(match, isSelected);
+                    },
+                  ),
+          ),
+
+          // Send button
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              20, 12, 20, 12 + MediaQuery.of(context).padding.bottom,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _selectedIds.isEmpty ? null : _sendInvites,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VesparaColors.glow,
+                  disabledBackgroundColor: VesparaColors.surface,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  _selectedIds.isEmpty
+                      ? 'Select people to invite'
+                      : 'Send ${_selectedIds.length} Invite${_selectedIds.length == 1 ? '' : 's'}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _selectedIds.isEmpty
+                        ? VesparaColors.secondary
+                        : VesparaColors.background,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final hasMatches = ref.watch(matchStateProvider).matches.isNotEmpty;
+    
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              hasMatches ? Icons.search_off : Icons.favorite_border,
+              size: 64,
+              color: VesparaColors.secondary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hasMatches ? 'No matches found' : 'No matches yet',
+              style: const TextStyle(
+                color: VesparaColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasMatches
+                  ? 'Try a different search'
+                  : 'Match with people in Discover to invite them to events',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: VesparaColors.secondary.withOpacity(0.8),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatchTile(Match match, bool isSelected) => GestureDetector(
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              _selectedIds.remove(match.matchedUserId);
+            } else {
+              _selectedIds.add(match.matchedUserId);
+            }
+          });
+          HapticFeedback.selectionClick();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? VesparaColors.glow.withOpacity(0.15)
+                : VesparaColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? VesparaColors.glow : VesparaColors.border,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: VesparaColors.glow.withOpacity(0.3),
+                backgroundImage: match.matchedUserAvatar != null
+                    ? NetworkImage(match.matchedUserAvatar!)
+                    : null,
+                child: match.matchedUserAvatar == null
+                    ? Text(
+                        (match.matchedUserName ?? '?')[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.glow,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+
+              // Name and status
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      match.matchedUserName ?? 'Unknown',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? VesparaColors.glow
+                            : VesparaColors.primary,
+                      ),
+                    ),
+                    Text(
+                      match.priority.label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Checkbox
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isSelected ? VesparaColors.glow : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isSelected ? VesparaColors.glow : VesparaColors.secondary,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? const Icon(Icons.check, size: 16, color: VesparaColors.background)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      );
+
+  void _sendInvites() {
+    // TODO: Actually send invites via eventsProvider
+    Navigator.pop(context);
+    widget.onInvitesSent(_selectedIds.length);
   }
 }

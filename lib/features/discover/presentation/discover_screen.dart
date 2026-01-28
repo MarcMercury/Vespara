@@ -76,16 +76,35 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       final supabase = ref.read(supabaseClientProvider);
       final currentUserId = supabase.auth.currentUser?.id;
 
-      // Fetch discoverable profiles (excluding current user)
+      if (currentUserId == null) {
+        setState(() {
+          _isLoadingProfiles = false;
+          _loadError = 'Not logged in';
+        });
+        return;
+      }
+
+      // Get already-swiped profile IDs to exclude them
+      final swipesResponse = await supabase
+          .from('swipes')
+          .select('swiped_id')
+          .eq('swiper_id', currentUserId);
+      
+      final swipedIds = (swipesResponse as List)
+          .map((s) => s['swiped_id'] as String)
+          .toSet();
+
+      // Fetch discoverable profiles (excluding current user and already swiped)
       final response = await supabase
           .from('profiles')
           .select('*')
           .eq('is_discoverable', true)
           .eq('onboarding_complete', true)
-          .neq('id', currentUserId ?? '')
+          .neq('id', currentUserId)
           .limit(50);
 
       final profiles = (response as List)
+          .where((json) => !swipedIds.contains(json['id'])) // Filter out swiped profiles
           .map((json) {
             // Add avatar_url to photos array if photos is empty
             final photos = List<String>.from(json['photos'] ?? []);
@@ -100,9 +119,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       setState(() {
         _profiles = profiles;
         _isLoadingProfiles = false;
+        _currentIndex = 0; // Reset index when reloading
       });
 
-      debugPrint('Discover: Loaded ${profiles.length} profiles');
+      debugPrint('Discover: Loaded ${profiles.length} profiles (excluded ${swipedIds.length} already swiped)');
     } catch (e) {
       debugPrint('Discover: Error loading profiles: $e');
       setState(() {
@@ -113,6 +133,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   /// Get filtered profiles based on current tab
+  /// For now, show all loaded profiles since filtering is done at query level
   List<DiscoverableProfile> get _filteredProfiles => _profiles
       .where(
         (p) => _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch,
@@ -126,67 +147,78 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     super.dispose();
   }
 
-  void _onSwipe(SwipeDirection direction) {
+  void _onSwipe(SwipeDirection direction) async {
     final profiles = _filteredProfiles;
     if (_currentIndex >= profiles.length) return;
 
     final profile = profiles[_currentIndex];
     final matchNotifier = ref.read(matchStateProvider.notifier);
 
-    // Process swipe action and update global state
+    // Advance to next card immediately for smooth UX
+    setState(() {
+      _currentIndex++;
+      _dragOffset = 0;
+      _dragRotation = 0;
+    });
+
+    // Process swipe action - now async and writes to database
     String message;
-    bool isMatch = false;
 
     switch (direction) {
       case SwipeDirection.left:
-        matchNotifier.passProfile(profile.id);
+        await matchNotifier.passProfile(profile.id);
         message = 'Passed on ${profile.displayName}';
         break;
       case SwipeDirection.right:
-        // Check for mutual match (simulated - 50% chance)
-        isMatch = DateTime.now().millisecond % 2 == 0;
-        matchNotifier.likeProfile(profile.id, profile.displayName ?? 'Someone',
-            profile.photos.isNotEmpty ? profile.photos.first : null,);
-        message = isMatch
-            ? "It's a match with ${profile.displayName}! 💜"
-            : 'Liked ${profile.displayName}! 💜';
-        break;
-      case SwipeDirection.superLike:
-        matchNotifier.superLikeProfile(
+        await matchNotifier.likeProfile(
             profile.id,
             profile.displayName ?? 'Someone',
-            profile.photos.isNotEmpty ? profile.photos.first : null,);
-        message = 'Super Match with ${profile.displayName}! ⭐';
-        isMatch = true;
+            profile.photos.isNotEmpty ? profile.photos.first : null,
+        );
+        message = 'Liked ${profile.displayName}! 💜';
+        break;
+      case SwipeDirection.superLike:
+        await matchNotifier.superLikeProfile(
+            profile.id,
+            profile.displayName ?? 'Someone',
+            profile.photos.isNotEmpty ? profile.photos.first : null,
+        );
+        message = 'Super liked ${profile.displayName}! ⭐';
         break;
     }
 
-    // Show feedback - clear any existing snackbar first
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            if (isMatch) ...[
-              const Icon(Icons.favorite, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-            ],
-            Expanded(child: Text(message)),
-          ],
-        ),
-        duration: Duration(seconds: isMatch ? 3 : 1),
-        behavior: SnackBarBehavior.floating,
-        dismissDirection: DismissDirection.horizontal,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: isMatch
-            ? VesparaColors.success
-            : (direction == SwipeDirection.left
-                ? VesparaColors.surface
-                : VesparaColors.glow.withOpacity(0.9)),
-        action: isMatch
+    // Check if a match was created (by comparing match count before/after)
+    final matchState = ref.read(matchStateProvider);
+    final hasNewMatch = matchState.matches.any((m) => m.matchedUserId == profile.id);
+
+    // Show feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              if (hasNewMatch) ...[
+                const Icon(Icons.favorite, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  hasNewMatch
+                hasNewMatch
             ? SnackBarAction(
                 label: 'Message',
+                textColor: Colors.white,
+                onPressed: () {
+                  // Dismiss this snackbar and navigate to Wire
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  // TODO: Navigate to Wire with this match conversation
+                },
+              )
+            : null,
+        ),
+      );
+    }         label: 'Message',
                 textColor: Colors.white,
                 onPressed: () {
                   // Dismiss this snackbar and navigate to Wire

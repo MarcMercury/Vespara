@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/models/chat.dart';
 import '../domain/models/match.dart';
@@ -7,6 +9,7 @@ import '../domain/models/match.dart';
 /// MATCH STATE PROVIDER
 /// Global state management for matches, likes, and cross-module interactions
 /// Handles: Discover -> Nest flow, Match -> Wire flow, Nest -> Planner flow
+/// NOW CONNECTED TO SUPABASE for persistence!
 /// ════════════════════════════════════════════════════════════════════════════
 
 /// State class holding all match-related data
@@ -18,6 +21,8 @@ class MatchState {
     this.passedProfiles = const {},
     this.conversations = const {},
     this.newMatchCount = 0,
+    this.isLoading = false,
+    this.hasLoadedFromDb = false,
   });
   final List<Match> matches;
   final Set<String> likedProfiles; // Profiles the user has liked
@@ -26,6 +31,8 @@ class MatchState {
   final Map<String, ChatConversation>
       conversations; // Active conversations by match ID
   final int newMatchCount;
+  final bool isLoading;
+  final bool hasLoadedFromDb;
 
   MatchState copyWith({
     List<Match>? matches,
@@ -34,6 +41,8 @@ class MatchState {
     Set<String>? passedProfiles,
     Map<String, ChatConversation>? conversations,
     int? newMatchCount,
+    bool? isLoading,
+    bool? hasLoadedFromDb,
   }) =>
       MatchState(
         matches: matches ?? this.matches,
@@ -42,6 +51,8 @@ class MatchState {
         passedProfiles: passedProfiles ?? this.passedProfiles,
         conversations: conversations ?? this.conversations,
         newMatchCount: newMatchCount ?? this.newMatchCount,
+        isLoading: isLoading ?? this.isLoading,
+        hasLoadedFromDb: hasLoadedFromDb ?? this.hasLoadedFromDb,
       );
 
   /// Get matches by priority
@@ -53,95 +64,290 @@ class MatchState {
 }
 
 /// Match state notifier for handling all match-related actions
+/// Now persists to Supabase!
 class MatchStateNotifier extends StateNotifier<MatchState> {
   MatchStateNotifier()
       : super(
           const MatchState(),
-        );
+        ) {
+    // Load data from database on initialization
+    _loadFromDatabase();
+  }
 
-  /// Like a profile from Discover
-  /// If mutual like, creates a match in the "New" category
-  void likeProfile(String profileId, String profileName, String? avatarUrl) {
-    // Add to liked set
-    final newLiked = {...state.likedProfiles, profileId};
+  SupabaseClient get _supabase => Supabase.instance.client;
+  String? get _currentUserId => _supabase.auth.currentUser?.id;
 
-    // Simulate mutual match (50% chance for demo, or always match super-likes)
-    final isMutualMatch = state.superLikedProfiles.contains(profileId) ||
-        (DateTime.now().millisecond % 2 == 0);
-
-    if (isMutualMatch) {
-      // Create a new match
-      final newMatch = Match(
-        id: 'match-${DateTime.now().millisecondsSinceEpoch}',
-        matchedUserId: profileId,
-        matchedUserName: profileName,
-        matchedUserAvatar: avatarUrl,
-        matchedAt: DateTime.now(),
-        compatibilityScore: 0.7 + (DateTime.now().millisecond % 30) / 100,
-        conversationId: 'conv-${DateTime.now().millisecondsSinceEpoch}',
-      );
-
-      // Create conversation for the match
-      final newConversation = ChatConversation(
-        id: newMatch.conversationId!,
-        matchId: newMatch.id,
-        otherUserId: profileId,
-        otherUserName: profileName,
-        otherUserAvatar: avatarUrl,
-      );
-
-      state = state.copyWith(
-        likedProfiles: newLiked,
-        matches: [...state.matches, newMatch],
-        conversations: {...state.conversations, newMatch.id: newConversation},
-        newMatchCount: state.newMatchCount + 1,
-      );
-    } else {
-      state = state.copyWith(likedProfiles: newLiked);
+  /// Load matches and swipes from database
+  Future<void> _loadFromDatabase() async {
+    if (_currentUserId == null) return;
+    
+    state = state.copyWith(isLoading: true);
+    
+    try {
+      // Load existing swipes to populate liked/passed sets
+      final swipesResponse = await _supabase
+          .from('swipes')
+          .select('swiped_id, direction')
+          .eq('swiper_id', _currentUserId!);
+      
+      final liked = <String>{};
+      final superLiked = <String>{};
+      final passed = <String>{};
+      
+      for (final swipe in swipesResponse as List) {
+        final swipedId = swipe['swiped_id'] as String;
+        final direction = swipe['direction'] as String;
+        
+        if (direction == 'right') {
+          liked.add(swipedId);
+        } else if (direction == 'super') {
+          superLiked.add(swipedId);
+        } else if (direction == 'left') {
+          passed.add(swipedId);
+        }
+      }
+      
+      // Load matches where this user is involved
+      final matchesResponse = await _supabase
+          .from('matches')
+          .select('''
+            *,
+            user_a:profiles!matches_user_a_id_fkey(id, display_name, avatar_url),
+            user_b:profiles!matches_user_b_id_fkey(id, display_name, avatar_url)
+          ''')
+          .or('user_a_id.eq.$_currentUserId,user_b_id.eq.$_currentUserId');
+      
+      final matches = <Match>[];
+      final conversations = <String, ChatConversation>{};
+      int newCount = 0;
+      
+      for (final matchData in matchesResponse as List) {
+        final isUserA = matchData['user_a_id'] == _currentUserId;
+        final otherUser = isUserA ? matchData['user_b'] : matchData['user_a'];
+        final myPriority = isUserA 
+            ? matchData['user_a_priority'] as String? 
+            : matchData['user_b_priority'] as String?;
+        final isArchived = isUserA 
+            ? matchData['user_a_archived'] as bool? ?? false
+            : matchData['user_b_archived'] as bool? ?? false;
+        
+        final priority = _priorityFromString(myPriority ?? 'new');
+        if (priority == MatchPriority.new_) newCount++;
+        
+        final match = Match(
+          id: matchData['id'] as String,
+          matchedUserId: otherUser['id'] as String,
+          matchedUserName: otherUser['display_name'] as String?,
+          matchedUserAvatar: otherUser['avatar_url'] as String?,
+          matchedAt: DateTime.parse(matchData['matched_at'] as String),
+          compatibilityScore: (matchData['compatibility_score'] as num?)?.toDouble() ?? 0.75,
+          conversationId: matchData['conversation_id'] as String?,
+          isSuperMatch: matchData['is_super_match'] as bool? ?? false,
+          priority: priority,
+          isArchived: isArchived, - NOW PERSISTS
+  Future<void> updateMatchPriority(String matchId, MatchPriority newPriority) async {
+    if (_currentUserId == null) return;
+    
+    // Optimistic update
+    final updatedMatches = state.matches.map((m) {
+      if (m.id == matchId) {
+        return m.copyWith(priority: newPriority);
+      }
+      return m;
+    }).toList();
+    state = state.copyWith(matches: updatedMatches);
+    
+    try {
+      // Find the match to determine if we're user_a or user_b
+      final match = state.matches.firstWhere((m) => m.id == matchId);
+      
+      // Get the match from DB to check our position
+      final matchData = await _supabase
+          .from('matches')
+          .select('user_a_id, user_b_id')
+          .eq('id', matchId)
+          .single();
+      
+      final isUserA = matchData['user_a_id'] == _currentUserId;
+      final column = isUserA ? 'user_a_priority' : 'user_b_priority';
+      
+      await _supabase
+          .from('matches')
+          .update({column: _priorityToString(newPriority)})
+          .eq('id', matchId);
+      
+      debugPrint('MatchState: Updated priority for ${match.matchedUserName} to ${newPriority.label}');
+    } catch (e) {
+      debugPrint('MatchState: Error updating priority: $e');
+      // Refresh from database on error
+      await _loadFromDatabase();
     }
   }
 
-  /// Super-like a profile (always creates a match for demo)
-  void superLikeProfile(
-      String profileId, String profileName, String? avatarUrl,) {
-    final newSuperLiked = {...state.superLikedProfiles, profileId};
-
-    // Super-likes always result in a match for demo purposes
-    final newMatch = Match(
-      id: 'match-${DateTime.now().millisecondsSinceEpoch}',
-      matchedUserId: profileId,
-      matchedUserName: profileName,
-      matchedUserAvatar: avatarUrl,
-      matchedAt: DateTime.now(),
-      compatibilityScore: 0.85 + (DateTime.now().millisecond % 15) / 100,
-      conversationId: 'conv-${DateTime.now().millisecondsSinceEpoch}',
-      isSuperMatch: true,
-    );
-
-    final newConversation = ChatConversation(
-      id: newMatch.conversationId!,
-      matchId: newMatch.id,
-      otherUserId: profileId,
-      otherUserName: profileName,
-      otherUserAvatar: avatarUrl,
-      lastMessage: '✨ Super Like match!',
-      lastMessageAt: DateTime.now(),
-      momentumScore: 0.8,
-    );
-
-    state = state.copyWith(
-      superLikedProfiles: newSuperLiked,
-      matches: [...state.matches, newMatch],
-      conversations: {...state.conversations, newMatch.id: newConversation},
-      newMatchCount: state.newMatchCount + 1,
-    );
+  /// Archive a match - NOW PERSISTS
+  Future<void> archiveMatch(String matchId) async {
+    if (_currentUserId == null) return;
+    
+    // Optimistic update
+    final updatedMatches = state.matches.map((m) {
+      if (m.id == matchId) {
+        return m.copyWith(isArchived: true);
+      }
+      return m;
+    }).toList();
+    state = state.copyWith(matches: updatedMatches);
+    
+    try {
+      // Get the match to determine if we're user_a or user_b
+      final matchData = await _supabase
+          .from('matches')
+          .select('user_a_id, user_b_id')
+          .eq('id', matchId)
+          .single();
+      
+      final isUserA = matchData['user_a_id'] == _currentUserId;
+      final column = isUserA ? 'user_a_archived' : 'user_b_archived';
+      
+      await _supabase
+          .from('matches')
+          .update({column: true})
+          .eq('id', matchId);
+      
+      debugPrint('MatchState: Archived match $matchId');
+    } catch (e) {
+      debugPrint('MatchState: Error archiving match: $e');
+      await _loadFromDatabase();
+    }
+        conversations: conversations,
+        newMatchCount: newCount,
+        isLoading: false,
+        hasLoadedFromDb: true,
+      );
+      
+      debugPrint('MatchState: Loaded ${matches.length} matches, ${liked.length + superLiked.length} likes, ${passed.length} passes from DB');
+    } catch (e) {
+      debugPrint('MatchState: Error loading from database: $e');
+      state = state.copyWith(isLoading: false, hasLoadedFromDb: true);
+    }
   }
 
-  /// Pass on a profile
-  void passProfile(String profileId) {
+  /// Refresh data from database
+  Future<void> refresh() => _loadFromDatabase();
+
+  MatchPriority _priorityFromString(String priority) {
+    switch (priority) {
+      case 'priority':
+        return MatchPriority.priority;
+      case 'new':
+        return MatchPriority.new_;
+      case 'inWaiting':
+        return MatchPriority.inWaiting;
+      case 'onWayOut':
+        return MatchPriority.onWayOut;
+      default:
+        return MatchPriority.new_;
+    }
+  }
+
+  String _priorityToString(MatchPriority priority) {
+    switch (priority) {
+      case MatchPriority.priority:
+        return 'priority';
+      case MatchPriority.new_:
+        return 'new';
+      case MatchPriority.inWaiting:
+        return 'inWaiting';
+      case MatchPriority.onWayOut:
+        return 'onWayOut';
+    }
+  }
+
+  /// Like a profile from Discover - NOW WRITES TO DATABASE
+  Future<void> likeProfile(String profileId, String profileName, String? avatarUrl) async {
+    if (_currentUserId == null) return;
+    
+    // Optimistically add to liked set
+    final newLiked = {...state.likedProfiles, profileId};
+    state = state.copyWith(likedProfiles: newLiked);
+    
+    try {
+      // Insert swipe into database - the trigger will check for mutual match
+      await _supabase.from('swipes').upsert({
+        'swiper_id': _currentUserId,
+        'swiped_id': profileId,
+        'direction': 'right',
+        'is_from_strict': true,
+      });
+      
+      debugPrint('MatchState: Recorded right swipe on $profileName');
+      
+      // Check if this created a match by refreshing from database
+      await _loadFromDatabase();
+    } catch (e) {
+      debugPrint('MatchState: Error recording swipe: $e');
+      // Revert optimistic update on error
+      state = state.copyWith(
+        likedProfiles: {...state.likedProfiles}..remove(profileId),
+      );
+    }
+  }
+
+  /// Super-like a profile - NOW WRITES TO DATABASE
+  Future<void> superLikeProfile(String profileId, String profileName, String? avatarUrl) async {
+    if (_currentUserId == null) return;
+    
+    // Optimistically add to super-liked set
+    final newSuperLiked = {...state.superLikedProfiles, profileId};
+    state = state.copyWith(superLikedProfiles: newSuperLiked);
+    
+    try {
+      // Insert super swipe into database
+      await _supabase.from('swipes').upsert({
+        'swiper_id': _currentUserId,
+        'swiped_id': profileId,
+        'direction': 'super',
+        'is_from_strict': true,
+      });
+      
+      debugPrint('MatchState: Recorded SUPER swipe on $profileName');
+      
+      // Check if this created a match by refreshing from database
+      await _loadFromDatabase();
+    } catch (e) {
+      debugPrint('MatchState: Error recording super swipe: $e');
+      // Revert optimistic update
+      state = state.copyWith(
+        superLikedProfiles: {...state.superLikedProfiles}..remove(profileId),
+      );
+    }
+  }
+
+  /// Pass on a profile - NOW WRITES TO DATABASE
+  Future<void> passProfile(String profileId) async {
+    if (_currentUserId == null) return;
+    
+    // Optimistically add to passed set
     state = state.copyWith(
       passedProfiles: {...state.passedProfiles, profileId},
     );
+    
+    try {
+      // Record the pass in database
+      await _supabase.from('swipes').upsert({
+        'swiper_id': _currentUserId,
+        'swiped_id': profileId,
+        'direction': 'left',
+        'is_from_strict': true,
+      });
+      
+      debugPrint('MatchState: Recorded left swipe (pass)');
+    } catch (e) {
+      debugPrint('MatchState: Error recording pass: $e');
+      // Revert on error
+      state = state.copyWith(
+        passedProfiles: {...state.passedProfiles}..remove(profileId),
+      );
+    }
   }
 
   /// Update match priority (move between Nest categories)

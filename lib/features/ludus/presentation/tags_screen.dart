@@ -104,7 +104,6 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           child: Column(
             children: [
               _buildHeader(),
-              _buildCategoryFilter(),
               Expanded(child: _buildGamesList()),
             ],
           ),
