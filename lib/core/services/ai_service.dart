@@ -161,7 +161,7 @@ class AIService {
 
       request.headers.addAll({
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${Env.openAiApiKey}',
+        'Authorization': 'Bearer ${Env.openaiApiKey}',
       });
 
       request.body = jsonEncode({
@@ -312,7 +312,7 @@ Be creative, fun, and engaging.''',
           Uri.parse('$_baseUrl$endpoint'),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${Env.openAiApiKey}',
+            'Authorization': 'Bearer ${Env.openaiApiKey}',
           },
           body: jsonEncode(body),
         )

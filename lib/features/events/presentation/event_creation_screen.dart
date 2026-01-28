@@ -1389,7 +1389,6 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                         id: 'cohost-${_coHosts.length}',
                         userId: 'user-${_coHosts.length}',
                         name: nameController.text,
-                        role: 'cohost',
                       ));
                     });
                     Navigator.pop(context);

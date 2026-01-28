@@ -252,9 +252,9 @@ Compatibility insight:''',
       maxTokens: 100,
     );
 
-    return result.fold(
-      onSuccess: (response) => response.content.trim(),
-      onFailure: (_) => null,
+    return result.when(
+      success: (response) => response.content.trim(),
+      failure: (_) => null,
     );
   }
 
@@ -274,13 +274,13 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
       maxTokens: 100,
     );
 
-    return result.fold(
-      onSuccess: (response) => response.content
+    return result.when(
+      success: (response) => response.content
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
           .take(3)
           .toList(),
-      onFailure: (_) => [],
+      failure: (_) => [],
     );
   }
 

@@ -1180,7 +1180,7 @@ class WireNotifier extends StateNotifier<WireState> {
       // Create typing user entry
       final typingUser = TypingUser(
         id: userId,
-        displayName: 'Someone', // Would need to fetch actual name
+        name: 'Someone', // Would need to fetch actual name
         startedAt: DateTime.now(),
       );
       

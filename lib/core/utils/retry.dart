@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' show Random;
 import 'package:flutter/foundation.dart';
 import 'result.dart';
 
@@ -238,7 +239,7 @@ class CircuitOpenException implements Exception {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-final _random = DateTime.now().millisecondsSinceEpoch;
+final _random = Random();
 
 bool _isRetryableError(dynamic error, RetryConfig config) {
   // Use custom check if provided

@@ -211,7 +211,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
       );
 
   void _createQuickDateEvent(String title, DateTime date) {
-    ref.read(planProvider.notifier).addEvent(
+    ref.read(planProvider.notifier).createEvent(
       PlanEvent(
         id: const Uuid().v4(),
         userId: Supabase.instance.client.auth.currentUser?.id ?? '',
@@ -219,7 +219,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         startTime: date,
         endTime: date.add(const Duration(hours: 2)),
         certainty: EventCertainty.tentative,
-        eventType: EventType.date,
+        createdAt: DateTime.now(),
       ),
     );
     ScaffoldMessenger.of(context).showSnackBar(
