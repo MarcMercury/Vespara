@@ -997,10 +997,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 children: [
                   Expanded(
                     child: _buildQuickAction(
-                      icon: Iconasync {
-                        Navigator.pop(context);
-                        // Get or create direct conversation with this match
-                        final cos.chat,
+                      icon: Icons.chat,
                       label: 'Message',
                       color: VesparaColors.glow,
                       onTap: () async {
@@ -1011,7 +1008,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             .getOrCreateDirectConversation(match.matchedUserId);
                         
                         if (conversationId != null && mounted) {
-                          // Find the conversation object
                           final wireState = ref.read(wireProvider);
                           final conversation = wireState.conversations.firstWhere(
                             (c) => c.id == conversationId,
@@ -1042,7 +1038,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       color: VesparaColors.success,
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to Planner screen
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const PlannerScreen(),
@@ -1059,7 +1054,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       color: VesparaColors.tagsYellow,
                       onTap: () {
                         Navigator.pop(context);
-                        // Navigate to TAG screen
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const TagScreen(),
@@ -1099,7 +1093,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       },
                     ),
                   ),
-                  const Expanded(
+                  const Expanded(child: SizedBox()),
+                ],
+              ),
+
               const SizedBox(height: 32),
 
               // AI Insights
@@ -1513,9 +1510,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
     final diff = DateTime.now().difference(date);
     if (diff.inDays == 0) return 'today';
     if (diff.inDays == 1) return 'yesterday';
-
-  /// Show sheet to invite a match to an event
-  void _showInviteToEventSheet(Match match) {
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     if (diff.inDays < 30) return '${diff.inDays ~/ 7} weeks ago';
     return '${diff.inDays ~/ 30} months ago';
@@ -1597,7 +1591,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Actually send the invite via eventsProvider
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Invited ${match.matchedUserName} to ${event.title}'),
@@ -1611,9 +1604,11 @@ class _NestScreenState extends ConsumerState<NestScreen>
           ],
         ),
       ),
-    )) {
+    );
+  }
+
+  void _openPhotoRankingForMatch(Match match) {
     // Convert match photos to ProfilePhoto objects for ranking
-    // Use avatar photo if available
     final photos = <ProfilePhoto>[];
 
     if (match.matchedUserAvatar != null) {
