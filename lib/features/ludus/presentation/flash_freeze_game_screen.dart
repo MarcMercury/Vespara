@@ -285,24 +285,26 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
     setState(() {
       _totalRounds++;
 
-      // Weighted random selection:
-      // - Green: 50% chance
-      // - Red: 35% chance
-      // - Yellow: 15% chance
+      // Generate next signal - never repeat the same signal back-to-back
+      // Get available signals (excluding current signal)
+      final availableSignals =
+          SignalType.values.where((s) => s != _currentSignal).toList();
+
+      // Weighted random selection from available signals:
+      // Base weights: Green: 50%, Red: 35%, Yellow: 15%
+      // Redistribute weights among available signals proportionally
       final roll = _random.nextDouble();
       SignalType newSignal;
 
-      if (roll < 0.50) {
-        newSignal = SignalType.green;
-      } else if (roll < 0.85) {
-        newSignal = SignalType.red;
+      if (_currentSignal == SignalType.green) {
+        // Available: Red (35%) and Yellow (15%) -> normalize to Red: 70%, Yellow: 30%
+        newSignal = roll < 0.70 ? SignalType.red : SignalType.yellow;
+      } else if (_currentSignal == SignalType.red) {
+        // Available: Green (50%) and Yellow (15%) -> normalize to Green: 77%, Yellow: 23%
+        newSignal = roll < 0.77 ? SignalType.green : SignalType.yellow;
       } else {
-        newSignal = SignalType.yellow;
-      }
-
-      // Avoid same signal twice in a row (except green)
-      if (newSignal == _currentSignal && newSignal != SignalType.green) {
-        newSignal = SignalType.green;
+        // Current is Yellow - Available: Green (50%) and Red (35%) -> normalize to Green: 59%, Red: 41%
+        newSignal = roll < 0.59 ? SignalType.green : SignalType.red;
       }
 
       _currentSignal = newSignal;
