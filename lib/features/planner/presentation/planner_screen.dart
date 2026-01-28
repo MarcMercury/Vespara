@@ -19,7 +19,15 @@ import '../../../core/theme/app_theme.dart';
 /// ════════════════════════════════════════════════════════════════════════════
 
 class PlannerScreen extends ConsumerStatefulWidget {
-  const PlannerScreen({super.key});
+  const PlannerScreen({
+    super.key,
+    this.preselectedMatchId,
+    this.preselectedMatchName,
+  });
+
+  /// Optional pre-selected match for "Ask them out" flow from Nest
+  final String? preselectedMatchId;
+  final String? preselectedMatchName;
 
   @override
   ConsumerState<PlannerScreen> createState() => _PlannerScreenState();
@@ -35,6 +43,213 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    
+    // If coming from "Ask them out" flow, show date planning dialog
+    if (widget.preselectedMatchId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showAskOutWizard();
+      });
+    }
+  }
+
+  /// Show wizard for planning a date with preselected match
+  void _showAskOutWizard() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.favorite, color: VesparaColors.glow),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Ask ${widget.preselectedMatchName ?? "them"} out',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'What kind of date would you like to plan?',
+              style: TextStyle(color: VesparaColors.secondary),
+            ),
+            const SizedBox(height: 24),
+            _buildDateOptionTile(
+              icon: Icons.local_bar,
+              title: 'Drinks Tonight',
+              subtitle: 'Quick and casual meetup',
+              onTap: () {
+                Navigator.pop(context);
+                _createQuickDateEvent('Drinks with ${widget.preselectedMatchName}', DateTime.now());
+              },
+            ),
+            _buildDateOptionTile(
+              icon: Icons.restaurant,
+              title: 'Dinner This Week',
+              subtitle: 'A proper dinner date',
+              onTap: () {
+                Navigator.pop(context);
+                _showDateTimePicker('Dinner with ${widget.preselectedMatchName}');
+              },
+            ),
+            _buildDateOptionTile(
+              icon: Icons.hiking,
+              title: 'Weekend Adventure',
+              subtitle: 'Something fun and active',
+              onTap: () {
+                Navigator.pop(context);
+                _showDateTimePicker('Adventure with ${widget.preselectedMatchName}');
+              },
+            ),
+            _buildDateOptionTile(
+              icon: Icons.auto_awesome,
+              title: 'Let AI Suggest',
+              subtitle: 'Get personalized date ideas',
+              isAi: true,
+              onTap: () {
+                Navigator.pop(context);
+                // Switch to Find Date tab
+                _tabController.animateTo(1);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Finding perfect dates for ${widget.preselectedMatchName}...'),
+                    backgroundColor: VesparaColors.glow,
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isAi = false,
+  }) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: ListTile(
+          onTap: onTap,
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isAi 
+                  ? VesparaColors.glow.withOpacity(0.2)
+                  : VesparaColors.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: isAi ? VesparaColors.glow : VesparaColors.secondary,
+            ),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isAi ? VesparaColors.glow : VesparaColors.primary,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 12,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          trailing: Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: isAi ? VesparaColors.glow : VesparaColors.secondary,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isAi 
+                  ? VesparaColors.glow.withOpacity(0.3)
+                  : VesparaColors.secondary.withOpacity(0.2),
+            ),
+          ),
+        ),
+      );
+
+  void _createQuickDateEvent(String title, DateTime date) {
+    ref.read(planProvider.notifier).addEvent(
+      PlanEvent(
+        id: const Uuid().v4(),
+        userId: Supabase.instance.client.auth.currentUser?.id ?? '',
+        title: title,
+        startTime: date,
+        endTime: date.add(const Duration(hours: 2)),
+        certainty: EventCertainty.tentative,
+        eventType: EventType.date,
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added "$title" to your plan!'),
+        backgroundColor: VesparaColors.success,
+      ),
+    );
+  }
+
+  void _showDateTimePicker(String title) {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+      builder: (context, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: VesparaColors.glow,
+            surface: VesparaColors.surface,
+          ),
+        ),
+        child: child!,
+      ),
+    ).then((date) {
+      if (date != null) {
+        _createQuickDateEvent(title, date);
+      }
+    });
   }
 
   @override

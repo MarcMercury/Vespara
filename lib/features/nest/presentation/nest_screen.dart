@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/group.dart';
 import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/profile_photo.dart';
+import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/wire_models.dart';
 import '../../../core/providers/events_provider.dart';
 import '../../../core/providers/groups_provider.dart';
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
+import '../../../core/services/match_insights_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
 import '../../ludus/presentation/tags_screen.dart';
@@ -919,301 +922,102 @@ class _NestScreenState extends ConsumerState<NestScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.glow.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+      builder: (context) => _MatchProfileSheet(
+        match: match,
+        onMessage: () => _openMessageWithMatch(match),
+        onAskOut: () => _openPlannerWithMatch(match),
+        onRankPhotos: () => _openPhotoRankingForMatch(match),
+        onShredder: () => _moveToShredder(match),
+        onUpdateNotes: (notes) => _updateMatchNotes(match, notes),
+      ),
+    );
+  }
 
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: VesparaColors.glow.withOpacity(0.2),
-                    ),
-                    child: Center(
-                      child: Text(
-                        match.matchedUserName?[0].toUpperCase() ?? '?',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
-                          color: VesparaColors.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          match.matchedUserName ?? 'Unknown',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: VesparaColors.primary,
-                          ),
-                        ),
-                        Text(
-                          'Matched ${_formatMatchDate(match.matchedAt)}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: VesparaColors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+  /// Open Wire chat with this match
+  Future<void> _openMessageWithMatch(Match match) async {
+    final navigator = Navigator.of(context);
+    navigator.pop();
+    
+    final conversationId = await ref
+        .read(wireProvider.notifier)
+        .getOrCreateDirectConversation(match.matchedUserId);
+    
+    if (conversationId != null && mounted) {
+      final wireState = ref.read(wireProvider);
+      final conversation = wireState.conversations.firstWhere(
+        (c) => c.id == conversationId,
+        orElse: () => WireConversation(
+          id: conversationId,
+          matchId: match.matchedUserId,
+          matchName: match.matchedUserName,
+          matchAvatarUrl: match.matchedUserAvatar,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      
+      navigator.push(
+        MaterialPageRoute(
+          builder: (context) => WireChatScreen(conversation: conversation),
+        ),
+      );
+    }
+  }
 
-              const SizedBox(height: 32),
-
-              // Quick actions - Row 1
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickAction(
-                      icon: Icons.chat,
-                      label: 'Message',
-                      color: VesparaColors.glow,
-                      onTap: () async {
-                        // Save navigator before popping
-                        final navigator = Navigator.of(context);
-                        navigator.pop();
-                        
-                        // Get or create direct conversation with this match
-                        final conversationId = await ref
-                            .read(wireProvider.notifier)
-                            .getOrCreateDirectConversation(match.matchedUserId);
-                        
-                        if (conversationId != null && mounted) {
-                          final wireState = ref.read(wireProvider);
-                          final conversation = wireState.conversations.firstWhere(
-                            (c) => c.id == conversationId,
-                            orElse: () => WireConversation(
-                              id: conversationId,
-                              matchId: match.matchedUserId,
-                              matchName: match.matchedUserName,
-                              matchAvatarUrl: match.matchedUserAvatar,
-                              createdAt: DateTime.now(),
-                              updatedAt: DateTime.now(),
-                            ),
-                          );
-                          
-                          navigator.push(
-                            MaterialPageRoute(
-                              builder: (context) => WireChatScreen(conversation: conversation),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildQuickAction(
-                      icon: Icons.calendar_today,
-                      label: 'Plan Date',
-                      color: VesparaColors.success,
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const PlannerScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildQuickAction(
-                      icon: Icons.games,
-                      label: 'Play TAG',
-                      color: VesparaColors.tagsYellow,
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const TagScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Quick actions - Row 2 (Rank Photos + Invite)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickAction(
-                      icon: Icons.photo_library,
-                      label: 'Rank Photos',
-                      color: Colors.amber,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _openPhotoRankingForMatch(match);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildQuickAction(
-                      icon: Icons.event,
-                      label: 'Invite',
-                      color: VesparaColors.secondary,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showInviteToEventSheet(match);
-                      },
-                    ),
-                  ),
-                  const Expanded(child: SizedBox()),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // AI Insights
-              _buildSectionTitle('AI Insights'),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: VesparaColors.background.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: VesparaColors.glow.withOpacity(0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (match.suggestedDateIdeas.isEmpty) ...[
-                      // Show placeholder when no AI insights yet
-                      Row(
-                        children: [
-                          Icon(Icons.auto_awesome,
-                              size: 16, color: VesparaColors.glow.withOpacity(0.5)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'AI insights will appear as you interact more with ${match.matchedUserName}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: VesparaColors.secondary.withOpacity(0.7),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Try sending a message or planning a date to unlock personalized suggestions!',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: VesparaColors.secondary.withOpacity(0.5),
-                        ),
-                      ),
-                    ] else
-                      ...match.suggestedDateIdeas.map(
-                        (idea) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.lightbulb,
-                                  size: 16, color: VesparaColors.tagsYellow,),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  idea,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: VesparaColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Notes
-              _buildSectionTitle('Notes'),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: VesparaColors.background.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    hintText:
-                        'Add personal notes about ${match.matchedUserName}...',
-                    hintStyle: const TextStyle(color: VesparaColors.secondary),
-                    border: InputBorder.none,
-                  ),
-                  style: const TextStyle(color: VesparaColors.primary),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Danger zone
-              _buildSectionTitle('Danger Zone'),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => _moveToShredder(match),
-                icon:
-                    const Icon(Icons.delete_sweep, color: VesparaColors.error),
-                label: const Text('Move to Shredder',
-                    style: TextStyle(color: VesparaColors.error),),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: VesparaColors.error.withOpacity(0.5)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                ),
-              ),
-            ],
-          ),
+  /// Open Planner with match pre-selected for "Ask them out"
+  void _openPlannerWithMatch(Match match) {
+    Navigator.pop(context);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PlannerScreen(
+          preselectedMatchId: match.matchedUserId,
+          preselectedMatchName: match.matchedUserName,
         ),
       ),
     );
+  }
+
+  /// Update notes for a match
+  Future<void> _updateMatchNotes(Match match, String notes) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    
+    try {
+      // Determine which column to update based on which user we are
+      final matchData = await Supabase.instance.client
+          .from('matches')
+          .select('user_a_id')
+          .eq('id', match.id)
+          .single();
+      
+      final isUserA = matchData['user_a_id'] == userId;
+      final notesColumn = isUserA ? 'user_a_notes' : 'user_b_notes';
+      
+      await Supabase.instance.client
+          .from('matches')
+          .update({notesColumn: notes})
+          .eq('id', match.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notes saved'),
+            backgroundColor: VesparaColors.success,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving notes: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save notes'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildQuickAction({
@@ -1638,37 +1442,797 @@ class _NestScreenState extends ConsumerState<NestScreen>
     );
   }
 
-  void _openPhotoRankingForMatch(Match match) {
-    // Convert match photos to ProfilePhoto objects for ranking
-    final photos = <ProfilePhoto>[];
+  void _openPhotoRankingForMatch(Match match) async {
+    // Fetch the user's profile to get all their photos
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('photos')
+          .eq('id', match.matchedUserId)
+          .maybeSingle();
 
-    if (match.matchedUserAvatar != null) {
-      photos.add(
-        ProfilePhoto.fromUrl(
-          id: '${match.matchedUserId}_photo_0',
+      final photoUrls = response != null 
+          ? List<String>.from(response['photos'] ?? [])
+          : <String>[];
+
+      // Fall back to avatar if no photos array
+      if (photoUrls.isEmpty && match.matchedUserAvatar != null) {
+        photoUrls.add(match.matchedUserAvatar!);
+      }
+
+      if (photoUrls.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This user has no photos to rank'),
+              backgroundColor: VesparaColors.surface,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Convert to ProfilePhoto objects
+      final photos = photoUrls.asMap().entries.map((entry) => ProfilePhoto.fromUrl(
+        id: '${match.matchedUserId}_photo_${entry.key}',
+        userId: match.matchedUserId,
+        photoUrl: entry.value,
+        position: entry.key + 1,
+        isPrimary: entry.key == 0,
+      )).toList();
+
+      if (mounted) {
+        PhotoRankingSheet.show(
+          context,
           userId: match.matchedUserId,
-          photoUrl: match.matchedUserAvatar!,
-          position: 1,
-          isPrimary: true,
+          userName: match.matchedUserName ?? 'This person',
+          photos: photos,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching photos for ranking: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load photos'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MATCH PROFILE SHEET - Full profile popup with AI insights
+// ════════════════════════════════════════════════════════════════════════════
+
+class _MatchProfileSheet extends ConsumerStatefulWidget {
+  const _MatchProfileSheet({
+    required this.match,
+    required this.onMessage,
+    required this.onAskOut,
+    required this.onRankPhotos,
+    required this.onShredder,
+    required this.onUpdateNotes,
+  });
+
+  final Match match;
+  final VoidCallback onMessage;
+  final VoidCallback onAskOut;
+  final VoidCallback onRankPhotos;
+  final VoidCallback onShredder;
+  final void Function(String notes) onUpdateNotes;
+
+  @override
+  ConsumerState<_MatchProfileSheet> createState() => _MatchProfileSheetState();
+}
+
+class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
+  UserProfile? _profile;
+  MatchInsight? _insight;
+  bool _isLoadingProfile = true;
+  bool _isLoadingInsight = true;
+  late TextEditingController _notesController;
+  bool _notesSaved = true;
+  int _currentPhotoIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _notesController = TextEditingController(text: widget.match.notes ?? '');
+    _loadProfileAndInsight();
+  }
+
+  @override
+  void dispose() {
+    // Save notes on close if changed
+    if (!_notesSaved && _notesController.text != widget.match.notes) {
+      widget.onUpdateNotes(_notesController.text);
+    }
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProfileAndInsight() async {
+    // Load full profile from Supabase
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', widget.match.matchedUserId)
+          .maybeSingle();
+
+      if (response != null && mounted) {
+        setState(() {
+          _profile = UserProfile.fromJson(response);
+          _isLoadingProfile = false;
+        });
+      } else {
+        setState(() => _isLoadingProfile = false);
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      setState(() => _isLoadingProfile = false);
+    }
+
+    // Load AI insight
+    try {
+      final insight = await MatchInsightsService.instance
+          .getDetailedInsight(widget.match.matchedUserId);
+      if (mounted) {
+        setState(() {
+          _insight = insight;
+          _isLoadingInsight = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading insight: $e');
+      setState(() => _isLoadingInsight = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: VesparaColors.glow.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Photo carousel
+                      _buildPhotoCarousel(),
+                      const SizedBox(height: 20),
+
+                      // Name, age, headline
+                      _buildProfileHeader(),
+                      const SizedBox(height: 20),
+
+                      // Quick Action Buttons
+                      _buildActionButtons(),
+                      const SizedBox(height: 24),
+
+                      // AI Compatibility Insight
+                      _buildAIInsightSection(),
+                      const SizedBox(height: 24),
+
+                      // About section (bio)
+                      if (_profile?.bio != null && _profile!.bio!.isNotEmpty)
+                        _buildAboutSection(),
+
+                      // Shared interests
+                      if (widget.match.sharedInterests.isNotEmpty ||
+                          _insight?.sharedInterests.isNotEmpty == true)
+                        _buildSharedInterestsSection(),
+
+                      // Vibe tags
+                      if (_profile?.vibeTags.isNotEmpty == true)
+                        _buildTagsSection('Vibe', _profile!.vibeTags, VesparaColors.glow),
+
+                      // Interest tags  
+                      if (_profile?.interestTags.isNotEmpty == true)
+                        _buildTagsSection('Interests', _profile!.interestTags, VesparaColors.success),
+
+                      // Notes section
+                      _buildNotesSection(),
+                      const SizedBox(height: 24),
+
+                      // Danger zone
+                      _buildDangerZone(),
+                      SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _buildPhotoCarousel() {
+    final photos = _profile?.photos ?? [];
+    final avatarUrl = widget.match.matchedUserAvatar;
+
+    // Use profile photos or fall back to avatar
+    final displayPhotos = photos.isNotEmpty 
+        ? photos 
+        : (avatarUrl != null ? [avatarUrl] : <String>[]);
+
+    if (displayPhotos.isEmpty) {
+      return Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: VesparaColors.glow.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+          child: Text(
+            widget.match.matchedUserName?[0].toUpperCase() ?? '?',
+            style: const TextStyle(
+              fontSize: 80,
+              fontWeight: FontWeight.bold,
+              color: VesparaColors.primary,
+            ),
+          ),
         ),
       );
     }
 
-    if (photos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This user has no photos to rank'),
-          backgroundColor: VesparaColors.surface,
+    return Column(
+      children: [
+        // Photo
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: SizedBox(
+            height: 350,
+            width: double.infinity,
+            child: PageView.builder(
+              itemCount: displayPhotos.length,
+              onPageChanged: (index) => setState(() => _currentPhotoIndex = index),
+              itemBuilder: (context, index) => Image.network(
+                displayPhotos[index],
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: VesparaColors.background,
+                  child: const Icon(Icons.broken_image, size: 48, color: VesparaColors.secondary),
+                ),
+              ),
+            ),
+          ),
         ),
-      );
-      return;
-    }
 
-    PhotoRankingSheet.show(
-      context,
-      userId: match.matchedUserId,
-      userName: match.matchedUserName ?? 'This person',
-      photos: photos,
+        // Dots indicator
+        if (displayPhotos.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                displayPhotos.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: index == _currentPhotoIndex ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: index == _currentPhotoIndex
+                        ? VesparaColors.glow
+                        : VesparaColors.secondary.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
+  }
+
+  Widget _buildProfileHeader() {
+    final name = _profile?.displayName ?? widget.match.matchedUserName ?? 'Unknown';
+    final age = _profile?.age ?? widget.match.matchedUserAge;
+    final headline = _profile?.headline;
+    final location = _profile?.city ?? _profile?.location;
+    final isVerified = _profile?.isVerified ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                  if (age != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      ', $age',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w300,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ],
+                  if (isVerified) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.verified, color: VesparaColors.glow, size: 24),
+                  ],
+                ],
+              ),
+            ),
+            // Compatibility badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.favorite, color: VesparaColors.glow, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${widget.match.compatibilityPercent}%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.glow,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (headline != null && headline.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            headline,
+            style: const TextStyle(
+              fontSize: 16,
+              color: VesparaColors.secondary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+        if (location != null && location.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.location_on, size: 14, color: VesparaColors.secondary),
+              const SizedBox(width: 4),
+              Text(
+                location,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Icon(Icons.schedule, size: 14, color: VesparaColors.secondary),
+              const SizedBox(width: 4),
+              Text(
+                'Matched ${_formatMatchDate(widget.match.matchedAt)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildActionButtons() => Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: widget.onMessage,
+              icon: const Icon(Icons.chat_bubble, size: 18),
+              label: const Text('Message'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.glow,
+                foregroundColor: VesparaColors.background,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: widget.onAskOut,
+              icon: const Icon(Icons.calendar_today, size: 18),
+              label: const Text('Ask Out'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: VesparaColors.success,
+                side: const BorderSide(color: VesparaColors.success),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.amber.withOpacity(0.5)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              onPressed: widget.onRankPhotos,
+              icon: const Icon(Icons.photo_library, color: Colors.amber),
+              tooltip: 'Rank Photos',
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildAIInsightSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            VesparaColors.glow.withOpacity(0.15),
+            VesparaColors.glow.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: VesparaColors.glow.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Vespara Insight',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+              ),
+              if (_insight != null)
+                Text(
+                  _insight!.compatibilityEmoji,
+                  style: const TextStyle(fontSize: 20),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingInsight)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: VesparaColors.glow),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Analyzing compatibility...',
+                  style: TextStyle(fontSize: 14, color: VesparaColors.secondary),
+                ),
+              ],
+            )
+          else if (_insight != null && _insight!.hasAIInsight)
+            Text(
+              _insight!.aiInsight!,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: VesparaColors.primary,
+              ),
+            )
+          else if (_insight != null && _insight!.quickInsight.isNotEmpty)
+            Text(
+              _insight!.quickInsight,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: VesparaColors.primary,
+              ),
+            )
+          else
+            Text(
+              'Keep chatting to unlock deeper insights about your compatibility with ${widget.match.matchedUserName}!',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: VesparaColors.secondary.withOpacity(0.8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          
+          // Conversation starters
+          if (_insight?.conversationTopics.isNotEmpty == true) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Try talking about:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _insight!.conversationTopics.take(3).map((topic) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  topic,
+                  style: const TextStyle(fontSize: 12, color: VesparaColors.primary),
+                ),
+              )).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutSection() => Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'About',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _profile!.bio!,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.6,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildSharedInterestsSection() {
+    final interests = _insight?.sharedInterests.isNotEmpty == true
+        ? _insight!.sharedInterests
+        : widget.match.sharedInterests;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.favorite, size: 16, color: VesparaColors.glow),
+              const SizedBox(width: 8),
+              const Text(
+                'You both enjoy',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: interests.map((interest) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: VesparaColors.glow.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+              ),
+              child: Text(
+                interest,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.glow,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagsSection(String title, List<String> tags, Color color) => Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: tags.map((tag) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  tag,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: color,
+                  ),
+                ),
+              )).toList(),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildNotesSection() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Personal Notes',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
+              ),
+              const Spacer(),
+              if (!_notesSaved)
+                TextButton.icon(
+                  onPressed: () {
+                    widget.onUpdateNotes(_notesController.text);
+                    setState(() => _notesSaved = true);
+                  },
+                  icon: const Icon(Icons.save, size: 16),
+                  label: const Text('Save'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: VesparaColors.success,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VesparaColors.background.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
+            ),
+            child: TextField(
+              controller: _notesController,
+              maxLines: 4,
+              onChanged: (_) => setState(() => _notesSaved = false),
+              decoration: InputDecoration(
+                hintText: 'Add personal notes about ${widget.match.matchedUserName}...',
+                hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+                border: InputBorder.none,
+              ),
+              style: const TextStyle(color: VesparaColors.primary, height: 1.5),
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildDangerZone() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Danger Zone',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: widget.onShredder,
+            icon: const Icon(Icons.delete_sweep, color: VesparaColors.error),
+            label: const Text(
+              'Send to Shredder',
+              style: TextStyle(color: VesparaColors.error),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: VesparaColors.error.withOpacity(0.5)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      );
+
+  String _formatMatchDate(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays == 0) return 'today';
+    if (diff.inDays == 1) return 'yesterday';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    if (diff.inDays < 30) return '${diff.inDays ~/ 7} weeks ago';
+    return '${diff.inDays ~/ 30} months ago';
   }
 }
