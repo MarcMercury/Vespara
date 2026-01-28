@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 
@@ -16,13 +17,171 @@ class ShredderScreen extends ConsumerStatefulWidget {
   ConsumerState<ShredderScreen> createState() => _ShredderScreenState();
 }
 
-class _ShredderScreenState extends ConsumerState<ShredderScreen> {
-  final List<Map<String, dynamic>> _suggestions = [];
+clList<Map<String, dynamic>> _suggestions = [];
   final List<Map<String, dynamic>> _shreddedHistory = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadStaleMatches();
+  }
+
+  Future<void> _loadStaleMatches() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Query matches older than 14 days
+      final cutoffDate =
+          DateTime.now().subtract(const Duration(days: 14)).toIso8601String();
+
+      // Get matches where current user is user_a
+      final matchesAsA = await supabase
+          .from('matches')
+          .select('''
+            id,
+            user_b_id,
+            matched_at,
+            first_message_at,
+            compatibility_score,
+            matched_user:profiles!matches_user_b_id_fkey (
+              id,
+              display_name,
+              avatar_url
+            )
+          ''')
+          .eq('user_a_id', userId)
+          .eq('user_a_archived', false)
+          .lt('matched_at', cutoffDate);
+
+      // Get matches where current user is user_b
+      final matchesAsB = await supabase
+          .from('matches')
+          .select('''
+            id,
+            user_a_id,
+            matched_at,
+            first_message_at,
+            compatibility_score,
+            matched_user:profiles!matches_user_a_id_fkey (
+              id,
+              display_name,
+              avatar_url
+            )
+          ''')
+          .eq('user_b_id', userId)
+          .eq('user_b_arc{
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: VesparaColors.glow),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadStaleMatches,
+      color: VesparaColors.glow,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildIntroCard(),
+            const SizedBox(height: 24),
+            if (_suggestions.isEmpty)
+              _buildEmptyState()
+            else ...[
+              const Text(
+                'AI SUGGESTS YOU LET GO OF',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.secondary,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ..._suggestions.map(_buildSuggestionCard),
+            ],
+          ],
+        ),
+      ),
+    );
+  }  'urgency': daysSinceMatch > 30 ? 'high' : 'medium',
+          'reason': hasMessages
+              ? 'Conversation stalled after initial messages'
+              : 'No messages exchanged since matching',
+        });
+      }
+
+      // Sort by days since match (oldest first)
+      suggestions.sort((a, b) =>
+          (b['daysSinceMatch'] as int).compareTo(a['daysSinceMatch'] as int));
+
+      setState(() {
+        _suggestions = suggestions;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading stale matches: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _shredMatch(Map<String, dynamic> suggestion) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final matchId = suggestion['id'] as String;
+      final matchedUserId = suggestion['matchedUserId'] as String;
+
+      // Determine which column to update based on user position
+      final match = await supabase
+          .from('matches')
+          .select('user_a_id')
+          .eq('id', matchId)
+          .single();
+
+      final isUserA = match['user_a_id'] == userId;
+
+      // Archive the match for the current user
+      await supabase.from('matches').update({
+        isUserA ? 'user_a_archived' : 'user_b_archived': true,
+      }).eq('id', matchId);
+
+      // Log to shredder_archive
+      await supabase.from('shredder_archive').insert({
+        'user_id': userId,
+        'shredded_user_id': matchedUserId,
+        'reason': suggestion['reason'],
+      });
+
+      // Remove from local list
+      setState(() {
+        _suggestions.removeWhere((s) => s['id'] == matchId);
+        _shreddedHistory.add(suggestion);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${suggestion['name']} has been shredded'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error shredding match: $e');
+    }
     // Suggestions will be loaded from database/AI
   }
 
@@ -312,18 +471,8 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                     Text(
                       'AI Analysis',
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: VesparaColors.glow,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  suggestion['reason'] as String,
-                  style: const TextStyle(
-                    fontSize: 14,
+              Navigator.pop(context);
+              _shredMatch(suggestion      fontSize: 14,
                     color: VesparaColors.primary,
                     height: 1.4,
                   ),

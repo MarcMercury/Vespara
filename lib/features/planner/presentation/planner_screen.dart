@@ -828,6 +828,49 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Coming Soon Banner
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    VesparaColors.glow.withOpacity(0.2),
+                    VesparaColors.surface,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.construction, color: VesparaColors.glow),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Calendar Sync Coming Soon',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        Text(
+                          'Full Google & Apple Calendar integration is in development',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: VesparaColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const Text(
               'CALENDAR INTEGRATIONS',
               style: TextStyle(
@@ -845,8 +888,15 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               icon: Icons.calendar_today,
               iconColor: const Color(0xFF4285F4),
               isConnected: state.googleCalendarConnected,
-              onConnect: () =>
-                  ref.read(planProvider.notifier).connectGoogleCalendar(),
+              onConnect: () {
+                ref.read(planProvider.notifier).connectGoogleCalendar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Google Calendar sync enabled (preview mode)'),
+                    backgroundColor: VesparaColors.glow,
+                  ),
+                );
+              },
               onDisconnect: () =>
                   ref.read(planProvider.notifier).disconnectGoogleCalendar(),
             ),
@@ -858,8 +908,15 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               icon: Icons.event,
               iconColor: const Color(0xFFFF3B30),
               isConnected: state.appleCalendarConnected,
-              onConnect: () =>
-                  ref.read(planProvider.notifier).connectAppleCalendar(),
+              onConnect: () {
+                ref.read(planProvider.notifier).connectAppleCalendar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Apple Calendar sync enabled (preview mode)'),
+                    backgroundColor: VesparaColors.glow,
+                  ),
+                );
+              },
               onDisconnect: () =>
                   ref.read(planProvider.notifier).disconnectAppleCalendar(),
             ),
@@ -1691,33 +1748,74 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
         ),
         const SizedBox(height: 20),
         connectionsAsync.when(
-          data: (connections) => Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: connections.map((c) {
-              final isSelected =
-                  _selectedConnections.any((sc) => sc.id == c.id);
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _selectedConnections.removeWhere((sc) => sc.id == c.id);
-                    } else {
-                      _selectedConnections.add(c);
-                    }
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? VesparaColors.glow : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected
-                          ? VesparaColors.glow
-                          : VesparaColors.glow.withOpacity(0.3),
+          data: (connections) {
+            if (connections.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: VesparaColors.glow.withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 48,
+                      color: VesparaColors.secondary.withOpacity(0.5),
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No matches yet',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Swipe in Discover to find connections you can invite to events!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: connections.map((c) {
+                final isSelected =
+                    _selectedConnections.any((sc) => sc.id == c.id);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedConnections.removeWhere((sc) => sc.id == c.id);
+                      } else {
+                        _selectedConnections.add(c);
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected ? VesparaColors.glow : Colors.transparent,
+                      border: Border.all(
+                        color: isSelected
+                            ? VesparaColors.glow
+                            : VesparaColors.glow.withOpacity(0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1763,7 +1861,8 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
                 ),
               );
             }).toList(),
-          ),
+          );
+          },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, __) => const Text(
             'Failed to load connections',

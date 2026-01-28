@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -250,24 +251,73 @@ class PlanNotifier extends StateNotifier<PlanState> {
       final userId = _supabase?.auth.currentUser?.id;
 
       if (userId != null && _supabase != null) {
-        final response = await _supabase
-            .from('plan_events')
-            .insert(event.toJson())
-            .select()
-            .single();
+        // Insert into database with proper column mapping
+        final response = await _supabase.from('plan_events').insert({
+          'user_id': userId,
+          'title': event.title,
+          'notes': event.notes,
+          'location': event.location,
+          'start_time': event.startTime.toIso8601String(),
+          'end_time': event.endTime?.toIso8601String(),
+          'certainty': event.certainty.name,
+          'connections': event.connections.map((c) => c.toJson()).toList(),
+          'is_from_experience': event.isFromExperience,
+          'experience_host_name': event.experienceHostName,
+          'is_hosting': event.isHosting,
+        }).select().single();
 
-        final newEvent = PlanEvent.fromJson(response);
+        // Create event with database-assigned ID
+        final newEvent = PlanEvent(
+          id: response['id'] as String,
+          userId: userId,
+          title: response['title'] as String,
+          notes: response['notes'] as String?,
+          location: response['location'] as String?,
+          startTime: DateTime.parse(response['start_time'] as String),
+          endTime: response['end_time'] != null
+              ? DateTime.parse(response['end_time'] as String)
+              : null,
+          certainty: EventCertaintyExtension.fromString(
+              response['certainty'] as String?),
+          connections: (response['connections'] as List?)
+                  ?.map((c) =>
+                      EventConnection.fromJson(c as Map<String, dynamic>))
+                  .toList() ??
+              [],
+          isFromExperience: response['is_from_experience'] as bool? ?? false,
+          experienceHostName: response['experience_host_name'] as String?,
+          isHosting: response['is_hosting'] as bool? ?? false,
+          createdAt: DateTime.parse(response['created_at'] as String),
+        );
+
         state = state.copyWith(
           events: [...state.events, newEvent],
         );
       } else {
-        // No user: add to local state only
+        // No user: add to local state only with client-generated ID
+        final localEvent = PlanEvent(
+          id: event.id,
+          userId: 'local-user',
+          title: event.title,
+          notes: event.notes,
+          location: event.location,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          certainty: event.certainty,
+          connections: event.connections,
+          createdAt: DateTime.now(),
+        );
         state = state.copyWith(
-          events: [...state.events, event],
+          events: [...state.events, localEvent],
         );
       }
     } catch (e) {
-      state = state.copyWith(error: 'Failed to create event: $e');
+      debugPrint('Failed to create event: $e');
+      // Even if database fails, add to local state
+      state = state.copyWith(
+        events: [...state.events, event],
+        error: 'Event saved locally (sync pending)',
+      );
     }
   }
 
@@ -379,15 +429,23 @@ class PlanNotifier extends StateNotifier<PlanState> {
   }
 
   /// Connect Google Calendar
+  /// Note: Full OAuth integration requires Google Cloud setup
+  /// Currently enables local calendar sync state
   Future<void> connectGoogleCalendar() async {
-    // In production, this would initiate OAuth flow
+    // TODO: In production, this would initiate Google OAuth flow
+    // For now, just toggle the connection state
     state = state.copyWith(googleCalendarConnected: true);
+    debugPrint('Google Calendar connected (mock - OAuth not yet implemented)');
   }
 
   /// Connect Apple Calendar
+  /// Note: Apple Calendar integration requires native setup
+  /// Currently enables local calendar sync state
   Future<void> connectAppleCalendar() async {
-    // In production, this would initiate OAuth flow
+    // TODO: In production, this would use EventKit on iOS
+    // For now, just toggle the connection state
     state = state.copyWith(appleCalendarConnected: true);
+    debugPrint('Apple Calendar connected (mock - native integration pending)');
   }
 
   /// Disconnect Google Calendar
@@ -579,7 +637,12 @@ final planConnectionsProvider =
   try {
     final supabase = Supabase.instance.client;
     final userId = supabase.auth.currentUser?.id;
-    if (userId == null) return [];
+    if (userId == null) {
+      debugPrint('planConnectionsProvider: No user logged in');
+      return [];
+    }
+
+    debugPrint('planConnectionsProvider: Loading connections for user $userId');
 
     // Query matches where current user is user_a or user_b
     final matchesAsA = await supabase
@@ -608,9 +671,12 @@ final planConnectionsProvider =
         .eq('user_b_id', userId)
         .eq('user_b_archived', false);
 
+    debugPrint(
+        'planConnectionsProvider: Found ${(matchesAsA as List).length} as A, ${(matchesAsB as List).length} as B');
+
     final connections = <EventConnection>[];
 
-    for (final match in [...matchesAsA as List, ...matchesAsB as List]) {
+    for (final match in [...matchesAsA, ...matchesAsB]) {
       final matchedUser = match['matched_user'] as Map<String, dynamic>?;
       if (matchedUser == null) continue;
 
@@ -621,8 +687,10 @@ final planConnectionsProvider =
       ));
     }
 
+    debugPrint('planConnectionsProvider: Returning ${connections.length} connections');
     return connections;
-  } catch (_) {
+  } catch (e) {
+    debugPrint('planConnectionsProvider error: $e');
     return [];
   }
 });
