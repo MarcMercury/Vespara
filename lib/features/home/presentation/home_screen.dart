@@ -442,7 +442,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       fit: BoxFit.contain,
                       cacheWidth: 400,
                       filterQuality: FilterQuality.high,
-                    errorBuilder: (context, error, stackTrace) {
+                      errorBuilder: (context, error, stackTrace) {
                       // Fallback to gradient + icon if image not found
                       return DecoratedBox(
                         decoration: BoxDecoration(
