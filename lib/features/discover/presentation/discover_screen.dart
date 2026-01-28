@@ -205,30 +205,28 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               Expanded(
                 child: Text(
                   hasNewMatch
-                hasNewMatch
-            ? SnackBarAction(
-                label: 'Message',
-                textColor: Colors.white,
-                onPressed: () {
-                  // Dismiss this snackbar and navigate to Wire
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  // TODO: Navigate to Wire with this match conversation
-                },
-              )
-            : null,
+                      ? "It's a match with ${profile.displayName}! 💫"
+                      : message,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: hasNewMatch ? VesparaColors.glow : VesparaColors.surface,
+          duration: Duration(seconds: hasNewMatch ? 4 : 2),
+          action: hasNewMatch
+              ? SnackBarAction(
+                  label: 'Message',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    // TODO: Navigate to Wire with this match conversation
+                  },
+                )
+              : null,
         ),
       );
-    }         label: 'Message',
-                textColor: Colors.white,
-                onPressed: () {
-                  // Dismiss this snackbar and navigate to Wire
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  // TODO: Navigate to Wire with this match conversation
-                },
-              )
-            : null,
-      ),
-    );
+    }
 
     setState(() {
       _currentIndex++;

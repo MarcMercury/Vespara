@@ -144,80 +144,17 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
           conversationId: matchData['conversation_id'] as String?,
           isSuperMatch: matchData['is_super_match'] as bool? ?? false,
           priority: priority,
-          isArchived: isArchived, - NOW PERSISTS
-  Future<void> updateMatchPriority(String matchId, MatchPriority newPriority) async {
-    if (_currentUserId == null) return;
-    
-    // Optimistic update
-    final updatedMatches = state.matches.map((m) {
-      if (m.id == matchId) {
-        return m.copyWith(priority: newPriority);
+          isArchived: isArchived,
+        );
+        
+        matches.add(match);
       }
-      return m;
-    }).toList();
-    state = state.copyWith(matches: updatedMatches);
-    
-    try {
-      // Find the match to determine if we're user_a or user_b
-      final match = state.matches.firstWhere((m) => m.id == matchId);
       
-      // Get the match from DB to check our position
-      final matchData = await _supabase
-          .from('matches')
-          .select('user_a_id, user_b_id')
-          .eq('id', matchId)
-          .single();
-      
-      final isUserA = matchData['user_a_id'] == _currentUserId;
-      final column = isUserA ? 'user_a_priority' : 'user_b_priority';
-      
-      await _supabase
-          .from('matches')
-          .update({column: _priorityToString(newPriority)})
-          .eq('id', matchId);
-      
-      debugPrint('MatchState: Updated priority for ${match.matchedUserName} to ${newPriority.label}');
-    } catch (e) {
-      debugPrint('MatchState: Error updating priority: $e');
-      // Refresh from database on error
-      await _loadFromDatabase();
-    }
-  }
-
-  /// Archive a match - NOW PERSISTS
-  Future<void> archiveMatch(String matchId) async {
-    if (_currentUserId == null) return;
-    
-    // Optimistic update
-    final updatedMatches = state.matches.map((m) {
-      if (m.id == matchId) {
-        return m.copyWith(isArchived: true);
-      }
-      return m;
-    }).toList();
-    state = state.copyWith(matches: updatedMatches);
-    
-    try {
-      // Get the match to determine if we're user_a or user_b
-      final matchData = await _supabase
-          .from('matches')
-          .select('user_a_id, user_b_id')
-          .eq('id', matchId)
-          .single();
-      
-      final isUserA = matchData['user_a_id'] == _currentUserId;
-      final column = isUserA ? 'user_a_archived' : 'user_b_archived';
-      
-      await _supabase
-          .from('matches')
-          .update({column: true})
-          .eq('id', matchId);
-      
-      debugPrint('MatchState: Archived match $matchId');
-    } catch (e) {
-      debugPrint('MatchState: Error archiving match: $e');
-      await _loadFromDatabase();
-    }
+      state = state.copyWith(
+        matches: matches,
+        likedProfiles: liked,
+        superLikedProfiles: superLiked,
+        passedProfiles: passed,
         conversations: conversations,
         newMatchCount: newCount,
         isLoading: false,
@@ -244,6 +181,8 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
         return MatchPriority.inWaiting;
       case 'onWayOut':
         return MatchPriority.onWayOut;
+      case 'legacy':
+        return MatchPriority.legacy;
       default:
         return MatchPriority.new_;
     }
@@ -259,6 +198,8 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
         return 'inWaiting';
       case MatchPriority.onWayOut:
         return 'onWayOut';
+      case MatchPriority.legacy:
+        return 'legacy';
     }
   }
 
