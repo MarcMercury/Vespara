@@ -437,7 +437,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
                     _getModuleIconPath(moduleName),
-                    fit: BoxFit.contain,
+                    fit: BoxFit.cover,
                     cacheWidth: 400,
                     filterQuality: FilterQuality.high,
                     errorBuilder: (context, error, stackTrace) {
