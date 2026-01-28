@@ -830,19 +830,34 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
           // Turn indicator
           _buildTurnIndicator(state),
 
-          // Mystery Card area
+          // Main game area - use Expanded with a nested Column
           Expanded(
-            flex: 2,
-            child: _buildMysteryCardArea(state),
-          ),
+            child: Column(
+              children: [
+                // Mystery Card area - takes available space
+                Expanded(
+                  child: _buildMysteryCardArea(state),
+                ),
 
-          // Place Card Button - separate from mystery card area for better hit testing
-          _buildPlaceCardButton(state),
+                // Place Card Button - FIXED height, not inside Expanded
+                // This ensures it's not overlapped by other widgets
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: (_selectedDropIndex != null && state.isMyTurn && !state.isRevealed) 
+                      ? 80 
+                      : (state.gameState == LaneGameState.stealing && state.isMyTurn && !state.isRevealed)
+                          ? 56
+                          : 0,
+                  child: _buildPlaceCardButton(state),
+                ),
 
-          // My Lane
-          Expanded(
-            flex: 3,
-            child: _buildMyLane(state, me),
+                // My Lane
+                Expanded(
+                  flex: 2,
+                  child: _buildMyLane(state, me),
+                ),
+              ],
+            ),
           ),
 
           // My stats bar
@@ -1103,91 +1118,80 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
     final showResult = result != null && state.isRevealed;
     final hasSelectedSpot = _selectedDropIndex != null;
 
-    return Center(
-      child: AnimatedBuilder(
-        animation: _shakeController,
-        builder: (context, child) {
-          final shake = sin(_shakeController.value * pi * 4) * 10;
-          return Transform.translate(
-            offset: Offset(showResult && !result.success ? shake : 0, 0),
-            child: child,
-          );
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Result badge
-            if (showResult)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color:
-                      result.success ? LaneColors.success : LaneColors.failure,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      result.success
-                          ? VesparaIcons.confirm
-                          : VesparaIcons.close,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      result.success ? 'CORRECT!' : 'WRONG!',
-                      style: const TextStyle(
+    // Wrap in ClipRect to prevent overflow and ensure proper bounds
+    return ClipRect(
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
+            final shake = sin(_shakeController.value * pi * 4) * 10;
+            return Transform.translate(
+              offset: Offset(showResult && !result.success ? shake : 0, 0),
+              child: child,
+            );
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min, // Don't expand beyond needed
+            children: [
+              // Result badge
+              if (showResult)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color:
+                        result.success ? LaneColors.success : LaneColors.failure,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        result.success
+                            ? VesparaIcons.confirm
+                            : VesparaIcons.close,
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
+                        size: 20,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Instruction text when it's my turn
-            if (state.isMyTurn && !state.isRevealed && !showResult)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  hasSelectedSpot 
-                      ? 'Tap PLACE CARD or choose a different spot'
-                      : 'Tap a slot below to place this card',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: hasSelectedSpot ? LaneColors.gold : Colors.white54,
-                    fontWeight: hasSelectedSpot ? FontWeight.w600 : FontWeight.normal,
+                      const SizedBox(width: 8),
+                      Text(
+                        result.success ? 'CORRECT!' : 'WRONG!',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
+              // Instruction text when it's my turn
+              if (state.isMyTurn && !state.isRevealed && !showResult)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    hasSelectedSpot 
+                        ? 'Tap PLACE CARD below'
+                        : 'Tap a slot below to place this card',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: hasSelectedSpot ? LaneColors.gold : Colors.white54,
+                      fontWeight: hasSelectedSpot ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ),
+
+              // The Mystery Card (no longer draggable)
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: hasSelectedSpot ? 0.6 : 1.0,
+                child: _buildMysteryCard(card, state.isRevealed),
               ),
-
-            // The Mystery Card (no longer draggable)
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: hasSelectedSpot ? 0.6 : 1.0,
-              child: _buildMysteryCard(card, state.isRevealed),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Pass button during steal only
-            if (state.isMyTurn && !state.isRevealed && state.gameState == LaneGameState.stealing)
-              TextButton.icon(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  setState(() => _selectedDropIndex = null);
-                  ref.read(laneOfLustProvider.notifier).skipSteal();
-                },
-                icon: const Icon(VesparaIcons.forward, size: 18),
-                label: const Text('Pass'),
-                style: TextButton.styleFrom(foregroundColor: Colors.white54),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
