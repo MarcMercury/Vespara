@@ -254,56 +254,144 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         onTap: () => _showGameDetails(game),
         child: Container(
           decoration: BoxDecoration(
-            color: VesparaColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: categoryColor.withOpacity(0.4), width: 1.5),
+            // Gradient background for 3D depth
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                VesparaColors.surface.withOpacity(0.95),
+                VesparaColors.surface,
+                Color.lerp(VesparaColors.surface, Colors.black, 0.15)!,
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: categoryColor.withOpacity(0.5), width: 2),
             boxShadow: [
-              // Bottom shadow for 3D lifted effect
+              // Deep bottom shadow for strong 3D lift
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 12,
-                spreadRadius: 2,
-                offset: const Offset(0, 6),
-              ),
-              // Ambient shadow
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 0,
+                color: Colors.black.withOpacity(0.7),
+                blurRadius: 16,
+                spreadRadius: 1,
                 offset: const Offset(0, 10),
               ),
-              // Color accent glow
+              // Mid-level shadow
               BoxShadow(
-                color: categoryColor.withOpacity(0.25),
-                blurRadius: 16,
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 8,
                 spreadRadius: 0,
-                offset: const Offset(0, 4),
+                offset: const Offset(0, 5),
+              ),
+              // Soft ambient shadow
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 24,
+                spreadRadius: 0,
+                offset: const Offset(0, 12),
+              ),
+              // Color accent glow underneath
+              BoxShadow(
+                color: categoryColor.withOpacity(0.35),
+                blurRadius: 20,
+                spreadRadius: -2,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.asset(
-              _getGameIconPath(game.title),
-              fit: BoxFit.cover,
-              cacheWidth: 300,
-              filterQuality: FilterQuality.high,
-              errorBuilder: (context, error, stackTrace) {
-                // Fallback if image not found
-                return Center(
-                  child: Text(
-                    game.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: VesparaColors.primary,
+          child: Stack(
+            children: [
+              // Image with padding for smaller size
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      _getGameIconPath(game.title),
+                      fit: BoxFit.cover,
+                      cacheWidth: 300,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback if image not found
+                        return Center(
+                          child: Text(
+                            game.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: VesparaColors.primary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      },
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              // Top highlight for 3D bevel effect
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 3,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.25),
+                        Colors.white.withOpacity(0.1),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Left highlight for 3D bevel
+              Positioned(
+                top: 0,
+                left: 0,
+                bottom: 0,
+                child: Container(
+                  width: 2,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.05),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Bottom darkening for 3D depth
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.15),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
