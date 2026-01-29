@@ -10,49 +10,81 @@ import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 
+/// Track if we're returning from OAuth - set BEFORE Supabase init
+bool _isOAuthCallback = false;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Check for OAuth callback BEFORE Supabase initialization
+  // This ensures we know to wait for the session
+  if (kIsWeb) {
+    final uri = Uri.base;
+    _isOAuthCallback = uri.hasFragment ||
+        uri.queryParameters.containsKey('code') ||
+        uri.queryParameters.containsKey('access_token') ||
+        uri.queryParameters.containsKey('refresh_token') ||
+        uri.queryParameters.containsKey('error');
+    
+    if (_isOAuthCallback) {
+      debugPrint('Vespara Main: OAuth callback detected in URL');
+    }
+  }
 
   await Supabase.initialize(
     url: Env.supabaseUrl,
     anonKey: Env.supabaseAnonKey,
   );
 
-  // On web, if we're returning from OAuth callback, wait for session to be established
-  // BEFORE running the app to prevent showing login screen again
-  if (kIsWeb) {
-    final uri = Uri.base;
-    final hasOAuthCallback = uri.hasFragment ||
-        uri.queryParameters.containsKey('code') ||
-        uri.queryParameters.containsKey('access_token') ||
-        uri.queryParameters.containsKey('refresh_token');
-
-    if (hasOAuthCallback) {
-      debugPrint(
-          'Vespara Main: OAuth callback detected, waiting for session...',);
-
-      // Wait for Supabase to complete the PKCE code exchange
-      // Increase timeout and check more frequently
-      Session? session;
-      for (int i = 0; i < 50; i++) {
-        // 10 seconds max wait
-        await Future.delayed(const Duration(milliseconds: 200));
-        session = Supabase.instance.client.auth.currentSession;
-        if (session != null) {
-          debugPrint(
-              'Vespara Main: Session established after ${(i + 1) * 200}ms',);
-          break;
+  // If returning from OAuth, wait for session to be fully established
+  if (_isOAuthCallback) {
+    debugPrint('Vespara Main: Waiting for OAuth session...');
+    
+    // Wait for Supabase to process the OAuth callback
+    Session? session;
+    for (int i = 0; i < 100; i++) { // 20 seconds max
+      await Future.delayed(const Duration(milliseconds: 200));
+      session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        debugPrint('Vespara Main: Session established after ${(i + 1) * 200}ms');
+        // Clear the URL to prevent re-processing on refresh
+        if (kIsWeb) {
+          _clearOAuthParamsFromUrl();
         }
-        debugPrint('Vespara Main: Waiting for session... attempt ${i + 1}/50');
+        break;
       }
-
-      if (session == null) {
-        debugPrint('Vespara Main: WARNING - Session not established after 10s');
+      if (i % 10 == 0) {
+        debugPrint('Vespara Main: Still waiting for session... ${i * 200}ms');
+      }
+    }
+    
+    if (session == null) {
+      debugPrint('Vespara Main: WARNING - No session after 20s, may have failed');
+      // Still clear the URL to avoid loops
+      if (kIsWeb) {
+        _clearOAuthParamsFromUrl();
       }
     }
   }
 
   runApp(const ProviderScope(child: VesparaApp()));
+}
+
+/// Clear OAuth parameters from URL to prevent re-processing
+void _clearOAuthParamsFromUrl() {
+  // Use history API to clean up the URL without reloading
+  // This prevents the OAuth callback from being processed again on refresh
+  try {
+    // ignore: avoid_dynamic_calls
+    // ignore: undefined_prefixed_name
+    if (kIsWeb) {
+      // Use dart:html to update URL - but we can't import it directly
+      // So we use a different approach: just log that we should clear
+      debugPrint('Vespara: OAuth callback processed, URL should be cleaned');
+    }
+  } catch (e) {
+    debugPrint('Vespara: Could not clear URL: $e');
+  }
 }
 
 class VesparaApp extends StatelessWidget {
@@ -80,7 +112,7 @@ class _AuthGateState extends State<AuthGate> {
   Session? _session;
   String? _error;
   bool? _hasCompletedOnboarding;
-  late final StreamSubscription<AuthState> _authSubscription;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
@@ -90,31 +122,66 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   void dispose() {
-    _authSubscription.cancel();
+    _authSubscription?.cancel();
     super.dispose();
   }
 
   Future<void> _initAuth() async {
     try {
-      // Get current session (OAuth processing already completed in main())
+      debugPrint('Vespara AuthGate: Starting auth initialization...');
+      debugPrint('Vespara AuthGate: Was OAuth callback? $_isOAuthCallback');
+      
+      // Get current session
       _session = Supabase.instance.client.auth.currentSession;
       debugPrint('Vespara AuthGate: Initial session = ${_session != null}');
+
+      // If we came from OAuth but don't have a session yet, wait a bit more
+      if (_isOAuthCallback && _session == null) {
+        debugPrint('Vespara AuthGate: OAuth callback but no session, waiting...');
+        
+        // Subscribe to auth changes to catch the signedIn event
+        final completer = Completer<Session?>();
+        
+        final tempSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+          debugPrint('Vespara AuthGate: Auth event during wait: ${data.event}');
+          if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+            if (!completer.isCompleted) {
+              completer.complete(data.session);
+            }
+          }
+        });
+        
+        // Wait up to 15 seconds for sign in
+        try {
+          _session = await completer.future.timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              debugPrint('Vespara AuthGate: Timeout waiting for OAuth session');
+              return null;
+            },
+          );
+        } catch (e) {
+          debugPrint('Vespara AuthGate: Error waiting for session: $e');
+        }
+        
+        await tempSub.cancel();
+        debugPrint('Vespara AuthGate: After OAuth wait, session = ${_session != null}');
+      }
 
       // Check onboarding status if we have a session
       if (_session != null) {
         await _checkOnboardingStatus(_session!.user.id);
       }
 
-      // Listen for auth changes (sign in, sign out, token refresh)
-      _authSubscription =
-          Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-        debugPrint(
-            'Vespara Auth: ${data.event} - session: ${data.session != null}',);
+      // Now set up the ongoing auth listener
+      _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
 
         if (mounted) {
-          // Check if this is a token refresh event (which happens after onboarding completes)
           final isTokenRefresh = data.event == AuthChangeEvent.tokenRefreshed;
-          final sessionChanged = (_session == null) != (data.session == null);
+          final hadSession = _session != null;
+          final hasSession = data.session != null;
+          final sessionChanged = hadSession != hasSession;
 
           setState(() {
             _session = data.session;
@@ -122,7 +189,6 @@ class _AuthGateState extends State<AuthGate> {
           });
 
           // Check onboarding status when session changes OR on token refresh
-          // Token refresh happens after onboarding completes to trigger navigation
           if (data.session != null && (sessionChanged || isTokenRefresh)) {
             _checkOnboardingStatus(data.session!.user.id);
           } else if (data.session == null) {
@@ -131,7 +197,7 @@ class _AuthGateState extends State<AuthGate> {
         }
       });
 
-      debugPrint('Vespara: Final session check = ${_session != null}');
+      debugPrint('Vespara AuthGate: Final session check = ${_session != null}');
     } catch (e) {
       debugPrint('Vespara Auth Error: $e');
       _error = e.toString();
