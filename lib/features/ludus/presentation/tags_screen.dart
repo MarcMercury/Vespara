@@ -248,25 +248,16 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   }
 
   Widget _buildGameCard(TagsGame game) {
-    final categoryColor = _getCategoryColor(game.category);
+    final gameColor = _getGameAccentColor(game.title);
     
     return GestureDetector(
         onTap: () => _showGameDetails(game),
         child: Container(
           decoration: BoxDecoration(
-            // Gradient background for 3D depth
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                VesparaColors.surface.withOpacity(0.95),
-                VesparaColors.surface,
-                Color.lerp(VesparaColors.surface, Colors.black, 0.15)!,
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
+            // Dark background to frame the image
+            color: const Color(0xFF1A1A2E),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: categoryColor.withOpacity(0.5), width: 2),
+            border: Border.all(color: gameColor.withOpacity(0.7), width: 2.5),
             boxShadow: [
               // Deep bottom shadow for strong 3D lift
               BoxShadow(
@@ -289,9 +280,9 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                 spreadRadius: 0,
                 offset: const Offset(0, 12),
               ),
-              // Color accent glow underneath
+              // Color accent glow underneath matching the game
               BoxShadow(
-                color: categoryColor.withOpacity(0.35),
+                color: gameColor.withOpacity(0.4),
                 blurRadius: 20,
                 spreadRadius: -2,
                 offset: const Offset(0, 8),
@@ -301,16 +292,16 @@ class _TagScreenState extends ConsumerState<TagScreen> {
           clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
-              // Image with padding for smaller size
+              // Image - full fit, no cropping
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(4),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     child: Image.asset(
                       _getGameIconPath(game.title),
-                      fit: BoxFit.cover,
-                      cacheWidth: 300,
+                      fit: BoxFit.contain, // Show full image without cropping
+                      cacheWidth: 400,
                       filterQuality: FilterQuality.high,
                       errorBuilder: (context, error, stackTrace) {
                         // Fallback if image not found
@@ -326,67 +317,6 @@ class _TagScreenState extends ConsumerState<TagScreen> {
                           ),
                         );
                       },
-                    ),
-                  ),
-                ),
-              ),
-              // Top highlight for 3D bevel effect
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 3,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withOpacity(0.25),
-                        Colors.white.withOpacity(0.1),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // Left highlight for 3D bevel
-              Positioned(
-                top: 0,
-                left: 0,
-                bottom: 0,
-                child: Container(
-                  width: 2,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.05),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // Bottom darkening for 3D depth
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.black.withOpacity(0.3),
-                        Colors.black.withOpacity(0.15),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
                     ),
                   ),
                 ),
@@ -418,6 +348,30 @@ class _TagScreenState extends ConsumerState<TagScreen> {
         return 'assets/images/GAME ICONS/Dice Breakers 2.png';
       default:
         return 'assets/images/GAME ICONS/Down to Clown 2.png';
+    }
+  }
+
+  /// Get accent color matching each game's icon art
+  Color _getGameAccentColor(String gameTitle) {
+    switch (gameTitle) {
+      case 'Down to Clown':
+        return const Color(0xFFE91E8C); // Pink (magenta/pink masks)
+      case 'Ice Breakers':
+        return const Color(0xFF00BFFF); // Blue (ice blue)
+      case 'Share or Dare':
+        return const Color(0xFFDC143C); // Red (crimson)
+      case 'Path of Pleasure':
+        return const Color(0xFF9B59B6); // Purple
+      case 'Lane of Lust':
+        return const Color(0xFFFF69B4); // Hot Pink
+      case 'Drama-Sutra':
+        return const Color(0xFFFFD700); // Yellow/Gold
+      case 'Flash Freeze':
+        return const Color(0xFF4FC3F7); // Light Blue (ice)
+      case 'Dice Breakers':
+        return const Color(0xFF8E44AD); // Purple
+      default:
+        return const Color(0xFFE91E8C); // Default pink
     }
   }
 
