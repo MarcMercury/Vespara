@@ -544,7 +544,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         ),
       );
 
-  Widget _buildPersonalitySummary() => Container(
+  Widget _buildPersonalitySummary() {
+    final summary = _analytics?.aiPersonalitySummary;
+    final hasRealData = summary != null && summary.isNotEmpty;
+    
+    return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: VesparaColors.surface,
@@ -568,20 +572,35 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              _analytics?.aiPersonalitySummary ??
-                  'You\'re charming on the surface but tend to lose interest after the chase. You match with many but commit to few. Your texting game is strong early but fades fast. You like attention more than connection.',
-              style: const TextStyle(
-                fontSize: 14,
-                color: VesparaColors.primary,
-                height: 1.5,
+            if (hasRealData)
+              Text(
+                summary,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.primary,
+                  height: 1.5,
+                ),
+              )
+            else
+              const Text(
+                'Not enough activity yet to generate your personality summary. Keep using the app and check back soon!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                  fontStyle: FontStyle.italic,
+                  height: 1.5,
+                ),
               ),
-            ),
           ],
         ),
       );
+  }
 
-  Widget _buildDatingStyle() => Container(
+  Widget _buildDatingStyle() {
+    final style = _analytics?.aiDatingStyle;
+    final hasRealData = style != null && style.isNotEmpty;
+    
+    return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: VesparaColors.surface,
@@ -606,26 +625,55 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              _analytics?.aiDatingStyle ?? '"The Collector"',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: VesparaColors.primary,
+            if (hasRealData) ...[
+              Text(
+                style,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: VesparaColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'You enjoy the validation of matching more than the work of connecting. You keep options open even when you find someone good. Classic commitment-phobe behavior disguised as "keeping things casual".',
-              style: TextStyle(
-                fontSize: 13,
-                color: VesparaColors.secondary,
-                height: 1.4,
+              const SizedBox(height: 8),
+              Text(
+                _getDatingStyleDescription(),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.secondary,
+                  height: 1.4,
+                ),
               ),
-            ),
+            ] else
+              const Text(
+                'Your dating style will be analyzed once you have more activity. Keep swiping, matching, and chatting!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                  fontStyle: FontStyle.italic,
+                  height: 1.5,
+                ),
+              ),
           ],
         ),
       );
+  }
+  
+  String _getDatingStyleDescription() {
+    // Generate description based on actual metrics
+    final ghostRate = _analytics?.ghostRate ?? 0;
+    final responseRate = _analytics?.responseRate ?? 0;
+    final totalMatches = _analytics?.totalMatches ?? 0;
+    
+    if (ghostRate > 50) {
+      return 'You tend to disappear from conversations. Consider being more consistent with your responses.';
+    } else if (responseRate > 80) {
+      return 'You\'re highly engaged and responsive. People appreciate that you follow through.';
+    } else if (totalMatches > 20 && responseRate < 30) {
+      return 'You match frequently but rarely engage. Quality over quantity might serve you better.';
+    } else {
+      return 'Based on your activity patterns and engagement style.';
+    }
+  }
 
   Widget _buildBehaviorMetrics() => Container(
         padding: const EdgeInsets.all(16),
@@ -716,13 +764,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   }
 
   Widget _buildImprovementTips() {
-    final tips = _analytics?.aiImprovementTips ??
-        [
-          'Stop swiping right on everyone - be selective',
-          'Actually follow through on date plans instead of flaking',
-          'Reply within 24 hours or don\'t reply at all',
-          'Be honest about what you want instead of stringing people along',
-        ];
+    // Only show tips from actual analytics, or generate based on real metrics
+    final tips = _analytics?.aiImprovementTips ?? _generateTipsFromMetrics();
+    final hasTips = tips.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -749,66 +793,147 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ],
           ),
           const SizedBox(height: 12),
-          ...tips.map(
-            (tip) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.check_circle,
-                      size: 16, color: VesparaColors.success,),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      tip,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: VesparaColors.primary,
-                        height: 1.4,
+          if (hasTips)
+            ...tips.map(
+              (tip) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle,
+                        size: 16, color: VesparaColors.success,),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        tip,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: VesparaColors.primary,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            )
+          else
+            const Text(
+              'Keep using the app to get personalized improvement tips based on your activity!',
+              style: TextStyle(
+                fontSize: 13,
+                color: VesparaColors.secondary,
+                fontStyle: FontStyle.italic,
               ),
             ),
-          ),
         ],
       ),
     );
   }
+  
+  List<String> _generateTipsFromMetrics() {
+    final tips = <String>[];
+    final ghostRate = _analytics?.ghostRate ?? 0;
+    final flakeRate = _analytics?.flakeRate ?? 0;
+    final responseRate = _analytics?.responseRate ?? 0;
+    final totalMatches = _analytics?.totalMatches ?? 0;
+    
+    // Only add tips if we have actual concerning metrics
+    if (ghostRate > 30) {
+      tips.add('Try to close conversations gracefully instead of disappearing');
+    }
+    if (flakeRate > 30) {
+      tips.add('Follow through on plans you make - reliability builds trust');
+    }
+    if (responseRate < 50 && totalMatches > 5) {
+      tips.add('Respond to messages within 24 hours to keep momentum');
+    }
+    if (totalMatches > 20 && responseRate < 30) {
+      tips.add('Quality over quantity - focus on fewer, better connections');
+    }
+    
+    return tips;
+  }
 
-  Widget _buildRedFlags() => Container(
+  Widget _buildRedFlags() {
+    // Generate red flags from actual analytics data
+    final redFlags = _generateRedFlagsFromMetrics();
+    final hasFlags = redFlags.isNotEmpty;
+    
+    return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: VesparaColors.error.withOpacity(0.1),
+          color: hasFlags 
+              ? VesparaColors.error.withOpacity(0.1)
+              : VesparaColors.success.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+          border: Border.all(
+            color: hasFlags 
+                ? VesparaColors.error.withOpacity(0.3)
+                : VesparaColors.success.withOpacity(0.3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.flag, color: VesparaColors.error, size: 18),
-                SizedBox(width: 8),
+                Icon(
+                  hasFlags ? Icons.flag : Icons.check_circle,
+                  color: hasFlags ? VesparaColors.error : VesparaColors.success,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  'Red Flags We\'ve Noticed',
+                  hasFlags ? 'Areas to Improve' : 'Looking Good!',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.error,
+                    color: hasFlags ? VesparaColors.error : VesparaColors.success,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildRedFlagItem('You ghosted 3 people this month'),
-            _buildRedFlagItem('Average conversation dies after 12 messages'),
-            _buildRedFlagItem('You only swipe on people 5+ years younger'),
-            _buildRedFlagItem('Last 4 dates were cancelled by you'),
+            if (hasFlags)
+              ...redFlags.map((flag) => _buildRedFlagItem(flag))
+            else
+              const Text(
+                'No concerning patterns detected. Keep up the good work!',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: VesparaColors.primary,
+                ),
+              ),
           ],
         ),
       );
+  }
+  
+  List<String> _generateRedFlagsFromMetrics() {
+    final flags = <String>[];
+    final ghostRate = _analytics?.ghostRate ?? 0;
+    final flakeRate = _analytics?.flakeRate ?? 0;
+    final responseRate = _analytics?.responseRate ?? 0;
+    final activeConversations = _analytics?.activeConversations ?? 0;
+    final totalMatches = _analytics?.totalMatches ?? 0;
+    
+    // Only flag genuinely concerning behavior based on real data
+    if (ghostRate > 50) {
+      flags.add('High ghost rate (${ghostRate.toInt()}%) - conversations are ending abruptly');
+    }
+    if (flakeRate > 50) {
+      flags.add('High flake rate (${flakeRate.toInt()}%) - plans are being cancelled frequently');
+    }
+    if (responseRate < 20 && totalMatches > 10) {
+      flags.add('Low response rate (${responseRate.toInt()}%) with ${totalMatches} matches');
+    }
+    if (activeConversations == 0 && totalMatches > 5) {
+      flags.add('No active conversations despite having matches');
+    }
+    
+    return flags;
+  }
 
   Widget _buildRedFlagItem(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
