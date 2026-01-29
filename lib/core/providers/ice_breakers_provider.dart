@@ -373,6 +373,9 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
         throw Exception('No cards returned');
       }
 
+      // Shuffle the deck for true randomness using Fisher-Yates
+      _shuffleDeck(deck);
+
       // Create session
       final session = await supabase
           .from('ice_breaker_sessions')
@@ -401,6 +404,17 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
         isLoading: false,
         phase: IceGamePhase.countdown,
       );
+    }
+  }
+
+  /// Fisher-Yates shuffle for true random deck order
+  void _shuffleDeck(List<IceCard> deck) {
+    final random = Random();
+    for (int i = deck.length - 1; i > 0; i--) {
+      final j = random.nextInt(i + 1);
+      final temp = deck[i];
+      deck[i] = deck[j];
+      deck[j] = temp;
     }
   }
 
@@ -809,6 +823,12 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
         deckPosition: 26,
       ),
     );
+
+    // Apply Fisher-Yates shuffle for true randomness
+    // Keep the escalation card at the end
+    final escalationCard = deck.removeLast();
+    _shuffleDeck(deck);
+    deck.add(escalationCard);
 
     return deck;
   }
