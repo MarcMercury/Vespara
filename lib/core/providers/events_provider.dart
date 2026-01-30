@@ -462,18 +462,18 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
   /// Cancel an event (host only)
   Future<void> cancelEvent(String eventId) async {
-    // Find the event
-    final event = state.allEvents.firstWhere(
-      (e) => e.id == eventId,
-      orElse: () => throw Exception('Event not found'),
-    );
+    // Verify event exists
+    final eventExists = state.allEvents.any((e) => e.id == eventId);
+    if (!eventExists) {
+      throw Exception('Event not found');
+    }
 
-    // Mark as cancelled in local state
+    // Remove from local state immediately (optimistic update)
     final updatedHosted = state.hostedEvents
-        .map((e) => e.id == eventId ? e.copyWith(isCancelled: true) : e)
+        .where((e) => e.id != eventId)
         .toList();
     final updatedAll = state.allEvents
-        .map((e) => e.id == eventId ? e.copyWith(isCancelled: true) : e)
+        .where((e) => e.id != eventId)
         .toList();
 
     state = state.copyWith(

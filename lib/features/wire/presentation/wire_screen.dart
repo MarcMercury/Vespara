@@ -447,6 +447,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
   List<ChatMessage> _messages = [];
   bool _showMediaOptions = false;
   bool _isLoading = true;
+  bool _isMuted = false; // Track muted state locally
   final _supabase = Supabase.instance.client;
 
   @override
@@ -736,8 +737,8 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                 _navigateToProfile(widget.conversation.otherUserId ?? '');
               }),
               _buildOptionTile(
-                widget.conversation.isMuted ? Icons.notifications : Icons.notifications_off, 
-                widget.conversation.isMuted ? 'Unmute Notifications' : 'Mute Notifications',
+                _isMuted ? Icons.notifications : Icons.notifications_off, 
+                _isMuted ? 'Unmute Notifications' : 'Mute Notifications',
                 () {
                   Navigator.pop(context);
                   _toggleMuteConversation();
@@ -905,7 +906,7 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               // Actually delete the conversation
               await ref.read(wireProvider.notifier).deleteConversation(widget.conversation.id);
@@ -947,10 +948,12 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
         duration: const Duration(hours: 8),
       );
       if (mounted) {
-        final isMuted = widget.conversation.isMuted;
+        setState(() {
+          _isMuted = !_isMuted;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isMuted ? 'Notifications unmuted' : 'Notifications muted for 8 hours'),
+            content: Text(_isMuted ? 'Notifications muted for 8 hours' : 'Notifications unmuted'),
             backgroundColor: VesparaColors.success,
           ),
         );

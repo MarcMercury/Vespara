@@ -1243,7 +1243,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                   
                   // Create the plan event
                   try {
-                    final connection = PlanConnection(
+                    final connection = EventConnection(
                       id: match.matchedUserId ?? match.id,
                       name: match.matchedUserName ?? 'Match',
                       avatarUrl: match.matchedUserAvatar,
