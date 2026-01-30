@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/chat.dart';
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -732,29 +733,23 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
               ),
               _buildOptionTile(Icons.person, 'View Profile', () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          'Opening ${widget.conversation.otherUserName}\'s profile...',),),
-                );
+                _navigateToProfile(widget.conversation.otherUserId ?? '');
               }),
-              _buildOptionTile(Icons.notifications_off, 'Mute Notifications',
-                  () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Notifications muted for 8 hours'),),
-                );
-              }),
+              _buildOptionTile(
+                widget.conversation.isMuted ? Icons.notifications : Icons.notifications_off, 
+                widget.conversation.isMuted ? 'Unmute Notifications' : 'Mute Notifications',
+                () {
+                  Navigator.pop(context);
+                  _toggleMuteConversation();
+                },
+              ),
               _buildOptionTile(Icons.search, 'Search in Chat', () {
                 Navigator.pop(context);
                 _showSearchInChatDialog();
               }),
               _buildOptionTile(Icons.photo_library, 'Shared Media', () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening shared media...')),
-                );
+                _showSharedMedia();
               }),
               _buildOptionTile(
                 Icons.block,
@@ -854,16 +849,34 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.pop(context); // Go back to chat list
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      '${widget.conversation.otherUserName} has been blocked',),
-                  backgroundColor: VesparaColors.error,
-                ),
-              );
+              try {
+                // Block the user via provider
+                await ref.read(wireProvider.notifier).blockUser(
+                  widget.conversation.otherUserId ?? '',
+                  widget.conversation.id,
+                );
+                if (mounted) {
+                  Navigator.pop(context); // Go back to chat list
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${widget.conversation.otherUserName} has been blocked',),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to block user: $e'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Block',
                 style: TextStyle(color: VesparaColors.error),),
@@ -894,18 +907,123 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pop(context); // Go back to chat list
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Chat deleted'),
-                  backgroundColor: VesparaColors.error,
-                ),
-              );
+              // Actually delete the conversation
+              await ref.read(wireProvider.notifier).deleteConversation(widget.conversation.id);
+              if (mounted) {
+                Navigator.pop(context); // Go back to chat list
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Chat deleted'),
+                    backgroundColor: VesparaColors.error,
+                  ),
+                );
+              }
             },
             child: const Text('Delete',
                 style: TextStyle(color: VesparaColors.error),),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToProfile(String userId) {
+    // Navigate to profile view
+    if (userId.isNotEmpty) {
+      // For now, show a snackbar since profile screen navigation depends on app structure
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Opening ${widget.conversation.otherUserName}\'s profile'),
+          backgroundColor: VesparaColors.glow,
+        ),
+      );
+    }
+  }
+
+  void _toggleMuteConversation() async {
+    try {
+      await ref.read(wireProvider.notifier).toggleMute(
+        widget.conversation.id,
+        duration: const Duration(hours: 8),
+      );
+      if (mounted) {
+        final isMuted = widget.conversation.isMuted;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isMuted ? 'Notifications unmuted' : 'Notifications muted for 8 hours'),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update notifications: $e'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSharedMedia() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Shared Media',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: VesparaColors.secondary),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: VesparaColors.border),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.photo_library_outlined,
+                      size: 64,
+                      color: VesparaColors.secondary.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No shared media yet',
+                      style: TextStyle(color: VesparaColors.secondary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

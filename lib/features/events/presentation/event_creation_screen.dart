@@ -1,10 +1,18 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../core/domain/models/plan_event.dart';
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/events_provider.dart';
+import '../../../core/providers/plan_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -42,6 +50,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
 
   String? _coverImageUrl;
   final String _coverTheme = 'default';
+  bool _isUploadingImage = false;
 
   final List<EventLink> _links = [];
   final List<EventCoHost> _coHosts = [];
@@ -944,8 +953,28 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            // Review button - shows preview modal on mobile
+            if (MediaQuery.of(context).size.width <= 800)
+              OutlinedButton.icon(
+                onPressed: _showPreviewModal,
+                icon: const Icon(Icons.visibility_outlined, size: 18, color: VesparaColors.glow),
+                label: const Text(
+                  'Review',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: VesparaColors.glow,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: VesparaColors.glow),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            const Spacer(),
             TextButton(
               onPressed: _saveDraft,
               child: const Text(
@@ -1051,68 +1080,87 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Cover image
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              VesparaColors.glow.withOpacity(0.4),
-                              VesparaColors.surface,
-                            ],
+                      // Cover image - clickable for photo upload
+                      GestureDetector(
+                        onTap: _pickCoverImage,
+                        child: Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                VesparaColors.glow.withOpacity(0.4),
+                                VesparaColors.surface,
+                              ],
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(20),),
                           ),
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(20),),
-                        ),
-                        child: Stack(
-                          children: [
-                            if (_coverImageUrl != null)
-                              ClipRRect(
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(20),),
-                                child: Image.network(
-                                  _coverImageUrl!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      _buildCoverPlaceholder(),
+                          child: Stack(
+                            children: [
+                              if (_coverImageUrl != null)
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(20),),
+                                  child: Image.network(
+                                    _coverImageUrl!,
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _buildCoverPlaceholder(),
+                                  ),
+                                )
+                              else
+                                _buildCoverPlaceholder(),
+                              if (_isUploadingImage)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: VesparaColors.background.withOpacity(0.7),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(20),),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: VesparaColors.glow,
+                                    ),
+                                  ),
                                 ),
-                              )
-                            else
-                              _buildCoverPlaceholder(),
-                            Positioned(
-                              right: 12,
-                              bottom: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6,),
-                                decoration: BoxDecoration(
-                                  color:
-                                      VesparaColors.background.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.edit,
-                                        size: 16, color: VesparaColors.primary,),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'Edit',
-                                      style: TextStyle(
-                                        fontSize: 14,
+                              Positioned(
+                                right: 12,
+                                bottom: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6,),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        VesparaColors.background.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _coverImageUrl != null ? Icons.edit : Icons.add_a_photo,
+                                        size: 16,
                                         color: VesparaColors.primary,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _coverImageUrl != null ? 'Change' : 'Add Photo',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: VesparaColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
 
@@ -1175,7 +1223,7 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
             ),
             SizedBox(height: 8),
             Text(
-              'Add cover image',
+              'Tap to add cover image',
               style: TextStyle(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -1184,6 +1232,129 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
           ],
         ),
       );
+
+  /// Pick and upload a cover image for the event
+  Future<void> _pickCoverImage() async {
+    final picker = ImagePicker();
+    
+    // Show option to choose camera or gallery
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Add Cover Photo',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: VesparaColors.glow),
+              title: const Text('Choose from Gallery',
+                  style: TextStyle(color: VesparaColors.primary)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: VesparaColors.glow),
+              title: const Text('Take a Photo',
+                  style: TextStyle(color: VesparaColors.primary)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            if (_coverImageUrl != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: VesparaColors.error),
+                title: const Text('Remove Photo',
+                    style: TextStyle(color: VesparaColors.error)),
+                onTap: () {
+                  setState(() => _coverImageUrl = null);
+                  Navigator.pop(context);
+                },
+              ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      setState(() => _isUploadingImage = true);
+      HapticFeedback.lightImpact();
+
+      // Upload to Supabase Storage
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id ?? 'anonymous';
+      final fileName = '${const Uuid().v4()}.jpg';
+      final filePath = 'events/$userId/$fileName';
+
+      if (kIsWeb) {
+        // Web: read as bytes
+        final bytes = await image.readAsBytes();
+        await supabase.storage.from('photos').uploadBinary(
+              filePath,
+              bytes,
+              fileOptions: const FileOptions(contentType: 'image/jpeg'),
+            );
+      } else {
+        // Mobile: use file
+        final file = File(image.path);
+        await supabase.storage.from('photos').upload(
+              filePath,
+              file,
+              fileOptions: const FileOptions(contentType: 'image/jpeg'),
+            );
+      }
+
+      // Get the public URL
+      final publicUrl = supabase.storage.from('photos').getPublicUrl(filePath);
+
+      setState(() {
+        _coverImageUrl = publicUrl;
+        _isUploadingImage = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cover photo added!'),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error uploading cover image: $e');
+      setState(() => _isUploadingImage = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: ${e.toString().split(':').last}'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   // Action methods
   Future<void> _selectDateTime() async {
@@ -1642,6 +1813,341 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
     );
   }
 
+  /// Show event preview modal for mobile devices
+  void _showPreviewModal() {
+    HapticFeedback.lightImpact();
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: VesparaColors.secondary.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Event Preview',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: VesparaColors.secondary),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: VesparaColors.border),
+              // Preview content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      // Event card preview
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: VesparaColors.background,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VesparaColors.glow.withOpacity(0.15),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Cover image
+                            Container(
+                              height: 180,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    VesparaColors.glow.withOpacity(0.4),
+                                    VesparaColors.surface,
+                                  ],
+                                ),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(20),
+                                ),
+                              ),
+                              child: _coverImageUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(20),
+                                      ),
+                                      child: Image.network(
+                                        _coverImageUrl!,
+                                        width: double.infinity,
+                                        height: 180,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Center(
+                                          child: Icon(
+                                            Icons.image_outlined,
+                                            size: 48,
+                                            color: VesparaColors.secondary,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.image_outlined,
+                                        size: 48,
+                                        color: VesparaColors.secondary,
+                                      ),
+                                    ),
+                            ),
+                            // Event info
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _titleController.text.isEmpty
+                                        ? 'Your Event Title'
+                                        : _titleController.text,
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w600,
+                                      color: VesparaColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  if (_eventDate != null)
+                                    _buildPreviewInfoRow(
+                                      Icons.calendar_today,
+                                      _formatDateTime(),
+                                    ),
+                                  if (_locationController.text.isNotEmpty)
+                                    _buildPreviewInfoRow(
+                                      Icons.location_on,
+                                      _locationController.text,
+                                    ),
+                                  if (_descriptionController.text.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _descriptionController.text,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: VesparaColors.secondary,
+                                        height: 1.5,
+                                      ),
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 16),
+                                  // RSVP buttons preview
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _buildMiniRsvpButton(_goingEmoji, 'Going'),
+                                      const SizedBox(width: 12),
+                                      _buildMiniRsvpButton(_maybeEmoji, 'Maybe'),
+                                      const SizedBox(width: 12),
+                                      _buildMiniRsvpButton(_cantGoEmoji, "Can't"),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Event settings summary
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.background,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: VesparaColors.border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Event Settings',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: VesparaColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSettingRow(
+                              'Visibility',
+                              _visibility.label,
+                              _visibility == EventVisibility.public
+                                  ? Icons.public
+                                  : Icons.lock_outline,
+                            ),
+                            _buildSettingRow(
+                              'Capacity',
+                              _unlimitedSpots
+                                  ? 'Unlimited'
+                                  : '${_spotsController.text} spots',
+                              Icons.people,
+                            ),
+                            if (_hasCost)
+                              _buildSettingRow(
+                                'Cost',
+                                '\$${_costController.text}',
+                                Icons.attach_money,
+                              ),
+                            _buildSettingRow(
+                              'Approval',
+                              _requiresApproval ? 'Required' : 'Not required',
+                              Icons.verified_user,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Action button
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _publishEvent();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VesparaColors.glow,
+                      foregroundColor: VesparaColors.background,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      _isEditing ? 'Update Event' : 'Create Event',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewInfoRow(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: VesparaColors.glow),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildMiniRsvpButton(String emoji, String label) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: VesparaColors.border),
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: VesparaColors.secondary,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildSettingRow(String label, String value, IconData icon) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: VesparaColors.secondary),
+            const SizedBox(width: 8),
+            Text(
+              '$label:',
+              style: const TextStyle(
+                fontSize: 13,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+
   Future<void> _saveDraft() async {
     HapticFeedback.mediumImpact();
 
@@ -1746,10 +2252,27 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
           location: event.venueName ?? event.venueAddress,
         );
 
+    // Also add to The Plan calendar for visibility
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final planEvent = PlanEvent(
+      id: const Uuid().v4(),
+      userId: userId,
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime ?? event.startTime.add(const Duration(hours: 3)),
+      certainty: EventCertainty.locked, // Hosting = confirmed
+      location: event.venueName ?? event.venueAddress,
+      notes: event.description,
+      isHosting: true,
+      isFromExperience: true,
+      createdAt: DateTime.now(),
+    );
+    ref.read(planProvider.notifier).createEvent(planEvent);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('🎉 "${event.title}" created successfully!'),
+          content: Text('🎉 "${event.title}" created and added to your Plan!'),
           backgroundColor: VesparaColors.success,
         ),
       );

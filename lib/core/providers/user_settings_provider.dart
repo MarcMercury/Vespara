@@ -182,4 +182,11 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
   Future<void> updatePhone(String phone) async {
     await updateSetting('phone', phone);
   }
+
+  /// Update email (requires Supabase auth email change)
+  Future<void> updateEmail(String email) async {
+    final supabase = Supabase.instance.client;
+    await supabase.auth.updateUser(UserAttributes(email: email));
+    // This will trigger a verification email from Supabase
+  }
 }

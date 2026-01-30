@@ -2530,6 +2530,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             style: TextStyle(color: VesparaColors.primary),),
         content: TextField(
           controller: controller,
+          keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.email, color: VesparaColors.glow),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -2543,13 +2544,39 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              final newEmail = controller.text.trim();
+              if (newEmail.isEmpty || !newEmail.contains('@')) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid email address'),
+                    backgroundColor: VesparaColors.error,
+                  ),
+                );
+                return;
+              }
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content:
-                        Text('Verification email sent to ${controller.text}'),),
-              );
+              try {
+                // Supabase requires email verification for changes
+                await ref.read(userSettingsProvider.notifier).updateEmail(newEmail);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Verification email sent to $newEmail'),
+                      backgroundColor: VesparaColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update email: $e'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              }
             },
             child:
                 const Text('Save', style: TextStyle(color: VesparaColors.glow)),

@@ -4,17 +4,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/group.dart';
 import '../../../core/domain/models/match.dart';
+import '../../../core/domain/models/plan_event.dart';
 import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/wire_models.dart';
 import '../../../core/providers/events_provider.dart';
 import '../../../core/providers/groups_provider.dart';
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/providers/plan_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/services/match_insights_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
-import '../../ludus/presentation/tags_screen.dart';
+import '../../ludus/presentation/tags_screen.dart' show TagScreen;
 import '../../planner/presentation/planner_screen.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
@@ -1217,12 +1219,78 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         fontWeight: FontWeight.w500,),),
                 trailing: const Icon(Icons.chevron_right,
                     color: VesparaColors.secondary,),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                          'Scheduling "$option" with ${match.matchedUserName}...',),
-                      backgroundColor: VesparaColors.success,),);
+                  
+                  // Calculate start time based on option
+                  DateTime startTime;
+                  switch (option) {
+                    case 'Drinks Tonight':
+                      startTime = DateTime.now().copyWith(hour: 19, minute: 0);
+                      break;
+                    case 'Dinner This Week':
+                      startTime = DateTime.now().add(const Duration(days: 3)).copyWith(hour: 19, minute: 0);
+                      break;
+                    case 'Weekend Adventure':
+                      // Find next Saturday
+                      final today = DateTime.now();
+                      final daysUntilSaturday = (DateTime.saturday - today.weekday) % 7;
+                      startTime = today.add(Duration(days: daysUntilSaturday == 0 ? 7 : daysUntilSaturday)).copyWith(hour: 14, minute: 0);
+                      break;
+                    default:
+                      startTime = DateTime.now().add(const Duration(days: 7)).copyWith(hour: 18, minute: 0);
+                  }
+                  
+                  // Create the plan event
+                  try {
+                    final connection = PlanConnection(
+                      id: match.matchedUserId ?? match.id,
+                      name: match.matchedUserName ?? 'Match',
+                      avatarUrl: match.matchedUserAvatar,
+                    );
+                    
+                    final event = PlanEvent(
+                      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+                      userId: Supabase.instance.client.auth.currentUser?.id ?? '',
+                      title: '$option with ${match.matchedUserName}',
+                      startTime: startTime,
+                      endTime: startTime.add(const Duration(hours: 2)),
+                      connections: [connection],
+                      certainty: EventCertainty.exploring,
+                      createdAt: DateTime.now(),
+                    );
+                    
+                    await ref.read(planProvider.notifier).createEvent(event);
+                    
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                          '"$option" scheduled with ${match.matchedUserName}!',),
+                        backgroundColor: VesparaColors.success,
+                        action: SnackBarAction(
+                          label: 'View',
+                          textColor: VesparaColors.background,
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => PlannerScreen(
+                                  preselectedMatchId: match.matchedUserId,
+                                  preselectedMatchName: match.matchedUserName,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('Failed to schedule: $e'),
+                        backgroundColor: VesparaColors.error,
+                      ),);
+                    }
+                  }
                 },
               ),
             ),
@@ -1286,10 +1354,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             fontSize: 12,),),),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                          'Starting $game with ${match.matchedUserName}...',),
-                      backgroundColor: VesparaColors.tagsYellow,),);
+                  // Navigate to TAGs screen
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TagScreen(),
+                    ),
+                  );
                 },
               ),
             ),

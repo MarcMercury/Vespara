@@ -365,6 +365,26 @@ class PlanNotifier extends StateNotifier<PlanState> {
     await updateEvent(event.copyWith(certainty: certainty));
   }
 
+  /// Update event with individual fields
+  Future<void> updateEventFields(
+    String eventId, {
+    String? title,
+    DateTime? startTime,
+    DateTime? endTime,
+    String? notes,
+    EventCertainty? certainty,
+  }) async {
+    final event = state.events.firstWhere((e) => e.id == eventId);
+    final updated = event.copyWith(
+      title: title ?? event.title,
+      startTime: startTime ?? event.startTime,
+      endTime: endTime ?? event.endTime,
+      notes: notes ?? event.notes,
+      certainty: certainty ?? event.certainty,
+    );
+    await updateEvent(updated);
+  }
+
   /// Find Me a Date - AI-powered date matching
   Future<List<AiDateSuggestion>> findMeADate({
     DateTime? preferredDate,

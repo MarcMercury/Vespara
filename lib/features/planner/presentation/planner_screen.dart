@@ -1473,7 +1473,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                   style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Open edit wizard
+                _showEditEventDialog(event);
               },
             ),
             ListTile(
@@ -1495,6 +1495,209 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditEventDialog(PlanEvent event) {
+    final titleController = TextEditingController(text: event.title);
+    final notesController = TextEditingController(text: event.notes ?? '');
+    DateTime selectedDate = event.startTime;
+    TimeOfDay selectedTime = TimeOfDay.fromDateTime(event.startTime);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: VesparaColors.secondary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Edit Event',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: titleController,
+                  style: const TextStyle(color: VesparaColors.primary),
+                  decoration: InputDecoration(
+                    labelText: 'Event Title',
+                    labelStyle: const TextStyle(color: VesparaColors.secondary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: VesparaColors.glow.withOpacity(0.3)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: VesparaColors.glow),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setModalState(() => selectedDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 18, color: VesparaColors.glow),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${selectedDate.month}/${selectedDate.day}/${selectedDate.year}',
+                                style: const TextStyle(color: VesparaColors.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: selectedTime,
+                          );
+                          if (picked != null) {
+                            setModalState(() => selectedTime = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.access_time, size: 18, color: VesparaColors.glow),
+                              const SizedBox(width: 8),
+                              Text(
+                                selectedTime.format(context),
+                                style: const TextStyle(color: VesparaColors.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: notesController,
+                  maxLines: 2,
+                  style: const TextStyle(color: VesparaColors.primary),
+                  decoration: InputDecoration(
+                    labelText: 'Notes (optional)',
+                    labelStyle: const TextStyle(color: VesparaColors.secondary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: VesparaColors.glow.withOpacity(0.3)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final newStartTime = DateTime(
+                        selectedDate.year,
+                        selectedDate.month,
+                        selectedDate.day,
+                        selectedTime.hour,
+                        selectedTime.minute,
+                      );
+                      await ref.read(planProvider.notifier).updateEventFields(
+                        event.id,
+                        title: titleController.text.trim(),
+                        startTime: newStartTime,
+                        notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Event updated!'),
+                            backgroundColor: VesparaColors.success,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VesparaColors.glow,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(
+                        color: VesparaColors.background,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).padding.bottom),
+              ],
+            ),
+          ),
         ),
       ),
     );

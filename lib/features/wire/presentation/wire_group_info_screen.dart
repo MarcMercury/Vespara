@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/wire_models.dart';
@@ -664,7 +665,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
               title: const Text('Change Group Photo'),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Pick new photo
+                _pickGroupPhoto(conversation);
               },
             ),
             ListTile(
@@ -765,6 +766,90 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<void> _pickGroupPhoto(WireConversation conversation) async {
+    final ImagePicker picker = ImagePicker();
+    
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      
+      if (image == null) return;
+      
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: VesparaColors.glow,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text('Uploading group photo...'),
+              ],
+            ),
+            duration: Duration(seconds: 30),
+          ),
+        );
+      }
+      
+      // Upload to Supabase Storage
+      final bytes = await image.readAsBytes();
+      final fileName = 'group_${widget.conversationId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = 'group_avatars/$fileName';
+      
+      await Supabase.instance.client.storage
+          .from('photos')
+          .uploadBinary(path, bytes, fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+            upsert: true,
+          ));
+      
+      // Get public URL
+      final publicUrl = Supabase.instance.client.storage
+          .from('photos')
+          .getPublicUrl(path);
+      
+      // Update conversation with new photo
+      await Supabase.instance.client
+          .from('conversations')
+          .update({'avatar_url': publicUrl})
+          .eq('id', widget.conversationId);
+      
+      // Reload conversations
+      await ref.read(wireProvider.notifier).loadConversations();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Group photo updated!'),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update photo: $e'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _showParticipantOptions(ConversationParticipant participant) {

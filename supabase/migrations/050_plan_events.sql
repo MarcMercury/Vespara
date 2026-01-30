@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS plan_events (
     notes TEXT,
     location TEXT,
     start_time TIMESTAMPTZ NOT NULL,
-    end_time TIMESTAMPTZ NOT NULL,
-    certainty TEXT NOT NULL DEFAULT 'tentative' CHECK (certainty IN ('tentative', 'likely', 'locked')),
+    end_time TIMESTAMPTZ,  -- Nullable to match Dart model
+    certainty TEXT NOT NULL DEFAULT 'tentative' CHECK (certainty IN ('tentative', 'likely', 'locked', 'exploring', 'wishful')),
     connections JSONB DEFAULT '[]'::jsonb,
     is_from_experience BOOLEAN DEFAULT FALSE,
     experience_host_name TEXT,

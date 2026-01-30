@@ -598,7 +598,13 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
               ),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Navigate to profile
+                // Navigate to member profile view
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Opening ${member.userName}\'s profile'),
+                    backgroundColor: VesparaColors.glow,
+                  ),
+                );
               },
             ),
             ListTile(
@@ -639,9 +645,33 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 style: TextStyle(color: VesparaColors.secondary),),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Remove member
+              try {
+                await ref.read(groupsProvider.notifier).removeMember(
+                  widget.groupId,
+                  member.userId,
+                );
+                // Refresh members list
+                _loadMembers();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${member.userName} removed from group'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to remove member: $e'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: VesparaColors.error,

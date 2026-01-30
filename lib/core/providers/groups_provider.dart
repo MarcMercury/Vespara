@@ -464,6 +464,34 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     return [];
   }
 
+  /// Remove a member from a group (creator only)
+  Future<void> removeMember(String groupId, String userId) async {
+    final group = state.groups.firstWhere(
+      (g) => g.id == groupId,
+      orElse: () => throw Exception('Group not found'),
+    );
+
+    if (!group.isCreator) {
+      throw Exception('Only the group creator can remove members');
+    }
+
+    if (_supabase == null) {
+      // Mock removal - just return success
+      return;
+    }
+
+    try {
+      await _supabase
+          .from('group_members')
+          .update({'status': 'removed'})
+          .eq('group_id', groupId)
+          .eq('user_id', userId);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      rethrow;
+    }
+  }
+
   /// Mark notification as read
   Future<void> markNotificationRead(String notificationId) async {
     if (_supabase == null) {

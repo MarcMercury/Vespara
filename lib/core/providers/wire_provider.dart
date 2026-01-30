@@ -323,6 +323,69 @@ class WireNotifier extends StateNotifier<WireState> {
     }
   }
 
+  /// Delete a conversation permanently
+  Future<void> deleteConversation(String conversationId) async {
+    // Remove from local state first (optimistic)
+    final updated = state.conversations
+        .where((c) => c.id != conversationId)
+        .toList();
+    state = state.copyWith(conversations: updated);
+
+    try {
+      // Delete messages first (cascade should handle this, but be explicit)
+      await _supabase
+          .from('messages')
+          .delete()
+          .eq('conversation_id', conversationId);
+
+      // Delete participants
+      await _supabase
+          .from('conversation_participants')
+          .delete()
+          .eq('conversation_id', conversationId);
+
+      // Delete the conversation
+      await _supabase
+          .from('conversations')
+          .delete()
+          .eq('id', conversationId);
+    } catch (e) {
+      debugPrint('Error deleting conversation: $e');
+      // Restore on failure
+      await loadConversations();
+      rethrow;
+    }
+  }
+
+  /// Block a user and delete/hide conversation
+  Future<void> blockUser(String userId, String conversationId) async {
+    if (userId.isEmpty) {
+      debugPrint('Cannot block: empty user ID');
+      return;
+    }
+
+    try {
+      // Add to blocked_users table
+      await _supabase.from('blocked_users').insert({
+        'blocker_id': _currentUserId,
+        'blocked_id': userId,
+        'blocked_at': DateTime.now().toIso8601String(),
+      });
+
+      // Archive/hide the conversation
+      await archiveConversation(conversationId);
+
+      // Remove from local state
+      final updated = state.conversations
+          .where((c) => c.id != conversationId)
+          .toList();
+      state = state.copyWith(conversations: updated);
+    } catch (e) {
+      debugPrint('Error blocking user: $e');
+      rethrow;
+    }
+  }
+
   /// Pin/unpin a conversation
   Future<void> togglePin(String conversationId) async {
     final conversation =

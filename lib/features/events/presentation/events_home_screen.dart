@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -492,47 +493,204 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            // Share - available for everyone
+            _buildOptionTile(
+              Icons.share,
+              'Share Event',
+              () {
+                Navigator.pop(context);
+                _shareEvent(event);
+              },
+            ),
             if (isHost) ...[
               _buildOptionTile(
                 Icons.edit,
                 'Edit Event',
-                () => Navigator.pop(context),
-              ),
-              _buildOptionTile(
-                Icons.share,
-                'Share Event',
-                () => Navigator.pop(context),
+                () {
+                  Navigator.pop(context);
+                  _editEvent(event);
+                },
               ),
               _buildOptionTile(
                 Icons.content_copy,
                 'Duplicate Event',
-                () => Navigator.pop(context),
+                () {
+                  Navigator.pop(context);
+                  _duplicateEvent(event);
+                },
               ),
               _buildOptionTile(
-                Icons.cancel,
-                'Cancel Event',
-                () => Navigator.pop(context),
+                Icons.delete,
+                'Delete Event',
+                () {
+                  Navigator.pop(context);
+                  _deleteEvent(event);
+                },
                 isDestructive: true,
               ),
             ] else ...[
               _buildOptionTile(
-                Icons.share,
-                'Share Event',
-                () => Navigator.pop(context),
-              ),
-              _buildOptionTile(
                 Icons.calendar_today,
                 'Add to Calendar',
-                () => Navigator.pop(context),
+                () {
+                  Navigator.pop(context);
+                  _addToCalendar(event);
+                },
               ),
               _buildOptionTile(
                 Icons.notifications_off,
                 'Mute Notifications',
-                () => Navigator.pop(context),
+                () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Notifications muted for this event'),
+                      backgroundColor: VesparaColors.glow,
+                    ),
+                  );
+                },
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  void _shareEvent(VesparaEvent event) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final date = event.startTime;
+    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    final dateStr = '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day} at $hour:${date.minute.toString().padLeft(2, '0')} $period';
+    
+    final shareText = '''
+🎉 ${event.title}
+
+📅 $dateStr
+📍 ${event.venueName ?? event.venueAddress ?? 'Location TBD'}
+
+${event.description ?? ''}
+
+Join me on Vespara!
+'''.trim();
+
+    Clipboard.setData(ClipboardData(text: shareText));
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Event link copied to clipboard! 📋'),
+        backgroundColor: VesparaColors.success,
+      ),
+    );
+  }
+
+  void _editEvent(VesparaEvent event) async {
+    final result = await Navigator.push<VesparaEvent>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventCreationScreen(eventToEdit: event),
+      ),
+    );
+    
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Event updated!'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
+  }
+
+  void _duplicateEvent(VesparaEvent event) async {
+    final duplicatedEvent = event.copyWith(
+      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+      title: '${event.title} (Copy)',
+      startTime: DateTime.now().add(const Duration(days: 7)),
+      endTime: event.endTime != null 
+          ? DateTime.now().add(const Duration(days: 7, hours: 3))
+          : null,
+      isDraft: true,
+      createdAt: DateTime.now(),
+      rsvps: [],
+    );
+    
+    final result = await Navigator.push<VesparaEvent>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventCreationScreen(eventToEdit: duplicatedEvent),
+      ),
+    );
+    
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Created "${result.title}"! 🎉'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
+  }
+
+  void _deleteEvent(VesparaEvent event) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Event?', 
+            style: TextStyle(color: VesparaColors.primary)),
+        content: const Text(
+          'This will permanently delete this event. This action cannot be undone.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', 
+                style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              final success = await ref
+                  .read(eventsProvider.notifier)
+                  .deleteVesparaEvent(event.id);
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? 'Event deleted' : 'Failed to delete event'),
+                    backgroundColor: success ? VesparaColors.error : VesparaColors.warning,
+                  ),
+                );
+              }
+            },
+            child: const Text('Delete', 
+                style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addToCalendar(VesparaEvent event) {
+    // Add to user's calendar
+    ref.read(eventsProvider.notifier).createCalendarEvent(
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime ?? event.startTime.add(const Duration(hours: 3)),
+      description: event.description,
+      location: event.venueName ?? event.venueAddress,
+    );
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Added to your calendar! 📅'),
+        backgroundColor: VesparaColors.success,
       ),
     );
   }

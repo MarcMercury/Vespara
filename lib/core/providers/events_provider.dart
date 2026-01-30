@@ -455,6 +455,57 @@ class EventsNotifier extends StateNotifier<EventsState> {
     );
   }
 
+  /// Update RSVP status (convenience method)
+  Future<void> updateRSVP(String eventId, String status) async {
+    await rsvpToEvent(eventId: eventId, status: status);
+  }
+
+  /// Cancel an event (host only)
+  Future<void> cancelEvent(String eventId) async {
+    // Find the event
+    final event = state.allEvents.firstWhere(
+      (e) => e.id == eventId,
+      orElse: () => throw Exception('Event not found'),
+    );
+
+    // Mark as cancelled in local state
+    final updatedHosted = state.hostedEvents
+        .map((e) => e.id == eventId ? e.copyWith(isCancelled: true) : e)
+        .toList();
+    final updatedAll = state.allEvents
+        .map((e) => e.id == eventId ? e.copyWith(isCancelled: true) : e)
+        .toList();
+
+    state = state.copyWith(
+      hostedEvents: updatedHosted,
+      allEvents: updatedAll,
+    );
+
+    if (_currentUserId.isEmpty) return;
+
+    try {
+      // Update in database
+      await _supabase
+          .from('group_events')
+          .update({
+            'is_cancelled': true,
+            'cancelled_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', eventId)
+          .eq('host_id', _currentUserId);
+
+      // Notify all invitees (the edge function would handle this)
+      // For now, we update invite statuses
+      await _supabase
+          .from('event_invites')
+          .update({'status': 'cancelled'})
+          .eq('event_id', eventId);
+    } catch (e) {
+      debugPrint('Error cancelling event: $e');
+      rethrow;
+    }
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // HELPER METHODS
   // ══════════════════════════════════════════════════════════════════════════

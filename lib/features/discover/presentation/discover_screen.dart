@@ -11,6 +11,7 @@ import '../../../core/providers/connection_state_provider.dart'
         EventAttendee;
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../events/presentation/events_home_screen.dart';
 
 /// Supabase client provider for discover screen
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -413,8 +414,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Filters updated!'),
+                    // Actually apply filters by reloading profiles with new filter criteria
+                    _loadDiscoverProfiles();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('Filters applied! Looking for ages ${_ageRange.start.toInt()}-${_ageRange.end.toInt()} within ${_maxDistance.toInt()} miles'),
                         backgroundColor: VesparaColors.success,),);
                   },
                   style: ElevatedButton.styleFrom(
@@ -1650,7 +1653,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
-                  // Would navigate to events/group screen
+                  // Navigate to events screen
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const EventsHomeScreen(),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.search),
                 label: const Text('Find Events'),

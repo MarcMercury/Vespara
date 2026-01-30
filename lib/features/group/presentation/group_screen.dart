@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/events.dart';
+import '../../../core/providers/events_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../events/presentation/event_creation_screen.dart';
+import '../../wire/presentation/wire_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// GROUP STUFF - Module 6
@@ -873,8 +877,13 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                   style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Opening event editor...')),);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => EventCreationScreen(
+                      editEvent: event,
+                    ),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -883,8 +892,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                   style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Sharing event link...')),);
+                _shareEvent(event);
               },
             ),
             ListTile(
@@ -893,8 +901,12 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                   style: TextStyle(color: VesparaColors.primary),),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Opening group chat...')),);
+                // Navigate to Wire with group chat for this event
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const WireScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -930,11 +942,22 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
               child: const Text('Keep Event',
                   style: TextStyle(color: VesparaColors.secondary),),),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Event cancelled. Guests notified.'),
-                  backgroundColor: VesparaColors.error,),);
+              try {
+                await ref.read(eventsProvider.notifier).cancelEvent(event.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Event cancelled. Guests notified.'),
+                    backgroundColor: VesparaColors.error,),);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Failed to cancel event: $e'),
+                    backgroundColor: VesparaColors.error,),);
+                }
+              }
             },
             child: const Text('Cancel Event',
                 style: TextStyle(color: VesparaColors.error),),
@@ -1157,17 +1180,48 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
     );
   }
 
+  void _shareEvent(GroupEvent event) {
+    final shareUrl = 'https://vespara.app/events/${event.id}';
+    final shareText = '${event.title}\n${_formatDate(event.startTime)}\n${event.venueName ?? ''}\n\n$shareUrl';
+    
+    Clipboard.setData(ClipboardData(text: shareText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Event link copied to clipboard!'),
+        backgroundColor: VesparaColors.success,
+      ),
+    );
+  }
+
   Widget _buildRSVPOption(
           String label, IconData icon, Color color, GroupEvent event,) =>
       GestureDetector(
-        onTap: () {
+        onTap: () async {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('You\'re marked as "$label" for ${event.title}'),
-              backgroundColor: color,
-            ),
-          );
+          try {
+            // Map label to RSVP status
+            final status = label == 'Going' ? 'going' 
+                : label == 'Maybe' ? 'maybe' 
+                : 'not_going';
+            await ref.read(eventsProvider.notifier).updateRSVP(event.id, status);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('You\'re marked as "$label" for ${event.title}'),
+                  backgroundColor: color,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to update RSVP: $e'),
+                  backgroundColor: VesparaColors.error,
+                ),
+              );
+            }
+          }
         },
         child: Column(
           children: [
@@ -1184,7 +1238,6 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
           ],
         ),
       );
-
   String _formatDate(DateTime date) {
     final months = [
       'Jan',

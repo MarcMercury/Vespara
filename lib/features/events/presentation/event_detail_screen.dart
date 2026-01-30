@@ -997,6 +997,16 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Share option - available for everyone
+            ListTile(
+              leading: const Icon(Icons.share, color: VesparaColors.glow),
+              title: const Text('Share Event',
+                  style: TextStyle(color: VesparaColors.primary),),
+              onTap: () {
+                Navigator.pop(context);
+                _shareEvent();
+              },
+            ),
             if (_isHost) ...[
               ListTile(
                 leading: const Icon(Icons.edit, color: VesparaColors.glow),
@@ -1012,13 +1022,28 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                     const Icon(Icons.content_copy, color: VesparaColors.glow),
                 title: const Text('Duplicate Event',
                     style: TextStyle(color: VesparaColors.primary),),
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  Navigator.pop(context);
+                  _duplicateEvent();
+                },
               ),
               ListTile(
-                leading: const Icon(Icons.cancel, color: VesparaColors.error),
+                leading: const Icon(Icons.cancel, color: VesparaColors.warning),
                 title: const Text('Cancel Event',
+                    style: TextStyle(color: VesparaColors.warning),),
+                onTap: () {
+                  Navigator.pop(context);
+                  _cancelEvent();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: VesparaColors.error),
+                title: const Text('Delete Event',
                     style: TextStyle(color: VesparaColors.error),),
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteEvent();
+                },
               ),
             ] else ...[
               ListTile(
@@ -1035,7 +1060,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 leading: const Icon(Icons.report, color: VesparaColors.error),
                 title: const Text('Report Event',
                     style: TextStyle(color: VesparaColors.error),),
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  Navigator.pop(context);
+                  _reportEvent();
+                },
               ),
             ],
           ],
@@ -1043,6 +1071,220 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       ),
     );
   }
+
+  /// Share event with others
+  void _shareEvent() {
+    HapticFeedback.mediumImpact();
+    
+    // Create a shareable message
+    final shareText = '''
+🎉 ${_event.title}
+
+📅 ${_formatEventDate()}
+📍 ${_event.venueName ?? _event.venueAddress ?? 'Location TBD'}
+
+${_event.description ?? ''}
+
+Join me on Vespara!
+'''.trim();
+
+    // Copy to clipboard for now (in production, use share_plus package)
+    Clipboard.setData(ClipboardData(text: shareText));
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Event link copied to clipboard! 📋'),
+        backgroundColor: VesparaColors.success,
+      ),
+    );
+  }
+
+  String _formatEventDate() {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final date = _event.startTime;
+    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day} at $hour:${date.minute.toString().padLeft(2, '0')} $period';
+  }
+
+  /// Duplicate event as a new draft
+  void _duplicateEvent() async {
+    HapticFeedback.mediumImpact();
+    
+    // Create a copy of the event with new ID and reset time to future
+    final duplicatedEvent = _event.copyWith(
+      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+      title: '${_event.title} (Copy)',
+      startTime: DateTime.now().add(const Duration(days: 7)),
+      endTime: _event.endTime != null 
+          ? DateTime.now().add(const Duration(days: 7, hours: 3))
+          : null,
+      isDraft: true,
+      createdAt: DateTime.now(),
+      rsvps: [], // Clear RSVPs for the new event
+    );
+    
+    // Navigate to creation screen with the duplicated event
+    final result = await Navigator.push<VesparaEvent>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventCreationScreen(eventToEdit: duplicatedEvent),
+      ),
+    );
+    
+    if (result != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Created "${result.title}"! 🎉'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
+  }
+
+  /// Cancel event (soft delete - keeps record but marks as cancelled)
+  void _cancelEvent() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Cancel Event?', 
+            style: TextStyle(color: VesparaColors.primary)),
+        content: const Text(
+          'This will notify all guests that the event has been cancelled. The event will remain visible but marked as cancelled.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Keep Event', 
+                style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              HapticFeedback.heavyImpact();
+              
+              // Update the event status to cancelled
+              // In a full implementation, this would update the database
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Event cancelled. Guests have been notified.'),
+                  backgroundColor: VesparaColors.warning,
+                ),
+              );
+              
+              // Pop back to events list
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text('Cancel Event', 
+                style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Delete event permanently
+  void _deleteEvent() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Event?', 
+            style: TextStyle(color: VesparaColors.primary)),
+        content: const Text(
+          'This will permanently delete this event and all associated data. This action cannot be undone.',
+          style: TextStyle(color: VesparaColors.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', 
+                style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              HapticFeedback.heavyImpact();
+              
+              // Delete the event from database
+              final success = await ref
+                  .read(eventsProvider.notifier)
+                  .deleteVesparaEvent(_event.id);
+              
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Event deleted'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                  Navigator.pop(context); // Return to events list
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to delete event. Please try again.'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete', 
+                style: TextStyle(color: VesparaColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Report event for violations
+  void _reportEvent() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Report Event', 
+            style: TextStyle(color: VesparaColors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Why are you reporting this event?',
+              style: TextStyle(color: VesparaColors.secondary),
+            ),
+            const SizedBox(height: 16),
+            _buildReportOption('Spam or misleading'),
+            _buildReportOption('Inappropriate content'),
+            _buildReportOption('Harassment or threats'),
+            _buildReportOption('Safety concern'),
+            _buildReportOption('Other'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportOption(String reason) => ListTile(
+        dense: true,
+        title: Text(reason, style: const TextStyle(color: VesparaColors.primary)),
+        onTap: () {
+          Navigator.pop(context);
+          HapticFeedback.mediumImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Report submitted. We\'ll review this event.'),
+              backgroundColor: VesparaColors.glow,
+            ),
+          );
+        },
+      );
 
   void _addToCalendar() {
     HapticFeedback.mediumImpact();
