@@ -822,47 +822,61 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
 
     return Container(
       key: const ValueKey('playing'),
-      child: Column(
-        children: [
-          // Header with opponents
-          _buildOpponentsBar(state),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Use responsive layout based on available height
+          final isDesktop = constraints.maxWidth > 800;
+          final isTallScreen = constraints.maxHeight > 700;
+          
+          return Column(
+            children: [
+              // Header with opponents
+              _buildOpponentsBar(state),
 
-          // Turn indicator
-          _buildTurnIndicator(state),
+              // Turn indicator
+              _buildTurnIndicator(state),
 
-          // Main game area - use Expanded with a nested Column
-          Expanded(
-            child: Column(
-              children: [
-                // Mystery Card area - takes available space
-                Expanded(
-                  child: _buildMysteryCardArea(state),
+              // Main game area - use Expanded with a nested Column
+              Expanded(
+                child: Column(
+                  children: [
+                    // Mystery Card area - ensure minimum height for the card
+                    Expanded(
+                      flex: isDesktop || isTallScreen ? 3 : 2,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: 280, // Card height (250) + padding + text
+                        ),
+                        child: _buildMysteryCardArea(state),
+                      ),
+                    ),
+
+                    // Place Card Button - FIXED height, not inside Expanded
+                    // This ensures it's not overlapped by other widgets
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      height: (_selectedDropIndex != null && state.isMyTurn && !state.isRevealed) 
+                          ? 80 
+                          : (state.gameState == LaneGameState.stealing && state.isMyTurn && !state.isRevealed)
+                              ? 56
+                              : 0,
+                      child: _buildPlaceCardButton(state),
+                    ),
+
+                    // My Lane
+                    Expanded(
+                      flex: isDesktop ? 2 : 3,
+                      child: _buildMyLane(state, me),
+                    ),
+                  ],
                 ),
+              ),
 
-                // Place Card Button - FIXED height, not inside Expanded
-                // This ensures it's not overlapped by other widgets
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: (_selectedDropIndex != null && state.isMyTurn && !state.isRevealed) 
-                      ? 80 
-                      : (state.gameState == LaneGameState.stealing && state.isMyTurn && !state.isRevealed)
-                          ? 56
-                          : 0,
-                  child: _buildPlaceCardButton(state),
-                ),
-
-                // My Lane
-                Expanded(
-                  flex: 2,
-                  child: _buildMyLane(state, me),
-                ),
-              ],
-            ),
-          ),
-
-          // My stats bar
-          _buildMyStatsBar(me, state),
-        ],
+              // My stats bar
+              _buildMyStatsBar(me, state),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1118,71 +1132,74 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
     final showResult = result != null && state.isRevealed;
     final hasSelectedSpot = _selectedDropIndex != null;
 
-    // Wrap in ClipRect to prevent overflow and ensure proper bounds
-    return ClipRect(
-      child: Center(
-        child: AnimatedBuilder(
-          animation: _shakeController,
-          builder: (context, child) {
-            final shake = sin(_shakeController.value * pi * 4) * 10;
-            return Transform.translate(
-              offset: Offset(showResult && !result.success ? shake : 0, 0),
-              child: child,
-            );
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min, // Don't expand beyond needed
-            children: [
-              // Result badge
-              if (showResult)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color:
-                        result.success ? LaneColors.success : LaneColors.failure,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        result.success
-                            ? VesparaIcons.confirm
-                            : VesparaIcons.close,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        result.success ? 'CORRECT!' : 'WRONG!',
-                        style: const TextStyle(
+    // Use SingleChildScrollView to prevent clipping on smaller screens
+    // Center the content vertically using alignment
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: AnimatedBuilder(
+            animation: _shakeController,
+            builder: (context, child) {
+              final shake = sin(_shakeController.value * pi * 4) * 10;
+              return Transform.translate(
+                offset: Offset(showResult && !result.success ? shake : 0, 0),
+                child: child,
+              );
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min, // Don't expand beyond needed
+              children: [
+                // Result badge
+                if (showResult)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color:
+                          result.success ? LaneColors.success : LaneColors.failure,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          result.success
+                              ? VesparaIcons.confirm
+                              : VesparaIcons.close,
                           color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
+                          size: 20,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Instruction text when it's my turn
-              if (state.isMyTurn && !state.isRevealed && !showResult)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    hasSelectedSpot 
-                        ? 'Tap PLACE CARD below'
-                        : 'Tap a slot below to place this card',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: hasSelectedSpot ? LaneColors.gold : Colors.white54,
-                      fontWeight: hasSelectedSpot ? FontWeight.w600 : FontWeight.normal,
+                        const SizedBox(width: 8),
+                        Text(
+                          result.success ? 'CORRECT!' : 'WRONG!',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+
+                // Instruction text when it's my turn
+                if (state.isMyTurn && !state.isRevealed && !showResult)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      hasSelectedSpot 
+                          ? 'Tap PLACE CARD below'
+                          : 'Tap a slot below to place this card',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: hasSelectedSpot ? LaneColors.gold : Colors.white54,
+                        fontWeight: hasSelectedSpot ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
 
               // The Mystery Card (no longer draggable)
               AnimatedOpacity(
