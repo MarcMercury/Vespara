@@ -140,7 +140,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
   late AnimationController _flashController;
 
   // Game settings
-  int _gameDurationMinutes = 3;
+  int _gameDurationMinutes = 1;
   DateTime? _gameStartTime;
   int _totalRounds = 0;
 
@@ -265,10 +265,10 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
       }
     }
 
-    // Random duration: 500-2500ms for each signal (max 2.5 seconds)
-    final durationMs = 500 + _random.nextInt(2001);
+    // Random duration: 2-4 seconds for each signal
+    final durationSeconds = 2 + _random.nextInt(3);
 
-    _signalTimer = Timer(Duration(milliseconds: durationMs), () {
+    _signalTimer = Timer(Duration(seconds: durationSeconds), () {
       if (_phase == GamePhase.playing) {
         _transitionToNextSignal();
       }
@@ -634,11 +634,9 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                _buildDurationOption(1),
+                                const SizedBox(width: 16),
                                 _buildDurationOption(2),
-                                const SizedBox(width: 12),
-                                _buildDurationOption(3),
-                                const SizedBox(width: 12),
-                                _buildDurationOption(4),
                               ],
                             ),
                           ],
