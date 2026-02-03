@@ -15,18 +15,21 @@ import '../../../core/providers/plan_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/services/match_insights_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
 import '../../ludus/presentation/tags_screen.dart' show TagScreen;
 import '../../planner/presentation/planner_screen.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
+import '../../wire/presentation/wire_create_group_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
 import 'group_detail_screen.dart';
 import 'groups_section.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// NEST SCREEN - Module 3
+/// NEST SCREEN (THE SANCTUM) - Module 2
 /// CRM-style match management with AI-driven priorities
-/// Columns: Priority | In Waiting | On the Way Out | Legacy
+/// Now includes Wire Chats and Groups functionality
+/// Tabs: Chats | New | Priority | In Waiting | On the Way Out | Legacy | Groups
 /// ════════════════════════════════════════════════════════════════════════════
 
 class NestScreen extends ConsumerStatefulWidget {
@@ -52,8 +55,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
   @override
   void initState() {
     super.initState();
-    // +1 for Circles tab
-    _tabController = TabController(length: _priorities.length + 1, vsync: this);
+    // Chats tab + 5 priority tabs + Groups tab = 7 tabs
+    _tabController = TabController(length: _priorities.length + 2, vsync: this);
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -211,6 +214,9 @@ class _NestScreenState extends ConsumerState<NestScreen>
 
   Widget _buildTabBar() {
     final groupsState = ref.watch(groupsProvider);
+    final wireState = ref.watch(wireProvider);
+    final totalUnread = wireState.totalUnreadCount;
+    final groupCount = wireState.groupConversations.length + groupsState.groupCount;
 
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -227,6 +233,31 @@ class _NestScreenState extends ConsumerState<NestScreen>
           letterSpacing: 1,
         ),
         tabs: [
+          // Chats tab first (Wire individual chats)
+          Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('💬'),
+                const SizedBox(width: 6),
+                const Text('CHATS'),
+                if (totalUnread > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      totalUnread.toString(),
+                      style: const TextStyle(fontSize: 10, color: VesparaColors.background),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
           // Priority tabs
           ..._priorities.map((p) {
             final count = _getMatchesForPriority(p).length;
@@ -256,15 +287,15 @@ class _NestScreenState extends ConsumerState<NestScreen>
               ),
             );
           }),
-          // Circles tab at the end
+          // Groups tab at the end (merged Wire Groups + Circles)
           Tab(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('⭕'),
+                const Text('👥'),
                 const SizedBox(width: 6),
-                const Text('CIRCLES'),
-                if (groupsState.groupCount > 0) ...[
+                const Text('GROUPS'),
+                if (groupCount > 0) ...[
                   const SizedBox(width: 6),
                   Container(
                     padding:
@@ -274,7 +305,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      groupsState.groupCount.toString(),
+                      groupCount.toString(),
                       style: const TextStyle(fontSize: 10),
                     ),
                   ),
@@ -290,6 +321,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
   Widget _buildTabBarView() => TabBarView(
         controller: _tabController,
         children: [
+          // Chats tab content (Wire individual chats)
+          _buildChatsTab(),
           // Priority tabs content
           ..._priorities.map((priority) {
             final matches = _getMatchesForPriority(priority);
@@ -304,48 +337,586 @@ class _NestScreenState extends ConsumerState<NestScreen>
               itemBuilder: (context, index) => _buildMatchCard(matches[index]),
             );
           }),
-          // Circles tab content
-          _buildCirclesTab(),
+          // Groups tab content (merged Circles + Wire Groups)
+          _buildGroupsTab(),
         ],
       );
 
-  Widget _buildCirclesTab() {
-    final groupsState = ref.watch(groupsProvider);
+  // ════════════════════════════════════════════════════════════════════════════
+  // CHATS TAB - Wire individual conversations
+  // ════════════════════════════════════════════════════════════════════════════
 
-    if (groupsState.isLoading) {
+  Widget _buildChatsTab() {
+    final wireState = ref.watch(wireProvider);
+    final conversations = wireState.activeConversations
+        .where((c) => !c.isGroup)
+        .toList()
+      ..sort((a, b) {
+        if (a.lastMessageAt == null) return 1;
+        if (b.lastMessageAt == null) return -1;
+        return b.lastMessageAt!.compareTo(a.lastMessageAt!);
+      });
+
+    if (wireState.isLoading) {
       return const Center(
-          child: CircularProgressIndicator(color: VesparaColors.glow),);
+        child: CircularProgressIndicator(color: VesparaColors.glow),
+      );
     }
 
-    if (groupsState.groups.isEmpty) {
+    if (conversations.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.group_outlined,
-                size: 48, color: VesparaColors.secondary,),
+            const Icon(Icons.chat_bubble_outline,
+                size: 48, color: VesparaColors.secondary),
             const SizedBox(height: 16),
             const Text(
-              'No circles yet',
+              'No conversations yet',
               style: TextStyle(fontSize: 16, color: VesparaColors.secondary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Create a circle to organize your connections',
+              'Start chatting with your connections',
               style: TextStyle(
-                  fontSize: 13,
-                  color: VesparaColors.secondary.withOpacity(0.7),),
+                fontSize: 13,
+                color: VesparaColors.secondary.withOpacity(0.7),
+              ),
             ),
           ],
         ),
       );
     }
 
-    return ListView.builder(
+    return RefreshIndicator(
+      onRefresh: () => ref.read(wireProvider.notifier).loadConversations(),
+      color: VesparaColors.glow,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: conversations.length,
+        itemBuilder: (context, index) =>
+            _buildConversationTile(conversations[index]),
+      ),
+    );
+  }
+
+  Widget _buildConversationTile(WireConversation conversation) {
+    return GestureDetector(
+      onTap: () {
+        VesparaHaptics.lightTap();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WireChatScreen(conversation: conversation),
+          ),
+        );
+      },
+      onLongPress: () => _showConversationOptions(conversation),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: conversation.unreadCount > 0
+                ? VesparaColors.glow.withOpacity(0.3)
+                : VesparaColors.glow.withOpacity(0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: VesparaColors.glow.withOpacity(0.2),
+                  ),
+                  child: conversation.avatarUrl != null
+                      ? ClipOval(
+                          child: Image.network(
+                            conversation.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Center(
+                              child: Text(
+                                conversation.displayName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  color: VesparaColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            conversation.displayName[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        ),
+                ),
+                if (conversation.unreadCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: VesparaColors.glow,
+                      ),
+                      child: Center(
+                        child: Text(
+                          conversation.unreadCount > 99
+                              ? '99+'
+                              : conversation.unreadCount.toString(),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: VesparaColors.background,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          if (conversation.isPinned) ...[
+                            const Icon(Icons.push_pin,
+                                size: 14, color: VesparaColors.glow),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            conversation.displayName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: conversation.unreadCount > 0
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _formatChatTime(conversation.lastMessageAt),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: conversation.unreadCount > 0
+                              ? VesparaColors.glow
+                              : VesparaColors.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversation.lastMessage ?? 'No messages yet',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: conversation.unreadCount > 0
+                                ? VesparaColors.primary
+                                : VesparaColors.secondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (conversation.isMuted)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: Icon(Icons.volume_off,
+                              size: 16, color: VesparaColors.secondary),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showConversationOptions(WireConversation conversation) {
+    VesparaHaptics.mediumTap();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: VesparaColors.inactive,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Icon(
+                conversation.isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                color: VesparaColors.glow,
+              ),
+              title: Text(conversation.isPinned ? 'Unpin Chat' : 'Pin Chat'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(wireProvider.notifier).togglePin(conversation.id);
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                conversation.isMuted ? Icons.volume_up : Icons.volume_off,
+                color: VesparaColors.tagsYellow,
+              ),
+              title: Text(conversation.isMuted ? 'Unmute' : 'Mute'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(wireProvider.notifier).toggleMute(conversation.id);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.archive, color: VesparaColors.secondary),
+              title: const Text('Archive Chat'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(wireProvider.notifier).archiveConversation(conversation.id);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatChatTime(DateTime? dateTime) {
+    if (dateTime == null) return '';
+
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+
+    if (diff.inDays == 0) {
+      final hour = dateTime.hour;
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      final ampm = hour >= 12 ? 'PM' : 'AM';
+      final hour12 = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      return '$hour12:$minute $ampm';
+    } else if (diff.inDays == 1) {
+      return 'Yesterday';
+    } else if (diff.inDays < 7) {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return days[dateTime.weekday - 1];
+    } else {
+      return '${dateTime.month}/${dateTime.day}';
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // GROUPS TAB - Merged Circles + Wire Groups
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildGroupsTab() {
+    final groupsState = ref.watch(groupsProvider);
+    final wireState = ref.watch(wireProvider);
+    final wireGroups = wireState.groupConversations;
+
+    if (groupsState.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: VesparaColors.glow),
+      );
+    }
+
+    final hasContent = groupsState.groups.isNotEmpty || wireGroups.isNotEmpty;
+
+    if (!hasContent) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.group_outlined,
+                size: 48, color: VesparaColors.secondary),
+            const SizedBox(height: 16),
+            const Text(
+              'No groups yet',
+              style: TextStyle(fontSize: 16, color: VesparaColors.secondary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create a group to chat with multiple connections',
+              style: TextStyle(
+                fontSize: 13,
+                color: VesparaColors.secondary.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const WireCreateGroupScreen()),
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Create Group'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.glow,
+                foregroundColor: VesparaColors.background,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: groupsState.groups.length,
-      itemBuilder: (context, index) =>
-          _buildCircleListItem(groupsState.groups[index]),
+      children: [
+        // Wire group chats first (active conversations)
+        if (wireGroups.isNotEmpty) ...[
+          _buildSectionHeader('Group Chats', wireGroups.length),
+          const SizedBox(height: 12),
+          ...wireGroups.map((group) => _buildWireGroupTile(group)),
+          if (groupsState.groups.isNotEmpty) const SizedBox(height: 24),
+        ],
+        // Circles (connection groups)
+        if (groupsState.groups.isNotEmpty) ...[
+          _buildSectionHeader('Circles', groupsState.groups.length),
+          const SizedBox(height: 12),
+          ...groupsState.groups.map((group) => _buildCircleListItem(group)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, int count) => Row(
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+              color: VesparaColors.secondary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: VesparaColors.glow.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              count.toString(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.glow,
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildWireGroupTile(WireConversation group) {
+    return GestureDetector(
+      onTap: () {
+        VesparaHaptics.lightTap();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WireChatScreen(conversation: group),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: group.unreadCount > 0
+                ? VesparaColors.glow.withOpacity(0.3)
+                : VesparaColors.glow.withOpacity(0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Group avatar
+            Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: VesparaColors.glow.withOpacity(0.2),
+                  ),
+                  child: group.avatarUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            group.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.group,
+                                  size: 26, color: VesparaColors.glow),
+                            ),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(Icons.group,
+                              size: 26, color: VesparaColors.glow),
+                        ),
+                ),
+                // Participant count badge
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: VesparaColors.background,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      group.participantCount.toString(),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.background,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          group.displayName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: group.unreadCount > 0
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: VesparaColors.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        _formatChatTime(group.lastMessageAt),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: group.unreadCount > 0
+                              ? VesparaColors.glow
+                              : VesparaColors.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (group.lastMessageSenderName != null)
+                        Text(
+                          '${group.lastMessageSenderName}: ',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: VesparaColors.glow,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          group.lastMessage ?? 'No messages yet',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: group.unreadCount > 0
+                                ? VesparaColors.primary
+                                : VesparaColors.secondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (group.unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: VesparaColors.glow,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            group.unreadCount > 99
+                                ? '99+'
+                                : group.unreadCount.toString(),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: VesparaColors.background,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

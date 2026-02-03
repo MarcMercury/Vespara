@@ -6,16 +6,16 @@ import '../../../core/theme/app_theme.dart';
 import '../../discover/presentation/discover_screen.dart';
 import '../../events/presentation/events_home_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
-// Import all 8 module screens
+// Import module screens
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
 import '../../planner/presentation/planner_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
-import '../../wire/presentation/wire_home_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// VESPARA HOME SCREEN
-/// The Bento Box Dashboard - 8 Interconnected Modules
+/// The Bento Box Dashboard - 6 Interconnected Modules
+/// Mirror accessible via header, Wire merged into Sanctum (Nest)
 /// ════════════════════════════════════════════════════════════════════════════
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -31,17 +31,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late AnimationController _pulseController;
   late List<Animation<double>> _tileAnimations;
 
-  /// The 8 Modules per user specification
+  /// The 6 Modules per user specification (Mirror accessed via header, Wire merged into Sanctum)
   /// Icons carefully curated for allure and mystery
   static const List<Map<String, dynamic>> _modules = [
-    {
-      'name': 'MIRROR',
-      'subtitle': 'Your Reflection ✧',
-      'icon': Icons.face_retouching_natural_rounded,
-      'emoji': '🪞',
-      'color': Color(0xFFBFA6D8), // Glow
-      'description': 'Brutal AI feedback',
-    },
     {
       'name': 'DISCOVER',
       'subtitle': 'The Hunt 🔮',
@@ -57,14 +49,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'emoji': '💜',
       'color': Color(0xFF4DB6AC), // Teal
       'description': 'CRM for connections',
-    },
-    {
-      'name': 'WIRE',
-      'subtitle': 'Whispers 🫦',
-      'icon': Icons.forum_rounded,
-      'emoji': '🫦',
-      'color': Color(0xFF64B5F6), // Blue
-      'description': 'Secrets exchanged',
     },
     {
       'name': 'PLANNER',
@@ -100,16 +84,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     },
   ];
 
-  /// Screens for each module
+  /// Screens for each module (Mirror via header, Wire merged into Sanctum)
   static const List<Widget> _screens = [
-    MirrorScreen(), // 0: Mirror - Profile/Analytics
-    DiscoverScreen(), // 1: Discover - Swipe Marketplace
-    NestScreen(), // 2: Nest - CRM Roster
-    WireHomeScreen(), // 3: Wire - WhatsApp-Style Chat
-    PlannerScreen(), // 4: Planner - Calendar
-    EventsHomeScreen(), // 5: Group - Partiful-Style Events
-    ShredderScreen(), // 6: Shredder - AI Cleanup
-    TagScreen(), // 7: TAG - Games
+    DiscoverScreen(), // 0: Discover - Swipe Marketplace
+    NestScreen(), // 1: Nest/Sanctum - CRM Roster + Wire Chats
+    PlannerScreen(), // 2: Planner - Calendar
+    EventsHomeScreen(), // 3: Group - Partiful-Style Events
+    ShredderScreen(), // 4: Shredder - AI Cleanup
+    TagScreen(), // 5: TAG - Games
   ];
 
   @override
@@ -129,7 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     )..repeat(reverse: true);
 
     // Create staggered animations for each tile
-    _tileAnimations = List.generate(8, (index) {
+    _tileAnimations = List.generate(6, (index) {
       final startTime = index * 0.1;
       final endTime = startTime + 0.4;
       return CurvedAnimation(
@@ -231,44 +213,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
 
-        // Profile avatar with pulse
+        // Mirror link with avatar and label
         AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) => GestureDetector(
-            onTap: () => _navigateToScreen(0), // Go to Mirror
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    VesparaColors.glow
-                        .withOpacity(0.7 + _pulseController.value * 0.3),
-                    VesparaColors.glow.withOpacity(0.4),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: VesparaColors.glow
-                        .withOpacity(0.2 + _pulseController.value * 0.1),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  displayName.isNotEmpty ? displayName[0].toUpperCase() : 'V',
-                  style: const TextStyle(
-                    color: VesparaColors.background,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MirrorScreen()),
+            ),
+            child: Row(
+              children: [
+                const Text(
+                  'Mirror',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: VesparaColors.secondary,
+                    letterSpacing: 1,
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        VesparaColors.glow
+                            .withOpacity(0.7 + _pulseController.value * 0.3),
+                        VesparaColors.glow.withOpacity(0.4),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: VesparaColors.glow
+                            .withOpacity(0.2 + _pulseController.value * 0.1),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      displayName.isNotEmpty ? displayName[0].toUpperCase() : 'M',
+                      style: const TextStyle(
+                        color: VesparaColors.background,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -351,17 +349,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // Row 1: Mirror + Discover
+                // Row 1: Discover + Nest
                 _buildModuleRow([0, 1], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: spacing),
-                // Row 2: Nest + Wire
+                // Row 2: Planner + Experiences
                 _buildModuleRow([2, 3], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: spacing),
-                // Row 3: Planner + Group
+                // Row 3: Shredder + TAG
                 _buildModuleRow([4, 5], tileWidth, tileHeight * 1.1, spacing),
-                const SizedBox(height: spacing),
-                // Row 4: Shredder + TAG
-                _buildModuleRow([6, 7], tileWidth, tileHeight * 1.1, spacing),
                 const SizedBox(height: 24),
               ],
             ),
@@ -537,14 +532,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String _getModuleIconPath(String moduleName) {
     // Map module names to their icon file names
     switch (moduleName) {
-      case 'MIRROR':
-        return 'assets/Main Page Tile Icons/Mirror1.png';
       case 'DISCOVER':
         return 'assets/Main Page Tile Icons/Discover1.png';
       case 'NEST':
         return 'assets/Main Page Tile Icons/Sanctum1.png';
-      case 'WIRE':
-        return 'assets/Main Page Tile Icons/Wire1.png';
       case 'PLANNER':
         return 'assets/Main Page Tile Icons/Planner1.png';
       case 'EXPERIENCES':
@@ -554,7 +545,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case 'TAG':
         return 'assets/Main Page Tile Icons/TAG1.png';
       default:
-        return 'assets/Main Page Tile Icons/Mirror1.png';
+        return 'assets/Main Page Tile Icons/Discover1.png';
     }
   }
 
