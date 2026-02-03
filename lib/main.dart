@@ -682,33 +682,6 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 24),
-
-                  // Demo Mode Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        // Navigate directly to home screen in demo mode
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                              builder: (context) => const HomeScreen(),),
-                        );
-                      },
-                      icon: const Icon(Icons.play_circle_outline, size: 24),
-                      label: const Text('Explore Demo Mode',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600,),),
-                      style: TextButton.styleFrom(
-                        foregroundColor: VesparaColors.glow,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                VesparaBorderRadius.button,),),
-                      ),
-                    ),
-                  ),
-
                   const Spacer(),
 
                   Padding(
