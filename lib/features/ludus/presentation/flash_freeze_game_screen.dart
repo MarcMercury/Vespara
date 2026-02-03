@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:universal_html/html.dart' as html;
 
 import '../../../core/theme/vespara_icons.dart';
 
@@ -426,28 +428,67 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
   }
 
   Future<void> _saveAllPhotos() async {
-    for (final capture in _captures) {
-      await ImageGallerySaver.saveImage(
-        capture.imageData,
-        quality: 90,
-        name: 'flash_freeze_${capture.timestamp.millisecondsSinceEpoch}',
-      );
-    }
+    if (_captures.isEmpty) return;
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(VesparaIcons.confirm, color: FlashColors.green),
-              const SizedBox(width: 8),
-              Text('All ${_captures.length} photos saved! 📸'),
-            ],
+    try {
+      if (kIsWeb) {
+        // Web: Download each image as a file
+        for (int i = 0; i < _captures.length; i++) {
+          final capture = _captures[i];
+          final blob = html.Blob([capture.imageData], 'image/jpeg');
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          final anchor = html.AnchorElement(href: url)
+            ..setAttribute('download', 'flash_freeze_${i + 1}.jpg')
+            ..style.display = 'none';
+          html.document.body?.append(anchor);
+          anchor.click();
+          anchor.remove();
+          html.Url.revokeObjectUrl(url);
+          // Small delay between downloads to prevent browser blocking
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+      } else {
+        // Mobile: Save to gallery
+        for (final capture in _captures) {
+          await ImageGallerySaver.saveImage(
+            capture.imageData,
+            quality: 90,
+            name: 'flash_freeze_${capture.timestamp.millisecondsSinceEpoch}',
+          );
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(VesparaIcons.confirm, color: FlashColors.green),
+                const SizedBox(width: 8),
+                Text('All ${_captures.length} photos saved! 📸'),
+              ],
+            ),
+            backgroundColor: FlashColors.surface,
+            behavior: SnackBarBehavior.floating,
           ),
-          backgroundColor: FlashColors.surface,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: FlashColors.red),
+                const SizedBox(width: 8),
+                Text('Failed to save photos: $e'),
+              ],
+            ),
+            backgroundColor: FlashColors.surface,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

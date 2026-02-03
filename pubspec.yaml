@@ -58,6 +58,7 @@ dependencies:
   sensors_plus: ^4.0.2
   camera: ^0.10.5+9
   image_gallery_saver: ^2.0.3
+  universal_html: ^2.2.4
   
   # Icons
   cupertino_icons: ^1.0.6
