@@ -49,13 +49,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
     MatchPriority.priority,
     MatchPriority.inWaiting,
     MatchPriority.onWayOut,
-    MatchPriority.legacy,
   ];
 
   @override
   void initState() {
     super.initState();
-    // Chats tab + 5 priority tabs + Groups tab = 7 tabs
+    // Chats tab + 4 priority tabs + Groups tab = 6 tabs
     _tabController = TabController(length: _priorities.length + 2, vsync: this);
     _glowController = AnimationController(
       vsync: this,
@@ -1679,7 +1678,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
       case MatchPriority.onWayOut:
         return 'Connections fading? They\'ll appear here.';
       case MatchPriority.legacy:
-        return 'Past connections live here for reference.';
+        return ''; // Legacy tab hidden but case needed for exhaustive switch
     }
   }
 
