@@ -4,30 +4,27 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:universal_html/html.dart' as html;
 
 import 'core/config/env.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 
-/// Track if we're returning from OAuth - set BEFORE Supabase init
-bool _isOAuthCallback = false;
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Check for OAuth callback BEFORE Supabase initialization
-  // This ensures we know to wait for the session
+  // Clean OAuth params from URL immediately on web to prevent loops
   if (kIsWeb) {
     final uri = Uri.base;
-    _isOAuthCallback = uri.hasFragment ||
-        uri.queryParameters.containsKey('code') ||
+    final hasOAuthParams = uri.queryParameters.containsKey('code') ||
         uri.queryParameters.containsKey('access_token') ||
-        uri.queryParameters.containsKey('refresh_token') ||
         uri.queryParameters.containsKey('error');
     
-    if (_isOAuthCallback) {
-      debugPrint('Vespara Main: OAuth callback detected in URL');
+    if (hasOAuthParams) {
+      debugPrint('Vespara: OAuth callback detected, cleaning URL');
+      // Clear URL params using history API
+      html.window.history.replaceState(null, '', uri.path);
     }
   }
 
@@ -36,55 +33,7 @@ Future<void> main() async {
     anonKey: Env.supabaseAnonKey,
   );
 
-  // If returning from OAuth, wait for session to be fully established
-  if (_isOAuthCallback) {
-    debugPrint('Vespara Main: Waiting for OAuth session...');
-    
-    // Wait for Supabase to process the OAuth callback
-    Session? session;
-    for (int i = 0; i < 100; i++) { // 20 seconds max
-      await Future.delayed(const Duration(milliseconds: 200));
-      session = Supabase.instance.client.auth.currentSession;
-      if (session != null) {
-        debugPrint('Vespara Main: Session established after ${(i + 1) * 200}ms');
-        // Clear the URL to prevent re-processing on refresh
-        if (kIsWeb) {
-          _clearOAuthParamsFromUrl();
-        }
-        break;
-      }
-      if (i % 10 == 0) {
-        debugPrint('Vespara Main: Still waiting for session... ${i * 200}ms');
-      }
-    }
-    
-    if (session == null) {
-      debugPrint('Vespara Main: WARNING - No session after 20s, may have failed');
-      // Still clear the URL to avoid loops
-      if (kIsWeb) {
-        _clearOAuthParamsFromUrl();
-      }
-    }
-  }
-
   runApp(const ProviderScope(child: VesparaApp()));
-}
-
-/// Clear OAuth parameters from URL to prevent re-processing
-void _clearOAuthParamsFromUrl() {
-  // Use history API to clean up the URL without reloading
-  // This prevents the OAuth callback from being processed again on refresh
-  try {
-    // ignore: avoid_dynamic_calls
-    // ignore: undefined_prefixed_name
-    if (kIsWeb) {
-      // Use dart:html to update URL - but we can't import it directly
-      // So we use a different approach: just log that we should clear
-      debugPrint('Vespara: OAuth callback processed, URL should be cleaned');
-    }
-  } catch (e) {
-    debugPrint('Vespara: Could not clear URL: $e');
-  }
 }
 
 class VesparaApp extends StatelessWidget {
