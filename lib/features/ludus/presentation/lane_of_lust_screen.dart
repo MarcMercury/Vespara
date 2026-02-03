@@ -1210,7 +1210,7 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
             ],
           ),
         ),
-      ),
+        ),
       ),
     );
   }
