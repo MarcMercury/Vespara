@@ -14,24 +14,31 @@ import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Clean OAuth params from URL immediately on web to prevent loops
+  // Store OAuth params info BEFORE init (for debugging)
+  bool hasOAuthParams = false;
   if (kIsWeb) {
     final uri = Uri.base;
-    final hasOAuthParams = uri.queryParameters.containsKey('code') ||
+    hasOAuthParams = uri.queryParameters.containsKey('code') ||
         uri.queryParameters.containsKey('access_token') ||
         uri.queryParameters.containsKey('error');
     
     if (hasOAuthParams) {
-      debugPrint('Vespara: OAuth callback detected, cleaning URL');
-      // Clear URL params using history API
-      html.window.history.replaceState(null, '', uri.path);
+      debugPrint('Vespara: OAuth callback detected in URL');
     }
   }
 
+  // Initialize Supabase FIRST - it needs to process OAuth tokens from the URL
   await Supabase.initialize(
     url: Env.supabaseUrl,
     anonKey: Env.supabaseAnonKey,
   );
+
+  // Clean OAuth params from URL AFTER Supabase has processed them
+  if (kIsWeb && hasOAuthParams) {
+    debugPrint('Vespara: Cleaning OAuth params from URL');
+    final uri = Uri.base;
+    html.window.history.replaceState(null, '', uri.path);
+  }
 
   runApp(const ProviderScope(child: VesparaApp()));
 }
@@ -59,6 +66,7 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   bool _isLoading = true;
   Session? _session;
+  String? _currentUserId; // Track the actual user ID, not just session existence
   String? _error;
   bool? _hasCompletedOnboarding;
   StreamSubscription<AuthState>? _authSubscription;
@@ -81,7 +89,8 @@ class _AuthGateState extends State<AuthGate> {
       
       // Get current session
       _session = Supabase.instance.client.auth.currentSession;
-      debugPrint('Vespara AuthGate: Initial session = ${_session != null}');
+      _currentUserId = _session?.user.id;
+      debugPrint('Vespara AuthGate: Initial session = ${_session != null}, userId = $_currentUserId');
 
       // Check onboarding status if we have a session
       if (_session != null) {
@@ -93,18 +102,26 @@ class _AuthGateState extends State<AuthGate> {
         debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
 
         if (mounted) {
-          final isTokenRefresh = data.event == AuthChangeEvent.tokenRefreshed;
-          final hadSession = _session != null;
-          final hasSession = data.session != null;
-          final sessionChanged = hadSession != hasSession;
+          final newUserId = data.session?.user.id;
+          final userChanged = _currentUserId != newUserId;
+          
+          debugPrint('Vespara Auth: Previous user: $_currentUserId, New user: $newUserId, Changed: $userChanged');
 
           setState(() {
             _session = data.session;
+            _currentUserId = newUserId;
             _isLoading = false;
+            
+            // CRITICAL: Reset onboarding status when user changes
+            // This forces a fresh check for the new user
+            if (userChanged) {
+              _hasCompletedOnboarding = null;
+              debugPrint('Vespara Auth: User changed! Resetting onboarding status.');
+            }
           });
 
-          // Check onboarding status when session changes OR on token refresh
-          if (data.session != null && (sessionChanged || isTokenRefresh)) {
+          // Check onboarding status when we have a session and user changed
+          if (data.session != null && userChanged) {
             _checkOnboardingStatus(data.session!.user.id);
           } else if (data.session == null) {
             _hasCompletedOnboarding = null;
@@ -302,14 +319,15 @@ class _LoginScreenState extends State<LoginScreen>
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     bool showPassword = false;
+    bool isSignUp = false; // Toggle between sign in and sign up
     
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: VesparaColors.surface,
-          title: const Text('Sign In with Email',
-              style: TextStyle(color: VesparaColors.primary),),
+          title: Text(isSignUp ? 'Create Account' : 'Sign In with Email',
+              style: const TextStyle(color: VesparaColors.primary),),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -335,7 +353,7 @@ class _LoginScreenState extends State<LoginScreen>
                 obscureText: !showPassword,
                 style: const TextStyle(color: VesparaColors.primary),
                 decoration: InputDecoration(
-                  hintText: 'Password',
+                  hintText: isSignUp ? 'Create password (min 6 chars)' : 'Password',
                   labelText: 'Password',
                   labelStyle: const TextStyle(color: VesparaColors.secondary),
                   hintStyle:
@@ -354,11 +372,27 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Leave password empty for magic link',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: VesparaColors.secondary.withOpacity(0.7),
+              if (!isSignUp)
+                Text(
+                  'Leave password empty for magic link',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.secondary.withOpacity(0.7),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              // Toggle between sign in and sign up
+              GestureDetector(
+                onTap: () => setDialogState(() => isSignUp = !isSignUp),
+                child: Text(
+                  isSignUp 
+                    ? 'Already have an account? Sign In'
+                    : 'New user? Create Account',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: VesparaColors.primary.withOpacity(0.8),
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
             ],
@@ -375,19 +409,60 @@ class _LoginScreenState extends State<LoginScreen>
                 final email = emailController.text.trim();
                 final password = passwordController.text;
                 
-                if (password.isNotEmpty) {
+                if (isSignUp) {
+                  // Sign up flow - requires password
+                  await _signUpWithEmailPassword(email, password);
+                } else if (password.isNotEmpty) {
+                  // Sign in with password
                   await _signInWithEmailPassword(email, password);
                 } else {
+                  // Magic link
                   await _signInWithMagicLink(email);
                 }
               },
-              child: const Text('Sign In',
-                  style: TextStyle(color: VesparaColors.primary),),
+              child: Text(isSignUp ? 'Create Account' : 'Sign In',
+                  style: const TextStyle(color: VesparaColors.primary),),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _signUpWithEmailPassword(String email, String password) async {
+    if (email.isEmpty || !email.contains('@')) {
+      _showError('Please enter a valid email');
+      return;
+    }
+    if (password.isEmpty || password.length < 6) {
+      _showError('Password must be at least 6 characters');
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+      );
+      if (response.user != null) {
+        if (response.session != null) {
+          _showSuccess('Account created! Welcome to Vespara ✨');
+        } else {
+          // Email confirmation required
+          _showSuccess('Check your email to confirm your account ✨');
+        }
+      }
+    } on AuthException catch (e) {
+      if (e.message.contains('already registered')) {
+        _showError('This email is already registered. Try signing in instead.');
+      } else {
+        _showError('Sign up failed: ${e.message}');
+      }
+    } catch (e) {
+      _showError('Sign up failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _signInWithEmailPassword(String email, String password) async {
@@ -409,7 +484,13 @@ class _LoginScreenState extends State<LoginScreen>
         _showSuccess('Welcome back! ✨');
       }
     } on AuthException catch (e) {
-      _showError('Login failed: ${e.message}');
+      if (e.message.contains('Invalid login credentials')) {
+        _showError('Invalid email or password. Try again or create an account.');
+      } else if (e.message.contains('Email not confirmed')) {
+        _showError('Please confirm your email before signing in.');
+      } else {
+        _showError('Login failed: ${e.message}');
+      }
     } catch (e) {
       _showError('Login failed: $e');
     } finally {
@@ -427,6 +508,7 @@ class _LoginScreenState extends State<LoginScreen>
       await Supabase.instance.client.auth.signInWithOtp(
         email: email,
         emailRedirectTo: 'https://vespara.vercel.app',
+        shouldCreateUser: true, // Allow new users to sign up via magic link
       );
       _showSuccess('Magic link sent! Check your email ✨');
     } catch (e) {

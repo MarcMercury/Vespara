@@ -19,9 +19,12 @@ SupabaseClient get _supabase => Supabase.instance.client;
 final authStateProvider =
     StreamProvider<AuthState>((ref) => _supabase.auth.onAuthStateChange);
 
-/// Current user provider
-final currentUserProvider =
-    Provider<User?>((ref) => _supabase.auth.currentUser);
+/// Current user provider - MUST watch authStateProvider to react to changes
+final currentUserProvider = Provider<User?>((ref) {
+  // Watch the auth state stream so this provider rebuilds on auth changes
+  ref.watch(authStateProvider);
+  return _supabase.auth.currentUser;
+});
 
 /// User profile provider - fetches real profile from Supabase
 final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
