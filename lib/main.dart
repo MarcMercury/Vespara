@@ -78,44 +78,10 @@ class _AuthGateState extends State<AuthGate> {
   Future<void> _initAuth() async {
     try {
       debugPrint('Vespara AuthGate: Starting auth initialization...');
-      debugPrint('Vespara AuthGate: Was OAuth callback? $_isOAuthCallback');
       
       // Get current session
       _session = Supabase.instance.client.auth.currentSession;
       debugPrint('Vespara AuthGate: Initial session = ${_session != null}');
-
-      // If we came from OAuth but don't have a session yet, wait a bit more
-      if (_isOAuthCallback && _session == null) {
-        debugPrint('Vespara AuthGate: OAuth callback but no session, waiting...');
-        
-        // Subscribe to auth changes to catch the signedIn event
-        final completer = Completer<Session?>();
-        
-        final tempSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-          debugPrint('Vespara AuthGate: Auth event during wait: ${data.event}');
-          if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-            if (!completer.isCompleted) {
-              completer.complete(data.session);
-            }
-          }
-        });
-        
-        // Wait up to 15 seconds for sign in
-        try {
-          _session = await completer.future.timeout(
-            const Duration(seconds: 15),
-            onTimeout: () {
-              debugPrint('Vespara AuthGate: Timeout waiting for OAuth session');
-              return null;
-            },
-          );
-        } catch (e) {
-          debugPrint('Vespara AuthGate: Error waiting for session: $e');
-        }
-        
-        await tempSub.cancel();
-        debugPrint('Vespara AuthGate: After OAuth wait, session = ${_session != null}');
-      }
 
       // Check onboarding status if we have a session
       if (_session != null) {
