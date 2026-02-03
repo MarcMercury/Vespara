@@ -175,7 +175,7 @@ enum MatchPriority {
       case MatchPriority.inWaiting:
         return 'In Waiting';
       case MatchPriority.onWayOut:
-        return 'On the Way Out';
+        return 'Head to Shred';
       case MatchPriority.legacy:
         return 'Legacy';
     }

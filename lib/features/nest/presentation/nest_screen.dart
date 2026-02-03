@@ -29,7 +29,7 @@ import 'groups_section.dart';
 /// NEST SCREEN (THE SANCTUM) - Module 2
 /// CRM-style match management with AI-driven priorities
 /// Now includes Wire Chats and Groups functionality
-/// Tabs: Chats | New | Priority | In Waiting | On the Way Out | Legacy | Groups
+/// Tabs: Chats | New | Priority | In Waiting | Head to Shred | Groups
 /// ════════════════════════════════════════════════════════════════════════════
 
 class NestScreen extends ConsumerStatefulWidget {
@@ -1969,7 +1969,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content:
-                      Text('${match.matchedUserName} moved to On The Way Out'),
+                      Text('${match.matchedUserName} moved to Head to Shred'),
                   backgroundColor: VesparaColors.error,),);
             },
             style:
