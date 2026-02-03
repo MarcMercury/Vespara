@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -25,26 +26,26 @@ final currentUserProvider =
 /// User profile provider - fetches real profile from Supabase
 final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final user = ref.watch(currentUserProvider);
-  print('[userProfileProvider] Current user: ${user?.id ?? "null"}');
+  debugPrint('[userProfileProvider] Current user: ${user?.id ?? "null"}');
 
   if (user == null) {
     // Not logged in - return null
-    print('[userProfileProvider] No user, returning null');
+    debugPrint('[userProfileProvider] No user, returning null');
     return null;
   }
 
   try {
-    print('[userProfileProvider] Fetching profile for user: ${user.id}');
+    debugPrint('[userProfileProvider] Fetching profile for user: ${user.id}');
     final response =
         await _supabase.from('profiles').select().eq('id', user.id).single();
-    print('[userProfileProvider] Got response: ${response.keys.toList()}');
-    print('[userProfileProvider] display_name: ${response['display_name']}');
-    print(
+    debugPrint('[userProfileProvider] Got response: ${response.keys.toList()}');
+    debugPrint('[userProfileProvider] display_name: ${response['display_name']}');
+    debugPrint(
         '[userProfileProvider] city: ${response['city']}, state: ${response['state']}',);
     return UserProfile.fromJson(response);
   } catch (e) {
     // Log error and return null
-    print('[userProfileProvider] Error fetching profile: $e');
+    debugPrint('[userProfileProvider] Error fetching profile: $e');
     return null;
   }
 });
@@ -80,7 +81,7 @@ final nearbyMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
         .map((json) => RosterMatch.fromJson(json))
         .toList();
   } catch (e) {
-    print('[nearbyMatchesProvider] Error: $e');
+    debugPrint('[nearbyMatchesProvider] Error: $e');
     return [];
   }
 });
@@ -126,7 +127,7 @@ final focusBatchProvider = FutureProvider<List<RosterMatch>>((ref) async {
         .map((json) => RosterMatch.fromJson(json))
         .toList();
   } catch (e) {
-    print('[focusBatchProvider] Error: $e');
+    debugPrint('[focusBatchProvider] Error: $e');
     return [];
   }
 });
@@ -153,7 +154,7 @@ final rosterMatchesProvider = FutureProvider<List<RosterMatch>>((ref) async {
         .map((json) => RosterMatch.fromJson(json))
         .toList();
   } catch (e) {
-    print('[rosterMatchesProvider] Error: $e');
+    debugPrint('[rosterMatchesProvider] Error: $e');
     return [];
   }
 });
@@ -194,7 +195,7 @@ final conversationsProvider = FutureProvider<List<Conversation>>((ref) async {
         .map((json) => Conversation.fromJson(json))
         .toList();
   } catch (e) {
-    print('[conversationsProvider] Error: $e');
+    debugPrint('[conversationsProvider] Error: $e');
     return [];
   }
 });
@@ -265,7 +266,7 @@ final gameCardsProvider = FutureProvider<List<GameCard>>((ref) async {
         .lte('consent_level', consentLevel.value);
     return (response as List).map((json) => GameCard.fromJson(json)).toList();
   } catch (e) {
-    print('[gameCardsProvider] Error: $e');
+    debugPrint('[gameCardsProvider] Error: $e');
     return [];
   }
 });
@@ -290,7 +291,7 @@ final vouchLinkProvider = FutureProvider<String?>((ref) async {
         .rpc('generate_vouch_link', params: {'user_id': user.id});
     return response as String?;
   } catch (e) {
-    print('[vouchLinkProvider] Error: $e');
+    debugPrint('[vouchLinkProvider] Error: $e');
     return null;
   }
 });
@@ -305,7 +306,7 @@ final vouchesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
         await _supabase.from('vouches').select().eq('vouched_for_id', user.id);
     return List<Map<String, dynamic>>.from(response);
   } catch (e) {
-    print('[vouchesProvider] Error: $e');
+    debugPrint('[vouchesProvider] Error: $e');
     return [];
   }
 });
@@ -332,7 +333,7 @@ final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
     }
     return UserAnalytics.fromJson(response);
   } catch (e) {
-    print('[userAnalyticsProvider] Error: $e');
+    debugPrint('[userAnalyticsProvider] Error: $e');
     return null;
   }
 });

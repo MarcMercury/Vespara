@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -43,7 +44,7 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
 
       return UserSettings.fromJson(insertResponse);
     } catch (e) {
-      print('[userSettingsProvider] Error: $e');
+      debugPrint('[userSettingsProvider] Error: $e');
       return null;
     }
   }
@@ -64,7 +65,7 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
       // Refresh the settings
       ref.invalidateSelf();
     } catch (e) {
-      print('[userSettingsProvider] Update error: $e');
+      debugPrint('[userSettingsProvider] Update error: $e');
       state = AsyncValue.error(e, StackTrace.current);
     }
   }
@@ -86,7 +87,7 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
       // Refresh the settings
       ref.invalidateSelf();
     } catch (e) {
-      print('[userSettingsProvider] Update error: $e');
+      debugPrint('[userSettingsProvider] Update error: $e');
       state = AsyncValue.error(e, StackTrace.current);
     }
   }

@@ -1162,7 +1162,7 @@ class _ExclusiveOnboardingScreenState
 
       await Supabase.instance.client.from('profiles').upsert(profileData);
 
-      print('[Onboarding] Profile saved successfully');
+      debugPrint('[Onboarding] Profile saved successfully');
 
       // ═══════════════════════════════════════════════════════════════════════
       // SYNC SETTINGS TO USER_SETTINGS TABLE
@@ -1234,7 +1234,7 @@ class _ExclusiveOnboardingScreenState
         onConflict: 'user_id',
       );
 
-      print('[Onboarding] User settings synced successfully');
+      debugPrint('[Onboarding] User settings synced successfully');
 
       // ═══════════════════════════════════════════════════════════════════════
       // SYNC PHOTOS TO PROFILE_PHOTOS TABLE
@@ -1264,7 +1264,7 @@ class _ExclusiveOnboardingScreenState
         }, onConflict: 'user_id,position');
       }
 
-      print('[Onboarding] Photos synced to profile_photos table: ${allPhotoUrls.length} photos');
+      debugPrint('[Onboarding] Photos synced to profile_photos table: ${allPhotoUrls.length} photos');
 
       // Refresh session to trigger navigation
       if (mounted) {
