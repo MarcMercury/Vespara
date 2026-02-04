@@ -320,6 +320,9 @@ class _LoginScreenState extends State<LoginScreen>
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: 'https://vespara.vercel.app',
+        queryParams: {
+          'prompt': 'select_account', // Force Google to show account picker every time
+        },
       );
     } catch (e) {
       _showError('Google Sign In failed: $e');
