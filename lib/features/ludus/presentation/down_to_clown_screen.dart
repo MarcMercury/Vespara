@@ -244,7 +244,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.asset(
-                              'assets/images/GAME ICONS/Down to Clown 2.png',
+                              'assets/images/GAME ICONS/Down to clown title page.png',
                               width: 120,
                               height: 120,
                               fit: BoxFit.cover,
@@ -714,7 +714,7 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.asset(
-                'assets/images/GAME ICONS/Down to Clown 2.png',
+                'assets/images/GAME ICONS/Down to clown title page.png',
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,

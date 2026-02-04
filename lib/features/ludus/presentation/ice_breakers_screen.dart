@@ -189,11 +189,11 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                     children: [
                       const SizedBox(height: 24),
 
-                      // Ice emoji with glow
+                      // Ice image with glow
                       AnimatedBuilder(
                         animation: _glowController,
                         builder: (context, child) => Container(
-                          padding: const EdgeInsets.all(32),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             boxShadow: [
@@ -205,8 +205,15 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
                               ),
                             ],
                           ),
-                          child:
-                              const Text('🧊', style: TextStyle(fontSize: 80)),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/images/GAME ICONS/Ice Breaker Title Page.png',
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                       ),
 
