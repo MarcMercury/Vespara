@@ -21,18 +21,24 @@ import '../widgets/tag_rating_display.dart';
 /// ════════════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════════
-// COLOR PALETTE (Casino Night Vibe)
+// COLOR PALETTE (Sultry Boudoir Vibe)
 // ═══════════════════════════════════════════════════════════════════════════
 
 class DiceColors {
-  static const background = Color(0xFF1A1523); // Deep Obsidian
+  static const background = Color(0xFF120A14); // Deep Velvet Black
   static const primary = Color(0xFFE040FB); // Electric Purple
   static const secondary = Color(0xFFE0D8EA); // Soft Lavender
-  static const bodyDie = Color(0xFF00E5FF); // Cyan - Body Parts Die
-  static const actionDie = Color(0xFFFFD700); // Gold - Action Die
-  static const redDie = Color(0xFFFF1744); // Hot Red - Escalation Die
+  static const bodyDie = Color(0xFFFF6B9D); // Sensual Rose Pink
+  static const actionDie = Color(0xFFFFB347); // Smoldering Amber Gold
+  static const redDie = Color(0xFFDC143C); // Passionate Crimson
   static const success = Color(0xFF2ECC71); // Green
   static const cardBg = Color(0xFF2D2438); // Dark Purple
+  
+  // New sultry accent colors
+  static const roseGold = Color(0xFFE8A87C);
+  static const deepRose = Color(0xFFB8405E);
+  static const burgundy = Color(0xFF722F37);
+  static const champagne = Color(0xFFF7E7CE);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -168,12 +174,12 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
 
     _diceRollController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 2000), // Slower, more sensual
     );
 
     _bounceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 800), // Smoother bounce
     );
   }
 
@@ -1284,110 +1290,157 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
     required bool isRolling,
     bool isDiamond = false,
   }) {
-    final size = isDiamond ? 85.0 : 95.0;
-    final borderRadius = isDiamond ? 14.0 : 18.0;
+    final size = isDiamond ? 90.0 : 100.0;
+    final borderRadius = isDiamond ? 16.0 : 20.0;
+    
+    // Sultry secondary color for gradient
+    final accentColor = HSLColor.fromColor(color)
+        .withSaturation(0.9)
+        .withLightness(0.3)
+        .toColor();
     
     return AnimatedBuilder(
       animation: _diceRollController,
       builder: (context, child) {
-        final shake =
-            isRolling ? sin(_diceRollController.value * pi * 8) * 5 : 0.0;
-        final pulse = isRolling ? 1.0 + sin(_diceRollController.value * pi * 4) * 0.05 : 1.0;
+        // Sensual, fluid motion using sine curves
+        final progress = _diceRollController.value;
+        
+        // Smooth swaying motion (like hips)
+        final swayX = isRolling 
+            ? sin(progress * pi * 6) * 8 * (1 - progress * 0.5) 
+            : 0.0;
+        final swayY = isRolling 
+            ? cos(progress * pi * 4) * 4 * (1 - progress * 0.3) 
+            : 0.0;
+        
+        // Breathing scale effect
+        final breathe = isRolling 
+            ? 1.0 + sin(progress * pi * 3) * 0.08 
+            : 1.0;
+        
+        // Slow rotation for 3D tumble effect
+        final rotateX = isRolling ? sin(progress * pi * 2) * 0.15 : 0.0;
+        final rotateZ = isRolling ? sin(progress * pi * 5) * 0.1 : 0.0;
+        
+        // Glow intensity pulses sensually
+        final glowIntensity = isRolling 
+            ? 0.6 + sin(progress * pi * 4) * 0.4 
+            : 0.5;
         
         return Transform.translate(
-          offset: Offset(shake, 0),
+          offset: Offset(swayX, swayY),
           child: Transform.scale(
-            scale: pulse,
-            child: Transform.rotate(
-              angle: isDiamond ? pi / 4 : 0,
+            scale: breathe,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.002) // Perspective
+                ..rotateX(rotateX)
+                ..rotateZ(rotateZ + (isDiamond ? pi / 4 : 0)),
               child: Container(
                 width: size,
                 height: size,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(borderRadius),
-                  // Outer glow
+                  // Multi-layer sultry glow
                   boxShadow: [
-                    // Primary glow
+                    // Outer sensual aura
                     BoxShadow(
-                      color: color.withOpacity(isRolling ? 0.8 : 0.5),
-                      blurRadius: isRolling ? 30 : 20,
-                      spreadRadius: isRolling ? 4 : 2,
+                      color: color.withOpacity(glowIntensity * 0.5),
+                      blurRadius: isRolling ? 50 : 35,
+                      spreadRadius: isRolling ? 8 : 4,
                     ),
-                    // Bottom shadow for depth
+                    // Inner warm glow
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: DiceColors.roseGold.withOpacity(glowIntensity * 0.3),
+                      blurRadius: 25,
+                      spreadRadius: 2,
+                    ),
+                    // Deep shadow for 3D depth
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.7),
+                      blurRadius: 20,
+                      offset: const Offset(4, 12),
+                    ),
+                    // Secondary shadow
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.4),
                       blurRadius: 15,
-                      offset: const Offset(0, 8),
+                      offset: const Offset(-2, -4),
                     ),
                   ],
                 ),
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(borderRadius),
-                    // 3D gradient - top-left highlight to bottom-right shadow
+                    // Rich 3D gradient - top-left highlight
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
+                        color.withOpacity(0.7),
                         color.withOpacity(0.4),
-                        color.withOpacity(0.2),
-                        color.withOpacity(0.05),
+                        accentColor.withOpacity(0.3),
+                        Colors.black.withOpacity(0.5),
                       ],
-                      stops: const [0.0, 0.5, 1.0],
+                      stops: const [0.0, 0.3, 0.6, 1.0],
                     ),
                     border: Border.all(
-                      width: 2,
-                      color: color.withOpacity(0.8),
+                      width: 2.5,
+                      color: color.withOpacity(0.9),
                     ),
                   ),
                   child: Container(
                     margin: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(borderRadius - 4),
-                      // Inner bevel effect
+                      borderRadius: BorderRadius.circular(borderRadius - 5),
+                      // Glossy inner layer
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withOpacity(0.15),
+                          Colors.white.withOpacity(0.25),
+                          Colors.white.withOpacity(0.05),
                           Colors.transparent,
-                          Colors.black.withOpacity(0.2),
+                          Colors.black.withOpacity(0.3),
                         ],
-                        stops: const [0.0, 0.4, 1.0],
-                      ),
-                      // Inner shadow simulation
-                      border: Border(
-                        top: BorderSide(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1.5,
-                        ),
-                        left: BorderSide(
-                          color: Colors.white.withOpacity(0.2),
-                          width: 1.5,
-                        ),
-                        bottom: BorderSide(
-                          color: Colors.black.withOpacity(0.3),
-                          width: 1.5,
-                        ),
-                        right: BorderSide(
-                          color: Colors.black.withOpacity(0.2),
-                          width: 1.5,
-                        ),
+                        stops: const [0.0, 0.2, 0.5, 1.0],
                       ),
                     ),
                     child: Container(
+                      margin: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(borderRadius - 6),
-                        // Glossy center
+                        borderRadius: BorderRadius.circular(borderRadius - 7),
+                        // Luxurious center with radial glow
                         gradient: RadialGradient(
-                          center: const Alignment(-0.3, -0.3),
-                          radius: 1.2,
+                          center: const Alignment(-0.4, -0.4),
+                          radius: 1.4,
                           colors: [
-                            color.withOpacity(0.3),
+                            DiceColors.champagne.withOpacity(0.15),
+                            color.withOpacity(0.25),
                             color.withOpacity(0.15),
-                            DiceColors.background.withOpacity(0.8),
+                            DiceColors.background.withOpacity(0.9),
                           ],
-                          stops: const [0.0, 0.4, 1.0],
+                          stops: const [0.0, 0.2, 0.5, 1.0],
+                        ),
+                        // Subtle inner bevel
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.white.withOpacity(0.35),
+                            width: 1.5,
+                          ),
+                          left: BorderSide(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                          bottom: BorderSide(
+                            color: Colors.black.withOpacity(0.4),
+                            width: 2,
+                          ),
+                          right: BorderSide(
+                            color: Colors.black.withOpacity(0.3),
+                            width: 2,
+                          ),
                         ),
                       ),
                       child: Transform.rotate(
@@ -1395,40 +1448,51 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Label with glow
+                            // Label with sensual glow
                             Text(
                               label,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: color,
-                                letterSpacing: 1.5,
+                                letterSpacing: 2,
                                 shadows: [
                                   Shadow(
-                                    color: color.withOpacity(0.8),
+                                    color: color.withOpacity(0.9),
+                                    blurRadius: 12,
+                                  ),
+                                  Shadow(
+                                    color: DiceColors.roseGold.withOpacity(0.5),
                                     blurRadius: 8,
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            // Value with embossed effect
+                            const SizedBox(height: 8),
+                            // Value with luxe embossed effect
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
+                                horizontal: 8,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(8),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.black.withOpacity(0.5),
+                                    color.withOpacity(0.2),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: color.withOpacity(0.4),
-                                  width: 1,
+                                  color: color.withOpacity(0.5),
+                                  width: 1.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: color.withOpacity(0.3),
-                                    blurRadius: 6,
+                                    color: color.withOpacity(0.4),
+                                    blurRadius: 10,
                                     spreadRadius: -2,
                                   ),
                                 ],
@@ -1436,19 +1500,23 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
                               child: Text(
                                 value,
                                 style: TextStyle(
-                                  fontSize: value.length > 6 ? 10 : (value.length > 4 ? 12 : 15),
+                                  fontSize: value.length > 6 ? 10 : (value.length > 4 ? 13 : 16),
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
                                   letterSpacing: 0.5,
                                   shadows: [
                                     Shadow(
                                       color: color,
-                                      blurRadius: 10,
+                                      blurRadius: 15,
+                                    ),
+                                    Shadow(
+                                      color: DiceColors.roseGold.withOpacity(0.6),
+                                      blurRadius: 8,
                                     ),
                                     const Shadow(
                                       color: Colors.black,
-                                      blurRadius: 2,
-                                      offset: Offset(1, 1),
+                                      blurRadius: 3,
+                                      offset: Offset(1, 2),
                                     ),
                                   ],
                                 ),
@@ -1473,17 +1541,32 @@ class _DiceBreakersScreenState extends State<DiceBreakersScreen>
     HapticFeedback.heavyImpact();
     setState(() => _isRolling = true);
 
-    _diceRollController.repeat();
+    // Smooth curve animation for sensual motion
+    _diceRollController.forward(from: 0);
 
-    // Roll animation duration
+    // Slower, more suspenseful roll with easing
     int rollCount = 0;
-    _rollTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
-      HapticFeedback.lightImpact();
+    int maxRolls = 25; // Longer anticipation
+    
+    _rollTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      // Haptic intensity decreases as we near the end (building suspense)
+      if (rollCount < 10) {
+        HapticFeedback.mediumImpact();
+      } else if (rollCount < 20) {
+        HapticFeedback.lightImpact();
+      } else {
+        HapticFeedback.selectionClick();
+      }
+      
       setState(() {}); // Force rebuild for random values
       rollCount++;
-      if (rollCount >= 20) {
+      
+      if (rollCount >= maxRolls) {
         timer.cancel();
-        _finishRoll();
+        // Dramatic pause before reveal
+        Future.delayed(const Duration(milliseconds: 400), () {
+          _finishRoll();
+        });
       }
     });
   }
