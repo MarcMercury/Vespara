@@ -39,6 +39,8 @@ class _ExclusiveOnboardingScreenState
   // Form controllers
   final _displayNameController = TextEditingController();
   final _bioController = TextEditingController();
+  final _headlineController = TextEditingController();
+  final _occupationController = TextEditingController();
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FORM DATA - Age Verification
@@ -610,6 +612,8 @@ class _ExclusiveOnboardingScreenState
     _displayNameController.dispose();
     _bioController.dispose();
     _hookController.dispose();
+    _headlineController.dispose();
+    _occupationController.dispose();
     super.dispose();
   }
 
@@ -1114,6 +1118,12 @@ class _ExclusiveOnboardingScreenState
             ? 'New to Vespara ✨'
             : _bioController.text.trim(),
         'hook': _hookController.text.trim(),
+        'headline': _headlineController.text.trim().isEmpty 
+            ? null 
+            : _headlineController.text.trim(),
+        'occupation': _occupationController.text.trim().isEmpty 
+            ? null 
+            : _occupationController.text.trim(),
         'birth_date': _birthDate?.toIso8601String().split('T').first,
         'age_verified': true,
         'age_verified_at': DateTime.now().toIso8601String(),
@@ -1706,6 +1716,78 @@ class _ExclusiveOnboardingScreenState
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
               onChanged: (_) => setState(() {}),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Headline
+            const Text(
+              'Headline (optional)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'A catchy tagline that shows up on your profile',
+              style: TextStyle(
+                fontSize: 12,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _headlineController,
+              style:
+                  const TextStyle(color: VesparaColors.primary, fontSize: 16),
+              maxLength: 60,
+              decoration: InputDecoration(
+                hintText: 'e.g. "Adventure seeker & wine enthusiast"',
+                hintStyle:
+                    TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+                filled: true,
+                fillColor: VesparaColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                counterStyle: const TextStyle(color: VesparaColors.secondary),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Occupation
+            const Text(
+              'Occupation (optional)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _occupationController,
+              style:
+                  const TextStyle(color: VesparaColors.primary, fontSize: 16),
+              decoration: InputDecoration(
+                hintText: 'What do you do?',
+                hintStyle:
+                    TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
+                filled: true,
+                fillColor: VesparaColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
             ),
 
             const SizedBox(height: 32),

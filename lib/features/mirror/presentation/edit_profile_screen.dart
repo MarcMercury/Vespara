@@ -321,7 +321,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     'must_verify',
     'no_strangers',
     'sti_tested_only',
+    'no_marking',
+    'no_fluids',
+    'sober_only',
   ];
+
+  static const Map<String, String> _hardLimitLabels = {
+    'no_smokers': '🚭 No Smokers',
+    'no_drugs': '💊 No Drug Use',
+    'no_pain': '🚫 No Pain Play',
+    'no_blood': '🩸 No Blood',
+    'no_humiliation': '😤 No Humiliation',
+    'no_anal': '🚫 No Anal',
+    'no_choking': '😮‍💨 No Breath Play',
+    'protection_required': '🛡️ Protection Required',
+    'no_bareback': '🚫 No Bareback',
+    'no_age_gaps': '📅 No Large Age Gaps',
+    'no_couples': '👫 No Couples',
+    'no_singles': '👤 No Singles',
+    'no_public': '🏠 Nothing Public',
+    'no_filming': '📵 No Photos/Videos',
+    'must_verify': '✅ Must Verify First',
+    'no_strangers': '🤝 Must Know First',
+    'sti_tested_only': '🧪 STI Tested Only',
+    'no_marking': '✋ No Marks/Bruises',
+    'no_fluids': '💧 No Fluid Exchange',
+    'sober_only': '🥤 Sober Only',
+  };
 
   static const List<String> _partyAvailabilityOptions = [
     'house_parties',
@@ -609,6 +635,53 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 labels: _discretionLabels,
               ),
 
+              const SizedBox(height: 24),
+
+              // Travel & Bandwidth Section
+              _buildSectionHeader('Travel & Energy'),
+              _buildSliderField(
+                'Travel Radius',
+                'How far are you willing to travel?',
+                _travelRadius.toDouble(),
+                5,
+                100,
+                '${_travelRadius.round()} miles',
+                (val) => setState(() => _travelRadius = val.round()),
+              ),
+              const SizedBox(height: 16),
+              _buildSliderField(
+                'Bandwidth',
+                'Your current availability/energy level',
+                _bandwidth,
+                0,
+                1,
+                _getBandwidthLabel(_bandwidth),
+                (val) => setState(() => _bandwidth = val),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Party & Events Section
+              _buildSectionHeader('Events & Parties'),
+              _buildMultiSelect(
+                  'Party Availability', _partyAvailabilityOptions, _selectedPartyAvailability,
+                  labels: _partyAvailabilityLabels,),
+
+              const SizedBox(height: 24),
+
+              // Heat & Limits Section
+              _buildSectionHeader('Heat & Boundaries'),
+              _buildDropdown(
+                'Heat Level',
+                _heatLevelOptions,
+                _selectedHeatLevel,
+                (val) => setState(() => _selectedHeatLevel = val),
+                labels: _heatLevelLabels,
+              ),
+              _buildMultiSelect(
+                  'Hard Limits', _hardLimitOptions, _selectedHardLimits,
+                  labels: _hardLimitLabels,),
+
               const SizedBox(height: 40),
 
               // Save button at bottom
@@ -821,4 +894,80 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ],
         ),
       );
+
+  Widget _buildSliderField(
+    String label,
+    String subtitle,
+    double value,
+    double min,
+    double max,
+    String displayValue,
+    Function(double) onChanged,
+  ) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: VesparaColors.secondary,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.glow.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    displayValue,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.glow,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: VesparaColors.secondary.withOpacity(0.7),
+              ),
+            ),
+            SliderTheme(
+              data: SliderThemeData(
+                activeTrackColor: VesparaColors.glow,
+                inactiveTrackColor: VesparaColors.surface,
+                thumbColor: VesparaColors.glow,
+                overlayColor: VesparaColors.glow.withOpacity(0.2),
+              ),
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                onChanged: onChanged,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  String _getBandwidthLabel(double bandwidth) {
+    if (bandwidth < 0.2) return '😴 Lurking';
+    if (bandwidth < 0.4) return '🌱 Low Key';
+    if (bandwidth < 0.6) return '⚡ Moderate';
+    if (bandwidth < 0.8) return '🔥 Active';
+    return '🌋 Ravenous';
+  }
 }

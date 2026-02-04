@@ -1861,48 +1861,267 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildProfileInfoSection(UserProfile profile) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VesparaColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+    return Column(
+      children: [
+        // Basic Info Section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VesparaColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.person_outline, color: VesparaColors.glow, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'PROFILE INFO',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: VesparaColors.primary,
-                ),
+              const Row(
+                children: [
+                  Icon(Icons.person_outline, color: VesparaColors.glow, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'PROFILE INFO',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 16),
+              
+              _buildCompactProfileRow('Bio', profile.bio ?? 'Not set'),
+              if (profile.hook != null && profile.hook!.isNotEmpty)
+                _buildCompactProfileRow('Hook', profile.hook!),
+              _buildCompactProfileRow('Location', 
+                  profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Not set'),
+              _buildCompactProfileRow('Pronouns', profile.pronouns ?? 'Not set'),
+              _buildCompactProfileRow('Gender', 
+                  profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Not set'),
+              _buildCompactProfileRow('Orientation',
+                  profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Not set'),
             ],
           ),
-          const SizedBox(height: 16),
-          
-          _buildCompactProfileRow('Bio', profile.bio ?? 'Not set'),
-          _buildCompactProfileRow('Location', 
-              profile.displayLocation.isNotEmpty ? profile.displayLocation : 'Not set'),
-          _buildCompactProfileRow('Pronouns', profile.pronouns ?? 'Not set'),
-          _buildCompactProfileRow('Gender', 
-              profile.gender.isNotEmpty ? profile.gender.join(', ') : 'Not set'),
-          _buildCompactProfileRow('Orientation',
-              profile.orientation.isNotEmpty ? profile.orientation.join(', ') : 'Not set'),
-          _buildCompactProfileRow('Seeking',
-              profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Not set'),
-          _buildCompactProfileRow('Relationship Status',
-              profile.relationshipStatus.isNotEmpty 
-                  ? profile.relationshipStatus.join(', ') : 'Not set'),
-        ],
-      ),
+        ),
+        
+        const SizedBox(height: 16),
+
+        // Relationship Section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VesparaColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.favorite_outline, color: VesparaColors.glow, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'RELATIONSHIP',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              _buildCompactProfileRow('Status',
+                  profile.relationshipStatus.isNotEmpty 
+                      ? profile.relationshipStatus.join(', ') : 'Not set'),
+              _buildCompactProfileRow('Seeking',
+                  profile.seeking.isNotEmpty ? profile.seeking.join(', ') : 'Not set'),
+              if (profile.partnerInvolvement != null)
+                _buildCompactProfileRow('Partner', profile.partnerInvolvement!),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Logistics Section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: VesparaColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.schedule_outlined, color: VesparaColors.glow, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'LOGISTICS',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              _buildCompactProfileRow('Availability',
+                  profile.availabilityGeneral.isNotEmpty 
+                      ? profile.availabilityGeneral.join(', ') : 'Not set'),
+              if (profile.schedulingStyle != null)
+                _buildCompactProfileRow('Scheduling', profile.schedulingStyle!),
+              if (profile.hostingStatus != null)
+                _buildCompactProfileRow('Hosting', profile.hostingStatus!),
+              if (profile.discretionLevel != null)
+                _buildCompactProfileRow('Discretion', profile.discretionLevel!),
+              _buildCompactProfileRow('Travel Radius', '${profile.travelRadius} miles'),
+              _buildCompactProfileRow('Bandwidth', _getBandwidthLabel(profile.bandwidth)),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Events & Parties Section
+        if (profile.partyAvailability.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VesparaColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: VesparaColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.celebration_outlined, color: VesparaColors.glow, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'EVENTS & PARTIES',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: profile.partyAvailability.map((p) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      p.replaceAll('_', ' ').split(' ').map((w) => 
+                          w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w
+                      ).join(' '),
+                      style: const TextStyle(fontSize: 12, color: VesparaColors.glow),
+                    ),
+                  )).toList(),
+                ),
+              ],
+            ),
+          ),
+
+        if (profile.partyAvailability.isNotEmpty) const SizedBox(height: 16),
+
+        // Hard Limits Section
+        if (profile.hardLimits.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VesparaColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.block, color: VesparaColors.error.withOpacity(0.8), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'HARD LIMITS',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: VesparaColors.error.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: profile.hardLimits.map((limit) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: VesparaColors.error.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      _formatHardLimit(limit),
+                      style: TextStyle(fontSize: 12, color: VesparaColors.error.withOpacity(0.8)),
+                    ),
+                  )).toList(),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
+  }
+
+  String _getBandwidthLabel(double bandwidth) {
+    if (bandwidth < 0.2) return '😴 Lurking';
+    if (bandwidth < 0.4) return '🌱 Low Key';
+    if (bandwidth < 0.6) return '⚡ Moderate';
+    if (bandwidth < 0.8) return '🔥 Active';
+    return '🌋 Ravenous';
+  }
+
+  String _formatHardLimit(String limit) {
+    const labels = {
+      'no_smokers': '🚭 No Smokers',
+      'no_drugs': '💊 No Drug Use',
+      'no_pain': '🚫 No Pain Play',
+      'no_blood': '🩸 No Blood',
+      'no_humiliation': '😤 No Humiliation',
+      'no_anal': '🚫 No Anal',
+      'no_choking': '😮‍💨 No Breath Play',
+      'protection_required': '🛡️ Protection Required',
+      'no_bareback': '🚫 No Bareback',
+      'no_age_gaps': '📅 No Large Age Gaps',
+      'no_couples': '👫 No Couples',
+      'no_singles': '👤 No Singles',
+      'no_public': '🏠 Nothing Public',
+      'no_filming': '📵 No Photos/Videos',
+      'must_verify': '✅ Must Verify',
+      'no_strangers': '🤝 Must Know First',
+      'sti_tested_only': '🧪 STI Tested Only',
+      'no_marking': '✋ No Marks',
+      'no_fluids': '💧 No Fluids',
+      'sober_only': '🥤 Sober Only',
+    };
+    return labels[limit] ?? limit.replaceAll('_', ' ');
   }
 
   Widget _buildCompactProfileRow(String label, String value) {
