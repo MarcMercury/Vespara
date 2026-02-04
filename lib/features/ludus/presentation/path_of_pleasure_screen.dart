@@ -1007,7 +1007,7 @@ class _PathOfPleasureScreenState extends ConsumerState<PathOfPleasureScreen>
       children: [
         _buildGameHeader(state),
         Expanded(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

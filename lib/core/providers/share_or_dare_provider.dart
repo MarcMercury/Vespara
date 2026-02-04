@@ -83,14 +83,21 @@ class ShareOrDareCard {
     required this.category,
   });
 
-  factory ShareOrDareCard.fromJson(Map<String, dynamic> json) =>
-      ShareOrDareCard(
-        id: json['id'] as String,
-        type: json['type'] == 'share' ? CardType.share : CardType.dare,
-        text: json['text'] as String,
-        heatLevel: _parseHeatLevel(json['heat_level'] as String),
-        category: _parseCategory(json['category'] as String),
-      );
+  factory ShareOrDareCard.fromJson(Map<String, dynamic> json) {
+    final typeStr = (json['type'] as String?)?.toLowerCase() ?? '';
+    // Handle both 'share' and 'truth' as SHARE type (database uses 'truth')
+    final cardType = (typeStr == 'share' || typeStr == 'truth') 
+        ? CardType.share 
+        : CardType.dare;
+    
+    return ShareOrDareCard(
+      id: json['id']?.toString() ?? '',
+      type: cardType,
+      text: json['text'] as String? ?? '',
+      heatLevel: _parseHeatLevel((json['heat_level'] as String?) ?? 'PG'),
+      category: _parseCategory((json['category'] as String?) ?? 'icebreaker'),
+    );
+  }
   final String id;
   final CardType type;
   final String text;
@@ -296,26 +303,46 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
       final cards =
           await _repository.getShareOrDareCards(state.heatLevel.dbValue);
 
+      debugPrint('ShareOrDare: Fetched ${cards.length} cards from database');
+
       if (cards.isNotEmpty) {
         final shares = cards.where((c) => c.type == CardType.share).toList()
           ..shuffle();
         final dares = cards.where((c) => c.type == CardType.dare).toList()
           ..shuffle();
 
+        debugPrint('ShareOrDare: DB loaded ${shares.length} shares and ${dares.length} dares');
+        
+        // Verify deck integrity
+        for (final card in shares) {
+          if (card.type != CardType.share) {
+            debugPrint('ShareOrDare DB ERROR: Share deck contains dare: ${card.text}');
+          }
+        }
+        for (final card in dares) {
+          if (card.type != CardType.dare) {
+            debugPrint('ShareOrDare DB ERROR: Dare deck contains share: ${card.text}');
+          }
+        }
+
         state = state.copyWith(
           phase: ShareOrDarePhase.spinning,
           shareDeck: shares,
           dareDeck: dares,
+          shareIndex: 0,
+          dareIndex: 0,
           isDemoMode: false,
           isLoading: false,
           startTime: DateTime.now(),
         );
       } else {
         // Fallback to demo mode
+        debugPrint('ShareOrDare: No cards from DB, falling back to demo mode');
         _loadDemoCards();
       }
     } catch (e) {
       // Fallback to demo mode
+      debugPrint('ShareOrDare: DB error ($e), falling back to demo mode');
       _loadDemoCards();
     }
   }
@@ -327,10 +354,26 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
     final dares = demoCards.where((c) => c.type == CardType.dare).toList()
       ..shuffle();
 
+    debugPrint('ShareOrDare: Loaded ${shares.length} shares and ${dares.length} dares');
+    
+    // Verify deck integrity
+    for (final card in shares) {
+      if (card.type != CardType.share) {
+        debugPrint('ShareOrDare ERROR: Share deck contains dare: ${card.text}');
+      }
+    }
+    for (final card in dares) {
+      if (card.type != CardType.dare) {
+        debugPrint('ShareOrDare ERROR: Dare deck contains share: ${card.text}');
+      }
+    }
+
     state = state.copyWith(
       phase: ShareOrDarePhase.spinning,
       shareDeck: shares,
       dareDeck: dares,
+      shareIndex: 0,  // Reset indices when reloading
+      dareIndex: 0,
       isDemoMode: true,
       isLoading: false,
       startTime: DateTime.now(),
@@ -346,6 +389,8 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
   }
 
   void selectType(CardType type) {
+    debugPrint('ShareOrDare: selectType called with ${type == CardType.share ? "SHARE" : "DARE"}');
+    
     // Get next card from appropriate deck
     ShareOrDareCard? card;
     int newIndex;
@@ -353,11 +398,19 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
     if (type == CardType.share) {
       // If deck empty, try to reload demo cards first
       if (state.shareDeck.isEmpty) {
+        debugPrint('ShareOrDare: Share deck empty, reloading...');
         _loadDemoCards();
         if (state.shareDeck.isEmpty) return;
       }
       newIndex = state.shareIndex % state.shareDeck.length;
       card = state.shareDeck[newIndex];
+      debugPrint('ShareOrDare: Selected SHARE card: "${card.text}" (type=${card.type})');
+      
+      // Verify the card type matches
+      if (card.type != CardType.share) {
+        debugPrint('ShareOrDare ERROR: Card in shareDeck is actually a DARE!');
+      }
+      
       state = state.copyWith(
         selectedType: type,
         currentCard: card,
@@ -367,11 +420,19 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
     } else {
       // If deck empty, try to reload demo cards first
       if (state.dareDeck.isEmpty) {
+        debugPrint('ShareOrDare: Dare deck empty, reloading...');
         _loadDemoCards();
         if (state.dareDeck.isEmpty) return;
       }
       newIndex = state.dareIndex % state.dareDeck.length;
       card = state.dareDeck[newIndex];
+      debugPrint('ShareOrDare: Selected DARE card: "${card.text}" (type=${card.type})');
+      
+      // Verify the card type matches
+      if (card.type != CardType.dare) {
+        debugPrint('ShareOrDare ERROR: Card in dareDeck is actually a SHARE!');
+      }
+      
       state = state.copyWith(
         selectedType: type,
         currentCard: card,

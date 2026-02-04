@@ -587,16 +587,27 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     final nextStarting =
         state.startingTeam == TeamTurn.teamA ? TeamTurn.teamB : TeamTurn.teamA;
 
-    // Clear previous round state and prepare for next round
+    // Prepare new round data BEFORE updating state to avoid intermediate invalid state
+    final shuffled = [...state.masterDeck]..shuffle();
+    final roundCards = shuffled.take(8).toList();
+    final correctOrder = [...roundCards]
+      ..sort((a, b) => a.trueRank.compareTo(b.trueRank));
+
+    final newRound = RoundData(
+      cards: roundCards,
+      correctOrder: correctOrder,
+    );
+
+    // Update state ONCE with all changes to prevent intermediate rebuild issues
     state = state.copyWith(
       roundNumber: state.roundNumber + 1,
       currentTurn: nextStarting,
       startingTeam: nextStarting,
-      showHandoffScreen: false, // Reset handoff state
-      clearCurrentRound: true, // Clear previous round
+      currentRound: newRound,
+      playerSorting: [...roundCards],
+      showHandoffScreen: state.connectionMode == ConnectionMode.passAndPlay,
+      phase: GamePhase.sorting,
     );
-
-    _startNewRound();
   }
 
   // ═════════════════════════════════════════════════════════════════════════
