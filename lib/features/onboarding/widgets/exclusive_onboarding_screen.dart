@@ -1383,7 +1383,15 @@ class _ExclusiveOnboardingScreenState
                     ],
                   ),
                 ),
-                if (_currentStep > 0) const SizedBox(width: 48),
+                // Sign out button - always visible
+                IconButton(
+                  onPressed: () async {
+                    await Supabase.instance.client.auth.signOut();
+                  },
+                  icon: const Icon(Icons.logout,
+                      color: VesparaColors.secondary, size: 20,),
+                  tooltip: 'Sign Out',
+                ),
               ],
             ),
             const SizedBox(height: 16),
