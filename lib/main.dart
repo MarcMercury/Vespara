@@ -87,17 +87,8 @@ class _AuthGateState extends State<AuthGate> {
     try {
       debugPrint('Vespara AuthGate: Starting auth initialization...');
       
-      // Get current session
-      _session = Supabase.instance.client.auth.currentSession;
-      _currentUserId = _session?.user.id;
-      debugPrint('Vespara AuthGate: Initial session = ${_session != null}, userId = $_currentUserId');
-
-      // Check onboarding status if we have a session
-      if (_session != null) {
-        await _checkOnboardingStatus(_session!.user.id);
-      }
-
-      // Now set up the ongoing auth listener
+      // Set up the ongoing auth listener FIRST
+      // This ensures we don't miss any auth events
       _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
         debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
 
@@ -107,29 +98,42 @@ class _AuthGateState extends State<AuthGate> {
           
           debugPrint('Vespara Auth: Previous user: $_currentUserId, New user: $newUserId, Changed: $userChanged');
 
-          setState(() {
-            _session = data.session;
-            _currentUserId = newUserId;
-            _isLoading = false;
-            
-            // CRITICAL: Reset onboarding status when user changes
-            // This forces a fresh check for the new user
-            if (userChanged) {
-              _hasCompletedOnboarding = null;
-              debugPrint('Vespara Auth: User changed! Resetting onboarding status.');
-            }
-          });
-
-          // Check onboarding status when we have a session and user changed
-          if (data.session != null && userChanged) {
-            _checkOnboardingStatus(data.session!.user.id);
-          } else if (data.session == null) {
-            _hasCompletedOnboarding = null;
+          // CRITICAL: Check onboarding BEFORE setState to avoid showing wrong screen briefly
+          if (data.session != null && (userChanged || _hasCompletedOnboarding == null)) {
+            // Fetch onboarding status first, then update state
+            _checkOnboardingStatus(data.session!.user.id).then((_) {
+              if (mounted) {
+                setState(() {
+                  _session = data.session;
+                  _currentUserId = newUserId;
+                  _isLoading = false;
+                });
+              }
+            });
+          } else {
+            setState(() {
+              _session = data.session;
+              _currentUserId = newUserId;
+              _isLoading = false;
+              if (data.session == null) {
+                _hasCompletedOnboarding = null;
+              }
+            });
           }
         }
       });
 
-      debugPrint('Vespara AuthGate: Final session check = ${_session != null}');
+      // Get current session AFTER setting up listener
+      _session = Supabase.instance.client.auth.currentSession;
+      _currentUserId = _session?.user.id;
+      debugPrint('Vespara AuthGate: Initial session = ${_session != null}, userId = $_currentUserId');
+
+      // Check onboarding status if we have a session
+      if (_session != null) {
+        await _checkOnboardingStatus(_session!.user.id);
+      }
+
+      debugPrint('Vespara AuthGate: Final session check = ${_session != null}, onboarding complete = $_hasCompletedOnboarding');
     } catch (e) {
       debugPrint('Vespara Auth Error: $e');
       _error = e.toString();
@@ -143,25 +147,34 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _checkOnboardingStatus(String userId) async {
+    debugPrint('Vespara: Checking onboarding status for user: $userId');
     try {
       final response = await Supabase.instance.client
           .from('profiles')
-          .select('is_verified, onboarding_complete')
+          .select('id, email, is_verified, onboarding_complete')
           .eq('id', userId)
           .maybeSingle();
 
+      debugPrint('Vespara: Profile response: $response');
+
       if (mounted) {
-        setState(() {
-          // User has completed onboarding if onboarding_complete=true 
-          // OR is_verified=true (for legacy accounts)
-          _hasCompletedOnboarding = response != null &&
-              (response['onboarding_complete'] == true ||
-                  response['is_verified'] == true);
-        });
+        if (response == null) {
+          debugPrint('Vespara: No profile found for user $userId - showing onboarding');
+          setState(() {
+            _hasCompletedOnboarding = false;
+          });
+        } else {
+          final isComplete = response['onboarding_complete'] == true ||
+              response['is_verified'] == true;
+          debugPrint('Vespara: Profile found! onboarding_complete=${response['onboarding_complete']}, is_verified=${response['is_verified']}, isComplete=$isComplete');
+          setState(() {
+            _hasCompletedOnboarding = isComplete;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Vespara: Error checking onboarding: $e');
-      // If profile doesn't exist, show onboarding
+      // On error, don't assume - let user retry
       if (mounted) {
         setState(() {
           _hasCompletedOnboarding = false;
