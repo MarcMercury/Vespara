@@ -449,32 +449,44 @@ class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
     state = state.copyWith(gameState: LaneGameState.dealing, isLoading: true);
 
     try {
-      // Generate shuffled deck
+      // Generate shuffled deck - single shared deck for all players
       final deck = _generateDemoDeck();
       deck.shuffle();
 
-      final players = [...state.players];
       final deckList = [...deck];
+      final newPlayers = <LanePlayer>[];
 
-      // Deal 3 cards to each player
-      for (final player in players) {
+      // Deal 3 cards to each player from the single deck
+      // Each card is removed from the deck so no duplicates occur
+      for (final player in state.players) {
         final dealt = <LaneCard>[];
         for (int i = 0; i < 3 && deckList.isNotEmpty; i++) {
           dealt.add(deckList.removeAt(0));
         }
-        player.hand = dealt;
-        player.sortHand();
+        // Sort by desireIndex before assigning
+        dealt.sort((a, b) => a.desireIndex.compareTo(b.desireIndex));
+        
+        // Create a new LanePlayer instance with the dealt hand
+        newPlayers.add(LanePlayer(
+          id: player.id,
+          oduserId: player.oduserId,
+          displayName: player.displayName,
+          avatarColor: player.avatarColor,
+          playerOrder: player.playerOrder,
+          isHost: player.isHost,
+          hand: dealt,
+        ));
       }
 
       // Short delay for dealing animation
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // Draw first mystery card
+      // Draw first mystery card from remaining deck
       final mysteryCard = deckList.isNotEmpty ? deckList.removeAt(0) : null;
 
       state = state.copyWith(
         gameState: LaneGameState.playing,
-        players: players,
+        players: newPlayers,
         deck: deckList,
         mysteryCard: mysteryCard,
         isRevealed: false,
@@ -531,16 +543,34 @@ class LaneOfLustNotifier extends StateNotifier<LaneOfLustState> {
 
   void _handleSuccessfulPlacement(
       LanePlayer player, LaneCard card, int insertIndex,) {
-    final players = [...state.players];
-    final playerIndex = players.indexWhere((p) => p.id == player.id);
+    final playerIndex = state.players.indexWhere((p) => p.id == player.id);
 
     if (playerIndex == -1) return;
 
-    // Add card to hand and sort
-    players[playerIndex].hand.insert(insertIndex, card);
+    // Create new hand with card inserted at correct position
+    final oldPlayer = state.players[playerIndex];
+    final newHand = [...oldPlayer.hand];
+    newHand.insert(insertIndex, card);
+
+    // Create new player instance with updated hand
+    final updatedPlayer = LanePlayer(
+      id: oldPlayer.id,
+      oduserId: oldPlayer.oduserId,
+      displayName: oldPlayer.displayName,
+      avatarColor: oldPlayer.avatarColor,
+      playerOrder: oldPlayer.playerOrder,
+      isHost: oldPlayer.isHost,
+      hand: newHand,
+    );
+
+    // Build new players list with the updated player
+    final players = [
+      for (int i = 0; i < state.players.length; i++)
+        if (i == playerIndex) updatedPlayer else state.players[i],
+    ];
 
     // Check win condition
-    if (players[playerIndex].laneLength >= state.winTarget) {
+    if (updatedPlayer.laneLength >= state.winTarget) {
       state = state.copyWith(
         gameState: LaneGameState.gameOver,
         players: players,

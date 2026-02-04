@@ -352,8 +352,7 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       currentIndex: state.currentIndex + 1,
     );
 
-    // Reshuffle if we run out
-    _checkReshuffle();
+    // No reshuffling during a round - once shown, prompts are not repeated
   }
 
   /// Mark current prompt as passed
@@ -369,27 +368,12 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
       currentIndex: state.currentIndex + 1,
     );
 
-    // Reshuffle if we run out
-    _checkReshuffle();
+    // No reshuffling during a round - once shown, prompts are not repeated
   }
 
-  /// Check if we need to reshuffle
-  void _checkReshuffle() {
-    if (state.currentIndex >= state.shuffledDeck.length) {
-      // Reshuffle the deck
-      final shuffled = List<DtcPrompt>.from(state.shuffledDeck);
-      for (int i = shuffled.length - 1; i > 0; i--) {
-        final j = _random.nextInt(i + 1);
-        final temp = shuffled[i];
-        shuffled[i] = shuffled[j];
-        shuffled[j] = temp;
-      }
-      state = state.copyWith(
-        shuffledDeck: shuffled,
-        currentIndex: 0,
-      );
-    }
-  }
+  /// Check if there are more prompts available
+  /// Returns false if the deck is exhausted (no repeats in same round)
+  bool get hasMorePromptsInRound => state.currentIndex < state.shuffledDeck.length;
 
   /// Update prompt stats in database
   Future<void> _updatePromptStats(String promptId, bool wasCorrect) async {
