@@ -241,8 +241,15 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
                               ),
                             ],
                           ),
-                          child:
-                              const Text('🤡', style: TextStyle(fontSize: 80)),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/images/GAME ICONS/Down to Clown 2.png',
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                       ),
 
@@ -704,9 +711,14 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '🤡',
-              style: TextStyle(fontSize: 60),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/GAME ICONS/Down to Clown 2.png',
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+              ),
             ),
 
             const SizedBox(height: 32),
