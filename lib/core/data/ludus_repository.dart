@@ -331,25 +331,12 @@ class LudusRepository {
     } catch (e) {
       // Fallback to direct query
       try {
-        List<String> allowedLevels;
-        switch (maxHeat) {
-          case 'X':
-            allowedLevels = ['PG', 'PG-13', 'R', 'X'];
-            break;
-          case 'R':
-            allowedLevels = ['PG', 'PG-13', 'R'];
-            break;
-          case 'PG-13':
-            allowedLevels = ['PG', 'PG-13'];
-            break;
-          default:
-            allowedLevels = ['PG'];
-        }
-
+        // Return ONLY cards at the selected heat level
+        // This ensures X-rated games get X-rated content, not PG content
         final response = await _supabase
             .from('share_or_dare_cards')
             .select()
-            .inFilter('heat_level', allowedLevels)
+            .eq('heat_level', maxHeat)
             .limit(50);
 
         final cards = (response as List)

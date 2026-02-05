@@ -503,14 +503,28 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
 
   // ═════════════════════════════════════════════════════════════════════════
   // DEMO MODE CARDS
+  // Returns ONLY cards at the selected heat level
+  // When users select X-rated, they expect X-rated content, not PG content
   // ═════════════════════════════════════════════════════════════════════════
 
   List<ShareOrDareCard> _getDemoCards(HeatLevel maxHeat) {
-    final cards = <ShareOrDareCard>[];
     final random = Random();
+    
+    // Get ONLY cards at the selected heat level
+    switch (maxHeat) {
+      case HeatLevel.pg:
+        return _getPgCards(random);
+      case HeatLevel.pg13:
+        return _getPg13Cards(random);
+      case HeatLevel.r:
+        return _getRCards(random);
+      case HeatLevel.x:
+        return _getXCards(random);
+    }
+  }
 
-    // PG cards (always included)
-    cards.addAll([
+  List<ShareOrDareCard> _getPgCards(Random random) {
+    return [
       ShareOrDareCard(
           id: '${random.nextInt(99999)}',
           type: CardType.share,
@@ -576,10 +590,11 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
               'Do a fashion show walk across the room like you\'re on a runway.',
           heatLevel: HeatLevel.pg,
           category: ShareOrDareCategory.physical,),
-    ]);
+    ];
+  }
 
-    if (maxHeat.index >= HeatLevel.pg13.index) {
-      cards.addAll([
+  List<ShareOrDareCard> _getPg13Cards(Random random) {
+    return [
         ShareOrDareCard(
             id: '${random.nextInt(99999)}',
             type: CardType.share,
@@ -654,11 +669,11 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
             text: 'Caress the chest of another player very gently.',
             heatLevel: HeatLevel.pg13,
             category: ShareOrDareCategory.physical,),
-      ]);
-    }
+    ];
+  }
 
-    if (maxHeat.index >= HeatLevel.r.index) {
-      cards.addAll([
+  List<ShareOrDareCard> _getRCards(Random random) {
+    return [
         ShareOrDareCard(
             id: '${random.nextInt(99999)}',
             type: CardType.share,
@@ -853,12 +868,12 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
                 'What\'s the most intense emotional connection with a partner?',
             heatLevel: HeatLevel.r,
             category: ShareOrDareCategory.deep,),
-      ]);
-    }
+    ];
+  }
 
-    // X-rated (extreme) questions
-    if (maxHeat.index >= HeatLevel.x.index) {
-      cards.addAll([
+  // X-rated (extreme) questions
+  List<ShareOrDareCard> _getXCards(Random random) {
+    return [
         ShareOrDareCard(
             id: '${random.nextInt(99999)}',
             type: CardType.share,
@@ -1169,10 +1184,7 @@ class ShareOrDareNotifier extends StateNotifier<ShareOrDareState> {
                 'Sensual Squeeze: Choose 2 people to give you a 1-minute sensual squeeze, focusing on your breasts and ass.',
             heatLevel: HeatLevel.x,
             category: ShareOrDareCategory.kinky,),
-      ]);
-    }
-
-    return cards;
+    ];
   }
 }
 
