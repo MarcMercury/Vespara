@@ -3,8 +3,15 @@
 -- Ensures DB and Demo mode have identical content with proper ratings
 -- ============================================================================
 
--- First, clear existing cards and rebuild with complete set
+-- Clear existing cards first (before constraint changes)
 TRUNCATE TABLE public.share_or_dare_cards;
+
+-- Now drop the old constraint that may have wrong name
+ALTER TABLE public.share_or_dare_cards DROP CONSTRAINT IF EXISTS velvet_rope_cards_type_check;
+ALTER TABLE public.share_or_dare_cards DROP CONSTRAINT IF EXISTS share_or_dare_cards_type_check;
+
+-- Re-add the type constraint with correct name  
+ALTER TABLE public.share_or_dare_cards ADD CONSTRAINT share_or_dare_cards_type_check CHECK (type IN ('share', 'dare'));
 
 -- ============================================================================
 -- 🟢 PG (SOCIAL) - SHARES
