@@ -215,8 +215,20 @@ class WireNotifier extends StateNotifier<WireState> {
 
   /// Create or get direct conversation with another user
   Future<String?> getOrCreateDirectConversation(String otherUserId) async {
+    // Validate user is authenticated
+    if (_currentUserId.isEmpty) {
+      debugPrint('Error: Cannot create conversation - user not authenticated');
+      return null;
+    }
+    
+    // Validate other user ID
+    if (otherUserId.isEmpty) {
+      debugPrint('Error: Cannot create conversation - invalid other user ID');
+      return null;
+    }
+
     try {
-      // Check if conversation already exists
+      // Check if conversation already exists in local state
       final existing = state.conversations.firstWhere(
         (c) => !c.isGroup && c.matchId == otherUserId,
         orElse: () => WireConversation(
@@ -228,6 +240,21 @@ class WireNotifier extends StateNotifier<WireState> {
 
       if (existing.id.isNotEmpty) {
         return existing.id;
+      }
+
+      // Check if conversation exists in database (might not be loaded yet)
+      final existingInDb = await _supabase
+          .from('conversations')
+          .select('id')
+          .eq('user_id', _currentUserId)
+          .eq('match_id', otherUserId)
+          .eq('conversation_type', 'direct')
+          .maybeSingle();
+      
+      if (existingInDb != null && existingInDb['id'] != null) {
+        final existingId = existingInDb['id'] as String;
+        await loadConversations(); // Refresh local state
+        return existingId;
       }
 
       // Create new direct conversation
@@ -261,6 +288,7 @@ class WireNotifier extends StateNotifier<WireState> {
       return conversationId;
     } catch (e) {
       debugPrint('Error creating conversation: $e');
+      state = state.copyWith(error: 'Failed to create conversation: $e');
       return null;
     }
   }

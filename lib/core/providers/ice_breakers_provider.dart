@@ -545,6 +545,11 @@ class IceBreakersNotifier extends StateNotifier<IceBreakersState> {
     );
   }
 
+  /// Finish game early (user chose to exit)
+  Future<void> finishEarly() async {
+    await _endGame();
+  }
+
   /// End the game
   Future<void> _endGame() async {
     state = state.copyWith(phase: IceGamePhase.results);

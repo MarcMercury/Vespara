@@ -664,8 +664,6 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
         return Colors.green;
       case HeatFilter.spicy:
         return Colors.orange;
-      case HeatFilter.xxx:
-        return Colors.red;
       case HeatFilter.all:
         return VesparaColors.glow;
     }
@@ -677,8 +675,6 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
         return '🌸';
       case HeatFilter.spicy:
         return '🌶️';
-      case HeatFilter.xxx:
-        return '🔥';
       case HeatFilter.all:
         return '🎲';
     }

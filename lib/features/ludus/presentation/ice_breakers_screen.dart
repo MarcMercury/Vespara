@@ -990,55 +990,97 @@ class _IceBreakersScreenState extends ConsumerState<IceBreakersScreen>
 
   Widget _buildStatusBar(IceBreakersState state) => Container(
         padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
           children: [
-            // Cards completed
+            // Finish button row
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text('✅', style: TextStyle(fontSize: 20)),
-                const SizedBox(width: 6),
-                Text(
-                  '${state.completedCards.length}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: IceColors.success,
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _cardTimer?.cancel();
+                    ref.read(iceBreakersProvider.notifier).finishEarly();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(VesparaIcons.confirm, color: Colors.white70, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Finish',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-
-            // Card number
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${state.currentCardIndex + 1}/${min(state.deck.length, 20)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-
-            // Cards skipped
+            const SizedBox(height: 8),
+            // Stats row
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '${state.skippedCards.length}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: IceColors.skip,
+                // Cards completed
+                Row(
+                  children: [
+                    const Text('✅', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${state.completedCards.length}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: IceColors.success,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Card number
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${state.currentCardIndex + 1}/${min(state.deck.length, 20)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                const Text('⏭️', style: TextStyle(fontSize: 20)),
+
+                // Cards skipped
+                Row(
+                  children: [
+                    Text(
+                      '${state.skippedCards.length}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: IceColors.skip,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text('⏭️', style: TextStyle(fontSize: 20)),
+                  ],
+                ),
               ],
             ),
           ],

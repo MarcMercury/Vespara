@@ -102,10 +102,9 @@ class DtcUserStats {
 
 /// Heat filter options
 enum HeatFilter {
-  all('all', 'All Levels', 'Everything from PG to XXX'),
-  mild('mild', 'Mild 🌸', 'PG and PG-13 only'),
-  spicy('spicy', 'Spicy 🌶️', 'R and X rated'),
-  xxx('xxx', 'XXX 🔥', 'Maximum heat');
+  all('all', 'All Levels', 'Everything from Mild to Spicy'),
+  mild('Mild', 'Mild 🌸', 'Flirty & suggestive'),
+  spicy('Spicy', 'Spicy 🌶️', 'Explicit & kinky');
 
   final String value;
   final String label;
@@ -280,18 +279,16 @@ class DtcGameNotifier extends StateNotifier<DtcGameState> {
 
     switch (state.heatFilter) {
       case HeatFilter.mild:
+        // Mild = PG, PG-13, R (or 'Mild' in new schema)
         filteredPrompts = filteredPrompts
-            .where((p) => ['PG', 'PG-13'].contains(p.heatLevel))
+            .where((p) => ['PG', 'PG-13', 'R', 'Mild'].contains(p.heatLevel))
             .toList();
         break;
       case HeatFilter.spicy:
+        // Spicy = X, XXX (or 'Spicy' in new schema)
         filteredPrompts = filteredPrompts
-            .where((p) => ['R', 'X'].contains(p.heatLevel))
+            .where((p) => ['X', 'XXX', 'Spicy'].contains(p.heatLevel))
             .toList();
-        break;
-      case HeatFilter.xxx:
-        filteredPrompts =
-            filteredPrompts.where((p) => p.heatLevel == 'XXX').toList();
         break;
       case HeatFilter.all:
         // Keep all
