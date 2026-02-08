@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -567,14 +568,14 @@ class WireNotifier extends StateNotifier<WireState> {
   /// Send a media message (image, video, voice, file)
   Future<WireMessage?> sendMediaMessage({
     required String conversationId,
-    required File file,
+    required Uint8List fileBytes,
+    required String filename,
     required MessageType type,
     String? caption,
     String? replyToId,
     List<double>? waveform, // For voice notes
   }) async {
     final clientMessageId = const Uuid().v4();
-    final filename = file.path.split('/').last;
 
     // Create optimistic message
     final optimisticMessage = WireMessage(
@@ -596,13 +597,13 @@ class WireNotifier extends StateNotifier<WireState> {
       // Upload file to storage
       final storagePath =
           '$_currentUserId/$conversationId/$clientMessageId-$filename';
-      await _supabase.storage.from('chat-media').upload(storagePath, file);
+      await _supabase.storage.from('chat-media').uploadBinary(storagePath, fileBytes);
 
       final mediaUrl =
           _supabase.storage.from('chat-media').getPublicUrl(storagePath);
 
       // Get file metadata
-      final fileBytes = await file.length();
+      final fileSizeBytes = fileBytes.length;
 
       // Create message
       final response = await _supabase
@@ -614,7 +615,7 @@ class WireNotifier extends StateNotifier<WireState> {
             'message_type': type.name,
             'media_url': mediaUrl,
             'media_filename': filename,
-            'media_filesize_bytes': fileBytes,
+            'media_filesize_bytes': fileSizeBytes,
             'media_waveform': waveform,
             'reply_to_id': replyToId,
             'client_message_id': clientMessageId,
@@ -635,14 +636,16 @@ class WireNotifier extends StateNotifier<WireState> {
   /// Send a voice note
   Future<WireMessage?> sendVoiceNote({
     required String conversationId,
-    required File audioFile,
+    required Uint8List audioBytes,
+    required String filename,
     required int durationSeconds,
     List<double>? waveform,
     String? replyToId,
   }) async =>
       sendMediaMessage(
         conversationId: conversationId,
-        file: audioFile,
+        fileBytes: audioBytes,
+        filename: filename,
         type: MessageType.voice,
         replyToId: replyToId,
         waveform: waveform,

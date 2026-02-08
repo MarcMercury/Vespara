@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -728,9 +726,12 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
     final file = await picker.pickImage(source: source);
 
     if (file != null) {
+      final bytes = await file.readAsBytes();
+      final filename = file.name;
       await ref.read(wireProvider.notifier).sendMediaMessage(
             conversationId: widget.conversation.id,
-            file: File(file.path),
+            fileBytes: bytes,
+            filename: filename,
             type: MessageType.image,
             replyToId: _replyingTo?.id,
           );
