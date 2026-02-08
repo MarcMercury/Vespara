@@ -648,7 +648,12 @@ class _ExclusiveOnboardingScreenState
 
   bool _isOver21() {
     if (_birthDate == null) return false;
-    final age = DateTime.now().difference(_birthDate!).inDays ~/ 365;
+    final now = DateTime.now();
+    final bd = _birthDate!;
+    int age = now.year - bd.year;
+    if (now.month < bd.month || (now.month == bd.month && now.day < bd.day)) {
+      age--;
+    }
     return age >= 21;
   }
 

@@ -150,7 +150,7 @@ DECLARE
     v_hours INT[];
 BEGIN
     -- Get most common active hours from recent sessions
-    SELECT ARRAY_AGG(DISTINCT hour ORDER BY count DESC)
+    SELECT ARRAY_AGG(hour ORDER BY count DESC)
     INTO v_hours
     FROM (
         SELECT 

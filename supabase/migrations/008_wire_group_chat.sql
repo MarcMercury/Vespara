@@ -182,6 +182,7 @@ CREATE POLICY "Users can view messages in their conversations" ON public.message
 
 CREATE POLICY "Users can send messages to their conversations" ON public.messages
     FOR INSERT WITH CHECK (
+        auth.uid() = sender_id AND
         EXISTS (
             SELECT 1 FROM public.conversation_participants cp 
             WHERE cp.conversation_id = conversation_id 
@@ -695,7 +696,13 @@ CREATE POLICY "Users can upload chat media" ON storage.objects
 CREATE POLICY "Users can view chat media in their conversations" ON storage.objects
     FOR SELECT USING (
         bucket_id = 'chat-media' AND
-        auth.uid() IS NOT NULL
+        auth.uid() IS NOT NULL AND
+        EXISTS (
+            SELECT 1 FROM public.conversation_participants cp
+            WHERE cp.user_id = auth.uid()
+            AND cp.is_active = TRUE
+            AND cp.conversation_id::text = (storage.foldername(name))[2]
+        )
     );
 
 -- ============================================

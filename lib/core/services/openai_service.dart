@@ -164,7 +164,7 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
         'max_tokens': AppConstants.maxTokens,
         'temperature': 0.7,
       }),
-    );
+    ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

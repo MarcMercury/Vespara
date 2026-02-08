@@ -586,7 +586,7 @@ Join me on Vespara!
     );
   }
 
-  void _editEvent(VesparaEvent event) async {
+  Future<void> _editEvent(VesparaEvent event) async {
     final result = await Navigator.push<VesparaEvent>(
       context,
       MaterialPageRoute(
@@ -604,7 +604,7 @@ Join me on Vespara!
     }
   }
 
-  void _duplicateEvent(VesparaEvent event) async {
+  Future<void> _duplicateEvent(VesparaEvent event) async {
     final duplicatedEvent = event.copyWith(
       id: 'event-${DateTime.now().millisecondsSinceEpoch}',
       title: '${event.title} (Copy)',

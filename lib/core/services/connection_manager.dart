@@ -39,6 +39,7 @@ class ConnectionManager {
   // Reconnection
   Timer? _reconnectTimer;
   Timer? _healthCheckTimer;
+  StreamSubscription<AuthState>? _authSubscription;
   final Duration _healthCheckInterval = const Duration(seconds: 30);
   final int _maxConsecutiveFailures = 3;
 
@@ -67,7 +68,8 @@ class ConnectionManager {
     _startHealthChecks();
 
     // Listen to auth state changes
-    _supabase.auth.onAuthStateChange.listen((data) {
+    _authSubscription?.cancel();
+    _authSubscription = _supabase.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.signedOut ||
           data.event == AuthChangeEvent.tokenRefreshed) {
         if (data.session == null) {
@@ -83,6 +85,7 @@ class ConnectionManager {
 
   /// Dispose resources
   void dispose() {
+    _authSubscription?.cancel();
     _reconnectTimer?.cancel();
     _healthCheckTimer?.cancel();
     _statusController.close();

@@ -17,7 +17,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXTRACT(YEAR FROM AGE(NOW(), birth_date)) >= 21;
 END;
-$$ LANGUAGE plpgsql IMMUTABLE;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================
 -- 2. RELATIONSHIP STATUS (Multi-Select)

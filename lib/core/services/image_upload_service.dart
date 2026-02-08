@@ -133,15 +133,30 @@ class ImageUploadService {
       final String extension = file.path.split('.').last.toLowerCase();
       final String fullPath = '$path.$extension';
 
+      // Validate file extension
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic'];
+      if (!allowedExtensions.contains(extension)) {
+        throw Exception('Unsupported image format: $extension');
+      }
+
       // Read file bytes
       final Uint8List bytes = await file.readAsBytes();
+
+      // Validate file size (max 10MB)
+      const maxSizeBytes = 10 * 1024 * 1024;
+      if (bytes.length > maxSizeBytes) {
+        throw Exception('Image too large. Maximum size is 10MB.');
+      }
+
+      // Map extension to proper MIME type
+      final mimeType = extension == 'jpg' ? 'image/jpeg' : 'image/$extension';
 
       // Upload to Supabase
       await _supabase.storage.from(bucket).uploadBinary(
             fullPath,
             bytes,
             fileOptions: FileOptions(
-              contentType: 'image/$extension',
+              contentType: mimeType,
               upsert: true,
             ),
           );

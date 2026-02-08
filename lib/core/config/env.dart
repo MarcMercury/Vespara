@@ -32,8 +32,7 @@ class Env {
 
   static String get supabaseUrl => _supabaseUrlDef.isNotEmpty
       ? _supabaseUrlDef
-      : (dotenv.env['SUPABASE_URL'] ??
-          'https://nazcwlfirmbuxuzlzjtz.supabase.co');
+      : (dotenv.env['SUPABASE_URL'] ?? '');
 
   static String get supabaseAnonKey => _supabaseAnonKeyDef.isNotEmpty
       ? _supabaseAnonKeyDef
@@ -57,7 +56,7 @@ class Env {
   // ═══════════════════════════════════════════════════════════════════════════
 
   static String get googleProjectId =>
-      dotenv.env['GOOGLE_PROJECT_ID'] ?? 'vespara-484323';
+      dotenv.env['GOOGLE_PROJECT_ID'] ?? '';
 
   static String get googleClientId => dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
 

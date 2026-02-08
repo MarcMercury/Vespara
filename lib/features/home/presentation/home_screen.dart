@@ -274,7 +274,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildQuickStats(dynamic analytics) => Container(
+  Widget _buildQuickStats(dynamic analytics) {
+    if (analytics == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              VesparaColors.glow.withOpacity(0.15),
+              VesparaColors.surface,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildQuickStat('—', 'Matches', Icons.favorite),
+            Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
+            _buildQuickStat('—', 'Active', Icons.chat_bubble),
+            Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
+            _buildQuickStat('—', 'Dates', Icons.calendar_today),
+            Container(width: 1, height: 30, color: VesparaColors.glow.withOpacity(0.2)),
+            _buildQuickStat('—', 'Rate', Icons.trending_up),
+          ],
+        ),
+      );
+    }
+    return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -312,6 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
       );
+  }
 
   Widget _buildQuickStat(String value, String label, IconData icon) => Column(
         children: [

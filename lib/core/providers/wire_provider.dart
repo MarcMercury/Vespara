@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1359,7 +1358,11 @@ class WireNotifier extends StateNotifier<WireState> {
 
 final wireProvider = StateNotifierProvider<WireNotifier, WireState>((ref) {
   final supabase = Supabase.instance.client;
-  final userId = supabase.auth.currentUser?.id ?? '';
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null || userId.isEmpty) {
+    // Return a notifier that won't load data until user is authenticated
+    return WireNotifier(supabase, '');
+  }
   return WireNotifier(supabase, userId);
 });
 
@@ -1371,8 +1374,8 @@ final activeMessagesProvider = Provider<List<WireMessage>>(
 final activeParticipantsProvider = Provider<List<ConversationParticipant>>(
     (ref) => ref.watch(wireProvider).activeParticipants,);
 
-/// Provider for conversation list
-final conversationsProvider = Provider<List<WireConversation>>(
+/// Provider for conversation list (Wire-specific)
+final wireConversationsProvider = Provider<List<WireConversation>>(
     (ref) => ref.watch(wireProvider).activeConversations,);
 
 /// Provider for group conversations only

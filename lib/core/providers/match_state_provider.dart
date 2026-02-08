@@ -292,7 +292,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
   }
 
   /// Update match priority (move between Nest categories)
-  void updateMatchPriority(String matchId, MatchPriority newPriority) {
+  Future<void> updateMatchPriority(String matchId, MatchPriority newPriority) async {
     final updatedMatches = state.matches.map((m) {
       if (m.id == matchId) {
         return m.copyWith(priority: newPriority);
@@ -301,10 +301,33 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
     }).toList();
 
     state = state.copyWith(matches: updatedMatches);
+
+    // Persist to database
+    if (_currentUserId != null) {
+      try {
+        final isUserA = state.matches.any((m) => m.id == matchId);
+        // Determine which column to update based on user position in match
+        final matchData = await _supabase
+            .from('matches')
+            .select('user_a_id')
+            .eq('id', matchId)
+            .maybeSingle();
+        if (matchData != null) {
+          final column = matchData['user_a_id'] == _currentUserId
+              ? 'user_a_priority'
+              : 'user_b_priority';
+          await _supabase.from('matches').update({
+            column: _priorityToString(newPriority),
+          }).eq('id', matchId);
+        }
+      } catch (e) {
+        debugPrint('MatchState: Error persisting priority: $e');
+      }
+    }
   }
 
   /// Archive a match
-  void archiveMatch(String matchId) {
+  Future<void> archiveMatch(String matchId) async {
     final updatedMatches = state.matches.map((m) {
       if (m.id == matchId) {
         return m.copyWith(isArchived: true);
@@ -313,6 +336,27 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
     }).toList();
 
     state = state.copyWith(matches: updatedMatches);
+
+    // Persist to database
+    if (_currentUserId != null) {
+      try {
+        final matchData = await _supabase
+            .from('matches')
+            .select('user_a_id')
+            .eq('id', matchId)
+            .maybeSingle();
+        if (matchData != null) {
+          final column = matchData['user_a_id'] == _currentUserId
+              ? 'user_a_archived'
+              : 'user_b_archived';
+          await _supabase.from('matches').update({
+            column: true,
+          }).eq('id', matchId);
+        }
+      } catch (e) {
+        debugPrint('MatchState: Error persisting archive: $e');
+      }
+    }
   }
 
   /// Send a message to a match (creates/updates conversation)

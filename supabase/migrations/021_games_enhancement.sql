@@ -268,14 +268,32 @@ ALTER TABLE tag_drama_round_ratings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Scene cards readable by all" ON tag_drama_scene_cards
   FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Sessions accessible by all" ON tag_drama_sessions
-  FOR ALL TO authenticated USING (true);
+CREATE POLICY "Sessions viewable by participants" ON tag_drama_sessions
+  FOR SELECT TO authenticated USING (
+    host_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM tag_drama_players WHERE session_id = id AND user_id = auth.uid())
+  );
 
-CREATE POLICY "Players accessible by all" ON tag_drama_players
-  FOR ALL TO authenticated USING (true);
+CREATE POLICY "Sessions manageable by host" ON tag_drama_sessions
+  FOR INSERT TO authenticated WITH CHECK (host_id = auth.uid());
 
-CREATE POLICY "Ratings accessible by all" ON tag_drama_round_ratings
-  FOR ALL TO authenticated USING (true);
+CREATE POLICY "Sessions updatable by host" ON tag_drama_sessions
+  FOR UPDATE TO authenticated USING (host_id = auth.uid());
+
+CREATE POLICY "Players can view session players" ON tag_drama_players
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Players can manage own record" ON tag_drama_players
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Players can update own record" ON tag_drama_players
+  FOR UPDATE TO authenticated USING (user_id = auth.uid());
+
+CREATE POLICY "Ratings viewable by all" ON tag_drama_round_ratings
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Users can insert own ratings" ON tag_drama_round_ratings
+  FOR INSERT TO authenticated WITH CHECK (true);
 
 -- Allow anon for demo mode
 CREATE POLICY "Scene cards readable by anon" ON tag_drama_scene_cards

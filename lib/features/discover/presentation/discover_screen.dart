@@ -244,12 +244,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         ),
       );
     }
-
-    setState(() {
-      _currentIndex++;
-      _dragOffset = 0;
-      _dragRotation = 0;
-    });
   }
 
   void _onDragUpdate(DragUpdateDetails details) {

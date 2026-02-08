@@ -2,7 +2,21 @@ import 'package:geolocator/geolocator.dart';
 
 /// Location Service for Tonight Mode
 class LocationService {
-  /// Get current position
+  /// Check whether we have location permission (without requesting)
+  static Future<bool> hasPermission() async {
+    final permission = await Geolocator.checkPermission();
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
+
+  /// Request location permission (call from UI layer only)
+  static Future<bool> requestPermission() async {
+    final permission = await Geolocator.requestPermission();
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
+
+  /// Get current position (requires permission already granted)
   static Future<Position?> getCurrentPosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -13,23 +27,19 @@ class LocationService {
       return null;
     }
 
-    // Check permissions
+    // Check permissions (do NOT request here - let UI handle that)
     permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return null;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       return null;
     }
 
-    // Get position
+    // Get position with timeout
     return Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
-    );
+    ).timeout(const Duration(seconds: 15), onTimeout: () {
+      throw Exception('Location request timed out');
+    });
   }
 
   /// Calculate distance between two points in kilometers

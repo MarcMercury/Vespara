@@ -5,6 +5,9 @@ import 'package:http/http.dart' as http;
 class ZipCodeService {
   static const String _baseUrl = 'https://api.zippopotam.us/us';
 
+  /// In-memory cache for ZIP lookups
+  static final Map<String, ZipCodeResult> _cache = {};
+
   /// Looks up city and state for a given US ZIP code
   /// Returns null if ZIP code is invalid or not found
   static Future<ZipCodeResult?> lookup(String zipCode) async {
@@ -12,6 +15,11 @@ class ZipCodeService {
     final cleanZip = zipCode.trim();
     if (!RegExp(r'^\d{5}$').hasMatch(cleanZip)) {
       return null;
+    }
+
+    // Check cache first
+    if (_cache.containsKey(cleanZip)) {
+      return _cache[cleanZip];
     }
 
     try {
@@ -27,12 +35,14 @@ class ZipCodeService {
 
         if (places != null && places.isNotEmpty) {
           final place = places[0];
-          return ZipCodeResult(
+          final result = ZipCodeResult(
             city: place['place name'] ?? '',
             state: place['state abbreviation'] ?? '',
             stateFull: place['state'] ?? '',
             zipCode: cleanZip,
           );
+          _cache[cleanZip] = result;
+          return result;
         }
       }
       return null;

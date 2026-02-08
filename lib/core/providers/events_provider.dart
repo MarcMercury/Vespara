@@ -830,7 +830,10 @@ class EventsNotifier extends StateNotifier<EventsState> {
 final eventsProvider =
     StateNotifierProvider<EventsNotifier, EventsState>((ref) {
   final supabase = Supabase.instance.client;
-  final userId = supabase.auth.currentUser?.id ?? '';
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null || userId.isEmpty) {
+    return EventsNotifier(supabase, '');
+  }
   return EventsNotifier(supabase, userId);
 });
 

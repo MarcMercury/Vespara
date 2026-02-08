@@ -49,10 +49,38 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
     }
   }
 
+  /// Allowed setting column names — prevents arbitrary column writes
+  static const _allowedKeys = {
+    'notify_new_messages',
+    'notify_new_matches',
+    'notify_date_reminders',
+    'notify_ai_insights',
+    'show_online_status',
+    'read_receipts',
+    'profile_visible',
+    'is_paused',
+    'paused_at',
+    'pause_reason',
+    'min_age',
+    'max_age',
+    'max_distance',
+    'show_me',
+    'relationship_types',
+    'google_calendar_connected',
+    'google_calendar_token',
+    'apple_calendar_connected',
+    'phone',
+  };
+
   /// Update a single setting
   Future<void> updateSetting(String key, dynamic value) async {
     final currentSettings = state.valueOrNull;
     if (currentSettings == null) return;
+
+    if (!_allowedKeys.contains(key)) {
+      debugPrint('[userSettingsProvider] Rejected unknown key: $key');
+      return;
+    }
 
     state = const AsyncValue.loading();
 
@@ -74,6 +102,10 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
   Future<void> updateSettings(Map<String, dynamic> updates) async {
     final currentSettings = state.valueOrNull;
     if (currentSettings == null) return;
+
+    // Filter out any disallowed keys
+    updates.removeWhere((key, _) => key != 'updated_at' && !_allowedKeys.contains(key));
+    if (updates.isEmpty) return;
 
     state = const AsyncValue.loading();
 

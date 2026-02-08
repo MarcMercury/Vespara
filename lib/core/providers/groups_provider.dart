@@ -67,6 +67,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     _initialize();
   }
   final SupabaseClient? _supabase;
+  final List<RealtimeChannel> _subscriptions = [];
 
   void _initialize() {
     // Load initial data
@@ -82,32 +83,47 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
     final userId = _supabase?.auth.currentUser?.id;
     if (userId == null || _supabase == null) return;
 
+    // Cancel existing subscriptions
+    for (final sub in _subscriptions) {
+      sub.unsubscribe();
+    }
+    _subscriptions.clear();
+
     // Subscribe to group changes
-    _supabase
+    final groupSub = _supabase
         .from('group_members')
         .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .listen((data) {
-          loadGroups();
-        });
+        .eq('user_id', userId);
+    groupSub.listen((data) {
+      loadGroups();
+    });
 
     // Subscribe to invitation changes
-    _supabase
+    final inviteSub = _supabase
         .from('group_invitations')
         .stream(primaryKey: ['id'])
-        .eq('invitee_id', userId)
-        .listen((data) {
-          loadPendingInvitations();
-        });
+        .eq('invitee_id', userId);
+    inviteSub.listen((data) {
+      loadPendingInvitations();
+    });
 
     // Subscribe to notifications
-    _supabase
+    final notifSub = _supabase
         .from('notifications')
         .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .listen((data) {
-          loadNotifications();
-        });
+        .eq('user_id', userId);
+    notifSub.listen((data) {
+      loadNotifications();
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _subscriptions) {
+      sub.unsubscribe();
+    }
+    _subscriptions.clear();
+    super.dispose();
   }
 
   /// Load user's groups

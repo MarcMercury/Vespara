@@ -171,22 +171,27 @@ class AIService {
         'stream': true,
       });
 
-      final response = await http.Client().send(request);
+      final client = http.Client();
+      try {
+        final response = await client.send(request);
 
-      await for (final chunk in response.stream.transform(utf8.decoder)) {
-        for (final line in chunk.split('\n')) {
-          if (line.startsWith('data: ') && !line.contains('[DONE]')) {
-            try {
-              final json = jsonDecode(line.substring(6));
-              final content = json['choices']?[0]?['delta']?['content'];
-              if (content != null) {
-                yield Success(content);
+        await for (final chunk in response.stream.transform(utf8.decoder)) {
+          for (final line in chunk.split('\n')) {
+            if (line.startsWith('data: ') && !line.contains('[DONE]')) {
+              try {
+                final json = jsonDecode(line.substring(6));
+                final content = json['choices']?[0]?['delta']?['content'];
+                if (content != null) {
+                  yield Success(content);
+                }
+              } catch (e) {
+                // Skip malformed chunks
               }
-            } catch (e) {
-              // Skip malformed chunks
             }
           }
         }
+      } finally {
+        client.close();
       }
     } catch (e, stack) {
       yield Failure(_transformError(e, stack));

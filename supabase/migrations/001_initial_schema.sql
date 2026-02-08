@@ -600,7 +600,7 @@ BEGIN
     link_code := replace(replace(replace(link_code, '+', 'X'), '/', 'Y'), '=', '');
     
     -- Insert the vouch link
-    INSERT INTO public.vouch_links (user_id, link_code, expires_at)
+    INSERT INTO public.vouch_links (user_id, code, expires_at)
     VALUES (user_id, link_code, NOW() + INTERVAL '7 days');
     
     -- Return the full link
@@ -618,10 +618,10 @@ BEGIN
     FROM public.roster_matches
     WHERE user_id = p_user_id
       AND is_archived = false
-      AND pipeline_stage NOT IN ('ghosted', 'legacy')
+      AND pipeline NOT IN ('on_way_out', 'legacy')
     ORDER BY 
         momentum_score DESC,
-        last_interaction_at DESC NULLS LAST
+        last_contact_date DESC NULLS LAST
     LIMIT batch_size;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -642,7 +642,7 @@ BEGIN
     END IF;
     
     -- Base score from interaction recency
-    days_since_interaction := EXTRACT(DAY FROM (NOW() - COALESCE(match_record.last_interaction_at, match_record.created_at)));
+    days_since_interaction := EXTRACT(DAY FROM (NOW() - COALESCE(match_record.last_contact_date, match_record.created_at)));
     
     IF days_since_interaction <= 1 THEN
         score := 100;
@@ -665,8 +665,8 @@ BEGIN
     
     score := score + LEAST(message_count * 2, 20);
     
-    -- Apply interest level multiplier
-    score := score * (match_record.interest_level / 5.0);
+    -- Apply momentum multiplier
+    score := score * GREATEST(match_record.momentum_score, 0.1);
     
     RETURN LEAST(score, 100);
 END;
@@ -678,7 +678,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     UPDATE public.roster_matches
     SET momentum_score = calculate_momentum_score(NEW.match_id),
-        last_interaction_at = NOW()
+        last_contact_date = NOW()
     WHERE id = NEW.match_id;
     RETURN NEW;
 END;
@@ -694,10 +694,10 @@ BEGIN
     WHERE user_id = p_user_id
       AND is_archived = false
       AND (
-          last_interaction_at IS NULL 
-          OR last_interaction_at < NOW() - (days_threshold || ' days')::INTERVAL
+      AND (last_contact_date IS NULL 
+          OR last_contact_date < NOW() - (days_threshold || ' days')::INTERVAL
       )
-    ORDER BY last_interaction_at ASC NULLS FIRST;
+    ORDER BY last_contact_date ASC NULLS FIRST;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -712,7 +712,7 @@ RETURNS TABLE(
     user_id UUID,
     display_name TEXT,
     distance_km DOUBLE PRECISION,
-    checked_in_at TIMESTAMPTZ
+    created_at TIMESTAMPTZ
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -721,20 +721,20 @@ BEGIN
         p.display_name,
         -- Haversine formula for distance calculation
         (6371 * acos(
-            cos(radians(p_latitude)) * cos(radians(tl.latitude)) *
-            cos(radians(tl.longitude) - radians(p_longitude)) +
-            sin(radians(p_latitude)) * sin(radians(tl.latitude))
+            cos(radians(p_latitude)) * cos(radians(tl.lat)) *
+            cos(radians(tl.lng) - radians(p_longitude)) +
+            sin(radians(p_latitude)) * sin(radians(tl.lat))
         )) AS distance_km,
-        tl.checked_in_at
+        tl.created_at
     FROM public.tonight_locations tl
     JOIN public.profiles p ON tl.user_id = p.id
-    WHERE tl.is_visible = true
+    WHERE tl.is_active = true
       AND tl.user_id != p_user_id
-      AND tl.checked_out_at IS NULL
+      AND tl.expires_at > NOW()
       AND (6371 * acos(
-            cos(radians(p_latitude)) * cos(radians(tl.latitude)) *
-            cos(radians(tl.longitude) - radians(p_longitude)) +
-            sin(radians(p_latitude)) * sin(radians(tl.latitude))
+            cos(radians(p_latitude)) * cos(radians(tl.lat)) *
+            cos(radians(tl.lng) - radians(p_longitude)) +
+            sin(radians(p_latitude)) * sin(radians(tl.lat))
         )) <= p_radius_km
     ORDER BY distance_km ASC;
 END;
@@ -744,6 +744,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- GRANT PERMISSIONS
 -- ============================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;

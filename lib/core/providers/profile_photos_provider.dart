@@ -354,12 +354,13 @@ class ProfilePhotosNotifier extends StateNotifier<ProfilePhotosState> {
     if (_userId == null) return false;
 
     try {
-      // Update positions
-      for (int i = 0; i < photoIdsInOrder.length; i++) {
-        await _supabase
-            .from('profile_photos')
-            .update({'position': i + 1}).eq('id', photoIdsInOrder[i]);
-      }
+      // Update positions in parallel instead of sequentially
+      await Future.wait([
+        for (int i = 0; i < photoIdsInOrder.length; i++)
+          _supabase
+              .from('profile_photos')
+              .update({'position': i + 1}).eq('id', photoIdsInOrder[i]),
+      ]);
 
       await loadMyPhotos();
       return true;

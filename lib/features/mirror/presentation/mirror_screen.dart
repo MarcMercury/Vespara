@@ -33,16 +33,13 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  UserAnalytics? _cachedAnalytics;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // Analytics will be loaded via provider
   }
 
-  UserAnalytics? get _analytics => _cachedAnalytics;
+  UserAnalytics? get _analytics => ref.read(userAnalyticsProvider).valueOrNull;
 
   void _navigateToEditProfile(UserProfile profile) {
     Navigator.of(context)
@@ -67,9 +64,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Load analytics from provider
-    final analyticsAsync = ref.watch(userAnalyticsProvider);
-    _cachedAnalytics = analyticsAsync.valueOrNull;
+    // Watch analytics from provider (triggers rebuilds)
+    ref.watch(userAnalyticsProvider);
 
     return Scaffold(
       backgroundColor: VesparaColors.background,

@@ -1,139 +1,181 @@
 // Supabase Edge Function: Vouch Chain Link Handler
 // Handles vouch link generation and redemption
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  "https://vespara.vercel.app",
+  "https://www.vespara.co",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 }
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const MAX_CODE_LENGTH = 24;
 
 function generateVouchCode(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  for (let i = 0; i < 12; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return code
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const array = new Uint8Array(12);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => chars[byte % chars.length]).join("");
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  const corsHeaders = getCorsHeaders(req);
+
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error('Missing authorization header')
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing required environment variables");
+      return new Response(
+        JSON.stringify({ error: "Server misconfigured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
     if (authError || !user) {
-      throw new Error('Invalid token')
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const url = new URL(req.url)
-    const action = url.searchParams.get('action')
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action");
 
-    if (action === 'generate') {
-      // Generate a new vouch link
-      const code = generateVouchCode()
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7) // 7 day expiry
+    if (action === "generate") {
+      const code = generateVouchCode();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
 
       const { data, error } = await supabase
-        .from('vouch_links')
+        .from("vouch_links")
         .insert({
           user_id: user.id,
           code,
           expires_at: expiresAt.toISOString(),
         })
         .select()
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) throw error;
 
-      const link = `https://vespara.co/vouch/${code}`
+      const link = `https://vespara.co/vouch/${code}`;
 
       return new Response(
         JSON.stringify({ link, code, expiresAt: expiresAt.toISOString() }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else if (action === "redeem") {
+      const body = await req.json();
+      const { code } = body;
 
-    } else if (action === 'redeem') {
-      // Redeem a vouch link
-      const body = await req.json()
-      const { code } = body
-
-      if (!code) {
-        throw new Error('Missing vouch code')
+      if (!code || typeof code !== "string") {
+        return new Response(
+          JSON.stringify({ error: "Missing vouch code" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      // Find the link
+      // Sanitize code - alphanumeric only
+      const safeCode = code.slice(0, MAX_CODE_LENGTH).replace(/[^a-zA-Z0-9]/g, "");
+      if (safeCode.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Invalid vouch code format" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const { data: link, error: linkError } = await supabase
-        .from('vouch_links')
-        .select('*')
-        .eq('code', code)
-        .is('used_by', null)
-        .gt('expires_at', new Date().toISOString())
-        .single()
+        .from("vouch_links")
+        .select("*")
+        .eq("code", safeCode)
+        .is("used_by", null)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
 
-      if (linkError || !link) {
-        throw new Error('Invalid or expired vouch link')
+      if (linkError) throw linkError;
+
+      if (!link) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired vouch link" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      // Can't vouch for yourself
       if (link.user_id === user.id) {
-        throw new Error('You cannot vouch for yourself')
+        return new Response(
+          JSON.stringify({ error: "You cannot vouch for yourself" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      // Create the vouch
       const { error: vouchError } = await supabase
-        .from('vouches')
+        .from("vouches")
         .insert({
           voucher_id: user.id,
           vouchee_id: link.user_id,
-          message: 'Vouched via link',
-        })
+          message: "Vouched via link",
+        });
 
       if (vouchError) {
-        if (vouchError.code === '23505') {
-          throw new Error('You have already vouched for this person')
+        if (vouchError.code === "23505") {
+          return new Response(
+            JSON.stringify({ error: "You have already vouched for this person" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
-        throw vouchError
+        throw vouchError;
       }
 
-      // Mark link as used
       await supabase
-        .from('vouch_links')
+        .from("vouch_links")
         .update({
           used_by: user.id,
           used_at: new Date().toISOString(),
         })
-        .eq('id', link.id)
+        .eq("id", link.id);
 
       return new Response(
-        JSON.stringify({ success: true, message: 'Vouch recorded successfully' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-
+        JSON.stringify({ success: true, message: "Vouch recorded successfully" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     } else {
-      throw new Error('Invalid action. Use ?action=generate or ?action=redeem')
+      return new Response(
+        JSON.stringify({ error: "Invalid action. Use ?action=generate or ?action=redeem" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-
   } catch (error) {
+    console.error("Vouch chain error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      JSON.stringify({ error: "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-})
+});

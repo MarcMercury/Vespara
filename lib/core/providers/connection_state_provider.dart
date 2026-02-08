@@ -84,19 +84,17 @@ class VesparaEvent {
 
 class EventAttendee {
   const EventAttendee({
-    required String userId,
+    required this.userId,
     required this.name,
     this.avatar,
     this.status = AttendeeStatus.going,
     required this.joinedAt,
-  }) : oderId = userId;
-  final String oderId;
+  });
+  final String userId;
   final String name;
   final String? avatar;
   final AttendeeStatus status;
   final DateTime joinedAt;
-
-  String get userId => oderId;
 }
 
 enum AttendeeStatus { going, maybe, invited }

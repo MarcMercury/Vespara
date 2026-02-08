@@ -113,6 +113,9 @@ class SupabaseService {
   }
 
   static Future<RosterMatch> createMatch(RosterMatch match) async {
+    if (currentUser == null) {
+      throw Exception('User must be authenticated to create a match');
+    }
     final response = await _client
         .from('roster_matches')
         .insert(match.toJson()..['user_id'] = currentUser!.id)
@@ -235,8 +238,9 @@ class SupabaseService {
         .from('user_analytics')
         .select()
         .eq('user_id', currentUser!.id)
-        .single();
+        .maybeSingle();
 
+    if (response == null) return null;
     return UserAnalytics.fromJson(response);
   }
 

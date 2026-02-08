@@ -1,51 +1,105 @@
 // Supabase Edge Function: Strategist AI
 // Handles OpenAI requests for dating advice
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  "https://vespara.vercel.app",
+  "https://www.vespara.co",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 }
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')!
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const MAX_NAME_LENGTH = 50;
+const MAX_CONTEXT_LENGTH = 1000;
+const MAX_QUESTION_LENGTH = 500;
+const MAX_HISTORY_LENGTH = 2000;
 
 interface StrategistRequest {
-  matchName: string
-  matchContext: string
-  userQuestion: string
-  conversationHistory?: string
+  matchName: string;
+  matchContext: string;
+  userQuestion: string;
+  conversationHistory?: string;
 }
 
 serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  const corsHeaders = getCorsHeaders(req);
+
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Verify auth
-    const authHeader = req.headers.get('Authorization')
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error('Missing authorization header')
+      return new Response(
+        JSON.stringify({ error: "Missing authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing required environment variables");
+      return new Response(
+        JSON.stringify({ error: "Server misconfigured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
     if (authError || !user) {
-      throw new Error('Invalid token')
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const body: StrategistRequest = await req.json()
-    const { matchName, matchContext, userQuestion, conversationHistory } = body
+    const body: StrategistRequest = await req.json();
+    const { matchName, matchContext, userQuestion, conversationHistory } = body;
 
-    // Build the prompt
+    // Validate
+    if (!matchName || typeof matchName !== "string") {
+      return new Response(
+        JSON.stringify({ error: "matchName is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (!userQuestion || typeof userQuestion !== "string") {
+      return new Response(
+        JSON.stringify({ error: "userQuestion is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Sanitize
+    const safeName = matchName.slice(0, MAX_NAME_LENGTH).replace(/[<>"'`]/g, "");
+    const safeContext = (matchContext || "").slice(0, MAX_CONTEXT_LENGTH).replace(/[<>"'`]/g, "");
+    const safeQuestion = userQuestion.slice(0, MAX_QUESTION_LENGTH).replace(/[<>"'`]/g, "");
+    const safeHistory = conversationHistory ? conversationHistory.slice(0, MAX_HISTORY_LENGTH).replace(/[<>"'`]/g, "") : undefined;
+
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) {
+      console.error("OPENAI_API_KEY not set");
+      return new Response(
+        JSON.stringify({ error: "Server misconfigured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const systemPrompt = `You are "The Strategist" - an elite dating advisor within Vespara, a premium relationship management app. You provide sharp, actionable advice with wit and sophistication.
 
 Your personality:
@@ -60,59 +114,66 @@ Guidelines:
 - Always provide specific, actionable next steps
 - Reference the match's context when relevant
 - Use sophisticated vocabulary but stay accessible
-- End with a memorable one-liner when appropriate`
+- End with a memorable one-liner when appropriate`;
 
-    const userPrompt = `Match: ${matchName}
-Context: ${matchContext}
-${conversationHistory ? `Recent conversation:\n${conversationHistory}\n` : ''}
-User's question: ${userQuestion}
+    const userPrompt = `Match: ${safeName}
+Context: ${safeContext}
+${safeHistory ? `Recent conversation:\n${safeHistory}\n` : ""}
+User's question: ${safeQuestion}
 
-Provide strategic advice.`
+Provide strategic advice.`;
 
-    // Call OpenAI
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${openaiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: "gpt-4-turbo",
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
         ],
         temperature: 0.8,
         max_tokens: 500,
       }),
-    })
+    });
 
-    const openaiData = await openaiResponse.json()
-    
+    const openaiData = await openaiResponse.json();
+
     if (!openaiResponse.ok) {
-      throw new Error(openaiData.error?.message || 'OpenAI API error')
+      console.error("OpenAI API error:", openaiData.error?.message);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate advice" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const advice = openaiData.choices[0]?.message?.content || 'Unable to generate advice.'
-    const tokensUsed = openaiData.usage?.total_tokens || 0
+    const advice = openaiData.choices[0]?.message?.content || "Unable to generate advice.";
+    const tokensUsed = openaiData.usage?.total_tokens || 0;
 
-    // Log to database
-    await supabase.from('strategist_logs').insert({
-      user_id: user.id,
-      query: userQuestion,
-      response: advice,
-      tokens_used: tokensUsed,
-    })
+    // Log to database (non-blocking, don't fail if log fails)
+    try {
+      await supabase.from("strategist_logs").insert({
+        user_id: user.id,
+        query: safeQuestion,
+        response: advice,
+        tokens_used: tokensUsed,
+      });
+    } catch (logError) {
+      console.error("Failed to log strategist usage:", logError);
+    }
 
     return new Response(
       JSON.stringify({ advice, tokensUsed }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
+    console.error("Strategist error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      JSON.stringify({ error: "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-})
+});

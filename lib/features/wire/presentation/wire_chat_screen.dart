@@ -39,13 +39,17 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
   bool _isRecordingVoice = false;
   bool _isLoadingMore = false;
 
+  /// Cached notifier ref so we can call it safely in dispose()
+  late final WireNotifier _wireNotifier;
+
   @override
   void initState() {
     super.initState();
+    _wireNotifier = ref.read(wireProvider.notifier);
 
     // Open conversation in provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(wireProvider.notifier).openConversation(widget.conversation.id);
+      _wireNotifier.openConversation(widget.conversation.id);
     });
 
     // Listen for text changes
@@ -57,8 +61,8 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
 
   @override
   void dispose() {
-    ref.read(wireProvider.notifier).closeConversation();
-    ref.read(wireProvider.notifier).stopTyping(widget.conversation.id);
+    _wireNotifier.closeConversation();
+    _wireNotifier.stopTyping(widget.conversation.id);
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _scrollController.dispose();

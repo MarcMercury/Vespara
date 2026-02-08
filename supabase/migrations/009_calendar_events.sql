@@ -82,16 +82,16 @@ CREATE TRIGGER update_calendar_events_updated_at
 -- 4. ENHANCED EVENTS TABLE (Add missing columns)
 -- ============================================
 
--- Add cost and visibility columns to events table
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS cost_per_person DECIMAL(10,2);
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT FALSE;
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS collect_guest_info BOOLEAN DEFAULT FALSE;
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS send_reminders BOOLEAN DEFAULT TRUE;
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS title_style TEXT DEFAULT 'classic';
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS end_time TIMESTAMPTZ;
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS venue_address TEXT;
-ALTER TABLE public.events ADD COLUMN IF NOT EXISTS host_name TEXT;
+-- Add cost and visibility columns to group_events table
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS cost_per_person DECIMAL(10,2);
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS collect_guest_info BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS send_reminders BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS title_style TEXT DEFAULT 'classic';
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS end_time TIMESTAMPTZ;
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS venue_address TEXT;
+ALTER TABLE public.group_events ADD COLUMN IF NOT EXISTS host_name TEXT;
 
 -- ============================================
 -- 5. EVENT RSVPS TABLE
@@ -99,7 +99,7 @@ ALTER TABLE public.events ADD COLUMN IF NOT EXISTS host_name TEXT;
 
 CREATE TABLE IF NOT EXISTS public.event_rsvps (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    event_id UUID NOT NULL REFERENCES public.group_events(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'invited', -- 'invited', 'going', 'maybe', 'cant_go'
     user_name TEXT,
@@ -122,9 +122,9 @@ CREATE POLICY "Users can view event RSVPs" ON public.event_rsvps
     FOR SELECT USING (
         auth.uid() = user_id OR
         EXISTS (
-            SELECT 1 FROM public.events e 
+            SELECT 1 FROM public.group_events e 
             WHERE e.id = event_id 
-            AND (e.host_id = auth.uid() OR e.is_private = false)
+            AND (e.created_by = auth.uid() OR e.is_public = true)
         )
     );
 

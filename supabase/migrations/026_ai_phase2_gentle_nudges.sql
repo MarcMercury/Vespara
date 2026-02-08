@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS nudge_history (
 CREATE INDEX idx_nudge_history_user ON nudge_history(user_id);
 CREATE INDEX idx_nudge_history_type ON nudge_history(nudge_type);
 CREATE INDEX idx_nudge_history_shown ON nudge_history(shown_at DESC);
-CREATE UNIQUE INDEX idx_nudge_history_unique ON nudge_history(user_id, nudge_id);
+CREATE UNIQUE INDEX idx_nudge_history_unique ON nudge_history(user_id, nudge_id, action);
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- FUNCTIONS: Generate Couple ID
@@ -135,14 +135,15 @@ BEGIN
     -- Get message statistics
     SELECT 
         COUNT(*) as total_messages,
-        COUNT(*) FILTER (WHERE sender_id = (SELECT user1_id FROM matches WHERE id = p_match_id)) as user1_messages,
-        COUNT(*) FILTER (WHERE sender_id = (SELECT user2_id FROM matches WHERE id = p_match_id)) as user2_messages,
+        COUNT(*) FILTER (WHERE sender_id = (SELECT user_a_id FROM matches WHERE id = p_match_id)) as user1_messages,
+        COUNT(*) FILTER (WHERE sender_id = (SELECT user_b_id FROM matches WHERE id = p_match_id)) as user2_messages,
         AVG(LENGTH(content)) as avg_length,
         MIN(created_at) as first_message,
         MAX(created_at) as last_message
     INTO v_message_stats
-    FROM messages
-    WHERE match_id = p_match_id;
+    FROM messages m
+    JOIN conversations c ON m.conversation_id = c.id
+    WHERE c.match_id = p_match_id;
     
     -- Calculate stage based on messages
     IF v_message_stats.total_messages = 0 THEN
@@ -319,9 +320,17 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION trigger_update_relationship_metrics()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_match_id UUID;
 BEGIN
-    -- Update metrics for this match
-    PERFORM update_relationship_metrics(NEW.match_id);
+    -- Look up match_id via conversation
+    SELECT c.match_id INTO v_match_id
+    FROM conversations c
+    WHERE c.id = NEW.conversation_id;
+    
+    IF v_match_id IS NOT NULL THEN
+        PERFORM update_relationship_metrics(v_match_id);
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

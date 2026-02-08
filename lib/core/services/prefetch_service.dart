@@ -297,10 +297,12 @@ class PrefetchService {
   Future<void> onAppOpen(String userId) async {
     debugPrint('PrefetchService: App opened, starting predictive prefetch');
 
-    // Prefetch in priority order
-    await prefetchMatches(userId);
-    await prefetchNearbyProfiles(userId: userId);
-    await prefetchAllGames();
+    // Prefetch in parallel since these are independent operations
+    await Future.wait([
+      prefetchMatches(userId),
+      prefetchNearbyProfiles(userId: userId),
+      prefetchAllGames(),
+    ]);
   }
 
   /// Called when user views a match - prefetch conversation and profile

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' show Random;
 import 'package:flutter/foundation.dart';
 import 'result.dart';
@@ -94,7 +93,7 @@ Future<T> withRetry<T>(
       final jitter = config.jitterFactor > 0
           ? (delay.inMilliseconds *
               config.jitterFactor *
-              (0.5 - _random.nextDouble() * 2))
+              (_random.nextDouble() - 0.5) * 2)
           : 0;
       final actualDelay = Duration(
         milliseconds: (delay.inMilliseconds + jitter)
@@ -247,17 +246,17 @@ bool _isRetryableError(dynamic error, RetryConfig config) {
     return config.isRetryable!(error);
   }
 
-  // Default retryable errors
-  if (error is SocketException) return true;
+  // Default retryable errors (string-based to support web platform)
   if (error is TimeoutException) return true;
-  if (error is HttpException) return true;
 
-  // Check for Supabase/PostgrestException codes
+  // Check for network/socket/http errors via string matching
+  // (dart:io types not available on web)
   final errorString = error.toString().toLowerCase();
   if (errorString.contains('socket') ||
       errorString.contains('timeout') ||
       errorString.contains('connection') ||
       errorString.contains('network') ||
+      errorString.contains('http') ||
       errorString.contains('503') ||
       errorString.contains('502') ||
       errorString.contains('504')) {
@@ -270,14 +269,13 @@ bool _isRetryableError(dynamic error, RetryConfig config) {
 AppError _defaultErrorTransformer(dynamic error, StackTrace? stackTrace) {
   final errorString = error.toString().toLowerCase();
 
-  // Network errors
-  if (error is SocketException ||
-      errorString.contains('socket') ||
+  // Network errors (string-based to support web platform)
+  if (errorString.contains('socket') ||
       errorString.contains('network')) {
     return AppError.network(originalError: error, stackTrace: stackTrace);
   }
 
-  // Timeout
+  // Timeout (string-based to support web platform)
   if (error is TimeoutException || errorString.contains('timeout')) {
     return AppError.timeout(originalError: error);
   }
