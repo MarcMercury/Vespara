@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/group.dart';
@@ -15,7 +16,9 @@ import '../../../core/providers/plan_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/services/match_insights_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
+import '../../../core/widgets/premium_effects.dart';
 import '../../ludus/presentation/tags_screen.dart' show TagScreen;
 import '../../planner/presentation/planner_screen.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
@@ -91,27 +94,32 @@ class _NestScreenState extends ConsumerState<NestScreen>
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: VesparaColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const GroupsSection(),
-                      const SizedBox(height: 16),
-                      _buildStats(),
-                      _buildTabBar(),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.5,
-                        child: _buildTabBarView(),
-                      ),
-                    ],
+        body: VesparaAnimatedBackground(
+          enableParticles: true,
+          particleCount: 12,
+          auroraIntensity: 0.6,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const GroupsSection(),
+                        const SizedBox(height: 16),
+                        _buildStats(),
+                        _buildTabBar(),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: _buildTabBarView(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -125,20 +133,23 @@ class _NestScreenState extends ConsumerState<NestScreen>
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
             ),
-            const Column(
+            Column(
               children: [
-                Text(
-                  'THE SANCTUM',
-                  style: TextStyle(
+                VesparaNeonText(
+                  text: 'THE SANCTUM',
+                  style: GoogleFonts.cinzel(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 4,
                     color: VesparaColors.primary,
                   ),
+                  glowColor: const Color(0xFF4ECDC4),
+                  glowRadius: 12,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   'Your connections, organized',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
                   ),

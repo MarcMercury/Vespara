@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,6 +9,8 @@ import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/events_provider.dart';
 import '../../../core/providers/plan_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/premium_effects.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE PLAN - Enhanced Planner Screen
@@ -264,23 +267,28 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
     return Scaffold(
       backgroundColor: VesparaColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildQuickStats(planState),
-            _buildTabBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildCalendarTab(planState),
-                  _buildFindDateTab(planState),
-                  _buildIntegrationsTab(planState),
-                ],
+      body: VesparaAnimatedBackground(
+        enableParticles: true,
+        particleCount: 12,
+        auroraIntensity: 0.6,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildQuickStats(planState),
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildCalendarTab(planState),
+                    _buildFindDateTab(planState),
+                    _buildIntegrationsTab(planState),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -302,29 +310,21 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             ),
             Column(
               children: [
-                const Text(
-                  'THE PLAN',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 4,
-                    color: VesparaColors.primary,
-                  ),
+              VesparaNeonText(
+                text: 'THE PLAN',
+                style: GoogleFonts.cinzel(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 4,
+                  color: VesparaColors.primary,
                 ),
-                Text(
-                  _getMonthYear(_selectedDate),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: VesparaColors.secondary,
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              onPressed: _showCalendarPicker,
-              icon: const Icon(Icons.calendar_month,
-                  color: VesparaColors.secondary,),
-            ),
+                glowColor: const Color(0xFFCE93D8),
+                glowRadius: 12,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _getMonthYear(_selectedDate),
+                style: GoogleFonts.inter(
           ],
         ),
       );

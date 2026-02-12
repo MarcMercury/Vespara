@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/events_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/premium_effects.dart';
 import '../widgets/event_tile_card.dart';
 import 'event_creation_screen.dart';
 import 'event_detail_screen.dart';
@@ -98,21 +101,26 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: VesparaColors.background,
-        body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              // Welcome header with gradient
-              SliverToBoxAdapter(child: _buildHeader()),
+        body: VesparaAnimatedBackground(
+          enableParticles: true,
+          particleCount: 15,
+          auroraIntensity: 0.7,
+          child: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                // Welcome header with gradient
+                SliverToBoxAdapter(child: _buildHeader()),
 
-              // Filter chips
-              SliverToBoxAdapter(child: _buildFilterBar()),
+                // Filter chips
+                SliverToBoxAdapter(child: _buildFilterBar()),
 
-              // Event grid
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: _buildEventGrid(),
-              ),
-            ],
+                // Event grid
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: _buildEventGrid(),
+                ),
+              ],
+            ),
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -164,15 +172,16 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
             const SizedBox(height: 16),
 
             // Welcome message
-            Text(
-              'Welcome back $_userName!',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w300,
-                fontStyle: FontStyle.italic,
+            VesparaNeonText(
+              text: 'Welcome back $_userName!',
+              style: GoogleFonts.cinzel(
+                fontSize: 28,
+                fontWeight: FontWeight.w400,
                 color: VesparaColors.primary,
                 letterSpacing: 0.5,
               ),
+              glowColor: const Color(0xFFFFB74D),
+              glowRadius: 15,
             ),
 
             const SizedBox(height: 8),

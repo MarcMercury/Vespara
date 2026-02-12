@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/premium_effects.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE SHREDDER - Module 7
@@ -135,14 +138,17 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: VesparaColors.background,
-        body: SafeArea(
+      body: VesparaAnimatedBackground(
+        enableParticles: true,
+        particleCount: 10,
+        auroraIntensity: 0.5,
+        child: SafeArea(
           child: Column(
             children: [
               _buildHeader(),
               Expanded(child: _buildContent()),
             ],
           ),
-        ),
       );
 
   Widget _buildHeader() => Padding(
@@ -154,29 +160,23 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
             ),
-            const Column(
-              children: [
-                Text(
-                  'THE SHREDDER',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 4,
-                    color: VesparaColors.error,
-                  ),
+          Column(
+            children: [
+              VesparaNeonText(
+                text: 'THE SHREDDER',
+                style: GoogleFonts.cinzel(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 4,
+                  color: VesparaColors.error,
                 ),
-                Text(
-                  'Time to let go',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: VesparaColors.secondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              onPressed: _showHistoryDialog,
+                glowColor: VesparaColors.error,
+                glowRadius: 12,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Time to let go',
+                style: GoogleFonts.inter(
               icon: const Icon(Icons.history, color: VesparaColors.secondary),
             ),
           ],

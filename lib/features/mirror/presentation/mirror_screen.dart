@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/supabase_service.dart';
@@ -13,6 +14,8 @@ import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/profile_photos_provider.dart';
 import '../../../core/providers/user_settings_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/premium_effects.dart';
 import '../widgets/qr_connect_modal.dart';
 import 'edit_profile_screen.dart';
 
@@ -69,22 +72,27 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
     return Scaffold(
       backgroundColor: VesparaColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildTabBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildBrutalTruthTab(), // TRUTH
-                  _buildBuildTab(), // BUILD - Combined Profile + Build + Photos
-                  _buildSettingsTab(), // SETTINGS
-                ],
+      body: VesparaAnimatedBackground(
+        enableParticles: true,
+        particleCount: 15,
+        auroraIntensity: 0.7,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildBrutalTruthTab(), // TRUTH
+                    _buildBuildTab(), // BUILD - Combined Profile + Build + Photos
+                    _buildSettingsTab(), // SETTINGS
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -99,20 +107,23 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
             ),
-            const Column(
+            Column(
               children: [
-                Text(
-                  'THE MIRROR',
-                  style: TextStyle(
+                VesparaNeonText(
+                  text: 'THE MIRROR',
+                  style: GoogleFonts.cinzel(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 4,
                     color: VesparaColors.primary,
                   ),
+                  glowColor: VesparaColors.glow,
+                  glowRadius: 12,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   'Face yourself',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
                     fontStyle: FontStyle.italic,

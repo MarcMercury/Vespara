@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/domain/models/tag_rating.dart';
 import '../../../core/domain/models/tags_game.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/premium_effects.dart';
 import '../widgets/tag_rating_display.dart';
 import 'dice_breakers_screen.dart';
 import 'down_to_clown_screen.dart';
@@ -100,12 +103,17 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: VesparaColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(child: _buildGamesList()),
-            ],
+        body: VesparaAnimatedBackground(
+          enableParticles: true,
+          particleCount: 15,
+          auroraIntensity: 0.8,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(child: _buildGamesList()),
+              ],
+            ),
           ),
         ),
       );
@@ -119,20 +127,23 @@ class _TagScreenState extends ConsumerState<TagScreen> {
               onPressed: () => Navigator.pop(context),
               icon: const Icon(VesparaIcons.back, color: VesparaColors.primary),
             ),
-            const Column(
+            Column(
               children: [
-                Text(
-                  'TAG',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+                VesparaNeonText(
+                  text: 'TAG',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 4,
                     color: VesparaColors.tagsYellow,
                   ),
+                  glowColor: VesparaColors.tagsYellow,
+                  glowRadius: 12,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   "You're It 🎯",
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
                   ),
@@ -250,7 +261,10 @@ class _TagScreenState extends ConsumerState<TagScreen> {
   Widget _buildGameCard(TagsGame game) {
     final gameColor = _getGameAccentColor(game.title);
     
-    return GestureDetector(
+    return Vespara3DTiltCard(
+        maxTiltDegrees: 7,
+        borderRadius: 20,
+        glowColor: gameColor,
         onTap: () => _showGameDetails(game),
         child: Container(
           decoration: BoxDecoration(

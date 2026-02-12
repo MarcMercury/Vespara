@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/discoverable_profile.dart';
@@ -11,6 +12,8 @@ import '../../../core/providers/connection_state_provider.dart'
         EventAttendee;
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/premium_effects.dart';
 import '../../events/presentation/events_home_screen.dart';
 
 /// Supabase client provider for discover screen
@@ -449,21 +452,26 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: VesparaColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildMatchTypeToggle(),
-              Expanded(
-                child: _selectedTabIndex == 2
-                    ? _buildMetIrlContent()
-                    : _buildCardStack(),
-              ),
-              if (_selectedTabIndex != 2) ...[
-                _buildActionButtons(),
-                const SizedBox(height: 16),
+        body: VesparaAnimatedBackground(
+          enableParticles: true,
+          particleCount: 18,
+          auroraIntensity: 0.7,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildMatchTypeToggle(),
+                Expanded(
+                  child: _selectedTabIndex == 2
+                      ? _buildMetIrlContent()
+                      : _buildCardStack(),
+                ),
+                if (_selectedTabIndex != 2) ...[
+                  _buildActionButtons(),
+                  const SizedBox(height: 16),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       );
@@ -479,18 +487,21 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             ),
             Column(
               children: [
-                const Text(
-                  'DISCOVER',
-                  style: TextStyle(
+                VesparaNeonText(
+                  text: 'DISCOVER',
+                  style: GoogleFonts.cinzel(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 4,
                     color: VesparaColors.primary,
                   ),
+                  glowColor: const Color(0xFFFF6B9D),
+                  glowRadius: 12,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '${_profiles.length - _currentIndex} profiles nearby',
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
                   ),
