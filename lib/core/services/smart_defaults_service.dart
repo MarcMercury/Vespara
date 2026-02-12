@@ -311,10 +311,10 @@ class SmartDefaultsService {
         );
       }
 
-      if ((profile['interests'] as List?)?.isEmpty ?? true) {
+      if ((profile['interest_tags'] as List?)?.isEmpty ?? true) {
         suggestions.add(
           ProfileSuggestion(
-            field: 'interests',
+            field: 'interest_tags',
             message: 'Add interests to find better matches',
             priority: 2,
           ),

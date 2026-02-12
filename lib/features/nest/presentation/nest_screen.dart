@@ -15,6 +15,7 @@ import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/plan_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/services/match_insights_service.dart';
+import '../../../core/services/deep_connection_engine.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
@@ -1612,6 +1613,7 @@ class _MatchProfileSheet extends ConsumerStatefulWidget {
 class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
   UserProfile? _profile;
   MatchInsight? _insight;
+  DeepCompatibility? _deepCompatibility;
   bool _isLoadingProfile = true;
   bool _isLoadingInsight = true;
   late TextEditingController _notesController;
@@ -1670,6 +1672,20 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
     } catch (e) {
       debugPrint('Error loading insight: $e');
       setState(() => _isLoadingInsight = false);
+    }
+
+    // Load deep compatibility in parallel
+    try {
+      final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+      if (currentUserId != null) {
+        final deepCompat = await DeepConnectionEngine.instance
+            .scoreCompatibility(currentUserId, widget.match.matchedUserId);
+        if (mounted) {
+          setState(() => _deepCompatibility = deepCompat);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading deep compatibility: $e');
     }
   }
 
@@ -2106,6 +2122,142 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
                   style: const TextStyle(fontSize: 12, color: VesparaColors.primary),
                 ),
               )).toList(),
+            ),
+          ],
+
+          // Deep compatibility breakdown
+          if (_deepCompatibility != null) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VesparaColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.analytics, size: 16, color: VesparaColors.glow),
+                      const SizedBox(width: 8),
+                      Text(
+                        _deepCompatibility!.chemistryType,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.glow,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${(_deepCompatibility!.overallScore * 100).round()}% match',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: VesparaColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Top dimension scores
+                  ..._deepCompatibility!.dimensions
+                      .where((d) => d.score > 0)
+                      .take(4)
+                      .map((dim) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              dim.name,
+                              style: const TextStyle(fontSize: 11, color: VesparaColors.secondary),
+                            ),
+                            Text(
+                              '${(dim.score * 100).round()}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: dim.score > 0.7
+                                    ? VesparaColors.success
+                                    : dim.score > 0.4
+                                        ? VesparaColors.tagsYellow
+                                        : VesparaColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: dim.score,
+                            minHeight: 3,
+                            backgroundColor: VesparaColors.surface,
+                            color: dim.score > 0.7
+                                ? VesparaColors.success
+                                : dim.score > 0.4
+                                    ? VesparaColors.tagsYellow
+                                    : VesparaColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                  if (_deepCompatibility!.topStrengths.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _deepCompatibility!.topStrengths.take(3).map((s) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.success.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '✓ $s',
+                          style: const TextStyle(fontSize: 10, color: VesparaColors.success),
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                  if (_deepCompatibility!.potentialFrictions.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _deepCompatibility!.potentialFrictions.take(2).map((f) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '⚡ $f',
+                          style: const TextStyle(fontSize: 10, color: VesparaColors.warning),
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                  if (_deepCompatibility!.connectionNarrative.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _deepCompatibility!.connectionNarrative,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: VesparaColors.secondary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ],

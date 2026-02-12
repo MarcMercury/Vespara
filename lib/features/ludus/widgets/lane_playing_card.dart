@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/providers/lane_of_lust_provider.dart';
@@ -5,446 +7,209 @@ import 'lane_card_illustrations.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// LANE OF LUST - Enhanced Playing Card Widget
-/// Luxurious, sexy, alluring card design with smooth edges and illustrations
+/// Luxurious card design with flip animation and better readability
 /// ════════════════════════════════════════════════════════════════════════════
 
-class LanePlayingCard extends StatelessWidget {
-  final LaneCard card;
-  final bool isRevealed;
-  final bool isSmall;
-  final bool isDragging;
-  final bool showGlow;
+// ═══════════════════════════════════════════════════════════════════════════
+// LANE CARD — SMALL (used in the player's lane timeline)
+// ═══════════════════════════════════════════════════════════════════════════
 
-  const LanePlayingCard({
+class LaneCardSmall extends StatelessWidget {
+  final LaneCard card;
+  final bool highlighted;
+
+  const LaneCardSmall({
     super.key,
     required this.card,
-    this.isRevealed = true,
-    this.isSmall = false,
-    this.isDragging = false,
-    this.showGlow = true,
+    this.highlighted = false,
   });
 
-  // Card dimensions
-  double get width => isSmall ? 95 : (isDragging ? 155 : 175);
-  double get height => isSmall ? 140 : (isDragging ? 225 : 250);
-  double get borderRadius => isSmall ? 12 : 16;
-  double get innerRadius => isSmall ? 9 : 13;
+  static const double cardWidth = 72;
+  static const double cardHeight = 108;
 
   @override
   Widget build(BuildContext context) {
-    final displayColor = isRevealed ? card.indexColor : const Color(0xFF9B59B6);
-    final illustration = getIllustrationForCard(card.text);
-    
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: width,
-      height: height,
+    final color = card.indexColor;
+
+    return Container(
+      width: cardWidth,
+      height: cardHeight,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        border: Border.all(
+          color: highlighted ? const Color(0xFFFFD700) : color.withOpacity(0.6),
+          width: highlighted ? 2.5 : 1.5,
+        ),
         boxShadow: [
-          // Outer shadow for depth
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
-            blurRadius: isDragging ? 20 : 12,
-            offset: Offset(isDragging ? 4 : 2, isDragging ? 8 : 4),
-            spreadRadius: isDragging ? 2 : 0,
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 6,
+            offset: const Offset(1, 3),
           ),
-          // Colored glow
-          if (showGlow)
+          if (highlighted)
             BoxShadow(
-              color: displayColor.withOpacity(isRevealed ? 0.35 : 0.25),
-              blurRadius: 24,
+              color: const Color(0xFFFFD700).withOpacity(0.4),
+              blurRadius: 12,
               spreadRadius: 2,
             ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(9),
         child: Stack(
           children: [
-            // Main card background with gradient
-            _buildCardBackground(displayColor),
-            
-            // Decorative border
-            _buildDecorativeBorder(displayColor),
-            
-            // Inner content area
-            _buildInnerContent(displayColor, illustration),
-            
-            // Card corners with suit-like symbols
-            _buildCornerDecorations(displayColor),
-            
-            // Glossy overlay
-            _buildGlossOverlay(),
-          ],
-        ),
-      ),
-    );
-  }
+            // Subtle gradient background
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    color.withOpacity(0.06),
+                  ],
+                ),
+              ),
+            ),
 
-  Widget _buildCardBackground(Color displayColor) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Colors.grey.shade50,
-            Colors.grey.shade100,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDecorativeBorder(Color displayColor) {
-    return Container(
-      margin: EdgeInsets.all(isSmall ? 2 : 3),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(innerRadius),
-        border: Border.all(
-          color: displayColor.withOpacity(0.8),
-          width: isSmall ? 2 : 3,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInnerContent(Color displayColor, LaneIllustration illustration) {
-    return Container(
-      margin: EdgeInsets.all(isSmall ? 4 : 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(innerRadius - 2),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isRevealed
-              ? [
-                  displayColor.withOpacity(0.08),
-                  displayColor.withOpacity(0.03),
-                  displayColor.withOpacity(0.08),
-                ]
-              : [
-                  const Color(0xFF9B59B6).withOpacity(0.1),
-                  const Color(0xFF6C3483).withOpacity(0.05),
-                  const Color(0xFF9B59B6).withOpacity(0.1),
-                ],
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(isSmall ? 6 : 10),
-        child: Column(
-          children: [
-            // Top: Index badge
-            _buildIndexBadge(displayColor),
-            
-            SizedBox(height: isSmall ? 4 : 8),
-            
-            // Center: Illustration
-            Expanded(
-              flex: 3,
-              child: Center(
-                child: Container(
-                  padding: EdgeInsets.all(isSmall ? 4 : 8),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: displayColor.withOpacity(0.08),
-                    border: Border.all(
-                      color: displayColor.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: LaneCardIllustration(
-                    illustration: illustration,
-                    color: displayColor.withOpacity(0.7),
-                    size: isSmall ? 32 : 52,
+            // Top-left: desire index badge
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${card.desireIndex}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.2,
                   ),
                 ),
               ),
             ),
-            
-            SizedBox(height: isSmall ? 2 : 6),
-            
-            // Card text
-            Expanded(
-              flex: 2,
-              child: _buildCardText(displayColor),
-            ),
-            
-            SizedBox(height: isSmall ? 2 : 4),
-            
-            // Category badge
-            _buildCategoryBadge(),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildIndexBadge(Color displayColor) {
-    return Align(
-      alignment: Alignment.topLeft,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isSmall ? 6 : 10,
-          vertical: isSmall ? 3 : 5,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isRevealed
-                ? [displayColor, displayColor.withOpacity(0.8)]
-                : [const Color(0xFF9B59B6), const Color(0xFF6C3483)],
-          ),
-          borderRadius: BorderRadius.circular(isSmall ? 6 : 8),
-          boxShadow: [
-            BoxShadow(
-              color: displayColor.withOpacity(0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Text(
-          isRevealed ? '${card.desireIndex}' : '?',
-          style: TextStyle(
-            fontSize: isSmall ? 14 : 20,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: 1,
-            shadows: [
-              Shadow(
-                color: Colors.black.withOpacity(0.3),
-                offset: const Offset(0, 1),
-                blurRadius: 2,
+            // Center illustration
+            Positioned.fill(
+              top: 22,
+              bottom: 28,
+              child: Center(
+                child: LaneCardIllustration(
+                  illustration: getIllustrationForCard(card.text),
+                  color: color.withOpacity(0.5),
+                  size: 28,
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+            ),
 
-  Widget _buildCardText(Color displayColor) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmall ? 2 : 4,
-        vertical: isSmall ? 2 : 4,
-      ),
-      decoration: BoxDecoration(
-        color: displayColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: displayColor.withOpacity(0.1),
-          width: 0.5,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          card.text,
-          style: TextStyle(
-            fontSize: isSmall ? 7 : 11,
-            fontWeight: FontWeight.w600,
-            color: isRevealed 
-                ? displayColor.withOpacity(0.85) 
-                : const Color(0xFF9B59B6).withOpacity(0.85),
-            height: 1.2,
-            letterSpacing: 0.2,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: isSmall ? 3 : 4,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-    );
-  }
+            // Bottom: card text
+            Positioned(
+              left: 4,
+              right: 4,
+              bottom: 4,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  card.text,
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w600,
+                    color: color.withOpacity(0.9),
+                    height: 1.15,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
 
-  Widget _buildCategoryBadge() {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmall ? 6 : 10,
-        vertical: isSmall ? 3 : 5,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            card.category.color.withOpacity(0.15),
-            card.category.color.withOpacity(0.25),
+            // Gloss
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 30,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(9)),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.4),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(isSmall ? 4 : 6),
-        border: Border.all(
-          color: card.category.color.withOpacity(0.4),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        card.category.displayName,
-        style: TextStyle(
-          fontSize: isSmall ? 7 : 10,
-          fontWeight: FontWeight.w700,
-          color: card.category.color,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCornerDecorations(Color displayColor) {
-    final cornerWidget = _CornerDecoration(
-      color: displayColor.withOpacity(0.25),
-      size: isSmall ? 14 : 20,
-    );
-
-    return Stack(
-      children: [
-        // Top right corner
-        Positioned(
-          top: isSmall ? 6 : 8,
-          right: isSmall ? 6 : 8,
-          child: cornerWidget,
-        ),
-        // Bottom left corner (rotated)
-        Positioned(
-          bottom: isSmall ? 6 : 8,
-          left: isSmall ? 6 : 8,
-          child: Transform.rotate(
-            angle: 3.14159, // 180 degrees
-            child: cornerWidget,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGlossOverlay() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      height: height * 0.35,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(borderRadius),
-          ),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.white.withOpacity(0.25),
-              Colors.white.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
       ),
     );
   }
 }
 
-/// Corner decoration that looks like a playing card suit
-class _CornerDecoration extends StatelessWidget {
-  final Color color;
-  final double size;
+// ═══════════════════════════════════════════════════════════════════════════
+// MYSTERY CARD — LARGE (the face-up/face-down card in play)
+// ═══════════════════════════════════════════════════════════════════════════
 
-  const _CornerDecoration({
-    required this.color,
-    required this.size,
-  });
+class LaneMysteryCard extends StatelessWidget {
+  final LaneCard card;
+  final bool isRevealed;
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _CornerPainter(color: color),
-      ),
-    );
-  }
-}
-
-class _CornerPainter extends CustomPainter {
-  final Color color;
-
-  _CornerPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    // Diamond shape
-    final path = Path();
-    path.moveTo(size.width / 2, 0);
-    path.lineTo(size.width, size.height / 2);
-    path.lineTo(size.width / 2, size.height);
-    path.lineTo(0, size.height / 2);
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    // Small dot in center
-    final dotPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(
-      Offset(size.width / 2, size.height / 2),
-      size.width * 0.15,
-      dotPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Mystery card back design (for unrevealed cards or deck)
-class LaneCardBack extends StatelessWidget {
-  final double width;
-  final double height;
-  final bool showGlow;
-
-  const LaneCardBack({
+  const LaneMysteryCard({
     super.key,
-    this.width = 175,
-    this.height = 250,
-    this.showGlow = true,
+    required this.card,
+    required this.isRevealed,
   });
+
+  static const double cardWidth = 160;
+  static const double cardHeight = 230;
 
   @override
   Widget build(BuildContext context) {
-    const mysteryColor = Color(0xFF9B59B6);
-    
+    return isRevealed ? _buildFrontFace() : _buildMysteryFace();
+  }
+
+  Widget _buildMysteryFace() {
     return Container(
-      width: width,
-      height: height,
+      width: cardWidth,
+      height: cardHeight,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.35),
-            blurRadius: 12,
-            offset: const Offset(2, 4),
+            blurRadius: 16,
+            offset: const Offset(2, 6),
           ),
-          if (showGlow)
-            BoxShadow(
-              color: mysteryColor.withOpacity(0.3),
-              blurRadius: 24,
-              spreadRadius: 2,
-            ),
+          BoxShadow(
+            color: const Color(0xFF9B59B6).withOpacity(0.3),
+            blurRadius: 24,
+            spreadRadius: 2,
+          ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Stack(
           children: [
-            // Dark purple gradient background
+            // Dark gradient background
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -458,57 +223,110 @@ class LaneCardBack extends StatelessWidget {
                 ),
               ),
             ),
-            
-            // Pattern overlay
-            _buildPatternOverlay(),
-            
-            // Center mystery symbol
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      mysteryColor.withOpacity(0.4),
-                      Colors.transparent,
-                    ],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 2,
-                  ),
-                ),
-                child: const Text(
-                  '🔥',
-                  style: TextStyle(fontSize: 48),
-                ),
-              ),
+
+            // Diamond pattern
+            CustomPaint(
+              size: const Size(cardWidth, cardHeight),
+              painter: _DiamondPatternPainter(),
             ),
-            
-            // Border
+
+            // Inner border
             Container(
               margin: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.15),
                   width: 2,
                 ),
               ),
             ),
-            
-            // Gloss
+
+            // Scenario text in the middle
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Question mark badge
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFF9B59B6).withOpacity(0.6),
+                            Colors.transparent,
+                          ],
+                        ),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          '?',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Card text (visible even unrevealed)
+                    Text(
+                      card.text,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.9),
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // "Where does this go?" label
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Where does this go?',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Gloss overlay
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              height: height * 0.3,
+              height: cardHeight * 0.3,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(14)),
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -526,32 +344,465 @@ class LaneCardBack extends StatelessWidget {
     );
   }
 
-  Widget _buildPatternOverlay() {
-    return CustomPaint(
-      size: Size(width, height),
-      painter: _PatternPainter(),
+  Widget _buildFrontFace() {
+    final color = card.indexColor;
+    final illustration = getIllustrationForCard(card.text);
+
+    return Container(
+      width: cardWidth,
+      height: cardHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        border: Border.all(color: color.withOpacity(0.7), width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(2, 6),
+          ),
+          BoxShadow(
+            color: color.withOpacity(0.35),
+            blurRadius: 24,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            // Background gradient
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    color.withOpacity(0.06),
+                    color.withOpacity(0.12),
+                  ],
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  // Top: desire index
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [color, color.withOpacity(0.8)],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '${card.desireIndex}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Illustration
+                  Expanded(
+                    flex: 3,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: color.withOpacity(0.08),
+                          border: Border.all(
+                            color: color.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: LaneCardIllustration(
+                          illustration: illustration,
+                          color: color.withOpacity(0.6),
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // Card text
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          card.text,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: color.withOpacity(0.85),
+                            height: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // Category badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          card.category.color.withOpacity(0.15),
+                          card.category.color.withOpacity(0.25),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: card.category.color.withOpacity(0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      card.category.displayName,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: card.category.color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Corner decoration top-right
+            Positioned(
+              top: 6,
+              right: 6,
+              child: _CornerDiamond(color: color.withOpacity(0.2), size: 16),
+            ),
+            // Corner decoration bottom-left
+            Positioned(
+              bottom: 6,
+              left: 6,
+              child: Transform.rotate(
+                angle: pi,
+                child:
+                    _CornerDiamond(color: color.withOpacity(0.2), size: 16),
+              ),
+            ),
+
+            // Gloss
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: cardHeight * 0.3,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _PatternPainter extends CustomPainter {
+// ═══════════════════════════════════════════════════════════════════════════
+// FLIP CARD — wraps mystery card with 3D flip animation
+// ═══════════════════════════════════════════════════════════════════════════
+
+class LaneFlipCard extends StatefulWidget {
+  final LaneCard card;
+  final bool isRevealed;
+
+  const LaneFlipCard({
+    super.key,
+    required this.card,
+    required this.isRevealed,
+  });
+
+  @override
+  State<LaneFlipCard> createState() => _LaneFlipCardState();
+}
+
+class _LaneFlipCardState extends State<LaneFlipCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _flipController;
+  late Animation<double> _flipAnimation;
+  bool _showFront = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _flipController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutBack),
+    );
+
+    _showFront = widget.isRevealed;
+    if (widget.isRevealed) {
+      _flipController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LaneFlipCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isRevealed && !oldWidget.isRevealed) {
+      _flipController.forward();
+      // At halfway point, switch to front face
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) setState(() => _showFront = true);
+      });
+    } else if (!widget.isRevealed && oldWidget.isRevealed) {
+      _flipController.reverse();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) setState(() => _showFront = false);
+      });
+    }
+    // If card changed (new mystery card), reset
+    if (widget.card.id != oldWidget.card.id) {
+      _flipController.value = widget.isRevealed ? 1.0 : 0.0;
+      _showFront = widget.isRevealed;
+    }
+  }
+
+  @override
+  void dispose() {
+    _flipController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _flipAnimation,
+      builder: (context, child) {
+        final angle = _flipAnimation.value * pi;
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle),
+          child: _showFront
+              ? LaneMysteryCard(card: widget.card, isRevealed: true)
+              : LaneMysteryCard(card: widget.card, isRevealed: false),
+        );
+      },
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DROP ZONE — the slot where a card can be placed
+// ═══════════════════════════════════════════════════════════════════════════
+
+class LaneDropSlot extends StatelessWidget {
+  final bool isSelected;
+  final bool isActive;
+  final VoidCallback? onTap;
+
+  const LaneDropSlot({
+    super.key,
+    this.isSelected = false,
+    this.isActive = true,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isActive) return const SizedBox(width: 6);
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        width: isSelected ? LaneCardSmall.cardWidth + 4 : 36,
+        height: LaneCardSmall.cardHeight,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF2ECC71).withOpacity(0.35),
+                    const Color(0xFF2ECC71).withOpacity(0.15),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(isSelected ? 10 : 8),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF2ECC71)
+                : Colors.white.withOpacity(0.25),
+            width: isSelected ? 2.5 : 1.5,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF2ECC71).withOpacity(0.25),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: isSelected
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.arrow_downward_rounded,
+                      color: const Color(0xFF2ECC71).withOpacity(0.8),
+                      size: 22,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'HERE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF2ECC71).withOpacity(0.9),
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                )
+              : Icon(
+                  Icons.add_rounded,
+                  color: Colors.white.withOpacity(0.3),
+                  size: 18,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _CornerDiamond extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const _CornerDiamond({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _DiamondPainter(color: color)),
+    );
+  }
+}
+
+class _DiamondPainter extends CustomPainter {
+  final Color color;
+  _DiamondPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final path = Path()
+      ..moveTo(size.width / 2, 0)
+      ..lineTo(size.width, size.height / 2)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(0, size.height / 2)
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    final dot = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2), size.width * 0.15, dot);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _DiamondPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.04)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    // Diamond pattern
     const spacing = 20.0;
     for (double x = 0; x < size.width + spacing; x += spacing) {
       for (double y = 0; y < size.height + spacing; y += spacing) {
-        final path = Path();
-        path.moveTo(x, y - 5);
-        path.lineTo(x + 5, y);
-        path.lineTo(x, y + 5);
-        path.lineTo(x - 5, y);
-        path.close();
+        final path = Path()
+          ..moveTo(x, y - 5)
+          ..lineTo(x + 5, y)
+          ..lineTo(x, y + 5)
+          ..lineTo(x - 5, y)
+          ..close();
         canvas.drawPath(path, paint);
       }
     }
@@ -559,4 +810,30 @@ class _PatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Keep old name for backward compatibility — delegates to new widget
+class LanePlayingCard extends StatelessWidget {
+  final LaneCard card;
+  final bool isRevealed;
+  final bool isSmall;
+  final bool isDragging;
+  final bool showGlow;
+
+  const LanePlayingCard({
+    super.key,
+    required this.card,
+    this.isRevealed = true,
+    this.isSmall = false,
+    this.isDragging = false,
+    this.showGlow = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isSmall) {
+      return LaneCardSmall(card: card);
+    }
+    return LaneMysteryCard(card: card, isRevealed: isRevealed);
+  }
 }

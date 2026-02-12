@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/services/deep_bio_generator.dart';
 import '../../../core/services/image_upload_service.dart';
 import '../../../core/services/permission_service.dart';
 import '../../../core/services/zipcode_service.dart';
@@ -774,22 +775,51 @@ class _ExclusiveOnboardingScreenState
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // BIO GENERATION
+  // BIO GENERATION - Deep AI-Powered
   // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> _generateAIBio() async {
     setState(() => _isGeneratingBio = true);
 
     try {
-      await Future.delayed(
-          const Duration(milliseconds: 800),); // Simulate thinking
-
       final name = _displayNameController.text.trim();
-      final bio = _buildBioFromSelections(name);
 
-      setState(() {
-        _bioController.text = bio;
-      });
+      // Use the Deep Bio Generator with ALL collected onboarding data
+      final deepGenerator = DeepBioGenerator.instance;
+      final bio = await deepGenerator.generateOnboardingBio(
+        name: name,
+        traits: _selectedTraits.toList(),
+        seeking: _seeking.toList(),
+        relationshipStatus: _relationshipStatus.toList(),
+        heatLevel: _heatLevel,
+        hardLimits: _hardLimits.toList(),
+        availability: _availability.toList(),
+        schedulingStyle: _schedulingStyle,
+        hostingStatus: _hostingStatus,
+        discretionLevel: _discretionLevel,
+        occupation: _occupationController.text.trim().isNotEmpty
+            ? _occupationController.text.trim()
+            : null,
+        city: _city,
+        state: _state,
+        gender: _gender.toList(),
+        orientation: _orientation.toList(),
+        bandwidth: _bandwidth,
+      );
+
+      if (mounted) {
+        setState(() {
+          _bioController.text = bio;
+        });
+      }
+    } catch (e) {
+      // Fallback to local generation if AI fails
+      if (mounted) {
+        final name = _displayNameController.text.trim();
+        setState(() {
+          _bioController.text = _buildBioFromSelections(name);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isGeneratingBio = false);

@@ -11,6 +11,7 @@ import '../../../core/providers/connection_state_provider.dart'
         VesparaConnectionState,
         EventAttendee;
 import '../../../core/providers/match_state_provider.dart';
+import '../../../core/services/deep_connection_engine.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
@@ -40,6 +41,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   int _currentIndex = 0;
   int _selectedTabIndex = 0; // 0 = Strict, 1 = Explore, 2 = Met IRL
   int _metIrlIndex = 0;
+
+  // Deep compatibility cache
+  final Map<String, DeepCompatibility> _deepScores = {};
 
   // Animation controllers
   late AnimationController _cardController;
@@ -143,6 +147,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       });
 
       debugPrint('Discover: Loaded ${profiles.length} profiles (excluded ${swipedIds.length} swiped, ${matchedIds.length} matched)');
+
+      // Score profiles with DeepConnectionEngine in background
+      _scoreProfilesInBackground(currentUserId, profiles);
     } catch (e) {
       debugPrint('Discover: Error loading profiles: $e');
       setState(() {
@@ -154,6 +161,55 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
   /// Get filtered profiles based on current tab
   /// For now, show all loaded profiles since filtering is done at query level
+
+  /// Score profiles with DeepConnectionEngine in the background
+  /// Scores are computed lazily — the first few visible cards are prioritized
+  Future<void> _scoreProfilesInBackground(
+    String currentUserId,
+    List<DiscoverableProfile> profiles,
+  ) async {
+    try {
+      final engine = DeepConnectionEngine.instance;
+      // Score top 10 profiles first for immediate display, then rest
+      final prioritized = profiles.take(10).toList();
+      for (final profile in prioritized) {
+        try {
+          final score = await engine.scoreCompatibility(currentUserId, profile.id);
+          if (mounted) {
+            setState(() => _deepScores[profile.id] = score);
+          }
+        } catch (e) {
+          debugPrint('Deep score error for ${profile.id}: $e');
+        }
+      }
+      // Score remaining profiles
+      for (final profile in profiles.skip(10)) {
+        if (!mounted) return;
+        try {
+          final score = await engine.scoreCompatibility(currentUserId, profile.id);
+          if (mounted) {
+            setState(() => _deepScores[profile.id] = score);
+          }
+        } catch (e) {
+          debugPrint('Deep score error for ${profile.id}: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Background scoring error: $e');
+    }
+  }
+
+  /// Get the compatibility score for a profile (deep score or fallback)
+  double _getCompatibilityScore(DiscoverableProfile profile) {
+    final deepScore = _deepScores[profile.id];
+    if (deepScore != null) return deepScore.overallScore;
+    return profile.compatibilityScore;
+  }
+
+  /// Get the chemistry type label if available
+  String? _getChemistryType(DiscoverableProfile profile) {
+    return _deepScores[profile.id]?.chemistryType;
+  }
   List<DiscoverableProfile> get _filteredProfiles => _profiles
       .where(
         (p) => _selectedTabIndex == 1 ? p.isWildcard : p.isStrictMatch,
@@ -863,33 +919,55 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 right: 16,
                 child: AnimatedBuilder(
                   animation: _glowController,
-                  builder: (context, child) => Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: VesparaColors.surface.withOpacity(0.9),
-                      border: Border.all(
-                        color: VesparaColors.glow
-                            .withOpacity(0.3 + _glowController.value * 0.3),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: VesparaColors.glow
-                              .withOpacity(0.2 + _glowController.value * 0.2),
-                          blurRadius: 12,
-                          spreadRadius: 2,
+                  builder: (context, child) => Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: VesparaColors.surface.withOpacity(0.9),
+                          border: Border.all(
+                            color: VesparaColors.glow
+                                .withOpacity(0.3 + _glowController.value * 0.3),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VesparaColors.glow
+                                  .withOpacity(0.2 + _glowController.value * 0.2),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      '${(profile.compatibilityScore * 100).round()}%',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: VesparaColors.primary,
+                        child: Text(
+                          '${(_getCompatibilityScore(profile) * 100).round()}%',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
                       ),
-                    ),
+                      // Show chemistry type if available
+                      if (_getChemistryType(profile) != null)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: VesparaColors.surface.withOpacity(0.85),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _getChemistryType(profile)!,
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/hard_truth_engine.dart';
+import '../../../core/services/smart_trait_recommender.dart';
 import '../../../core/domain/models/analytics.dart';
 import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
@@ -36,10 +38,66 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // Deep AI state
+  HardTruthAssessment? _hardTruthAssessment;
+  bool _loadingAssessment = false;
+  TraitRecommendations? _traitRecommendations;
+  bool _loadingRecommendations = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      if (_tabController.index == 0 && _hardTruthAssessment == null && !_loadingAssessment) {
+        _loadHardTruthAssessment();
+      } else if (_tabController.index == 1 && _traitRecommendations == null && !_loadingRecommendations) {
+        _loadTraitRecommendations();
+      }
+    }
+  }
+
+  Future<void> _loadHardTruthAssessment() async {
+    setState(() => _loadingAssessment = true);
+    try {
+      final engine = HardTruthEngine.instance;
+      final userId = SupabaseService.instance.currentUser?.id;
+      if (userId != null) {
+        final assessment = await engine.generateAssessment(userId);
+        if (mounted) setState(() => _hardTruthAssessment = assessment);
+      }
+    } catch (e) {
+      debugPrint('Hard truth assessment error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingAssessment = false);
+    }
+  }
+
+  Future<void> _loadTraitRecommendations() async {
+    setState(() => _loadingRecommendations = true);
+    try {
+      final recommender = SmartTraitRecommender.instance;
+      final userId = SupabaseService.instance.currentUser?.id;
+      if (userId != null) {
+        final recs = await recommender.getRecommendations(userId);
+        if (mounted) setState(() => _traitRecommendations = recs);
+      }
+    } catch (e) {
+      debugPrint('Trait recommendation error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingRecommendations = false);
+    }
   }
 
   UserAnalytics? get _analytics => ref.read(userAnalyticsProvider).valueOrNull;
@@ -499,6 +557,21 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           children: [
             _buildBrutalHeader(),
             const SizedBox(height: 24),
+            // Deep AI Assessment section
+            if (_loadingAssessment)
+              _buildAssessmentLoading()
+            else if (_hardTruthAssessment != null) ...[
+              _buildArchetypeCard(),
+              const SizedBox(height: 20),
+              _buildBrutalOneLiner(),
+              const SizedBox(height: 20),
+              _buildContradictionsCard(),
+              const SizedBox(height: 20),
+              _buildBlindSpotsCard(),
+              const SizedBox(height: 20),
+              _buildStrengthsCard(),
+              const SizedBox(height: 20),
+            ],
             _buildPersonalitySummary(),
             const SizedBox(height: 20),
             _buildDatingStyle(),
@@ -508,6 +581,23 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             _buildImprovementTips(),
             const SizedBox(height: 20),
             _buildRedFlags(),
+            const SizedBox(height: 20),
+            // Refresh assessment button
+            Center(
+              child: TextButton.icon(
+                onPressed: _loadingAssessment ? null : () {
+                  HardTruthEngine.instance.invalidateCache(
+                    SupabaseService.instance.currentUser?.id ?? '',
+                  );
+                  _loadHardTruthAssessment();
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: Text(
+                  _hardTruthAssessment == null ? 'Generate AI Assessment' : 'Refresh Assessment',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
           ],
         ),
       );
@@ -551,8 +641,344 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         ),
       );
 
+  // ════════════════════════════════════════════════════════════════════════
+  // DEEP AI ASSESSMENT WIDGETS
+  // ════════════════════════════════════════════════════════════════════════
+
+  Widget _buildAssessmentLoading() => Container(
+    padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(
+      color: VesparaColors.surface,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: const Column(
+      children: [
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: VesparaColors.glow,
+          ),
+        ),
+        SizedBox(height: 16),
+        Text(
+          'The AI is studying your patterns...',
+          style: TextStyle(
+            fontSize: 14,
+            color: VesparaColors.secondary,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildArchetypeCard() {
+    final assessment = _hardTruthAssessment!;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            VesparaColors.glow.withOpacity(0.15),
+            VesparaColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.fingerprint, size: 36, color: VesparaColors.glow),
+          const SizedBox(height: 12),
+          Text(
+            assessment.personalityArchetype,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: VesparaColors.glow,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          // Overall score
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildScorePill('Overall', assessment.overallScore, VesparaColors.glow),
+              const SizedBox(width: 8),
+              _buildScorePill('Consistency', assessment.consistencyScore, VesparaColors.tagsYellow),
+              const SizedBox(width: 8),
+              _buildScorePill('Effort', assessment.effortScore, VesparaColors.success),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScorePill(String label, double score, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$label: ${(score * 100).toInt()}',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBrutalOneLiner() {
+    final oneLiner = _hardTruthAssessment!.brutalTruthOneLiner;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.error.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: VesparaColors.error.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_fire_department, color: VesparaColors.error, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              oneLiner,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContradictionsCard() {
+    final contradictions = _hardTruthAssessment!.contradictionInsights;
+    if (contradictions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.compare_arrows, color: VesparaColors.tagsYellow, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Your Contradictions',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.tagsYellow,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Where your words and actions don\'t match',
+            style: TextStyle(fontSize: 11, color: VesparaColors.secondary),
+          ),
+          const SizedBox(height: 12),
+          ...contradictions.map((c) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VesparaColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    c,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: VesparaColors.primary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlindSpotsCard() {
+    final blindSpots = _hardTruthAssessment!.blindSpots;
+    if (blindSpots.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.visibility_off, color: VesparaColors.error, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Blind Spots',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...blindSpots.map((spot) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.circle, size: 6, color: VesparaColors.error),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    spot,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: VesparaColors.primary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStrengthsCard() {
+    final strengths = _hardTruthAssessment!.strengths;
+    final growthEdges = _hardTruthAssessment!.growthEdges;
+    if (strengths.isEmpty && growthEdges.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VesparaColors.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (strengths.isNotEmpty) ...[
+            const Row(
+              children: [
+                Icon(Icons.star, color: VesparaColors.success, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  'Your Strengths',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.success,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: strengths.map((s) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: VesparaColors.success.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  s,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: VesparaColors.success,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )).toList(),
+            ),
+          ],
+          if (strengths.isNotEmpty && growthEdges.isNotEmpty)
+            const SizedBox(height: 16),
+          if (growthEdges.isNotEmpty) ...[
+            const Row(
+              children: [
+                Icon(Icons.trending_up, color: VesparaColors.tagsYellow, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  'Growth Edges',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: VesparaColors.tagsYellow,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...growthEdges.map((edge) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.arrow_upward, size: 14, color: VesparaColors.tagsYellow),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      edge,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: VesparaColors.primary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildPersonalitySummary() {
-    final summary = _analytics?.aiPersonalitySummary;
+    final deepSummary = _hardTruthAssessment?.personalitySummary;
+    final summary = deepSummary ?? _analytics?.aiPersonalitySummary;
     final hasRealData = summary != null && summary.isNotEmpty;
     
     return Container(
@@ -604,7 +1030,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   }
 
   Widget _buildDatingStyle() {
-    final style = _analytics?.aiDatingStyle;
+    final deepStyle = _hardTruthAssessment?.datingStyle;
+    final style = deepStyle ?? _analytics?.aiDatingStyle;
     final hasRealData = style != null && style.isNotEmpty;
     
     return Container(
@@ -771,8 +1198,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
   }
 
   Widget _buildImprovementTips() {
-    // Only show tips from actual analytics, or generate based on real metrics
-    final tips = _analytics?.aiImprovementTips ?? _generateTipsFromMetrics();
+    // Use deep AI assessment tips first, then fall back to analytics/metrics
+    final deepAdvice = _hardTruthAssessment?.optimizationAdvice;
+    final tips = deepAdvice ?? _analytics?.aiImprovementTips ?? _generateTipsFromMetrics();
     final hasTips = tips.isNotEmpty;
 
     return Container(
@@ -1167,24 +1595,95 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Get personalized suggestions based on your profile, interests, and what others with similar vibes enjoy.',
+                'Personalized suggestions based on your psychological profile, behavior patterns, and compatibility insights.',
                 style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
               ),
               const SizedBox(height: 12),
-              const Text('You might also like:',
-                  style:
-                      TextStyle(fontSize: 12, color: VesparaColors.secondary),),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildSuggestionChip('🏔️', 'Adventurous'),
-                  _buildSuggestionChip('🎨', 'Creative'),
-                  _buildSuggestionChip('✈️', 'Travel'),
-                  _buildSuggestionChip('🎵', 'Music'),
+              if (_loadingRecommendations)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VesparaColors.glow),
+                    ),
+                  ),
+                )
+              else if (_traitRecommendations != null) ...[
+                // Gap insights
+                if (_traitRecommendations!.gapInsights.isNotEmpty) ...[
+                  ..._traitRecommendations!.gapInsights.take(2).map((gap) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.tagsYellow.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lightbulb_outline, size: 16, color: VesparaColors.tagsYellow),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              gap.insight,
+                              style: const TextStyle(fontSize: 12, color: VesparaColors.primary, height: 1.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+                  const SizedBox(height: 8),
                 ],
-              ),
+                const Text('Suggested for you:',
+                    style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _traitRecommendations!.suggestions.take(6).map((s) =>
+                    _buildSmartSuggestionChip(s),
+                  ).toList(),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() => _traitRecommendations = null);
+                      _loadTraitRecommendations();
+                    },
+                    child: const Text(
+                      'Refresh suggestions',
+                      style: TextStyle(fontSize: 11, color: VesparaColors.glow),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                const Text('You might also like:',
+                    style: TextStyle(fontSize: 12, color: VesparaColors.secondary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildSuggestionChip('🏔️', 'Adventurous'),
+                    _buildSuggestionChip('🎨', 'Creative'),
+                    _buildSuggestionChip('✈️', 'Travel'),
+                    _buildSuggestionChip('🎵', 'Music'),
+                  ],
+                ),
+                Center(
+                  child: TextButton(
+                    onPressed: _loadTraitRecommendations,
+                    child: const Text(
+                      'Get AI suggestions',
+                      style: TextStyle(fontSize: 11, color: VesparaColors.glow),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -2259,6 +2758,51 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           ],
         ),
       );
+
+  Widget _buildSmartSuggestionChip(TraitSuggestion suggestion) {
+    return Tooltip(
+      message: suggestion.reason,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              VesparaColors.glow.withOpacity(0.15),
+              VesparaColors.glow.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: VesparaColors.glow.withOpacity(0.4)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  suggestion.trait,
+                  style: const TextStyle(fontSize: 12, color: VesparaColors.primary, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.add, size: 14, color: VesparaColors.glow),
+              ],
+            ),
+            if (suggestion.reason.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  suggestion.reason,
+                  style: const TextStyle(fontSize: 9, color: VesparaColors.secondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Color _getHeatColor(String heatLevel) {
     switch (heatLevel.toLowerCase()) {

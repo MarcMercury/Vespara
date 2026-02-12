@@ -254,15 +254,28 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
         'create_vespara_group',
         params: {
           'p_name': name,
-          'p_description': description,
-          'p_avatar_url': avatarUrl,
+          if (description != null) 'p_description': description,
+          if (avatarUrl != null) 'p_avatar_url': avatarUrl,
         },
       );
 
       final groupId = response as String;
       await loadGroups();
 
-      return state.groups.firstWhere((g) => g.id == groupId);
+      return state.groups.firstWhere(
+        (g) => g.id == groupId,
+        orElse: () => VesparaGroup(
+          id: groupId,
+          name: name,
+          description: description,
+          avatarUrl: avatarUrl,
+          creatorId: _supabase.auth.currentUser?.id ?? '',
+          conversationId: null,
+          createdAt: DateTime.now(),
+          currentUserRole: GroupRole.creator,
+          currentUserJoinedAt: DateTime.now(),
+        ),
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       return null;

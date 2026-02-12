@@ -96,11 +96,11 @@ class PredictiveMatchingEngine {
     Map<String, dynamic> theirProfile,
   ) async {
     // Extract interests
-    final myInterests = (myProfile['interests'] as List?)
+    final myInterests = (myProfile['interest_tags'] as List?)
             ?.map((e) => e.toString().toLowerCase())
             .toSet() ??
         {};
-    final theirInterests = (theirProfile['interests'] as List?)
+    final theirInterests = (theirProfile['interest_tags'] as List?)
             ?.map((e) => e.toString().toLowerCase())
             .toSet() ??
         {};
@@ -411,7 +411,7 @@ class PredictiveMatchingEngine {
 
   int _inferSocialEnergy(Map<String, dynamic> profile) {
     final bio = (profile['bio'] ?? '').toString().toLowerCase();
-    final interests = (profile['interests'] as List?)
+    final interests = (profile['interest_tags'] as List?)
             ?.map((e) => e.toString().toLowerCase())
             .toList() ??
         [];

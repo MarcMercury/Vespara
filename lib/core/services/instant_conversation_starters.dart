@@ -96,7 +96,7 @@ Be casual, not desperate. Reference something from their profile if possible.
 Keep each under 80 characters. One per line, no numbering.''',
       prompt: '''Their profile:
 Name: ${otherProfile['display_name']}
-Interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not listed'}
+Interests: ${(otherProfile['interest_tags'] as List?)?.join(', ') ?? 'not listed'}
 
 Generate 3 revival messages:''',
       maxTokens: 150,
@@ -161,8 +161,8 @@ Generate 3 follow-up responses:''',
     Map<String, dynamic> otherProfile,
   ) async {
     final sharedInterests = _findSharedInterests(
-      myProfile['interests'] as List?,
-      otherProfile['interests'] as List?,
+      myProfile['interest_tags'] as List?,
+      otherProfile['interest_tags'] as List?,
     );
 
     final result = await _aiService.generateIceBreakers(
@@ -202,7 +202,7 @@ Generate 3 follow-up responses:''',
     final starters = <ConversationStarter>[];
 
     // Check interests
-    final interests = profile['interests'] as List?;
+    final interests = profile['interest_tags'] as List?;
     if (interests != null && interests.isNotEmpty) {
       final interest = interests.first.toString().toLowerCase();
 
@@ -271,8 +271,8 @@ Generate 3 follow-up responses:''',
     if (profile['bio'] != null) {
       parts.add('Bio: ${profile['bio']}');
     }
-    if (profile['interests'] != null) {
-      parts.add('Interests: ${(profile['interests'] as List).join(', ')}');
+    if (profile['interest_tags'] != null) {
+      parts.add('Interests: ${(profile['interest_tags'] as List).join(', ')}');
     }
     if (profile['occupation'] != null) {
       parts.add('Job: ${profile['occupation']}');
@@ -334,8 +334,8 @@ Generate 3 follow-up responses:''',
             id,
             user1_id,
             user2_id,
-            user1:profiles!matches_user1_id_fkey(id, display_name, bio, interests, occupation, photos),
-            user2:profiles!matches_user2_id_fkey(id, display_name, bio, interests, occupation, photos)
+            user1:profiles!matches_user1_id_fkey(id, display_name, bio, interest_tags, occupation, photos),
+            user2:profiles!matches_user2_id_fkey(id, display_name, bio, interest_tags, occupation, photos)
           ''').eq('id', matchId).maybeSingle();
 
       if (match == null) return null;

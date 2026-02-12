@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import '../../../core/domain/models/tag_rating.dart';
 import '../../../core/providers/dtc_game_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/vespara_icons.dart';
+import '../../../core/utils/web_orientation.dart';
 import '../widgets/tag_rating_display.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -90,6 +92,8 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    // Also restore web orientation in case user leaves mid-game
+    if (kIsWeb) unlockWebOrientation();
     super.dispose();
   }
 
@@ -865,6 +869,14 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
   // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> _startCountdown() async {
+    // Lock to landscape immediately when the user taps "Let's Go"
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    // On web/mobile browsers, use the Screen Orientation API + fullscreen
+    if (kIsWeb) await lockWebLandscape();
+
     // Start a new game in the provider (shuffles deck with Fisher-Yates)
     await ref.read(dtcGameProvider.notifier).startNewGame();
 
@@ -928,11 +940,8 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
     _calibratedPitch = null;
     _inputLocked = false;
 
-    // Force landscape orientation for gameplay
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    // Landscape was already locked in _startCountdown —
+    // no need to set it again here.
 
     setState(() => _gameState = DownToClownState.playing);
 
@@ -1037,6 +1046,8 @@ class _DownToClownScreenState extends ConsumerState<DownToClownScreen>
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    // On web, unlock orientation and exit fullscreen
+    if (kIsWeb) await unlockWebOrientation();
 
     // Save game session to database
     await ref.read(dtcGameProvider.notifier).endGame();

@@ -57,6 +57,9 @@ class KinkCard {
     required this.id,
     required this.text,
     required this.trueRank,
+    this.globalRank,
+    this.popularityScore,
+    this.totalVotes = 0,
     this.eloScore = 1000.0,
     this.weeklyRankChange = 0,
   });
@@ -64,20 +67,45 @@ class KinkCard {
   factory KinkCard.fromJson(Map<String, dynamic> json) => KinkCard(
         id: json['id'] as String,
         text: json['text'] as String,
-        trueRank: json['true_rank'] as int,
+        trueRank: json['true_rank'] as int? ?? json['global_rank'] as int? ?? 50,
+        globalRank: json['global_rank'] as int?,
+        popularityScore: (json['popularity_score'] as num?)?.toDouble(),
+        totalVotes: json['total_votes'] as int? ?? 0,
         eloScore: (json['elo_score'] as num?)?.toDouble() ?? 1000.0,
-        weeklyRankChange: json['weekly_rank_change'] as int? ?? 0,
+        weeklyRankChange: json['weekly_rank_change'] as int? ?? json['rank_change'] as int? ?? 0,
       );
+
+  /// Create from Supabase pop_get_cards RPC result
+  factory KinkCard.fromSupabase(Map<String, dynamic> json) => KinkCard(
+        id: json['id'] as String,
+        text: json['text'] as String,
+        trueRank: json['global_rank'] as int? ?? 50,
+        globalRank: json['global_rank'] as int?,
+        popularityScore: (json['popularity_score'] as num?)?.toDouble(),
+        totalVotes: json['total_votes'] as int? ?? 0,
+        weeklyRankChange: json['rank_change'] as int? ?? 0,
+      );
+
   final String id;
   final String text;
   final int trueRank; // 1-200 (1 = most vanilla, 200 = most hardcore)
+  final int? globalRank; // Crowd-sourced rank (updated nightly)
+  final double? popularityScore; // 0-100 popularity
+  final int totalVotes; // How many votes this card has received
   final double eloScore; // Hidden Elo rating for crowd ranking
   final int weeklyRankChange;
+
+  /// The effective rank used for scoring — prefers crowd-sourced globalRank,
+  /// falls back to hardcoded trueRank
+  int get effectiveRank => globalRank ?? trueRank;
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'text': text,
         'true_rank': trueRank,
+        'global_rank': globalRank,
+        'popularity_score': popularityScore,
+        'total_votes': totalVotes,
         'elo_score': eloScore,
         'weekly_rank_change': weeklyRankChange,
       };
@@ -275,8 +303,64 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
           const PathOfPleasureState(
             masterDeck: _masterKinkCards,
           ),
-        );
+        ) {
+    // Attempt to load crowd-sourced cards from Supabase on init
+    _loadCardsFromSupabase();
+  }
   final SupabaseClient? _supabase;
+  bool _cardsLoaded = false;
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // SUPABASE CARD LOADING (Crowd-sourced adaptive rankings)
+  // ═════════════════════════════════════════════════════════════════════════
+
+  Future<void> _loadCardsFromSupabase() async {
+    if (_supabase == null || _cardsLoaded) return;
+
+    try {
+      // Fetch ALL active cards with their current global rankings
+      final response = await _supabase
+          .from('pop_cards')
+          .select('id, text, category, subcategory, heat_level, global_rank, popularity_score, rank_change, total_votes')
+          .eq('is_active', true)
+          .order('global_rank', ascending: true);
+
+      final rows = response as List<dynamic>;
+      if (rows.isEmpty) return; // Keep hardcoded fallback
+
+      final supabaseCards = rows.map((row) {
+        final json = row as Map<String, dynamic>;
+        return KinkCard.fromSupabase(json);
+      }).toList();
+
+      if (supabaseCards.length >= 8) {
+        _cardsLoaded = true;
+        state = state.copyWith(masterDeck: supabaseCards);
+      }
+    } catch (e) {
+      // Silently fall back to hardcoded cards
+      debugPrint('PathOfPleasure: Failed to load cards from Supabase: $e');
+    }
+  }
+
+  /// Record votes to Supabase after a round so rankings can adapt over time
+  Future<void> _recordVotesToSupabase(List<KinkCard> submittedOrder) async {
+    if (_supabase == null) return;
+
+    try {
+      final cardIds = submittedOrder.map((c) => c.id).toList();
+      final positions = List.generate(submittedOrder.length, (i) => i + 1);
+
+      await _supabase.rpc('pop_submit_round_votes', params: {
+        'p_card_ids': cardIds,
+        'p_submitted_positions': positions,
+        'p_session_id': state.sessionId,
+      });
+    } catch (e) {
+      // Non-critical — game still works, just doesn't record votes
+      debugPrint('PathOfPleasure: Failed to record votes: $e');
+    }
+  }
 
   // ═════════════════════════════════════════════════════════════════════════
   // SETUP & MODE SELECTION
@@ -358,9 +442,9 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     final shuffled = [...state.masterDeck]..shuffle();
     final roundCards = shuffled.take(8).toList();
 
-    // Sort by true rank to get correct order
+    // Sort by effectiveRank (crowd-sourced globalRank if available, else trueRank)
     final correctOrder = [...roundCards]
-      ..sort((a, b) => a.trueRank.compareTo(b.trueRank));
+      ..sort((a, b) => a.effectiveRank.compareTo(b.effectiveRank));
 
     final round = RoundData(
       cards: roundCards,
@@ -511,6 +595,14 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     // Log matchups for Elo calculation (backend)
     _logMatchupsForElo(round);
 
+    // Record votes to Supabase so crowd-sourced rankings evolve over time
+    final winningSubmission = round.teamBStealAttempt?.submittedOrder ??
+        round.teamASecondAttempt?.submittedOrder ??
+        round.teamAFirstAttempt?.submittedOrder;
+    if (winningSubmission != null) {
+      _recordVotesToSupabase(winningSubmission);
+    }
+
     state = state.copyWith(
       currentRound: round,
       teamA: updatedTeamA,
@@ -591,7 +683,7 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     final shuffled = [...state.masterDeck]..shuffle();
     final roundCards = shuffled.take(8).toList();
     final correctOrder = [...roundCards]
-      ..sort((a, b) => a.trueRank.compareTo(b.trueRank));
+      ..sort((a, b) => a.effectiveRank.compareTo(b.effectiveRank));
 
     final newRound = RoundData(
       cards: roundCards,

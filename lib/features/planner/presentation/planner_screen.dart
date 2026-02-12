@@ -2457,7 +2457,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
       createdAt: DateTime.now(),
     );
 
-    // Create in Events provider (saves to group_events table)
+    // Create in Events provider (saves to vespara_events table)
     await ref.read(eventsProvider.notifier).createVesparaEvent(vesparaEvent);
 
     // Also create in Plan provider for calendar view

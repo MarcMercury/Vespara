@@ -156,12 +156,23 @@ class EventCoHost extends Equatable {
     required this.name,
     this.avatarUrl,
     this.nickname,
+    this.role,
+    this.canEdit = true,
+    this.canInvite = true,
+    this.canManageRsvps = true,
   });
   final String id;
   final String userId;
   final String name;
   final String? avatarUrl;
   final String? nickname;
+  final String? role; // 'pending', 'accepted', 'declined'
+  final bool canEdit;
+  final bool canInvite;
+  final bool canManageRsvps;
+
+  bool get isAccepted => role == 'accepted';
+  bool get isPending => role == 'pending' || role == null;
 
   @override
   List<Object?> get props => [id, userId, name];
@@ -220,6 +231,7 @@ enum UserEventStatus {
 enum EventVisibility {
   private,
   public,
+  friends,
   openInvite;
 
   String get label {
@@ -228,6 +240,8 @@ enum EventVisibility {
         return 'Private';
       case EventVisibility.public:
         return 'Public';
+      case EventVisibility.friends:
+        return 'Friends Only';
       case EventVisibility.openInvite:
         return 'Open Invite';
     }
@@ -239,6 +253,8 @@ enum EventVisibility {
         return 'Only people you invite can see this';
       case EventVisibility.public:
         return 'Anyone on Vespara can discover this';
+      case EventVisibility.friends:
+        return 'Only your friends/matches can see this';
       case EventVisibility.openInvite:
         return 'Guests can invite their friends';
     }

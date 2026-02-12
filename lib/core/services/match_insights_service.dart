@@ -112,11 +112,11 @@ class MatchInsightsService {
     Map<String, dynamic> myProfile,
     Map<String, dynamic> otherProfile,
   ) {
-    final myInterests = (myProfile['interests'] as List?)
+    final myInterests = (myProfile['interest_tags'] as List?)
             ?.map((e) => e.toString().toLowerCase())
             .toSet() ??
         {};
-    final theirInterests = (otherProfile['interests'] as List?)
+    final theirInterests = (otherProfile['interest_tags'] as List?)
             ?.map((e) => e.toString().toLowerCase())
             .toSet() ??
         {};
@@ -267,8 +267,8 @@ Compatibility insight:''',
 Each should be specific and actionable.
 Keep each under 50 characters. One per line, no numbering.''',
       prompt:
-          '''Profile 1 interests: ${(myProfile['interests'] as List?)?.join(', ') ?? 'not listed'}
-Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not listed'}
+          '''Profile 1 interests: ${(myProfile['interest_tags'] as List?)?.join(', ') ?? 'not listed'}
+Profile 2 interests: ${(otherProfile['interest_tags'] as List?)?.join(', ') ?? 'not listed'}
 
 3 conversation topics:''',
       maxTokens: 100,
@@ -290,8 +290,8 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
     if (profile['bio'] != null) {
       parts.add('Bio: ${profile['bio']}');
     }
-    if (profile['interests'] != null) {
-      parts.add('Interests: ${(profile['interests'] as List).join(', ')}');
+    if (profile['interest_tags'] != null) {
+      parts.add('Interests: ${(profile['interest_tags'] as List).join(', ')}');
     }
     if (profile['occupation'] != null) {
       parts.add('Job: ${profile['occupation']}');
@@ -340,7 +340,7 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
     try {
       return await _supabase
           .from('profiles')
-          .select('id, display_name, bio, interests, occupation, looking_for')
+          .select('id, display_name, bio, interest_tags, occupation, looking_for')
           .eq('id', _userId!)
           .maybeSingle();
     } catch (e) {
@@ -359,7 +359,7 @@ Profile 2 interests: ${(otherProfile['interests'] as List?)?.join(', ') ?? 'not 
       final otherProfile = await _supabase
           .from('profiles')
           .select(
-              'id, display_name, bio, interests, occupation, looking_for, photos',)
+              'id, display_name, bio, interest_tags, occupation, looking_for, photos',)
           .eq('id', otherUserId)
           .maybeSingle();
 

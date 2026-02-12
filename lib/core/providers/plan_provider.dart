@@ -184,28 +184,43 @@ class PlanNotifier extends StateNotifier<PlanState> {
       final userId = _supabase?.auth.currentUser?.id;
 
       if (userId != null && _supabase != null) {
-        // Load events where user is going or hosting
-        final response = await _supabase.from('vespara_events').select('''
+        // Load events where user is hosting
+        final hostedResponse = await _supabase.from('vespara_events').select('''
               *,
               rsvps:vespara_event_rsvps(user_id, status)
-            ''').or('host_id.eq.$userId').order('start_time');
+            ''').eq('host_id', userId).order('start_time');
+
+        // Load events where user has RSVP'd
+        final rsvpResponse = await _supabase
+            .from('vespara_event_rsvps')
+            .select('''
+              status,
+              event:vespara_events(*, rsvps:vespara_event_rsvps(user_id, status))
+            ''')
+            .eq('user_id', userId)
+            .inFilter('status', ['going', 'maybe']);
 
         final experienceEvents = <PlanEvent>[];
+        final seenIds = <String>{};
 
-        for (final eventJson in response as List) {
-          final rsvps = eventJson['rsvps'] as List? ?? [];
-          final userRsvp = rsvps.firstWhere(
-            (r) => r['user_id'] == userId,
-            orElse: () => null,
-          );
-
-          // Include if hosting or RSVP'd as going
-          final isHosting = eventJson['host_id'] == userId;
-          final isGoing = userRsvp != null && userRsvp['status'] == 'going';
-
-          if (isHosting || isGoing) {
+        // Add hosted events
+        for (final eventJson in hostedResponse as List) {
+          final eventId = eventJson['id'] as String;
+          if (seenIds.add(eventId)) {
             experienceEvents
-                .add(_convertVesparaEventToPlanEvent(eventJson, isHosting));
+                .add(_convertVesparaEventToPlanEvent(eventJson, true));
+          }
+        }
+
+        // Add RSVP'd events
+        for (final rsvpJson in rsvpResponse as List) {
+          final eventJson = rsvpJson['event'] as Map<String, dynamic>?;
+          if (eventJson != null) {
+            final eventId = eventJson['id'] as String;
+            if (seenIds.add(eventId)) {
+              experienceEvents
+                  .add(_convertVesparaEventToPlanEvent(eventJson, false));
+            }
           }
         }
 

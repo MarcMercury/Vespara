@@ -136,7 +136,7 @@ Each answer should be:
 - Genuine and engaging
 Return one per line, no numbering.''',
       prompt: '''Prompt: "$prompt"
-User context: ${profile['display_name']}, ${profile['age']}, interests: ${profile['interests']}
+User context: ${profile['display_name']}, ${profile['age']}, interests: ${profile['interest_tags']}
 Generate 3 answers:''',
       maxTokens: 200,
     );
@@ -188,7 +188,7 @@ Generate 3 answers:''',
   /// Get suggested interests based on profile and popular trends
   Future<List<String>> getSuggestedInterests() async {
     final profile = await _getProfileContext();
-    final currentInterests = List<String>.from(profile['interests'] ?? []);
+    final currentInterests = List<String>.from(profile['interest_tags'] ?? []);
 
     try {
       // Get popular interests
@@ -218,14 +218,14 @@ Generate 3 answers:''',
 
     try {
       final profile = await _getProfileContext();
-      final interests = List<String>.from(profile['interests'] ?? []);
+      final interests = List<String>.from(profile['interest_tags'] ?? []);
 
       if (!interests.contains(interest)) {
         interests.add(interest);
 
         await _supabase
             .from('profiles')
-            .update({'interests': interests}).eq('id', _userId!);
+            .update({'interest_tags': interests}).eq('id', _userId!);
       }
 
       return true;
@@ -255,7 +255,7 @@ Generate 3 answers:''',
 
     final profile = await _supabase
         .from('profiles')
-        .select('display_name, age, interests, occupation, education')
+        .select('display_name, age, interest_tags, occupation, education')
         .eq('id', _userId!)
         .maybeSingle();
 
@@ -274,8 +274,8 @@ Generate 3 answers:''',
     if (profile['occupation'] != null) {
       parts.add('Job: ${profile['occupation']}');
     }
-    if (profile['interests'] != null) {
-      parts.add('Interests: ${(profile['interests'] as List).join(', ')}');
+    if (profile['interest_tags'] != null) {
+      parts.add('Interests: ${(profile['interest_tags'] as List).join(', ')}');
     }
     if (currentBio != null && currentBio.isNotEmpty) {
       parts.add('Current bio: $currentBio');
@@ -293,8 +293,8 @@ Generate 3 answers:''',
       result = result.replaceAll('[occupation]', profile['occupation']);
     }
 
-    if (profile['interests'] != null) {
-      final interests = profile['interests'] as List;
+    if (profile['interest_tags'] != null) {
+      final interests = profile['interest_tags'] as List;
       if (interests.isNotEmpty) {
         result = result.replaceAll('[interest]', interests.first.toString());
         result = result.replaceAll('[hobby]', interests.first.toString());

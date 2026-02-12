@@ -114,8 +114,8 @@ Just the prompt text, nothing else.''',
       // Get match and profiles
       final match = await _supabase.from('matches').select('''
             id, created_at,
-            user1:profiles!matches_user1_id_fkey(id, display_name, interests, bio),
-            user2:profiles!matches_user2_id_fkey(id, display_name, interests, bio)
+            user1:profiles!matches_user1_id_fkey(id, display_name, interest_tags, bio),
+            user2:profiles!matches_user2_id_fkey(id, display_name, interest_tags, bio)
           ''').eq('id', matchId).maybeSingle();
 
       if (match == null) return null;
@@ -149,11 +149,11 @@ Just the prompt text, nothing else.''',
       }
 
       // Find shared interests
-      final myInterests = (myProfile['interests'] as List?)
+      final myInterests = (myProfile['interest_tags'] as List?)
               ?.map((e) => e.toString().toLowerCase())
               .toSet() ??
           {};
-      final theirInterests = (theirProfile['interests'] as List?)
+      final theirInterests = (theirProfile['interest_tags'] as List?)
               ?.map((e) => e.toString().toLowerCase())
               .toSet() ??
           {};

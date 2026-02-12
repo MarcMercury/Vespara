@@ -1494,8 +1494,10 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
   }
 
   void _addCoHost() {
-    final nameController = TextEditingController();
-    
+    final searchController = TextEditingController();
+    List<Map<String, dynamic>> searchResults = [];
+    bool isSearching = false;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
@@ -1503,79 +1505,156 @@ class _EventCreationScreenState extends ConsumerState<EventCreationScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Add Co-Host',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Enter the name of your co-host',
-              style: TextStyle(
-                fontSize: 14,
-                color: VesparaColors.secondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Co-host name',
-                hintStyle: const TextStyle(color: VesparaColors.secondary),
-                prefixIcon: const Icon(Icons.person_add, color: VesparaColors.glow),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: VesparaColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: VesparaColors.glow),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Add Co-Host',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
                 ),
               ),
-              style: const TextStyle(color: VesparaColors.primary),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (nameController.text.isNotEmpty) {
-                    setState(() {
-                      _coHosts.add(EventCoHost(
-                        id: 'cohost-${_coHosts.length}',
-                        userId: 'user-${_coHosts.length}',
-                        name: nameController.text,
-                      ));
-                    });
-                    Navigator.pop(context);
-                    HapticFeedback.mediumImpact();
+              const SizedBox(height: 8),
+              const Text(
+                'Search for a user to add as co-host',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.secondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: searchController,
+                autofocus: true,
+                onChanged: (query) async {
+                  if (query.length < 2) {
+                    setModalState(() => searchResults = []);
+                    return;
                   }
+                  setModalState(() => isSearching = true);
+                  final results = await ref
+                      .read(eventsProvider.notifier)
+                      .searchUsersForInvite(query);
+                  // Filter out already-added co-hosts
+                  final existingIds = _coHosts.map((c) => c.userId).toSet();
+                  setModalState(() {
+                    searchResults = results
+                        .where((u) => !existingIds.contains(u['id']))
+                        .toList();
+                    isSearching = false;
+                  });
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VesparaColors.glow,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: InputDecoration(
+                  hintText: 'Search by name...',
+                  hintStyle: const TextStyle(color: VesparaColors.secondary),
+                  prefixIcon:
+                      const Icon(Icons.search, color: VesparaColors.glow),
+                  suffixIcon: isSearching
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: VesparaColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: VesparaColors.glow),
+                  ),
                 ),
-                child: const Text('Add Co-Host',
-                    style: TextStyle(color: VesparaColors.background)),
+                style: const TextStyle(color: VesparaColors.primary),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 12),
+              if (searchResults.isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: searchResults.length,
+                    itemBuilder: (context, index) {
+                      final user = searchResults[index];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: user['avatar_url'] != null
+                              ? NetworkImage(user['avatar_url'] as String)
+                              : null,
+                          backgroundColor: VesparaColors.glow.withValues(alpha: 0.2),
+                          child: user['avatar_url'] == null
+                              ? Text(
+                                  (user['display_name'] as String? ?? '?')[0]
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                      color: VesparaColors.glow),
+                                )
+                              : null,
+                        ),
+                        title: Text(
+                          user['display_name'] as String? ?? 'User',
+                          style:
+                              const TextStyle(color: VesparaColors.primary),
+                        ),
+                        trailing: const Icon(Icons.add_circle_outline,
+                            color: VesparaColors.glow),
+                        onTap: () {
+                          setState(() {
+                            _coHosts.add(EventCoHost(
+                              id: 'cohost-${_coHosts.length}',
+                              userId: user['id'] as String,
+                              name: user['display_name'] as String? ??
+                                  'Co-host',
+                              avatarUrl: user['avatar_url'] as String?,
+                              role: 'pending',
+                            ));
+                          });
+                          Navigator.pop(context);
+                          HapticFeedback.mediumImpact();
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  '${user['display_name']} added as co-host'),
+                              backgroundColor: VesparaColors.success,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              if (searchResults.isEmpty &&
+                  searchController.text.length >= 2 &&
+                  !isSearching)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'No users found',
+                      style: TextStyle(color: VesparaColors.secondary),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

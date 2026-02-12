@@ -124,9 +124,9 @@ class DatePlannerService {
     required Map<String, dynamic> otherProfile,
     required List previousDates,
   }) async {
-    final myInterests = (myProfile['interests'] as List?)?.join(', ') ?? '';
+    final myInterests = (myProfile['interest_tags'] as List?)?.join(', ') ?? '';
     final theirInterests =
-        (otherProfile['interests'] as List?)?.join(', ') ?? '';
+        (otherProfile['interest_tags'] as List?)?.join(', ') ?? '';
     final previousActivities = previousDates
         .map((d) => d['activity'] as String?)
         .where((a) => a != null)
@@ -350,8 +350,8 @@ Write an invite message:''',
             id,
             user1_id,
             user2_id,
-            user1:profiles!matches_user1_id_fkey(id, display_name, interests, location),
-            user2:profiles!matches_user2_id_fkey(id, display_name, interests, location)
+            user1:profiles!matches_user1_id_fkey(id, display_name, interest_tags, location),
+            user2:profiles!matches_user2_id_fkey(id, display_name, interest_tags, location)
           ''').eq('id', matchId).maybeSingle();
 
       if (match == null) return null;

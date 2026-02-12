@@ -644,6 +644,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     final going = _event.rsvps.where((r) => r.status == 'going').toList();
     final maybe = _event.rsvps.where((r) => r.status == 'maybe').toList();
     final invited = _event.rsvps.where((r) => r.status == 'invited').toList();
+    final waitlist =
+        _event.rsvps.where((r) => r.status == 'waitlist').toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -659,50 +661,85 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                 color: VesparaColors.primary,
               ),
             ),
-            if (_event.maxSpots != null)
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _event.isFull
-                      ? VesparaColors.error.withOpacity(0.2)
-                      : VesparaColors.glow.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _event.isFull
-                      ? 'FULL'
-                      : '${_event.spotsRemaining} spots left',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _event.isFull
-                        ? VesparaColors.error
-                        : VesparaColors.glow,
+            Row(
+              children: [
+                if (_isHost)
+                  GestureDetector(
+                    onTap: _shareInviteLink,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.glow.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.link, size: 14, color: VesparaColors.glow),
+                          SizedBox(width: 4),
+                          Text(
+                            'Share Link',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                const SizedBox(width: 8),
+                if (_event.maxSpots != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _event.isFull
+                          ? VesparaColors.error.withValues(alpha: 0.2)
+                          : VesparaColors.glow.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _event.isFull
+                          ? 'FULL'
+                          : '${_event.spotsRemaining} spots left',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _event.isFull
+                            ? VesparaColors.error
+                            : VesparaColors.glow,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
 
         const SizedBox(height: 16),
 
         // RSVP summary chips
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             _buildGuestChip('👍 ${going.length} Going', VesparaColors.success),
-            const SizedBox(width: 8),
             _buildGuestChip(
-                '🤔 ${maybe.length} Maybe', VesparaColors.tagsYellow,),
-            const SizedBox(width: 8),
+                '🤔 ${maybe.length} Maybe', VesparaColors.tagsYellow),
             _buildGuestChip(
-                '💌 ${invited.length} Invited', VesparaColors.secondary,),
+                '💌 ${invited.length} Invited', VesparaColors.secondary),
+            if (waitlist.isNotEmpty)
+              _buildGuestChip(
+                  '🕐 ${waitlist.length} Waitlist', VesparaColors.tagsBlue),
           ],
         ),
 
         const SizedBox(height: 16),
 
-        // Guest list
+        // Guest sections
         if (going.isNotEmpty) ...[
           _buildGuestSection('Going', going, VesparaColors.success),
           const SizedBox(height: 12),
@@ -711,11 +748,31 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           _buildGuestSection('Maybe', maybe, VesparaColors.tagsYellow),
           const SizedBox(height: 12),
         ],
+        if (waitlist.isNotEmpty) ...[
+          _buildGuestSection('Waitlist', waitlist, VesparaColors.tagsBlue),
+          const SizedBox(height: 12),
+        ],
         if (_isHost && invited.isNotEmpty) ...[
           _buildGuestSection('Pending', invited, VesparaColors.secondary),
         ],
       ],
     );
+  }
+
+  Future<void> _shareInviteLink() async {
+    final code = await ref
+        .read(eventsProvider.notifier)
+        .createInviteLink(eventId: _event.id);
+    if (code != null && mounted) {
+      // Copy to clipboard
+      await Clipboard.setData(ClipboardData(text: code));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invite code copied: $code'),
+          backgroundColor: VesparaColors.success,
+        ),
+      );
+    }
   }
 
   Widget _buildGuestChip(String text, Color color) => Container(
@@ -764,24 +821,52 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
         ),
       );
 
-  Widget _buildGuestAvatar(EventRsvp guest) => Column(
+  Widget _buildGuestAvatar(EventRsvp guest) {
+    final showActions =
+        _isHost && (guest.status == 'waitlist' || guest.status == 'invited');
+    return GestureDetector(
+      onLongPress: _isHost
+          ? () => _showGuestActions(guest)
+          : null,
+      child: Column(
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: VesparaColors.glow.withOpacity(0.3),
-            backgroundImage: guest.userAvatarUrl != null
-                ? NetworkImage(guest.userAvatarUrl!)
-                : null,
-            child: guest.userAvatarUrl == null
-                ? Text(
-                    guest.userName[0].toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: VesparaColors.glow.withValues(alpha: 0.3),
+                backgroundImage: guest.userAvatarUrl != null
+                    ? NetworkImage(guest.userAvatarUrl!)
+                    : null,
+                child: guest.userAvatarUrl == null
+                    ? Text(
+                        guest.userName[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.glow,
+                        ),
+                      )
+                    : null,
+              ),
+              if (showActions)
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
                       color: VesparaColors.glow,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: VesparaColors.surface, width: 2),
                     ),
-                  )
-                : null,
+                    child: const Icon(Icons.more_horiz,
+                        size: 10, color: VesparaColors.background),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -792,7 +877,79 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             ),
           ),
         ],
-      );
+      ),
+    );
+  }
+
+  void _showGuestActions(EventRsvp guest) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              guest.userName,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (guest.status == 'waitlist' || guest.status == 'invited')
+              ListTile(
+                leading: const Icon(Icons.check_circle,
+                    color: VesparaColors.success),
+                title: const Text('Approve',
+                    style: TextStyle(color: VesparaColors.primary)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await ref.read(eventsProvider.notifier).approveGuest(
+                        eventId: _event.id,
+                        userId: guest.userId,
+                      );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${guest.userName} approved!'),
+                        backgroundColor: VesparaColors.success,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ListTile(
+              leading:
+                  const Icon(Icons.remove_circle, color: VesparaColors.error),
+              title: const Text('Remove',
+                  style: TextStyle(color: VesparaColors.error)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await ref.read(eventsProvider.notifier).removeGuest(
+                      eventId: _event.id,
+                      userId: guest.userId,
+                    );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${guest.userName} removed'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildBottomBar() => Container(
         padding: EdgeInsets.fromLTRB(
@@ -1386,13 +1543,13 @@ Join me on Vespara!
   Future<void> _updateRsvp(String status) async {
     HapticFeedback.heavyImpact();
 
-    // Persist to database via provider
-    final success = await ref.read(eventsProvider.notifier).respondToInvite(
+    // Persist to database via provider — rsvpToEvent handles capacity/waitlist
+    final result = await ref.read(eventsProvider.notifier).rsvpToEvent(
           eventId: _event.id,
           status: status,
         );
 
-    if (!success) {
+    if (result == 'error') {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1404,6 +1561,9 @@ Join me on Vespara!
       return;
     }
 
+    // The actual status may differ (e.g. 'waitlist' if event was full)
+    final actualStatus = result;
+
     // Update the event's RSVPs locally for immediate UI feedback
     final updatedRsvps = _event.rsvps.map((r) {
       if (r.userId == _currentUserId) {
@@ -1413,7 +1573,7 @@ Join me on Vespara!
           userId: r.userId,
           userName: r.userName,
           userAvatarUrl: r.userAvatarUrl,
-          status: status,
+          status: actualStatus,
           createdAt: r.createdAt,
           respondedAt: DateTime.now(),
         );
@@ -1429,7 +1589,7 @@ Join me on Vespara!
           eventId: _event.id,
           userId: _currentUserId,
           userName: 'You',
-          status: status,
+          status: actualStatus,
           createdAt: DateTime.now(),
           respondedAt: DateTime.now(),
         ),
@@ -1441,7 +1601,7 @@ Join me on Vespara!
     });
 
     String message;
-    switch (status) {
+    switch (actualStatus) {
       case 'going':
         message = "You're going! 🎉";
         break;
@@ -1449,7 +1609,11 @@ Join me on Vespara!
         message = 'Marked as maybe 🤔';
         break;
       case 'cant_go':
+      case 'not_going':
         message = "Sorry you can't make it 😢";
+        break;
+      case 'waitlist':
+        message = "Event is full — you're on the waitlist 🕐";
         break;
       default:
         message = 'RSVP updated';
@@ -1776,9 +1940,13 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
         ),
       );
 
-  void _sendInvites() {
-    // TODO: Actually send invites via eventsProvider
-    Navigator.pop(context);
-    widget.onInvitesSent(_selectedIds.length);
+  void _sendInvites() async {
+    final notifier = ref.read(eventsProvider.notifier);
+    final count = await notifier.sendBulkInvites(
+      eventId: widget.event.id,
+      userIds: _selectedIds.toList(),
+    );
+    if (mounted) Navigator.pop(context);
+    widget.onInvitesSent(count);
   }
 }
