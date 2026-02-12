@@ -343,7 +343,10 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
     }
   }
 
-  /// Record votes to Supabase after a round so rankings can adapt over time
+  /// Record votes to Supabase after a round so rankings can adapt over time.
+  /// The DB auto-triggers a recalculation once enough votes accumulate
+  /// (threshold-based, not schedule-based). Cards can only shift ±3 ranks
+  /// per recalc cycle so rankings drift gradually.
   Future<void> _recordVotesToSupabase(List<KinkCard> submittedOrder) async {
     if (_supabase == null) return;
 
@@ -356,9 +359,36 @@ class PathOfPleasureNotifier extends StateNotifier<PathOfPleasureState> {
         'p_submitted_positions': positions,
         'p_session_id': state.sessionId,
       });
+
+      // Silently refresh the master deck in the background so that if a
+      // recalc just fired, upcoming rounds use the latest (slightly shifted)
+      // rankings. This is fire-and-forget — doesn't block gameplay.
+      _refreshCardsInBackground();
     } catch (e) {
       // Non-critical — game still works, just doesn't record votes
       debugPrint('PathOfPleasure: Failed to record votes: $e');
+    }
+  }
+
+  /// Quietly reload cards from Supabase without interrupting the current game.
+  /// Only updates the master deck (future rounds); the current round is
+  /// unaffected so no score changes mid-round.
+  Future<void> _refreshCardsInBackground() async {
+    if (_supabase == null) return;
+    try {
+      final response = await _supabase
+          .from('pop_cards')
+          .select('id, text, category, subcategory, heat_level, global_rank, popularity_score, rank_change, total_votes')
+          .eq('is_active', true)
+          .order('global_rank', ascending: true);
+
+      final rows = response as List<dynamic>;
+      if (rows.length >= 8) {
+        final refreshed = rows.map((r) => KinkCard.fromSupabase(r as Map<String, dynamic>)).toList();
+        state = state.copyWith(masterDeck: refreshed);
+      }
+    } catch (_) {
+      // Ignore — current deck is fine
     }
   }
 

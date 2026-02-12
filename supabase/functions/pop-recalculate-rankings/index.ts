@@ -2,18 +2,27 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
- * Path of Pleasure - Nightly Rankings Recalculation
+ * Path of Pleasure - Manual Rankings Recalculation (Admin/Safety Valve)
  *
- * This Edge Function recalculates the global popularity rankings for all
- * Path of Pleasure cards based on accumulated player votes and Elo matchups.
+ * Rankings now auto-recalculate inside the database when enough votes
+ * accumulate (threshold-based, not schedule-based). This Edge Function
+ * exists as a MANUAL override for admins — e.g., after tuning config
+ * or to force a recalc during testing.
  *
- * Schedule: Run nightly via cron (recommended: 3 AM UTC)
- *   - Supabase Dashboard → Edge Functions → pop-recalculate-rankings → Schedule
- *   - Cron expression: 0 3 * * *
+ * The recalculation applies dampening: each card can only shift ±3 ranks
+ * per cycle to prevent wild jumps. Cards need ≥10 total votes before
+ * their rank moves at all.
  *
- * Or call manually:
+ * Call manually:
  *   curl -X POST https://<project>.supabase.co/functions/v1/pop-recalculate-rankings \
  *     -H "Authorization: Bearer <service_role_key>"
+ *
+ * Adjust thresholds (no deploy needed):
+ *   SELECT pop_update_recalc_config(
+ *     p_vote_threshold := 100,    -- recalc after 100 new votes (default 50)
+ *     p_max_rank_shift := 5,      -- allow ±5 rank movement per cycle (default 3)
+ *     p_min_votes_to_rerank := 20 -- card needs 20 votes before moving (default 10)
+ *   );
  */
 
 const ALLOWED_ORIGINS = [
