@@ -342,7 +342,7 @@ Remember: This bio should feel like it could ONLY have been written by this spec
       bio = bio.substring(1, bio.length - 1);
     }
     // Remove any "Bio:" or "Here's" prefix
-    bio = bio.replaceAll(RegExp(r'^(Bio:|Here\'s.*?:|Option \d+:)\s*', caseSensitive: false), '');
+    bio = bio.replaceAll(RegExp(r"^(Bio:|Here's.*?:|Option \d+:)\s*", caseSensitive: false), '');
     return bio.trim();
   }
 

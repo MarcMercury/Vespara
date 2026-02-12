@@ -72,9 +72,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     setState(() => _loadingAssessment = true);
     try {
       final engine = HardTruthEngine.instance;
-      final userId = SupabaseService.instance.currentUser?.id;
+      final userId = SupabaseService.currentUser?.id;
       if (userId != null) {
-        final assessment = await engine.generateAssessment(userId);
+        final assessment = await engine.generateAssessment(userId: userId);
         if (mounted) setState(() => _hardTruthAssessment = assessment);
       }
     } catch (e) {
@@ -88,9 +88,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     setState(() => _loadingRecommendations = true);
     try {
       final recommender = SmartTraitRecommender.instance;
-      final userId = SupabaseService.instance.currentUser?.id;
+      final userId = SupabaseService.currentUser?.id;
       if (userId != null) {
-        final recs = await recommender.getRecommendations(userId);
+        final recs = await recommender.getRecommendations(userId: userId);
         if (mounted) setState(() => _traitRecommendations = recs);
       }
     } catch (e) {
@@ -115,12 +115,6 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         ref.invalidate(userProfileProvider);
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -587,7 +581,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               child: TextButton.icon(
                 onPressed: _loadingAssessment ? null : () {
                   HardTruthEngine.instance.invalidateCache(
-                    SupabaseService.instance.currentUser?.id ?? '',
+                    userId: SupabaseService.currentUser?.id,
                   );
                   _loadHardTruthAssessment();
                 },
@@ -1199,8 +1193,10 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
   Widget _buildImprovementTips() {
     // Use deep AI assessment tips first, then fall back to analytics/metrics
-    final deepAdvice = _hardTruthAssessment?.optimizationAdvice;
-    final tips = deepAdvice ?? _analytics?.aiImprovementTips ?? _generateTipsFromMetrics();
+    final deepAdviceStr = _hardTruthAssessment?.optimizationAdvice;
+    final List<String> tips = deepAdviceStr != null && deepAdviceStr.isNotEmpty
+        ? [deepAdviceStr]
+        : (_analytics?.aiImprovementTips ?? _generateTipsFromMetrics());
     final hasTips = tips.isNotEmpty;
 
     return Container(
@@ -1612,8 +1608,8 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 )
               else if (_traitRecommendations != null) ...[
                 // Gap insights
-                if (_traitRecommendations!.gapInsights.isNotEmpty) ...[
-                  ..._traitRecommendations!.gapInsights.take(2).map((gap) => Padding(
+                if (_traitRecommendations!.gapAnalysis.isNotEmpty) ...[
+                  ..._traitRecommendations!.gapAnalysis.take(2).map((gap) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Container(
                       padding: const EdgeInsets.all(10),
@@ -1627,7 +1623,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              gap.insight,
+                              gap.observation,
                               style: const TextStyle(fontSize: 12, color: VesparaColors.primary, height: 1.3),
                             ),
                           ),
@@ -1643,7 +1639,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _traitRecommendations!.suggestions.take(6).map((s) =>
+                  children: _traitRecommendations!.allSuggestions.take(6).map((s) =>
                     _buildSmartSuggestionChip(s),
                   ).toList(),
                 ),

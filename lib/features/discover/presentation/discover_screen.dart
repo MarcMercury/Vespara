@@ -174,7 +174,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       final prioritized = profiles.take(10).toList();
       for (final profile in prioritized) {
         try {
-          final score = await engine.scoreCompatibility(currentUserId, profile.id);
+          final score = await engine.scoreCompatibility(userId1: currentUserId, userId2: profile.id);
           if (mounted) {
             setState(() => _deepScores[profile.id] = score);
           }
@@ -186,7 +186,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       for (final profile in profiles.skip(10)) {
         if (!mounted) return;
         try {
-          final score = await engine.scoreCompatibility(currentUserId, profile.id);
+          final score = await engine.scoreCompatibility(userId1: currentUserId, userId2: profile.id);
           if (mounted) {
             setState(() => _deepScores[profile.id] = score);
           }

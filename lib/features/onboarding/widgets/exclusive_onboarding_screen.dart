@@ -791,7 +791,7 @@ class _ExclusiveOnboardingScreenState
         traits: _selectedTraits.toList(),
         seeking: _seeking.toList(),
         relationshipStatus: _relationshipStatus.toList(),
-        heatLevel: _heatLevel,
+        heatLevel: _heatLevel ?? 'moderate',
         hardLimits: _hardLimits.toList(),
         availability: _availability.toList(),
         schedulingStyle: _schedulingStyle,
@@ -802,8 +802,8 @@ class _ExclusiveOnboardingScreenState
             : null,
         city: _city,
         state: _state,
-        gender: _gender.toList(),
-        orientation: _orientation.toList(),
+        gender: _selectedGenders.toList(),
+        orientation: _selectedOrientations.toList(),
         bandwidth: _bandwidth,
       );
 

@@ -1679,7 +1679,7 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
       final currentUserId = Supabase.instance.client.auth.currentUser?.id;
       if (currentUserId != null) {
         final deepCompat = await DeepConnectionEngine.instance
-            .scoreCompatibility(currentUserId, widget.match.matchedUserId);
+            .scoreCompatibility(userId1: currentUserId, userId2: widget.match.matchedUserId);
         if (mounted) {
           setState(() => _deepCompatibility = deepCompat);
         }
@@ -2244,10 +2244,10 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
                       )).toList(),
                     ),
                   ],
-                  if (_deepCompatibility!.connectionNarrative.isNotEmpty) ...[
+                  if (_deepCompatibility!.narrative.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Text(
-                      _deepCompatibility!.connectionNarrative,
+                      _deepCompatibility!.narrative,
                       style: const TextStyle(
                         fontSize: 12,
                         height: 1.4,

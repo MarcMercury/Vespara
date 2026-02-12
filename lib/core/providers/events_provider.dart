@@ -877,7 +877,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
           id: linkMap['id'] as String? ?? const Uuid().v4(),
           type: EventLinkType.values.firstWhere(
             (t) => t.name == (linkMap['type'] as String? ?? 'other'),
-            orElse: () => EventLinkType.other,
+            orElse: () => EventLinkType.custom,
           ),
           label: linkMap['label'] as String? ?? '',
           url: linkMap['url'] as String? ?? '',

@@ -69,6 +69,16 @@ sealed class Result<T> {
         Failure(:final error) => failure?.call(error),
       };
 
+  /// Fold pattern - alias for when() with onSuccess/onFailure named params
+  R fold<R>({
+    required R Function(T data) onSuccess,
+    required R Function(AppError error) onFailure,
+  }) =>
+      switch (this) {
+        Success(:final data) => onSuccess(data),
+        Failure(:final error) => onFailure(error),
+      };
+
   /// Gets data or throws the error
   T getOrThrow() => switch (this) {
         Success(:final data) => data,
