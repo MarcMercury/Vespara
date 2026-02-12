@@ -1317,9 +1317,11 @@ class _LaneOfLustScreenState extends ConsumerState<LaneOfLustScreen>
         final index = _selectedDropIndex;
         if (index == null) return;
         HapticFeedback.heavyImpact();
-        final capturedIndex = index;
+        // Call placement FIRST, then clear selection.
+        // The listener already clears _selectedDropIndex on result,
+        // but we clear here too in case something goes wrong.
+        ref.read(laneOfLustProvider.notifier).attemptPlacement(index);
         setState(() => _selectedDropIndex = null);
-        ref.read(laneOfLustProvider.notifier).attemptPlacement(capturedIndex);
       },
       child: Container(
         width: double.infinity,

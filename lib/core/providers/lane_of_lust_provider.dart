@@ -97,10 +97,10 @@ class LaneCard {
 
   /// Color gradient based on desire index
   Color get indexColor {
-    if (desireIndex <= 30) return const Color(0xFF87CEEB); // Light blue - mild
-    if (desireIndex <= 50) return const Color(0xFFFFD700); // Gold - medium
-    if (desireIndex <= 75) return const Color(0xFFFF8C00); // Orange - hot
-    return const Color(0xFFDC143C); // Crimson - extreme
+    if (desireIndex <= 30) return const Color(0xFF4A90D9); // Medium blue - mild
+    if (desireIndex <= 50) return const Color(0xFFD4A017); // Dark gold - medium
+    if (desireIndex <= 75) return const Color(0xFFE06600); // Deep orange - hot
+    return const Color(0xFFBF1030); // Deep crimson - extreme
   }
 }
 

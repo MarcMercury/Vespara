@@ -118,15 +118,15 @@ class LaneCardSmall extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.08),
+                  color: color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   card.text,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: color.withOpacity(0.9),
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A2E),
                     height: 1.15,
                   ),
                   textAlign: TextAlign.center,
@@ -457,16 +457,16 @@ class LaneMysteryCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 4),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.06),
+                        color: color.withOpacity(0.10),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Center(
                         child: Text(
                           card.text,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: color.withOpacity(0.85),
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
                             height: 1.2,
                           ),
                           textAlign: TextAlign.center,
