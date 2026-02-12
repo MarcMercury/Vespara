@@ -325,9 +325,20 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               Text(
                 _getMonthYear(_selectedDate),
                 style: GoogleFonts.inter(
-          ],
-        ),
-      );
+                  fontSize: 12,
+                  color: VesparaColors.secondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.today, color: VesparaColors.secondary),
+          ),
+        ],
+      ),
+    );
 
   Widget _buildQuickStats(PlanState state) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),

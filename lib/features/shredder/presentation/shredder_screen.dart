@@ -138,17 +138,19 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: VesparaColors.background,
-      body: VesparaAnimatedBackground(
-        enableParticles: true,
-        particleCount: 10,
-        auroraIntensity: 0.5,
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(child: _buildContent()),
-            ],
+        body: VesparaAnimatedBackground(
+          enableParticles: true,
+          particleCount: 10,
+          auroraIntensity: 0.5,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(child: _buildContent()),
+              ],
+            ),
           ),
+        ),
       );
 
   Widget _buildHeader() => Padding(
@@ -177,11 +179,20 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
               Text(
                 'Time to let go',
                 style: GoogleFonts.inter(
-              icon: const Icon(Icons.history, color: VesparaColors.secondary),
-            ),
-          ],
-        ),
-      );
+                  fontSize: 12,
+                  color: VesparaColors.secondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.history, color: VesparaColors.secondary),
+          ),
+        ],
+      ),
+    );
 
   Widget _buildContent() {
     if (_isLoading) {
