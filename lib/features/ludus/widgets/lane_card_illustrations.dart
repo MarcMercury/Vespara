@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -2400,7 +2402,7 @@ class _StickFigurePainter extends CustomPainter {
     _drawHead(canvas, Offset(cx + 1.5 * unit, 4 * unit), unit * 0.5, paint);
     canvas.drawLine(Offset(cx + 1.5 * unit, 4.5 * unit), Offset(cx + 1.5 * unit, 7 * unit), paint);
     // Dollar sign
-    _drawText(canvas, '$', Offset(cx, 2.5 * unit), unit * 1, fillPaint);
+    _drawText(canvas, '\$', Offset(cx, 2.5 * unit), unit * 1, fillPaint);
     // Holding hands
     canvas.drawLine(Offset(cx - 1.5 * unit, 5.5 * unit), Offset(cx + 1.5 * unit, 5.5 * unit), paint);
     _drawSmallHeart(canvas, Offset(cx, 3.5 * unit), unit * 0.3, fillPaint);
@@ -2513,8 +2515,8 @@ class _StickFigurePainter extends CustomPainter {
     const count = 6;
     for (int i = 0; i < count; i++) {
       final angle = (i / count) * 3.14159 * 2 - 1.57;
-      final x = cx + 2.5 * unit * (angle.cos());
-      final y = cy + 2.5 * unit * (angle.sin());
+      final x = cx + 2.5 * unit * cos(angle);
+      final y = cy + 2.5 * unit * sin(angle);
       _drawHead(canvas, Offset(x, y), unit * 0.35, paint);
     }
     // Confetti
@@ -2559,7 +2561,16 @@ class _StickFigurePainter extends CustomPainter {
     canvas.drawLine(Offset(cx + 2 * unit, 4 * unit), Offset(cx + unit, 4 * unit), paint);
     canvas.drawLine(Offset(cx + 3 * unit, 4 * unit), Offset(cx + 4 * unit, 4 * unit), paint);
     // Chain connecting
-    fBATCH 10: Cards 91-100 — Extreme
+    final chain = Path();
+    chain.moveTo(cx - 2.5 * unit, 6 * unit);
+    chain.quadraticBezierTo(cx, 7.5 * unit, cx + 2.5 * unit, 4.5 * unit);
+    canvas.drawPath(chain, paint);
+    _drawText(canvas, '+', Offset(cx, 4 * unit), unit * 0.8, fillPaint);
+    _drawSparkle(canvas, Offset(cx - 2.5 * unit, 2 * unit), unit * 0.3, paint);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BATCH 10: Cards 91-100 — Extreme
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Card 91: Gorean — kneeling figure, pedestal, "GOR" text
@@ -2611,8 +2622,8 @@ class _StickFigurePainter extends CustomPainter {
     const count = 5;
     for (int i = 0; i < count; i++) {
       final angle = (i / count) * 3.14159 * 2 - 1.57;
-      final x = cx + 3 * unit * (angle.cos());
-      final y = cy + 3 * unit * (angle.sin());
+      final x = cx + 3 * unit * cos(angle);
+      final y = cy + 3 * unit * sin(angle);
       _drawHead(canvas, Offset(x, y), unit * 0.35, paint);
     }
     _drawText(canvas, 'M', Offset(cx + 3 * unit, cy - 2.5 * unit), unit * 0.3, fillPaint);
@@ -2632,8 +2643,8 @@ class _StickFigurePainter extends CustomPainter {
     const count = 6;
     for (int i = 0; i < count; i++) {
       final angle = (i / count) * 3.14159 * 2 - 1.57;
-      final x = cx + 3 * unit * (angle.cos());
-      final y = cy + 3 * unit * (angle.sin());
+      final x = cx + 3 * unit * cos(angle);
+      final y = cy + 3 * unit * sin(angle);
       _drawHead(canvas, Offset(x, y), unit * 0.3, paint);
       canvas.drawLine(Offset(x, y + 0.3 * unit), Offset(x, y + unit), paint);
     }
@@ -2786,15 +2797,6 @@ class _StickFigurePainter extends CustomPainter {
     canvas.drawLine(Offset(cx - 0.1 * unit, 3.2 * unit), Offset(cx - 0.3 * unit, 3.5 * unit), paint);
     canvas.drawLine(Offset(cx + 0.1 * unit, 3.2 * unit), Offset(cx + 0.3 * unit, 3.5 * unit), paint);
     canvas.drawLine(Offset(cx + 0.3 * unit, 3.2 * unit), Offset(cx + 0.1 * unit, 3.5 * unit), paint);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PLACEHOLDER (kept for potential future use)
-    chain.moveTo(cx - 2.5 * unit, 6 * unit);
-    chain.quadraticBezierTo(cx, 7.5 * unit, cx + 2.5 * unit, 4.5 * unit);
-    canvas.drawPath(chain, paint);
-    _drawText(canvas, '+', Offset(cx, 4 * unit), unit * 0.8, fillPaint);
-    _drawSparkle(canvas, Offset(cx - 2.5 * unit, 2 * unit), unit * 0.3, paint);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
