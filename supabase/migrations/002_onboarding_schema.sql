@@ -1,5 +1,5 @@
 -- ============================================
--- VESPARA ONBOARDING SCHEMA EXTENSION
+-- KULT ONBOARDING SCHEMA EXTENSION
 -- Run this in Supabase SQL Editor
 -- ============================================
 

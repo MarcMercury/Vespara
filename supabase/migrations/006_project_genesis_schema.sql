@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- VESPARA MIGRATION 006: Schema Updates for Project Genesis Seeding
+-- KULT MIGRATION 006: Schema Updates for Project Genesis Seeding
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 
 -- This migration adds columns required for the comprehensive seeding script

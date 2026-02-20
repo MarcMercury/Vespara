@@ -1,5 +1,5 @@
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
--- ║                    VESPARA PHASE 2: THE NERVOUS SYSTEM                    ║
+-- ║                     KULT PHASE 2: THE NERVOUS SYSTEM                      ║
 -- ║              Schema Extensions, Enums, RLS & Helper Functions             ║
 -- ╚═══════════════════════════════════════════════════════════════════════════╝
 

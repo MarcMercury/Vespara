@@ -1,6 +1,6 @@
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
 -- ║              MIGRATION 057: FIX CIRCLE (GROUP) CREATION                   ║
--- ║   Resolves 400 on create_vespara_group, 500 on group_members query        ║
+-- ║   Resolves 400 on group creation RPC, 500 on group_members query           ║
 -- ╚═══════════════════════════════════════════════════════════════════════════╝
 --
 -- Issues Fixed:
@@ -149,7 +149,7 @@ CREATE POLICY "gm_insert" ON public.group_members
     );
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 5. FIX VESPARA_GROUPS RLS POLICIES
+-- 5. FIX KULT_GROUPS RLS POLICIES
 -- ════════════════════════════════════════════════════════════════════════════
 
 DROP POLICY IF EXISTS "Creators can manage their groups" ON public.vespara_groups;
@@ -185,7 +185,7 @@ CREATE POLICY "vg_delete" ON public.vespara_groups
     USING (creator_id = auth.uid());
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 6. RECREATE create_vespara_group FUNCTION (clean version)
+-- 6. RECREATE create_vespara_group FUNCTION (clean version for Kult)
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- Drop ALL possible function signatures

@@ -22,8 +22,8 @@ class Env {
   // APP IDENTITY
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get appName => dotenv.env['APP_NAME'] ?? 'Vespara';
-  static String get appDomain => dotenv.env['APP_DOMAIN'] ?? 'www.vespara.co';
+    static String get appName => dotenv.env['APP_NAME'] ?? 'Kult';
+    static String get appDomain => dotenv.env['APP_DOMAIN'] ?? 'www.kult.app';
   static String get appVersion => dotenv.env['APP_VERSION'] ?? '0.1.0-alpha';
 
   // ═══════════════════════════════════════════════════════════════════════════

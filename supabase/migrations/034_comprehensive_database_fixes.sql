@@ -242,7 +242,7 @@ CREATE POLICY "conversations_update" ON public.conversations
     );
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 6. FIX CREATE_VESPARA_GROUP FUNCTION
+-- 6. FIX CREATE_KULT_GROUP FUNCTION (legacy: create_vespara_group)
 -- ════════════════════════════════════════════════════════════════════════════
 
 DROP FUNCTION IF EXISTS public.create_vespara_group(TEXT, TEXT, TEXT);

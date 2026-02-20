@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// VESPARA PROJECT GENESIS: Dynamic User Seeding Script
+// KULT PROJECT GENESIS: Dynamic User Seeding Script
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // CLEANUP SQL (Run this to wipe all test data):
@@ -202,7 +202,7 @@ function generateProfile(index: number, isTonightMode: boolean = false): Profile
     id,
     first_name: firstName,
     last_name: lastName,
-    email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace('x', '')}@vespara.test`,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace('x', '')}@kult.test`,
     avatar_url: `https://i.pravatar.cc/400?u=${id}`,
     photos: [
       `https://i.pravatar.cc/800?u=${id}-1`,
@@ -231,7 +231,7 @@ const LIAM_MERCER: Profile = {
   id: uuid(),
   first_name: 'Liam',
   last_name: 'MercerX',
-  email: 'liam.mercer@vespara.test',
+  email: 'liam.mercer@kult.test',
   avatar_url: `https://i.pravatar.cc/400?u=liam-mercer`,
   photos: [
     'https://i.pravatar.cc/800?u=liam-1',
@@ -254,7 +254,7 @@ const ELENI_KOSTAS: Profile = {
   id: uuid(),
   first_name: 'Eleni',
   last_name: 'KostasX',
-  email: 'eleni.kostas@vespara.test',
+  email: 'eleni.kostas@kult.test',
   avatar_url: `https://i.pravatar.cc/400?u=eleni-kostas`,
   photos: [
     'https://i.pravatar.cc/800?u=eleni-1',
@@ -278,7 +278,7 @@ const MARCUS_THORNE: Profile = {
   id: uuid(),
   first_name: 'Marcus',
   last_name: 'ThorneX',
-  email: 'marcus.thorne@vespara.test',
+  email: 'marcus.thorne@kult.test',
   avatar_url: `https://i.pravatar.cc/400?u=marcus-thorne`,
   photos: [
     'https://i.pravatar.cc/800?u=marcus-1',
@@ -300,7 +300,7 @@ const JULIAN_VANCE: Profile = {
   id: uuid(),
   first_name: 'Julian',
   last_name: 'VanceX',
-  email: 'julian.vance@vespara.test',
+  email: 'julian.vance@kult.test',
   avatar_url: `https://i.pravatar.cc/400?u=julian-vance`,
   photos: [
     'https://i.pravatar.cc/800?u=julian-1',
@@ -494,7 +494,7 @@ function generateRosterMatch(
     name: `${match.first_name} ${match.last_name}`,
     nickname: null,
     avatar_url: match.avatar_url,
-    source: 'Vespara',
+    source: 'Kult',
     pipeline,
     momentum_score: momentum,
     notes,
@@ -539,7 +539,7 @@ interface EventAttendee {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function seed() {
-  console.log('🌱 VESPARA PROJECT GENESIS: Beginning seed operation...\n');
+  console.log('🌱 KULT PROJECT GENESIS: Beginning seed operation...\n');
   
   // ─────────────────────────────────────────────────────────────────────────
   // STEP 0: Create or get Hero user (the logged-in test user)
@@ -551,13 +551,13 @@ async function seed() {
     id: uuid(),
     first_name: 'Alex',
     last_name: 'HeroX',
-    email: 'hero@vespara.test',
+    email: 'hero@kult.test',
     avatar_url: 'https://i.pravatar.cc/400?u=hero-main',
     photos: [
       'https://i.pravatar.cc/800?u=hero-1',
       'https://i.pravatar.cc/800?u=hero-2',
     ],
-    bio: "The main character. Testing all 8 tiles of the Vespara dashboard.",
+    bio: "The main character. Testing all 8 tiles of the Kult dashboard.",
     age: 32,
     vibe_tags: ['Adventure-Seeker', 'Foodie', 'Night Owl'],
     bandwidth: 75,

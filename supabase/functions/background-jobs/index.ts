@@ -1,5 +1,5 @@
 // ╔═══════════════════════════════════════════════════════════════════════════╗
-// ║                    VESPARA BACKGROUND JOB PROCESSOR                        ║
+// ║                     KULT BACKGROUND JOB PROCESSOR                           ║
 // ║              Async processing for embeddings, feeds, cleanup               ║
 // ╚═══════════════════════════════════════════════════════════════════════════╝
 
@@ -7,8 +7,8 @@ import "https://esm.sh/@supabase/functions-js@2.4.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const ALLOWED_ORIGINS = [
-  "https://vespara.vercel.app",
-  "https://www.vespara.co",
+  "https://kult.vercel.app",
+  "https://www.kult.app",
   "http://localhost:3000",
 ];
 

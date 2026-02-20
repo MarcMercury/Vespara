@@ -1,8 +1,8 @@
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
--- ║              VESPARA EVENTS SYSTEM REBUILD                                ║
+-- ║                KULT EVENTS SYSTEM REBUILD                                  ║
 -- ║  Migration 058: Complete events infrastructure                            ║
--- ║  - vespara_events table (replaces reliance on group_events)               ║
--- ║  - vespara_event_rsvps table                                              ║
+-- ║  - vespara_events table (legacy name; replaces reliance on group_events)  ║
+-- ║  - vespara_event_rsvps table (legacy name)                                ║
 -- ║  - event_cohosts table                                                    ║
 -- ║  - event_invitations table                                                ║
 -- ║  - Storage policies for event photos                                      ║
@@ -10,7 +10,7 @@
 -- ╚═══════════════════════════════════════════════════════════════════════════╝
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 1. VESPARA EVENTS TABLE
+-- 1. KULT EVENTS TABLE (legacy object: vespara_events)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS public.vespara_events (
@@ -120,7 +120,7 @@ CREATE INDEX IF NOT EXISTS idx_event_cohosts_event ON public.event_cohosts(event
 CREATE INDEX IF NOT EXISTS idx_event_cohosts_user ON public.event_cohosts(user_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 3. VESPARA EVENT RSVPS TABLE
+-- 3. KULT EVENT RSVPS TABLE (legacy object: vespara_event_rsvps)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS public.vespara_event_rsvps (
@@ -166,7 +166,7 @@ CREATE INDEX IF NOT EXISTS idx_event_invitation_links_event
     ON public.event_invitation_links(event_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 5. ROW LEVEL SECURITY - vespara_events
+-- 5. ROW LEVEL SECURITY - Kult events (vespara_events)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.vespara_events ENABLE ROW LEVEL SECURITY;
@@ -254,7 +254,7 @@ CREATE POLICY "event_cohosts_delete" ON public.event_cohosts
     );
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 7. ROW LEVEL SECURITY - vespara_event_rsvps
+-- 7. ROW LEVEL SECURITY - Kult event RSVPs (vespara_event_rsvps)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.vespara_event_rsvps ENABLE ROW LEVEL SECURITY;

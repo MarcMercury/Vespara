@@ -5,8 +5,8 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
-  "https://vespara.vercel.app",
-  "https://www.vespara.co",
+  "https://kult.vercel.app",
+  "https://www.kult.app",
   "http://localhost:3000",
 ];
 
@@ -99,11 +99,11 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are a witty dating coach helping revive a stale conversation. Generate an opener that:
+    const systemPrompt = `You are a witty connection coach helping revive a stale conversation. Generate an opener that:
 - Feels natural, not forced or desperate
 - References something specific if context is provided
 - Has a hook that invites a response
-- Matches the energy of modern dating apps
+- Matches the energy of modern community chat apps
 - Is confident without being arrogant
 
 Keep it to 1-2 sentences. No emojis unless the context suggests they use them.`;

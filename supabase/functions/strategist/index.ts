@@ -1,12 +1,12 @@
 // Supabase Edge Function: Strategist AI
-// Handles OpenAI requests for dating advice
+// Handles OpenAI requests for connection advice
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
-  "https://vespara.vercel.app",
-  "https://www.vespara.co",
+  "https://kult.vercel.app",
+  "https://www.kult.app",
   "http://localhost:3000",
 ];
 
@@ -100,14 +100,14 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are "The Strategist" - an elite dating advisor within Vespara, a premium relationship management app. You provide sharp, actionable advice with wit and sophistication.
+    const systemPrompt = `You are "The Strategist" - an elite connection advisor within Kult, a premium community app. You provide sharp, actionable advice with wit and sophistication.
 
 Your personality:
 - Confident but not arrogant
 - Witty with occasional dry humor
 - Direct and actionable (no fluff)
 - Emotionally intelligent
-- Never judgmental about modern dating
+- Never judgmental about modern connection culture
 
 Guidelines:
 - Keep responses concise (2-3 paragraphs max)

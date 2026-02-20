@@ -582,7 +582,7 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
 
 ${event.description ?? ''}
 
-Join me on Vespara!
+Join me on Kult!
 '''.trim();
 
     Clipboard.setData(ClipboardData(text: shareText));

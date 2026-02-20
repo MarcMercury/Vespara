@@ -254,7 +254,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Show this code to someone you meet. They scan it with their Vespara app to instantly connect.',
+                      'Show this code to someone you meet. They scan it with their Kult app to instantly connect.',
                       style: TextStyle(
                         color: VesparaColors.secondary,
                         fontSize: 13,
@@ -421,7 +421,7 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Point your camera at someone\'s Vespara QR code to instantly connect.',
+                    'Point your camera at someone\'s Kult QR code to instantly connect.',
                     style: TextStyle(
                       color: VesparaColors.secondary,
                       fontSize: 13,

@@ -95,8 +95,8 @@ class PermissionService {
           context,
           VesparaPermission.location,
           'Location Access',
-          'Vespara needs your location to show you nearby events, '
-              'find matches in your area, and enable Tonight Mode.',
+            'Kult needs your location to show nearby events, '
+              'discover local communities, and enable Tonight Mode.',
           Icons.location_on_outlined,
         );
         if (!shouldRequest) {
@@ -160,7 +160,7 @@ class PermissionService {
           context,
           VesparaPermission.photos,
           'Photo Library Access',
-          'Vespara needs access to your photos to let you upload profile pictures and share moments.',
+          'Kult needs access to your photos to let you upload profile pictures and share moments.',
           Icons.photo_library_outlined,
         );
         if (!shouldProceed) return null;
@@ -203,7 +203,7 @@ class PermissionService {
           context,
           VesparaPermission.camera,
           'Camera Access',
-          'Vespara needs camera access to take profile photos and share live moments.',
+          'Kult needs camera access to take profile photos and share live moments.',
           Icons.camera_alt_outlined,
         );
         if (!shouldProceed) return null;
@@ -247,7 +247,7 @@ class PermissionService {
           context,
           VesparaPermission.photos,
           'Photo Library Access',
-          'Vespara needs access to your photos to let you upload profile pictures.',
+          'Kult needs access to your photos to let you upload profile pictures.',
           Icons.photo_library_outlined,
         );
         if (!shouldProceed) return [];

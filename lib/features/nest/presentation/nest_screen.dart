@@ -2036,7 +2036,7 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'Vespara Insight',
+                  'Kult Insight',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

@@ -1,7 +1,7 @@
-# 🌱 VESPARA PROJECT GENESIS: Seeding Guide
+# 🌱 KULT PROJECT GENESIS: Seeding Guide
 
 ## Overview
-This guide walks you through seeding the Vespara database with high-fidelity mock data to test all 8 tiles of the dashboard.
+This guide walks you through seeding the Kult database with high-fidelity mock data to test all 8 tiles of the dashboard.
 
 ---
 

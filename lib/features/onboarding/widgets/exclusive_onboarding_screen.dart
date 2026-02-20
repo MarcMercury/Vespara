@@ -1150,7 +1150,7 @@ class _ExclusiveOnboardingScreenState
         'email': user.email ?? '',
         'display_name': _displayNameController.text.trim(),
         'bio': _bioController.text.trim().isEmpty
-            ? 'New to Vespara ✨'
+          ? 'New to Kult ✨'
             : _bioController.text.trim(),
         'hook': _hookController.text.trim(),
         'headline': _headlineController.text.trim().isEmpty 
@@ -1316,7 +1316,7 @@ class _ExclusiveOnboardingScreenState
         await Supabase.instance.client.auth.refreshSession();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Welcome to Vespara! ✨'),
+            content: Text('Welcome to Kult! ✨'),
             backgroundColor: VesparaColors.success,
           ),
         );
@@ -1479,7 +1479,7 @@ class _ExclusiveOnboardingScreenState
                   )
                 : Text(
                     _currentStep == _steps.length - 1
-                        ? 'ENTER VESPARA ✨'
+                    ? 'ENTER KULT ✨'
                         : 'CONTINUE',
                     style: const TextStyle(
                       fontSize: 16,
@@ -1519,7 +1519,7 @@ class _ExclusiveOnboardingScreenState
             const SizedBox(height: 24),
 
             const Text(
-              'Vespara is for adults 21+',
+              'Kult is for adults 21+',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w500,
@@ -1559,7 +1559,7 @@ class _ExclusiveOnboardingScreenState
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'You\'re creating your profile outline. Once welcomed into Vespara, you\'ll be able to further build your personal profile.',
+                      'You\'re creating your profile outline. Once welcomed into Kult, you\'ll be able to further build your personal profile.',
                       style: TextStyle(
                         fontSize: 13,
                         color: VesparaColors.secondary,
@@ -1652,7 +1652,7 @@ class _ExclusiveOnboardingScreenState
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'You must be 21 or older to join Vespara',
+                        'You must be 21 or older to join Kult',
                         style: TextStyle(color: VesparaColors.error),
                       ),
                     ),
@@ -1704,7 +1704,7 @@ class _ExclusiveOnboardingScreenState
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
-                          'I confirm I am 21 years or older and agree to Vespara\'s terms of service',
+                          'I confirm I am 21 years or older and agree to Kult\'s terms of service',
                           style: TextStyle(
                             fontSize: 14,
                             color: VesparaColors.primary,
@@ -2488,7 +2488,7 @@ class _ExclusiveOnboardingScreenState
           children: [
             const SizedBox(height: 20),
             const Text(
-              'What brings you to Vespara?',
+              'What brings you to Kult?',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,

@@ -1,5 +1,5 @@
 -- ============================================
--- VESPARA GROUPS - Social Circles Feature
+-- KULT GROUPS - Social Circles Feature
 -- Migration 028: User-created groups with invitations
 -- ============================================
 
@@ -90,7 +90,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_type ON public.notifications(type);
 -- 3. CREATE ALL RLS POLICIES (now all tables exist)
 -- ============================================
 
--- VESPARA_GROUPS POLICIES
+-- KULT_GROUPS POLICIES
 CREATE POLICY "Creators can manage their groups" ON public.vespara_groups
     FOR ALL USING (auth.uid() = creator_id);
 

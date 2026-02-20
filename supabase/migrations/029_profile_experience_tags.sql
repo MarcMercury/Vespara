@@ -1,5 +1,5 @@
 -- ============================================
--- VESPARA PROFILE EXPERIENCE TAGS
+-- KULT PROFILE EXPERIENCE TAGS
 -- Migration 029: Add interest_tags and desire_tags columns
 -- ============================================
 

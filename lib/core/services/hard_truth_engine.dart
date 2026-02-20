@@ -344,7 +344,7 @@ Generate a deeply personalized Hard Truth assessment. Remember: this should feel
     final contradictions = _detectContradictions(dna);
 
     // For new users, generate a profile-only assessment (no behavior data)
-    final systemPrompt = '''You are "The Mirror" — Vespara's brutally honest AI dating coach.
+    final systemPrompt = '''You are "The Mirror" — Kult's brutally honest AI connection coach.
 
 This user is NEW — they have minimal behavior data. Analyze their PROFILE SETUP only.
 

@@ -571,7 +571,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
                 _tabController.animateTo(1); // Go to Find a Date tab
               },
               icon: const Icon(Icons.auto_awesome, color: VesparaColors.glow),
-              label: const Text('Let Vespara find you a date',
+              label: const Text('Let Kult find your next link-up',
                   style: TextStyle(color: VesparaColors.glow),),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: VesparaColors.glow),
@@ -2442,7 +2442,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
       _selectedTime.minute,
     );
 
-    // Create a VesparaEvent for unified events system
+    // Create a VesparaEvent for unified Kult events system
     final vesparaEvent = VesparaEvent(
       id: const Uuid().v4(),
       title: _titleController.text,
@@ -2457,7 +2457,7 @@ class _AddEventWizardState extends ConsumerState<AddEventWizard> {
       createdAt: DateTime.now(),
     );
 
-    // Create in Events provider (saves to vespara_events table)
+    // Create in Events provider (saves to legacy vespara_events table)
     await ref.read(eventsProvider.notifier).createVesparaEvent(vesparaEvent);
 
     // Also create in Plan provider for calendar view

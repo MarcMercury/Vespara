@@ -51,7 +51,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Find your next obsession',
     },
     {
-      'name': 'NEST',
+      'name': 'CULT',
       'subtitle': 'Your Conquests',
       'icon': Icons.favorite_rounded,
       'emoji': '💜',
@@ -201,7 +201,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           children: [
             // Neon glow title
             VesparaNeonText(
-              text: 'VESPARA',
+              text: 'KULT',
               style: GoogleFonts.cinzel(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -623,8 +623,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     switch (moduleName) {
       case 'DISCOVER':
         return 'assets/Main Page Tile Icons/Discover1.png';
-      case 'NEST':
-        return 'assets/Main Page Tile Icons/Sanctum1.png';
+      case 'CULT':
+        return 'assets/Main Page Tile Icons/Cult.png';
       case 'PLANNER':
         return 'assets/Main Page Tile Icons/Planner1.png';
       case 'EXPERIENCES':

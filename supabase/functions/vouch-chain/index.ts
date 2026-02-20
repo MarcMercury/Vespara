@@ -5,8 +5,8 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = [
-  "https://vespara.vercel.app",
-  "https://www.vespara.co",
+  "https://kult.vercel.app",
+  "https://www.kult.app",
   "http://localhost:3000",
 ];
 
@@ -85,7 +85,7 @@ serve(async (req) => {
 
       if (error) throw error;
 
-      const link = `https://vespara.co/vouch/${code}`;
+      const link = `https://kult.app/vouch/${code}`;
 
       return new Response(
         JSON.stringify({ link, code, expiresAt: expiresAt.toISOString() }),

@@ -539,7 +539,7 @@ class _VesparaIntroState extends State<VesparaIntro>
               child: Transform.translate(
                 offset: Offset(0, 20 * (1 - _titleFadeAnim.value)),
                 child: Text(
-                  'VESPARA',
+                  'KULT',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.w200,
@@ -565,7 +565,7 @@ class _VesparaIntroState extends State<VesparaIntro>
               child: Transform.translate(
                 offset: Offset(0, 20 * (1 - _subtitleFadeAnim.value)),
                 child: Text(
-                  'WHERE DESIRE MEETS DISCRETION',
+                  'HOW DO YOU KNOW?',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,

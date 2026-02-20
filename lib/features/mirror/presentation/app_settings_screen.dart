@@ -870,7 +870,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   ),
                   SizedBox(height: VesparaSpacing.sm),
                   Text(
-                    'We\'re building powerful integrations to enhance your Vespara experience.',
+                    'We\'re building powerful integrations to enhance your Kult experience.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: VesparaColors.secondary,
@@ -1084,7 +1084,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           children: [
             _buildSectionHeader(
               'AI Personalization',
-              'Let Vespara craft your perfect experience',
+              'Let Kult craft your perfect experience',
               Icons.auto_awesome_rounded,
             ),
             const SizedBox(height: VesparaSpacing.lg),
@@ -1112,7 +1112,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   ),
                 ),
                 subtitle: const Text(
-                  'Enable AI-powered recommendations across Vespara',
+                  'Enable AI-powered recommendations across Kult',
                   style:
                       TextStyle(color: VesparaColors.secondary, fontSize: 12),
                 ),

@@ -107,10 +107,10 @@ class EventsNotifier extends StateNotifier<EventsState> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // VESPARA EVENTS (Full Event Hosting - vespara_events table)
+  // KULT EVENTS (Full Event Hosting - legacy vespara_events table)
   // ══════════════════════════════════════════════════════════════════════════
 
-  /// Load all Vespara events (hosted + invited + co-hosted)
+  /// Load all Kult events (hosted + invited + co-hosted)
   Future<void> loadAllVesparaEvents() async {
     state = state.copyWith(isLoading: true);
 
@@ -227,7 +227,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
         isLoading: false,
       );
     } catch (e) {
-      debugPrint('Error loading Vespara events: $e');
+      debugPrint('Error loading Kult events: $e');
       state = state.copyWith(
         allEvents: [],
         hostedEvents: [],
@@ -238,7 +238,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
     }
   }
 
-  /// Create a new Vespara event (full-featured event)
+  /// Create a new Kult event (full-featured event)
   Future<VesparaEvent?> createVesparaEvent(VesparaEvent event) async {
     debugPrint('Creating event: ${event.title}');
 
@@ -310,7 +310,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
           .select()
           .single();
 
-      debugPrint('Event created in vespara_events: ${response['id']}');
+      debugPrint('Event created in legacy table vespara_events: ${response['id']}');
 
       // Add cohosts if any
       for (final coHost in event.coHosts) {
@@ -330,13 +330,13 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
       return newEvent;
     } catch (e) {
-      debugPrint('Error creating Vespara event: $e');
+      debugPrint('Error creating Kult event: $e');
       // Keep optimistic update even if DB fails
       return newEvent;
     }
   }
 
-  /// Update an existing Vespara event
+  /// Update an existing Kult event
   Future<bool> updateVesparaEvent(VesparaEvent event) async {
     // Update locally first
     final updatedHosted = state.hostedEvents
@@ -396,12 +396,12 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
       return true;
     } catch (e) {
-      debugPrint('Error updating Vespara event: $e');
+      debugPrint('Error updating Kult event: $e');
       return false;
     }
   }
 
-  /// Delete a Vespara event
+  /// Delete a Kult event
   Future<bool> deleteVesparaEvent(String eventId) async {
     state = state.copyWith(
       hostedEvents: state.hostedEvents.where((e) => e.id != eventId).toList(),
@@ -420,7 +420,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
       return true;
     } catch (e) {
-      debugPrint('Error deleting Vespara event: $e');
+      debugPrint('Error deleting Kult event: $e');
       return false;
     }
   }

@@ -17,8 +17,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  */
 
 const ALLOWED_ORIGINS = [
-  "https://vespara.vercel.app",
-  "https://www.vespara.co",
+  "https://kult.vercel.app",
+  "https://www.kult.app",
   "http://localhost:3000",
 ];
 
@@ -280,7 +280,7 @@ serve(async (req) => {
         "Unexpected angle — if they're funny, be sincere. If they're deep, be playful.",
     };
 
-    const systemPrompt = `You are writing a dating profile bio for the app Vespara — an exclusive, sex-positive social networking platform for adults 21+.
+    const systemPrompt = `You are writing a community profile bio for the app Kult — a playful, social platform for adults 21+.
 
 YOUR VOICE CALIBRATION FOR THIS PERSON:
 ${voiceGuide}

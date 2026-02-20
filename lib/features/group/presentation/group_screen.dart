@@ -756,7 +756,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
               const SizedBox(height: 8),
               Text(
                 isPublic
-                    ? 'Anyone on Vespara can see and join this event'
+                    ? 'Anyone on Kult can see and join this event'
                     : 'Only people you invite can see this event',
                 style: const TextStyle(
                   fontSize: 11,
@@ -1181,7 +1181,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
   }
 
   void _shareEvent(GroupEvent event) {
-    final shareUrl = 'https://vespara.app/events/${event.id}';
+    final shareUrl = 'https://kult.app/events/${event.id}';
     final shareText = '${event.title}\n${_formatDate(event.startTime)}\n${event.venueName ?? ''}\n\n$shareUrl';
     
     Clipboard.setData(ClipboardData(text: shareText));

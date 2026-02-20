@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// VESPARA EVENT MODEL - Enhanced Partiful-Style Events
+/// KULT EVENT MODEL - Enhanced Partiful-Style Events
 /// Comprehensive event model with all the bells and whistles
 /// ════════════════════════════════════════════════════════════════════════════
 
@@ -252,7 +252,7 @@ enum EventVisibility {
       case EventVisibility.private:
         return 'Only people you invite can see this';
       case EventVisibility.public:
-        return 'Anyone on Vespara can discover this';
+        return 'Anyone on Kult can discover this';
       case EventVisibility.friends:
         return 'Only your friends/matches can see this';
       case EventVisibility.openInvite:

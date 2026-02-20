@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- VESPARA PROJECT GENESIS: Master Seed File
+-- KULT PROJECT GENESIS: Master Seed File
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 
 -- CLEANUP COMMAND (Run this to wipe all test data):
@@ -187,7 +187,7 @@ SELECT id, 'green', 'truth', 'What''s the wildest thing on your bucket list?', 5
 INSERT INTO ludus_cards (game_id, consent_level, card_type, content, sort_order) 
 SELECT id, 'green', 'dare', 'Send a voice note to someone here saying something you''ve always meant to tell them.', 6 FROM ludus_games WHERE name = 'Truth or Dare: Elevated';
 INSERT INTO ludus_cards (game_id, consent_level, card_type, content, sort_order) 
-SELECT id, 'green', 'dare', 'Let the group compose a message on your dating app and send it.', 7 FROM ludus_games WHERE name = 'Truth or Dare: Elevated';
+SELECT id, 'green', 'dare', 'Let the group compose a message in your community app and send it.', 7 FROM ludus_games WHERE name = 'Truth or Dare: Elevated';
 INSERT INTO ludus_cards (game_id, consent_level, card_type, content, sort_order) 
 SELECT id, 'green', 'dare', 'Do your best impression of someone in this room. We guess who.', 8 FROM ludus_games WHERE name = 'Truth or Dare: Elevated';
 INSERT INTO ludus_cards (game_id, consent_level, card_type, content, sort_order) 

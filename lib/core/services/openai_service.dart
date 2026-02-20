@@ -154,7 +154,7 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
           {
             'role': 'system',
             'content':
-                'You are a sophisticated dating and relationship advisor. Be direct, mature, and helpful.',
+                'You are a sophisticated community and relationship advisor. Be direct, mature, and helpful.',
           },
           {
             'role': 'user',

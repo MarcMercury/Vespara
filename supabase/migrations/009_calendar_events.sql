@@ -1,5 +1,5 @@
 -- ============================================
--- VESPARA CALENDAR EVENTS TABLE
+-- KULT CALENDAR EVENTS TABLE
 -- Migration 009: Calendar events for The Planner
 -- ============================================
 

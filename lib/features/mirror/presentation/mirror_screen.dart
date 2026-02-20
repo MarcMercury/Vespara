@@ -624,7 +624,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             SizedBox(height: 8),
             Text(
-              'AI analysis of your dating behavior. No sugarcoating. No excuses.',
+              'AI analysis of your connection behavior. No sugarcoating. No excuses.',
               style: TextStyle(
                 fontSize: 13,
                 color: VesparaColors.secondary,
@@ -1043,7 +1043,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     color: VesparaColors.tagsYellow, size: 18,),
                 SizedBox(width: 8),
                 Text(
-                  'Your Dating Style',
+                  'Your Connection Style',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1073,7 +1073,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ),
             ] else
               const Text(
-                'Your dating style will be analyzed once you have more activity. Keep swiping, matching, and chatting!',
+                'Your connection style will be analyzed once you have more activity. Keep participating and chatting!',
                 style: TextStyle(
                   fontSize: 14,
                   color: VesparaColors.secondary,
@@ -3234,7 +3234,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           children: [
             const Icon(Icons.star, size: 48, color: VesparaColors.glow),
             const SizedBox(height: 16),
-            const Text('Vespara Plus',
+            const Text('Kult Plus',
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -3245,7 +3245,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             const SizedBox(height: 24),
             _buildSubscriptionFeature('Unlimited swipes'),
             _buildSubscriptionFeature('See who likes you'),
-            _buildSubscriptionFeature('AI dating coach'),
+            _buildSubscriptionFeature('AI connection coach'),
             _buildSubscriptionFeature('Priority matching'),
             const SizedBox(height: 24),
             OutlinedButton(

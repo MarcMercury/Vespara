@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════════════
-// VESPARA PROJECT GENESIS: Node.js Seeding Script
+// KULT PROJECT GENESIS: Node.js Seeding Script
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // USAGE:
@@ -127,7 +127,7 @@ function generateProfile(index, isTonightMode = false) {
     id,
     first_name: firstName,
     last_name: lastName,
-    email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace('x', '')}@vespara.test`,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase().replace('x', '')}@kult.test`,
     avatar_url: `https://i.pravatar.cc/400?u=${id}`,
     photos: [`https://i.pravatar.cc/800?u=${id}-1`, `https://i.pravatar.cc/800?u=${id}-2`],
     bio: BIO_TEMPLATES[index % BIO_TEMPLATES.length],
@@ -148,17 +148,17 @@ function generateProfile(index, isTonightMode = false) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function seed() {
-  console.log('🌱 VESPARA PROJECT GENESIS: Beginning seed operation...\n');
+  console.log('🌱 KULT PROJECT GENESIS: Beginning seed operation...\n');
 
   // Hero user
   const HERO = {
     id: uuid(),
     first_name: 'Alex',
     last_name: 'HeroX',
-    email: 'hero@vespara.test',
+    email: 'hero@kult.test',
     avatar_url: 'https://i.pravatar.cc/400?u=hero-main',
     photos: ['https://i.pravatar.cc/800?u=hero-1', 'https://i.pravatar.cc/800?u=hero-2'],
-    bio: 'The main character. Testing all 8 tiles of the Vespara dashboard.',
+    bio: 'The main character. Testing all 8 tiles of the Kult dashboard.',
     age: 32,
     vibe_tags: ['Adventure-Seeker', 'Foodie', 'Night Owl'],
     bandwidth: 75,
@@ -175,7 +175,7 @@ async function seed() {
     id: uuid(),
     first_name: 'Liam',
     last_name: 'MercerX',
-    email: 'liam.mercer@vespara.test',
+    email: 'liam.mercer@kult.test',
     avatar_url: 'https://i.pravatar.cc/400?u=liam-mercer',
     photos: ['https://i.pravatar.cc/800?u=liam-1'],
     bio: 'VC who writes poetry. The irony is not lost on me.',
@@ -194,7 +194,7 @@ async function seed() {
     id: uuid(),
     first_name: 'Eleni',
     last_name: 'KostasX',
-    email: 'eleni.kostas@vespara.test',
+    email: 'eleni.kostas@kult.test',
     avatar_url: 'https://i.pravatar.cc/400?u=eleni-kostas',
     photos: ['https://i.pravatar.cc/800?u=eleni-1', 'https://i.pravatar.cc/800?u=eleni-2'],
     bio: 'Chef who left restaurants for private clients. Obsessed with Tokyo sushi.',
