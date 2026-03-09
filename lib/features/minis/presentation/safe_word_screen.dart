@@ -28,6 +28,7 @@ class SafeWordScreen extends StatefulWidget {
 class _SafeWordScreenState extends State<SafeWordScreen>
     with TickerProviderStateMixin {
   final _nameController = TextEditingController();
+  final _igController = TextEditingController();
   final _friendController = TextEditingController();
   String? _generatedSafeWord;
   String? _explanation;
@@ -35,7 +36,8 @@ class _SafeWordScreenState extends State<SafeWordScreen>
   bool _isRare = false;
   bool _isFriendMode = false;
   int _playCount = 0;
-  int _selectedVibe = 0;
+  double _analysisProgress = 0;
+  String _analysisLabel = 'Waiting for profile scan...';
 
   late AnimationController _revealController;
   late Animation<double> _revealAnimation;
@@ -43,77 +45,57 @@ class _SafeWordScreenState extends State<SafeWordScreen>
 
   static const Color _accentColor = Color(0xFFE91E63);
 
-  static const List<String> _vibeLabels = [
-    'Flirting', 'Chaos', 'Trouble', 'Romance', 'Bad Decisions',
+  static const List<String> _safeWordFirst = [
+    'Toaster',
+    'Velcro',
+    'Wombat',
+    'Bazooka',
+    'Ketchup',
+    'Mango',
+    'LavaLamp',
+    'Taxidermy',
+    'Goose',
+    'Parmesan',
+    'Sprinkler',
+    'Goblin',
   ];
-  static const List<String> _vibeEmojis = [
-    '😏', '🔥', '😈', '💕', '🍸',
+  static const List<String> _safeWordSecond = [
+    'Monsoon',
+    'Protocol',
+    'Coupons',
+    'Ballet',
+    'Helicopter',
+    'Crouton',
+    'Detergent',
+    'NightShift',
+    'Dinosaur',
+    'Falsetto',
+    'Audit',
+    'Moonwalk',
   ];
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // SAFE WORD DATA — Organized by vibe
-  // ═══════════════════════════════════════════════════════════════════════
-
-  static const List<List<String>> _wordsByVibe = [
-    // 0: Flirting
-    [
-      'Library Card', 'Avocado Toast', 'Pillow Menu', 'Candle Budget',
-      'Soft Launch', 'Lip Gloss', 'Eye Contact', 'Playlist Swap',
-      'Slow Dance', 'Whisper Tax', 'Blushing Receipt', 'Wink Protocol',
-      'Dimmer Switch', 'Thigh Graze', 'Breath Mint Emergency',
-      'Hair Tuck', 'Neck Whisper', 'Cheek Kiss Audit', 'Eyelash Wish',
-      'Shoulder Touch', 'Inside Joke', 'Goodnight Text', 'Morning Voice',
-    ],
-    // 1: Chaos
-    [
-      'Tax Deduction', 'Parking Meter', 'Terms of Service', 'Jury Duty',
-      'HOA Meeting', 'Spreadsheet', 'Budget Review', 'Dental Appointment',
-      'Smoke Detector', 'Fire Drill', 'Eviction Notice', 'Audit Season',
-      'Flash Mob', 'Wrong Flight', 'Stolen Cart', 'False Alarm',
-      'Power Outage', 'Plot Twist', 'Witness Protection', 'Escape Hatch',
-      'Broken Lease', 'Late Fee', 'Expired Coupon', 'No Signal',
-    ],
-    // 2: Trouble
-    [
-      'Restraining Order', 'Bail Money', 'Getaway Car', 'Alibi Needed',
-      'Objection', 'Lawyer Up', 'Crime Scene', 'Forensic Evidence',
-      'Security Footage', 'Blackmail Folder', 'Burner Phone', 'Back Exit',
-      'Wanted Poster', 'Lie Detector', 'Confession Booth', 'Suspect List',
-      'Fingerprints', 'Double Cross', 'Silent Treatment', 'Cover Story',
-      'Plausible Deniability', 'Paper Trail', 'Mistrial', 'Caught Red-Handed',
-    ],
-    // 3: Romance
-    [
-      'Candlelight', 'Rose Petal', 'Love Letter', 'Slow Motion',
-      'Sunset Drive', 'Forehead Kiss', 'Hand Holding', 'Serenade',
-      'Stargazing', 'Couples Massage', 'Proposal Rehearsal', 'Anniversary',
-      'Honeymoon Phase', 'Love Language', 'Butterflies', 'First Dance',
-      'Pillow Fort', 'Breakfast in Bed', 'Rain Kiss', 'Matching Tattoo',
-      'Promise Ring', 'Soul Tie', 'Heart Flutter', 'Love Drunk',
-    ],
-    // 4: Bad Decisions
-    [
-      'Tequila Sunrise', 'Last Call', 'Hold My Drink', 'YOLO Receipt',
-      'Uber to the Ex', 'Reply All', 'Send It', 'No Regrets',
-      'Triple Dog Dare', 'One More Round', 'Bar Tab Denial', 'Shots Fired',
-      'Drunk Text', 'Walk of Shame', 'Morning After', 'Bad Tattoo',
-      'Lost Wallet', 'Wrong Address', 'Group Chat Leak', 'Voicemail Delete',
-      'Emergency Pizza', 'Karaoke Solo', 'Stage Dive', 'Crowd Surf',
-    ],
+  static const List<String> _safeWordThird = [
+    'Supreme',
+    'Deluxe',
+    'Emergency',
+    'AfterDark',
+    '3000',
+    'Director\'sCut',
+    'Unplugged',
+    'MkII',
+    'NoRefunds',
+    'Ultra',
+    'Turbo',
+    'Offline',
   ];
-
-  // Escalation extras — added for repeat plays
-  static const List<String> _extras = [
-    'at Brunch', 'on a Tuesday', 'with Witnesses', 'during Mercury Retrograde',
-    'at the DMV', 'in Crocs', 'with Ranch Dressing', 'at Your In-Laws',
-    'in a Bouncy Castle', 'at Bible Study', 'during a Work Call',
-    'in a Denny\'s Parking Lot', 'at Costco', 'with a Slow Clap',
-    'in Business Casual', 'at a PTA Meeting', 'in the Ball Pit',
-    'during Tax Season', 'at the Salad Bar', 'in a Snuggie',
-    'with Jazz Hands', 'at Chuck E. Cheese', 'during a Seance',
-    'at Grandma\'s', 'in Economy Class', 'with Finger Guns',
-    'at a Funeral', 'in the Ikea Showroom', 'during Karaoke',
-    'in a Onesie', 'with Eye Contact', 'at a Dog Park',
+  static const List<String> _safeWordChaos = [
+    'under a disco ball',
+    'in a mall fountain',
+    'while the microwave beeps',
+    'next to a haunted ring light',
+    'during an emotional weather event',
+    'behind a suspicious curtain',
+    'while someone yells "plot twist"',
+    'inside a ceremonial hoodie',
   ];
 
   // Rare results (1-2% chance)
@@ -153,26 +135,51 @@ class _SafeWordScreenState extends State<SafeWordScreen>
   @override
   void dispose() {
     _nameController.dispose();
+    _igController.dispose();
     _friendController.dispose();
     _revealController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
 
-  void _generateSafeWord() {
+  Future<void> _runFakeIgReview(String igHandle) async {
+    final stages = <String>[
+      'Opening @$igHandle profile... ',
+      'Reviewing questionable highlights...',
+      'Counting chaotic comment sections...',
+      'Calibrating nonsense detector...',
+      'Finalizing unhinged verdict...',
+    ];
+
+    for (var i = 0; i < stages.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 260));
+      if (!mounted) return;
+      setState(() {
+        _analysisProgress = (i + 1) / stages.length;
+        _analysisLabel = stages[i];
+      });
+    }
+  }
+
+  Future<void> _generateSafeWord() async {
     final name = _isFriendMode
         ? _friendController.text.trim()
         : _nameController.text.trim();
-    if (name.isEmpty) return;
+    final igHandle = _igController.text.trim().replaceAll('@', '');
+    if (name.isEmpty || igHandle.isEmpty) return;
 
-    setState(() => _isRevealing = true);
+    setState(() {
+      _isRevealing = true;
+      _analysisProgress = 0;
+      _analysisLabel = 'Queued for IG chaos scan...';
+    });
     _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('safe_word'));
 
     final seed = DateTime.now().microsecondsSinceEpoch ^
       name.hashCode ^
       _playCount ^
-      (_selectedVibe << 8);
+      igHandle.hashCode;
     final rng = Random(seed);
 
     // 1-2% rare result chance
@@ -186,34 +193,31 @@ class _SafeWordScreenState extends State<SafeWordScreen>
       safeWord = _rareWords[idx];
       explanation = _rareExplanations[idx];
     } else {
-      final vibeWords = _wordsByVibe[_selectedVibe];
-      safeWord = vibeWords[rng.nextInt(vibeWords.length)];
+      safeWord =
+          '${_safeWordFirst[rng.nextInt(_safeWordFirst.length)]} '
+          '${_safeWordSecond[rng.nextInt(_safeWordSecond.length)]} '
+          '${_safeWordThird[rng.nextInt(_safeWordThird.length)]}';
 
-      // Escalation: after 3+ plays, add extras
-      if (_playCount >= 3) {
-        safeWord += ' ${_extras[rng.nextInt(_extras.length)]}';
-      }
-      // After 5+ plays, double up
-      if (_playCount >= 5) {
-        safeWord += ' (${_extras[rng.nextInt(_extras.length)]})';
+      if (_playCount >= 2 || rng.nextBool()) {
+        safeWord += ' ${_safeWordChaos[rng.nextInt(_safeWordChaos.length)]}';
       }
 
       explanation = _isFriendMode
-          ? '$name\'s safe word energy is... concerning.'
-          : 'Use it wisely. Or don\'t. We\'re not your therapist.';
+          ? '$name + @$igHandle radiates elite confusion and avoidable choices.'
+          : 'Algorithm says @$igHandle should keep this word in a fireproof envelope.';
     }
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() {
-        _generatedSafeWord = safeWord;
-        _explanation = explanation;
-        _isRare = isRare;
-        _isRevealing = false;
-      });
-      _revealController.forward(from: 0);
-      HapticFeedback.heavyImpact();
+    await _runFakeIgReview(igHandle);
+    if (!mounted) return;
+
+    setState(() {
+      _generatedSafeWord = safeWord;
+      _explanation = explanation;
+      _isRare = isRare;
+      _isRevealing = false;
     });
+    _revealController.forward(from: 0);
+    HapticFeedback.heavyImpact();
   }
 
   @override
@@ -309,7 +313,7 @@ class _SafeWordScreenState extends State<SafeWordScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter your name, pick a vibe,\nand discover the word you never knew you needed.',
+              'Enter name + IG handle and let the app\npretend to profile-stalk your chaos.',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -319,14 +323,17 @@ class _SafeWordScreenState extends State<SafeWordScreen>
             ),
             const SizedBox(height: 28),
 
-            // ── VIBE SELECTOR ──
-            _buildVibeSelector(),
-            const SizedBox(height: 20),
-
             // ── NAME INPUT ──
             _buildInput(
               controller: _nameController,
               hint: 'Enter your name...',
+              onSubmit: _generateSafeWord,
+            ),
+            const SizedBox(height: 12),
+
+            _buildInput(
+              controller: _igController,
+              hint: 'Enter IG handle (required)...',
               onSubmit: _generateSafeWord,
             ),
             const SizedBox(height: 12),
@@ -358,12 +365,11 @@ class _SafeWordScreenState extends State<SafeWordScreen>
                   elevation: 0,
                 ),
                 child: _isRevealing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                    ? Text(
+                        'Reviewing @${_igController.text.trim().replaceAll('@', '')}...',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
                       )
                     : Text(
@@ -377,6 +383,26 @@ class _SafeWordScreenState extends State<SafeWordScreen>
                       ),
               ),
             ),
+                  if (_isRevealing) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _analysisLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: _analysisProgress,
+                        minHeight: 8,
+                        backgroundColor: VesparaColors.surface,
+                        valueColor: const AlwaysStoppedAnimation<Color>(_accentColor),
+                      ),
+                    ),
+                  ],
             const SizedBox(height: 32),
 
             // ── RESULT CARD ──
@@ -395,73 +421,6 @@ class _SafeWordScreenState extends State<SafeWordScreen>
   // ═══════════════════════════════════════════════════════════════════════
   // SHARED WIDGETS
   // ═══════════════════════════════════════════════════════════════════════
-
-  Widget _buildVibeSelector() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'PICK YOUR VIBE',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: VesparaColors.secondary,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: List.generate(_vibeLabels.length, (i) {
-                final selected = _selectedVibe == i;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedVibe = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: selected
-                            ? _accentColor.withOpacity(0.2)
-                            : VesparaColors.surface,
-                        border: Border.all(
-                          color: selected
-                              ? _accentColor
-                              : VesparaColors.secondary.withOpacity(0.2),
-                          width: selected ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_vibeEmojis[i], style: const TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Text(
-                            _vibeLabels[i],
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                              color: selected ? _accentColor : VesparaColors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      );
 
   Widget _buildInput({
     required TextEditingController controller,
@@ -589,7 +548,7 @@ class _SafeWordScreenState extends State<SafeWordScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              '$name\'s Safe Word:',
+              '$name (@${_igController.text.trim().replaceAll('@', '')})\'s Safe Word:',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: VesparaColors.secondary,
@@ -618,22 +577,6 @@ class _SafeWordScreenState extends State<SafeWordScreen>
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            // Vibe badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: _accentColor.withOpacity(0.1),
-              ),
-              child: Text(
-                '${_vibeEmojis[_selectedVibe]} ${_vibeLabels[_selectedVibe]} Vibe',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: _accentColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
           ],
         ),
       ),

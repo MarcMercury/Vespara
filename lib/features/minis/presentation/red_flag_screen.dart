@@ -28,13 +28,15 @@ class RedFlagScreen extends StatefulWidget {
 class _RedFlagScreenState extends State<RedFlagScreen>
     with TickerProviderStateMixin {
   final _nameController = TextEditingController();
+  final _igController = TextEditingController();
   final _friendController = TextEditingController();
   String? _generatedFlag;
   bool _isRevealing = false;
   bool _isRare = false;
   bool _isFriendMode = false;
   int _playCount = 0;
-  int _selectedVibe = 0;
+  double _analysisProgress = 0;
+  String _analysisLabel = 'Queued for red-flag inspection...';
 
   late AnimationController _revealController;
   late Animation<double> _revealAnimation;
@@ -42,13 +44,6 @@ class _RedFlagScreenState extends State<RedFlagScreen>
   late AnimationController _flagWaveController;
 
   static const Color _accentColor = Color(0xFFFF1744);
-
-  static const List<String> _vibeLabels = [
-    'Flirting', 'Chaos', 'Trouble', 'Romance', 'Bad Decisions',
-  ];
-  static const List<String> _vibeEmojis = [
-    '😏', '🔥', '😈', '💕', '🍸',
-  ];
 
   // ═══════════════════════════════════════════════════════════════════════
   // RED FLAG DATA — Organized by vibe
@@ -151,6 +146,14 @@ class _RedFlagScreenState extends State<RedFlagScreen>
     'Their red flag has a red flag. It\'s red flags all the way down.',
   ];
 
+  static const List<String> _chaosAddons = [
+    'Also your close friends list is 92% exes and one dentist.',
+    'Three strangers in your comments just typed "girl run" in sync.',
+    'The algorithm tried to warn us, then clocked out early.',
+    'Your archived stories should legally require goggles.',
+    'Someone reported this behavior to astrology and astrology resigned.',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -175,6 +178,7 @@ class _RedFlagScreenState extends State<RedFlagScreen>
   @override
   void dispose() {
     _nameController.dispose();
+    _igController.dispose();
     _friendController.dispose();
     _revealController.dispose();
     _pulseController.dispose();
@@ -182,20 +186,43 @@ class _RedFlagScreenState extends State<RedFlagScreen>
     super.dispose();
   }
 
-  void _generateRedFlag() {
+  Future<void> _runFakeIgReview(String igHandle) async {
+    final stages = <String>[
+      'Opening @$igHandle profile...',
+      'Reviewing captions under emotional duress...',
+      'Parsing suspicious gym selfies...',
+      'Cross-checking chaos in comments...',
+      'Compiling deeply unnecessary verdict...',
+    ];
+    for (var i = 0; i < stages.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 240));
+      if (!mounted) return;
+      setState(() {
+        _analysisProgress = (i + 1) / stages.length;
+        _analysisLabel = stages[i];
+      });
+    }
+  }
+
+  Future<void> _generateRedFlag() async {
     final name = _isFriendMode
         ? _friendController.text.trim()
         : _nameController.text.trim();
-    if (name.isEmpty) return;
+    final igHandle = _igController.text.trim().replaceAll('@', '');
+    if (name.isEmpty || igHandle.isEmpty) return;
 
-    setState(() => _isRevealing = true);
+    setState(() {
+      _isRevealing = true;
+      _analysisProgress = 0;
+      _analysisLabel = 'Queued for red-flag inspection...';
+    });
     _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('red_flag'));
 
     final seed = DateTime.now().microsecondsSinceEpoch ^
       name.hashCode ^
       _playCount ^
-      (_selectedVibe << 8);
+      igHandle.hashCode;
     final rng = Random(seed);
 
     final isRare = rng.nextInt(100) < 2;
@@ -204,8 +231,8 @@ class _RedFlagScreenState extends State<RedFlagScreen>
     if (isRare) {
       flag = _rareFlags[rng.nextInt(_rareFlags.length)];
     } else {
-      final vibeFlags = _flagsByVibe[_selectedVibe];
-      flag = vibeFlags[rng.nextInt(vibeFlags.length)];
+      final allFlags = _flagsByVibe.expand((group) => group).toList();
+      flag = allFlags[rng.nextInt(allFlags.length)];
 
       // Escalation after 3+ plays
       if (_playCount >= 3) {
@@ -213,16 +240,18 @@ class _RedFlagScreenState extends State<RedFlagScreen>
       }
     }
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() {
-        _generatedFlag = flag;
-        _isRare = isRare;
-        _isRevealing = false;
-      });
-      _revealController.forward(from: 0);
-      HapticFeedback.heavyImpact();
+    flag += '\n\n${_chaosAddons[rng.nextInt(_chaosAddons.length)]}';
+
+    await _runFakeIgReview(igHandle);
+    if (!mounted) return;
+
+    setState(() {
+      _generatedFlag = flag;
+      _isRare = isRare;
+      _isRevealing = false;
     });
+    _revealController.forward(from: 0);
+    HapticFeedback.heavyImpact();
   }
 
   @override
@@ -321,7 +350,7 @@ class _RedFlagScreenState extends State<RedFlagScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'We all have one. Yours is just funnier\nthan you think.',
+              'Name + IG handle required.\nWe will now pretend this is forensic science.',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -331,14 +360,17 @@ class _RedFlagScreenState extends State<RedFlagScreen>
             ),
             const SizedBox(height: 28),
 
-            // ── VIBE SELECTOR ──
-            _buildVibeSelector(),
-            const SizedBox(height: 20),
-
             // ── NAME INPUT ──
             _buildInput(
               controller: _nameController,
               hint: 'Enter your name...',
+              onSubmit: _generateRedFlag,
+            ),
+            const SizedBox(height: 12),
+
+            _buildInput(
+              controller: _igController,
+              hint: 'Enter IG handle (required)...',
               onSubmit: _generateRedFlag,
             ),
             const SizedBox(height: 12),
@@ -370,12 +402,11 @@ class _RedFlagScreenState extends State<RedFlagScreen>
                   elevation: 0,
                 ),
                 child: _isRevealing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                    ? Text(
+                        'Reviewing @${_igController.text.trim().replaceAll('@', '')}...',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
                       )
                     : Text(
@@ -389,6 +420,26 @@ class _RedFlagScreenState extends State<RedFlagScreen>
                       ),
               ),
             ),
+                  if (_isRevealing) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _analysisLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: _analysisProgress,
+                        minHeight: 8,
+                        backgroundColor: VesparaColors.surface,
+                        valueColor: const AlwaysStoppedAnimation<Color>(_accentColor),
+                      ),
+                    ),
+                  ],
             const SizedBox(height: 32),
 
             // ── RESULT CARD ──
@@ -407,73 +458,6 @@ class _RedFlagScreenState extends State<RedFlagScreen>
   // ═══════════════════════════════════════════════════════════════════════
   // SHARED WIDGETS
   // ═══════════════════════════════════════════════════════════════════════
-
-  Widget _buildVibeSelector() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'PICK YOUR VIBE',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: VesparaColors.secondary,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: List.generate(_vibeLabels.length, (i) {
-                final selected = _selectedVibe == i;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedVibe = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: selected
-                            ? _accentColor.withOpacity(0.2)
-                            : VesparaColors.surface,
-                        border: Border.all(
-                          color: selected
-                              ? _accentColor
-                              : VesparaColors.secondary.withOpacity(0.2),
-                          width: selected ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_vibeEmojis[i], style: const TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Text(
-                            _vibeLabels[i],
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                              color: selected ? _accentColor : VesparaColors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      );
 
   Widget _buildInput({
     required TextEditingController controller,
@@ -600,7 +584,7 @@ class _RedFlagScreenState extends State<RedFlagScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              '🚩 $name\'s Red Flag:',
+              '🚩 $name (@${_igController.text.trim().replaceAll('@', '')})\'s Red Flag:',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: VesparaColors.secondary,
@@ -619,26 +603,6 @@ class _RedFlagScreenState extends State<RedFlagScreen>
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: _accentColor.withOpacity(0.1),
-                  ),
-                  child: Text(
-                    '${_vibeEmojis[_selectedVibe]} ${_vibeLabels[_selectedVibe]} Vibe',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: _accentColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 12),
             Text(
               'But honestly? You\'re still gonna swipe right.',

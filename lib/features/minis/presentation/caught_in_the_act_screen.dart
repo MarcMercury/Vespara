@@ -29,13 +29,15 @@ class CaughtInTheActScreen extends StatefulWidget {
 class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
     with TickerProviderStateMixin {
   final _nameController = TextEditingController();
+  final _igController = TextEditingController();
   final _friendController = TextEditingController();
   _LocationResult? _result;
   bool _isRevealing = false;
   bool _isRare = false;
   bool _isFriendMode = false;
   int _playCount = 0;
-  int _selectedVibe = 0;
+  double _analysisProgress = 0;
+  String _analysisLabel = 'Queued for location scandal scan...';
 
   late AnimationController _revealController;
   late Animation<double> _revealAnimation;
@@ -43,11 +45,12 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
 
   static const Color _accentColor = Color(0xFFFF6D00);
 
-  static const List<String> _vibeLabels = [
-    'Flirting', 'Chaos', 'Trouble', 'Romance', 'Bad Decisions',
-  ];
-  static const List<String> _vibeEmojis = [
-    '😏', '🔥', '😈', '💕', '🍸',
+  static const List<String> _chaosAddons = [
+    'A drone appears, records everything, then posts a recap thread.',
+    'Three aunties in sunglasses nod and take notes.',
+    'A nearby Bluetooth speaker starts playing dramatic violin music.',
+    'Security politely applauds and asks for encore tickets.',
+    'A random influencer declares this a "public learning moment."',
   ];
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -161,26 +164,50 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
   @override
   void dispose() {
     _nameController.dispose();
+    _igController.dispose();
     _friendController.dispose();
     _revealController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
 
-  void _generateLocation() {
+  Future<void> _runFakeIgReview(String igHandle) async {
+    final stages = <String>[
+      'Opening @$igHandle geotags...',
+      'Reviewing suspicious check-ins...',
+      'Mapping maximum embarrassment radius...',
+      'Simulating public witnesses...',
+      'Finalizing chaotic location forecast...',
+    ];
+    for (var i = 0; i < stages.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 240));
+      if (!mounted) return;
+      setState(() {
+        _analysisProgress = (i + 1) / stages.length;
+        _analysisLabel = stages[i];
+      });
+    }
+  }
+
+  Future<void> _generateLocation() async {
     final name = _isFriendMode
         ? _friendController.text.trim()
         : _nameController.text.trim();
-    if (name.isEmpty) return;
+    final igHandle = _igController.text.trim().replaceAll('@', '');
+    if (name.isEmpty || igHandle.isEmpty) return;
 
-    setState(() => _isRevealing = true);
+    setState(() {
+      _isRevealing = true;
+      _analysisProgress = 0;
+      _analysisLabel = 'Queued for location scandal scan...';
+    });
     _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('get_caught'));
 
     final seed = DateTime.now().microsecondsSinceEpoch ^
       name.hashCode ^
       _playCount ^
-      (_selectedVibe << 8);
+      igHandle.hashCode;
     final rng = Random(seed);
 
     final isRare = rng.nextInt(100) < 2;
@@ -189,20 +216,26 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
     if (isRare) {
       location = _rareLocations[rng.nextInt(_rareLocations.length)];
     } else {
-      final vibeLocations = _locationsByVibe[_selectedVibe];
-      location = vibeLocations[rng.nextInt(vibeLocations.length)];
+      final allLocations = _locationsByVibe.expand((group) => group).toList();
+      final picked = allLocations[rng.nextInt(allLocations.length)];
+      location = _LocationResult(
+        location: picked.location,
+        emoji: picked.emoji,
+        punchline:
+            '${picked.punchline} ${_chaosAddons[rng.nextInt(_chaosAddons.length)]}',
+      );
     }
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() {
-        _result = location;
-        _isRare = isRare;
-        _isRevealing = false;
-      });
-      _revealController.forward(from: 0);
-      HapticFeedback.heavyImpact();
+    await _runFakeIgReview(igHandle);
+    if (!mounted) return;
+
+    setState(() {
+      _result = location;
+      _isRare = isRare;
+      _isRevealing = false;
     });
+    _revealController.forward(from: 0);
+    HapticFeedback.heavyImpact();
   }
 
   @override
@@ -298,7 +331,7 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter your name and find out where\nyou\'d absolutely get busted.',
+              'Enter name + IG handle and let this app\nfake-investigate your public downfall.',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -308,14 +341,17 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
             ),
             const SizedBox(height: 28),
 
-            // ── VIBE SELECTOR ──
-            _buildVibeSelector(),
-            const SizedBox(height: 20),
-
             // ── NAME INPUT ──
             _buildInput(
               controller: _nameController,
               hint: 'Enter your name...',
+              onSubmit: _generateLocation,
+            ),
+            const SizedBox(height: 12),
+
+            _buildInput(
+              controller: _igController,
+              hint: 'Enter IG handle (required)...',
               onSubmit: _generateLocation,
             ),
             const SizedBox(height: 12),
@@ -347,12 +383,11 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
                   elevation: 0,
                 ),
                 child: _isRevealing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                    ? Text(
+                        'Reviewing @${_igController.text.trim().replaceAll('@', '')}...',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                         ),
                       )
                     : Text(
@@ -366,6 +401,26 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
                       ),
               ),
             ),
+                  if (_isRevealing) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _analysisLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: VesparaColors.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: _analysisProgress,
+                        minHeight: 8,
+                        backgroundColor: VesparaColors.surface,
+                        valueColor: const AlwaysStoppedAnimation<Color>(_accentColor),
+                      ),
+                    ),
+                  ],
             const SizedBox(height: 32),
 
             // ── RESULT ──
@@ -384,73 +439,6 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
   // ═══════════════════════════════════════════════════════════════════════
   // SHARED WIDGETS
   // ═══════════════════════════════════════════════════════════════════════
-
-  Widget _buildVibeSelector() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'PICK YOUR VIBE',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: VesparaColors.secondary,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: List.generate(_vibeLabels.length, (i) {
-                final selected = _selectedVibe == i;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedVibe = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: selected
-                            ? _accentColor.withOpacity(0.2)
-                            : VesparaColors.surface,
-                        border: Border.all(
-                          color: selected
-                              ? _accentColor
-                              : VesparaColors.secondary.withOpacity(0.2),
-                          width: selected ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_vibeEmojis[i], style: const TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Text(
-                            _vibeLabels[i],
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                              color: selected ? _accentColor : VesparaColors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      );
 
   Widget _buildInput({
     required TextEditingController controller,
@@ -581,7 +569,7 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              '$name would get caught at:',
+              '$name (@${_igController.text.trim().replaceAll('@', '')}) would get caught at:',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: VesparaColors.secondary,
@@ -621,21 +609,6 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
               ),
             ],
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: _accentColor.withOpacity(0.1),
-              ),
-              child: Text(
-                '${_vibeEmojis[_selectedVibe]} ${_vibeLabels[_selectedVibe]} Vibe',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: _accentColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
           ],
         ),
       ),
