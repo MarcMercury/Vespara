@@ -12,7 +12,6 @@ import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/page_transitions.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../../discover/presentation/discover_screen.dart';
-import '../../events/presentation/events_home_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
 // Import module screens
 import '../../mirror/presentation/mirror_screen.dart';
@@ -58,14 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'CRM for connections',
     },
     {
-      'name': 'EXPERIENCES',
-      'subtitle': 'The Scene',
-      'icon': Icons.local_fire_department_rounded,
-      'emoji': '🥂',
-      'color': Color(0xFFFFB74D), // Warm amber
-      'description': 'Curate gatherings',
-    },
-    {
       'name': 'SHREDDER',
       'subtitle': 'Clean Slate',
       'icon': Icons.auto_delete_rounded,
@@ -87,9 +78,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const List<Widget> _screens = [
     DiscoverScreen(), // 0: Discover
     NestScreen(), // 1: Nest/Sanctum
-    EventsHomeScreen(), // 2: Experiences
-    ShredderScreen(), // 3: Shredder
-    TagScreen(), // 4: TAG
+    ShredderScreen(), // 2: Shredder
+    TagScreen(), // 3: TAG
   ];
 
   @override
@@ -629,8 +619,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return 'assets/Main Page Tile Icons/Discover1.png';
       case 'NEST':
         return 'assets/Main Page Tile Icons/Sanctum1.png';
-      case 'EXPERIENCES':
-        return 'assets/Main Page Tile Icons/Experiences1.png';
       case 'SHREDDER':
         return 'assets/Main Page Tile Icons/Shredder1.png';
       case 'TAG':

@@ -15,7 +15,6 @@ import '../../../core/services/deep_connection_engine.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
-import '../../events/presentation/events_home_screen.dart';
 
 /// Supabase client provider for discover screen
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -1715,7 +1714,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               ),
               const SizedBox(height: 24),
               const Text(
-                'No event connections yet',
+                'No IRL connections yet',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
@@ -1724,35 +1723,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               ),
               const SizedBox(height: 12),
               const Text(
-                'Attend events to meet people IRL!\nAfter the event, you can connect with\npeople you\'ve met here.',
+                'When you mark people as met in person,\nthey will appear here for easier follow-up.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
                   color: VesparaColors.secondary,
                   height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Navigate to events screen
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const EventsHomeScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.search),
-                label: const Text('Find Events'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VesparaColors.success,
-                  foregroundColor: VesparaColors.background,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
                 ),
               ),
             ],

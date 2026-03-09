@@ -60,10 +60,8 @@ class VesparaGradients {
     switch (index) {
       case 0: return discover;
       case 1: return nest;
-      case 2: return planner;
-      case 3: return experiences;
-      case 4: return shredder;
-      case 5: return tag;
+      case 2: return shredder;
+      case 3: return tag;
       default: return discover;
     }
   }

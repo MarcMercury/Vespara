@@ -9,7 +9,6 @@ import '../../../core/domain/models/plan_event.dart';
 import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/wire_models.dart';
-import '../../../core/providers/events_provider.dart';
 import '../../../core/providers/groups_provider.dart';
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/plan_provider.dart';
@@ -1587,98 +1586,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     if (diff.inDays < 30) return '${diff.inDays ~/ 7} weeks ago';
     return '${diff.inDays ~/ 30} months ago';
-  }
-
-  /// Show sheet to invite a match to an event
-  void _showInviteToEventSheet(Match match) {
-    final eventsState = ref.read(eventsProvider);
-    // Filter for upcoming events (not in the past)
-    final events = eventsState.allEvents.where((e) => !e.isPast).toList();
-
-    if (events.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No upcoming events to invite to'),
-          backgroundColor: VesparaColors.surface,
-        ),
-      );
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: VesparaColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Invite ${match.matchedUserName ?? "them"} to...',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...events.take(5).map(
-              (event) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.glow.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.event, color: VesparaColors.glow),
-                ),
-                title: Text(
-                  event.title,
-                  style: const TextStyle(
-                    color: VesparaColors.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                subtitle: Text(
-                  '${event.dateLabel} • ${event.venueName ?? "TBD"}',
-                  style: const TextStyle(
-                    color: VesparaColors.secondary,
-                    fontSize: 12,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Invited ${match.matchedUserName} to ${event.title}'),
-                      backgroundColor: VesparaColors.success,
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
-        ),
-      ),
-    );
   }
 
   void _openPhotoRankingForMatch(Match match) async {
