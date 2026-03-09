@@ -1,5 +1,5 @@
 -- ============================================
--- KULT COMMUNITY APP - FULL SCHEMA OVERHAUL
+-- VESPARA DATING APP - FULL SCHEMA OVERHAUL
 -- Migration 007: Transform into real dating platform
 -- ============================================
 

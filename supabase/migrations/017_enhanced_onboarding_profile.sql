@@ -1,5 +1,5 @@
 -- ============================================
--- KULT ENHANCED ONBOARDING PROFILE
+-- VESPARA ENHANCED ONBOARDING PROFILE
 -- Migration 017: Exclusive Club Interview Experience
 -- ============================================
 

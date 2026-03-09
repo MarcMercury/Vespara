@@ -439,7 +439,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         'email': user.email ?? '',
         'display_name': _displayNameController.text.trim(),
         'bio': _bioController.text.trim().isEmpty
-          ? 'New to Kult ✨'
+            ? 'New to Vespara ✨'
             : _bioController.text.trim(),
         'looking_for': allTraits, // Store traits in existing array column
         'discretion_level': _selectedDiscretionLevel,
@@ -458,7 +458,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Profile saved! Entering Kult...'),
+            content: Text('Profile saved! Entering Vespara...'),
             backgroundColor: VesparaColors.success,
           ),
         );
@@ -589,7 +589,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ),
                           )
                         : Text(
-                            _currentPage == 2 ? 'ENTER KULT ✨' : 'CONTINUE',
+                            _currentPage == 2 ? 'ENTER VESPARA ✨' : 'CONTINUE',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

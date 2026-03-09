@@ -1,5 +1,5 @@
 -- ============================================
--- KULT WIRE - WHATSAPP-STYLE GROUP MESSAGING
+-- VESPARA WIRE - WHATSAPP-STYLE GROUP MESSAGING
 -- Migration 008: Full group chat, voice notes, file sharing
 -- ============================================
 

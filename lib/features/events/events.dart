@@ -1,4 +1,4 @@
-/// Kult Events Module
+/// Vespara Events Module
 /// Partiful-style event management with beautiful tile cards
 library;
 

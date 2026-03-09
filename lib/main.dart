@@ -13,26 +13,6 @@ import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 /// Track if we're returning from OAuth - set BEFORE Supabase init
 bool _isOAuthCallback = false;
 
-String _authRedirectUrl() {
-  if (kIsWeb) {
-    final origin = Uri.base.origin;
-    if (origin.isNotEmpty) {
-      return origin;
-    }
-  }
-
-  final configuredDomain = Env.appDomain.trim();
-  if (configuredDomain.isNotEmpty) {
-    if (configuredDomain.startsWith('http://') ||
-        configuredDomain.startsWith('https://')) {
-      return configuredDomain;
-    }
-    return 'https://$configuredDomain';
-  }
-
-  return 'https://kult.vercel.app';
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -47,7 +27,7 @@ Future<void> main() async {
         uri.queryParameters.containsKey('error');
     
     if (_isOAuthCallback) {
-      debugPrint('Kult Main: OAuth callback detected in URL');
+      debugPrint('Vespara Main: OAuth callback detected in URL');
     }
   }
 
@@ -58,7 +38,7 @@ Future<void> main() async {
 
   // If returning from OAuth, wait for session to be fully established
   if (_isOAuthCallback) {
-    debugPrint('Kult Main: Waiting for OAuth session...');
+    debugPrint('Vespara Main: Waiting for OAuth session...');
     
     // Wait for Supabase to process the OAuth callback
     Session? session;
@@ -66,7 +46,7 @@ Future<void> main() async {
       await Future.delayed(const Duration(milliseconds: 200));
       session = Supabase.instance.client.auth.currentSession;
       if (session != null) {
-        debugPrint('Kult Main: Session established after ${(i + 1) * 200}ms');
+        debugPrint('Vespara Main: Session established after ${(i + 1) * 200}ms');
         // Clear the URL to prevent re-processing on refresh
         if (kIsWeb) {
           _clearOAuthParamsFromUrl();
@@ -74,12 +54,12 @@ Future<void> main() async {
         break;
       }
       if (i % 10 == 0) {
-        debugPrint('Kult Main: Still waiting for session... ${i * 200}ms');
+        debugPrint('Vespara Main: Still waiting for session... ${i * 200}ms');
       }
     }
     
     if (session == null) {
-      debugPrint('Kult Main: WARNING - No session after 20s, may have failed');
+      debugPrint('Vespara Main: WARNING - No session after 20s, may have failed');
       // Still clear the URL to avoid loops
       if (kIsWeb) {
         _clearOAuthParamsFromUrl();
@@ -100,10 +80,10 @@ void _clearOAuthParamsFromUrl() {
     if (kIsWeb) {
       // Use dart:html to update URL - but we can't import it directly
       // So we use a different approach: just log that we should clear
-      debugPrint('Kult: OAuth callback processed, URL should be cleaned');
+      debugPrint('Vespara: OAuth callback processed, URL should be cleaned');
     }
   } catch (e) {
-    debugPrint('Kult: Could not clear URL: $e');
+    debugPrint('Vespara: Could not clear URL: $e');
   }
 }
 
@@ -112,7 +92,7 @@ class VesparaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-      title: 'Kult',
+        title: 'Vespara',
         debugShowCheckedModeBanner: false,
         theme: VesparaTheme.dark,
         home: const AuthGate(),
@@ -148,22 +128,22 @@ class _AuthGateState extends State<AuthGate> {
 
   Future<void> _initAuth() async {
     try {
-      debugPrint('Kult AuthGate: Starting auth initialization...');
-      debugPrint('Kult AuthGate: Was OAuth callback? $_isOAuthCallback');
+      debugPrint('Vespara AuthGate: Starting auth initialization...');
+      debugPrint('Vespara AuthGate: Was OAuth callback? $_isOAuthCallback');
       
       // Get current session
       _session = Supabase.instance.client.auth.currentSession;
-      debugPrint('Kult AuthGate: Initial session = ${_session != null}');
+      debugPrint('Vespara AuthGate: Initial session = ${_session != null}');
 
       // If we came from OAuth but don't have a session yet, wait a bit more
       if (_isOAuthCallback && _session == null) {
-        debugPrint('Kult AuthGate: OAuth callback but no session, waiting...');
+        debugPrint('Vespara AuthGate: OAuth callback but no session, waiting...');
         
         // Subscribe to auth changes to catch the signedIn event
         final completer = Completer<Session?>();
         
         final tempSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-          debugPrint('Kult AuthGate: Auth event during wait: ${data.event}');
+          debugPrint('Vespara AuthGate: Auth event during wait: ${data.event}');
           if (data.event == AuthChangeEvent.signedIn && data.session != null) {
             if (!completer.isCompleted) {
               completer.complete(data.session);
@@ -176,16 +156,16 @@ class _AuthGateState extends State<AuthGate> {
           _session = await completer.future.timeout(
             const Duration(seconds: 15),
             onTimeout: () {
-              debugPrint('Kult AuthGate: Timeout waiting for OAuth session');
+              debugPrint('Vespara AuthGate: Timeout waiting for OAuth session');
               return null;
             },
           );
         } catch (e) {
-          debugPrint('Kult AuthGate: Error waiting for session: $e');
+          debugPrint('Vespara AuthGate: Error waiting for session: $e');
         }
         
         await tempSub.cancel();
-        debugPrint('Kult AuthGate: After OAuth wait, session = ${_session != null}');
+        debugPrint('Vespara AuthGate: After OAuth wait, session = ${_session != null}');
       }
 
       // Check onboarding status if we have a session
@@ -195,7 +175,7 @@ class _AuthGateState extends State<AuthGate> {
 
       // Now set up the ongoing auth listener
       _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-        debugPrint('Kult Auth: ${data.event} - session: ${data.session != null}');
+        debugPrint('Vespara Auth: ${data.event} - session: ${data.session != null}');
 
         if (mounted) {
           final isTokenRefresh = data.event == AuthChangeEvent.tokenRefreshed;
@@ -217,9 +197,9 @@ class _AuthGateState extends State<AuthGate> {
         }
       });
 
-      debugPrint('Kult AuthGate: Final session check = ${_session != null}');
+      debugPrint('Vespara AuthGate: Final session check = ${_session != null}');
     } catch (e) {
-      debugPrint('Kult Auth Error: $e');
+      debugPrint('Vespara Auth Error: $e');
       _error = e.toString();
     }
 
@@ -248,7 +228,7 @@ class _AuthGateState extends State<AuthGate> {
         });
       }
     } catch (e) {
-      debugPrint('Kult: Error checking onboarding: $e');
+      debugPrint('Vespara: Error checking onboarding: $e');
       // If profile doesn't exist, show onboarding
       if (mounted) {
         setState(() {
@@ -380,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.apple,
-        redirectTo: _authRedirectUrl(),
+        redirectTo: 'https://vespara.vercel.app',
       );
     } catch (e) {
       _showError('Apple Sign In failed: $e');
@@ -394,7 +374,7 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: _authRedirectUrl(),
+        redirectTo: 'https://vespara.vercel.app',
       );
     } catch (e) {
       _showError('Google Sign In failed: $e');
@@ -531,7 +511,7 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       await Supabase.instance.client.auth.signInWithOtp(
         email: email,
-        emailRedirectTo: _authRedirectUrl(),
+        emailRedirectTo: 'https://vespara.vercel.app',
       );
       _showSuccess('Magic link sent! Check your email ✨');
     } catch (e) {
@@ -605,7 +585,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 48),
 
                   Text(
-                    'KULT',
+                    'VESPARA',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           letterSpacing: 12,
                         ),
@@ -614,7 +594,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 12),
 
                   const Text(
-                    'How do you know?',
+                    'Vespara: Infinite Experiences',
                     style: TextStyle(
                       fontSize: 15,
                       fontStyle: FontStyle.italic,
@@ -734,7 +714,7 @@ class _LoginScreenState extends State<LoginScreen>
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: Text(
-                      'What happens in your Kult, stays in your Kult',
+                      'What happens in Vespara, stays in Vespara',
                       style: TextStyle(
                         fontSize: 12,
                         color: VesparaColors.secondary.withOpacity(0.7),

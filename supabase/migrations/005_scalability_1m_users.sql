@@ -1,5 +1,5 @@
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
--- ║                     KULT PHASE 6: SCALABILITY LAYER                        ║
+-- ║                    VESPARA PHASE 6: SCALABILITY LAYER                      ║
 -- ║        Production-Ready Infrastructure for 1,000,000+ Users                ║
 -- ╚═══════════════════════════════════════════════════════════════════════════╝
 --

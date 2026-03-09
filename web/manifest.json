@@ -1,11 +1,11 @@
 {
-  "name": "Kult",
-  "short_name": "Kult",
+  "name": "Vespara",
+  "short_name": "Vespara",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1A1523",
   "theme_color": "#E0D8EA",
-  "description": "How do you know?",
+  "description": "The Social Operating System",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [

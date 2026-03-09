@@ -26,8 +26,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  */
 
 const ALLOWED_ORIGINS = [
-  "https://kult.vercel.app",
-  "https://www.kult.app",
+  "https://vespara.vercel.app",
+  "https://www.vespara.co",
   "http://localhost:3000",
 ];
 

@@ -1,6 +1,5 @@
-# KULT
-
-## How do you know?
+# VESPARA
+## The Social Operating System
 
 **Status:** Pre-Alpha | **Codename:** The Hub | **Est:** 2026 | **Last Updated:** January 2026
 
@@ -8,9 +7,9 @@
 
 ## 🌑 The Vision
 
-**Kult is a community app.** It helps people build and maintain their own mini Kults, with relationship tools and consent-forward social gameplay for adults (21+).
+**Vespara is not a dating app.** It is a **Relationship Management System (RMS)** combined with a **Consent-Forward Game Engine** for sex-positive, kink-aware adults (21+).
 
-We solve connection burnout by replacing shallow swipe mechanics with an intentional community operating system.
+We solve "Match Burnout" by replacing the slot-machine mechanics of modern dating with an intelligent, intentional operating system.
 
 - **Intentionality:** We calculate ROI on social time.
 - **The "Bento" Grid:** The entire OS lives on a single, 8-Tile dashboard.
@@ -137,7 +136,7 @@ Before any game loads, users must agree on a "Rating Level."
 
 ## 🎨 Design System: "Celestial Luxury"
 
-We strictly adhere to the **Kult Night** palette. **Do not use default Flutter colors.**
+We strictly adhere to the **Vespara Night** palette. **Do not use default Flutter colors.**
 
 | Component | Color Hex | Usage |
 |-----------|-----------|-------|
@@ -208,8 +207,8 @@ supabase/
 The `.env` file is pre-configured. See [CREDENTIALS.md](CREDENTIALS.md) for all API keys.
 
 ```properties
-APP_NAME="Kult"
-APP_DOMAIN="www.kult.app"
+APP_NAME="Vespara"
+APP_DOMAIN="www.vespara.co"
 
 # Supabase (Project: nazcwlfirmbuxuzlzjtz)
 SUPABASE_URL="https://nazcwlfirmbuxuzlzjtz.supabase.co"
@@ -242,7 +241,7 @@ flutter run
 | Table | Purpose |
 |-------|---------|
 | `profiles` | Comprehensive user profiles with Interview data |
-| `groups` | Kult Circles/Groups for communities |
+| `groups` | Vespara Circles/Groups for communities |
 | `group_members` | Group membership with roles |
 | `roster_matches` | CRM entries with pipeline stages |
 | `conversations` | Messaging threads with momentum |
@@ -332,7 +331,7 @@ You are acting as the **Chief Architect**.
 2. **Type Safety:** Strictly type your Models. Ensure Supabase tables map 1:1 to Dart classes.
 3. **Visuals:** Always check `lib/core/theme/app_theme.dart` before defining a color.
 4. **TAGS Logic:** Never allow a game to load without checking the `consent_level` first.
-5. **NO BLUE:** The Kult palette contains zero blue. Ever.
+5. **NO BLUE:** The Vespara palette contains zero blue. Ever.
 6. **Credentials:** All keys are in [CREDENTIALS.md](CREDENTIALS.md). Never ask for them.
 
 ---
@@ -341,7 +340,7 @@ You are acting as the **Chief Architect**.
 
 | Resource | URL |
 |----------|-----|
-| **Domain** | [www.kult.app](https://www.kult.app) |
+| **Domain** | [www.vespara.co](https://www.vespara.co) |
 | **Supabase Dashboard** | [Project Dashboard](https://supabase.com/dashboard/project/nazcwlfirmbuxuzlzjtz) |
 | **Vercel Project** | `prj_YXmEZmMnRx9l8pGCcAOBLSmwFTTi` |
 
@@ -353,7 +352,7 @@ You are acting as the **Chief Architect**.
 
 ---
 
-**Copyright © 2026 Kult. All Rights Reserved.**
+**Copyright © 2026 Vespara. All Rights Reserved.**
 
 *Built with 🌙 Celestial Luxury*
 

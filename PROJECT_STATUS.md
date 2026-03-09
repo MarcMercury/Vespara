@@ -1,4 +1,4 @@
-# Kult - Project Status
+# Vespara - Project Status
 
 > **Build Status: Production Ready (Pre-Alpha)**
 
@@ -10,7 +10,7 @@ Last Updated: January 21, 2026
 
 ### Icon & Emoji Overhaul (January 2026)
 - ✅ Created `VesparaIcons` class with 100+ curated Material icons
-- ✅ Created `VesparaEmoji` class with curated alternatives
+- ✅ Created `VesparaEmoji` class with alluring alternatives
 - ✅ Replaced 450+ basic icons with rounded/elegant variants
 - ✅ Updated 200+ emoji instances (👍→🙌, 😊→😏, etc.)
 
@@ -25,17 +25,17 @@ Last Updated: January 21, 2026
 
 ## 🏗️ Architecture Overview
 
-Kult uses a **feature-first architecture** with Flutter + Riverpod for state management. The app is structured around 8 core modules accessible from a Bento Grid home screen.
+Vespara uses a **feature-first architecture** with Flutter + Riverpod for state management. The app is structured around 8 core modules accessible from a Bento Grid home screen.
 
 ### The 8 Modules
 
 | Module | Screen | Description |
 |--------|--------|-------------|
 | **MIRROR** | `mirror_screen.dart` | Profile management & AI analytics |
-| **DISCOVER** | `discover_screen.dart` | Swipe marketplace for finding connections |
+| **DISCOVER** | `discover_screen.dart` | Swipe marketplace for finding matches |
 | **NEST** | `nest_screen.dart` | CRM for managing connections |
 | **WIRE** | `wire_screen.dart` | Messaging & conversations |
-| **PLANNER** | `planner_screen.dart` | AI-powered social scheduling |
+| **PLANNER** | `planner_screen.dart` | AI-powered date scheduling |
 | **GROUP** | `group_screen.dart` | Events & party planning |
 | **SHREDDER** | `shredder_screen.dart` | Ghost Protocol & cleanup tools |
 | **TAG** | `tags_screen.dart` | Consent-forward adult games (Ludus) |
@@ -47,7 +47,7 @@ Kult uses a **feature-first architecture** with Flutter + Riverpod for state man
 ### Core Infrastructure
 - [x] `main.dart` - App entry with Supabase init & auth gate
 - [x] `lib/core/config/env.dart` - Environment configuration
-- [x] `lib/core/theme/app_theme.dart` - Kult Night design system
+- [x] `lib/core/theme/app_theme.dart` - Vespara Night design system
 - [x] `lib/core/theme/motion.dart` - Animation curves & timing
 - [x] `lib/core/theme/vespara_icons.dart` - 100+ curated icons & emojis
 - [x] `lib/core/widgets/drama_sutra_card.dart` - Game card component
@@ -167,7 +167,7 @@ Kult uses a **feature-first architecture** with Flutter + Riverpod for state man
 | 004 | `phase2_nervous_system.sql` | Real-time features |
 | 005 | `scalability_1m_users.sql` | Performance optimizations |
 | 006 | `project_genesis_schema.sql` | Genesis features |
-| 007 | `vespara_dating_app.sql` | Core social/relationship tables |
+| 007 | `vespara_dating_app.sql` | Dating-specific tables |
 | 008 | `wire_group_chat.sql` | Group messaging |
 | 009+ | Various game schemas | Game-specific tables |
 | 017 | `exclusive_onboarding.sql` | Premium onboarding flow |
@@ -175,7 +175,7 @@ Kult uses a **feature-first architecture** with Flutter + Riverpod for state man
 ### Edge Functions (Deployed)
 | Function | Purpose |
 |----------|---------|
-| `strategist` | AI connection advice |
+| `strategist` | AI dating advice |
 | `ghost-protocol` | Closure message generator |
 | `resuscitator` | Stale conversation revival |
 | `vouch-chain` | Social verification |
@@ -187,7 +187,7 @@ Kult uses a **feature-first architecture** with Flutter + Riverpod for state man
 
 ## 🎨 Design System
 
-### Color Palette (Kult Night)
+### Color Palette (Vespara Night)
 | Token | Hex | Usage |
 |-------|-----|-------|
 | Void | `#1A1523` | Main background |
@@ -262,8 +262,8 @@ All credentials stored in `CREDENTIALS.md` and `.env`:
 - Supabase (Project: nazcwlfirmbuxuzlzjtz)
 - OpenAI GPT-4
 - Google Maps
-- Vercel (kult.app)
+- Vercel (vespara.co)
 
 ---
 
-*Built with 💜 for modern community orchestrators*
+*Built with 💜 for the modern relationship strategist*

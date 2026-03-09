@@ -1,5 +1,5 @@
 -- ============================================
--- KULT DATABASE SCHEMA
+-- VESPARA DATABASE SCHEMA
 -- Run this in Supabase SQL Editor
 -- ============================================
 

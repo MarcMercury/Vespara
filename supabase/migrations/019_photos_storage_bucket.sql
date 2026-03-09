@@ -1,5 +1,5 @@
 -- ╔═══════════════════════════════════════════════════════════════════════════╗
--- ║                    KULT PHOTOS STORAGE CONFIGURATION                       ║
+-- ║                   VESPARA PHOTOS STORAGE CONFIGURATION                     ║
 -- ║                    Photos Storage Bucket & Policies                        ║
 -- ╚═══════════════════════════════════════════════════════════════════════════╝
 

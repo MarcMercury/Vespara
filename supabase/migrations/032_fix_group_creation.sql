@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- MIGRATION 032: FIX GROUP CREATION FUNCTION
--- Fix the create_vespara_group function to include user_id in conversations (Kult)
+-- Fix the create_vespara_group function to include user_id in conversations
 -- Also fix the self-referential RLS policy bug on group_members
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Drop and recreate the create_vespara_group function with proper user_id (Kult)
+-- Drop and recreate the create_vespara_group function with proper user_id
 CREATE OR REPLACE FUNCTION public.create_vespara_group(
     p_name TEXT,
     p_description TEXT DEFAULT NULL,

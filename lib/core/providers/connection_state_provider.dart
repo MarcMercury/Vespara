@@ -167,8 +167,6 @@ class VesparaConnectionState {
 class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
   ConnectionStateNotifier() : super(_initialState());
 
-  static const String _primaryConnectScheme = 'kult';
-
   static VesparaConnectionState _initialState() {
     // Start with empty state - data will be loaded from database
     return const VesparaConnectionState();
@@ -177,7 +175,7 @@ class ConnectionStateNotifier extends StateNotifier<VesparaConnectionState> {
   /// Generate QR code data for my profile
   String generateMyQrCode(String userId, String displayName) {
     // In production, this would be encrypted/signed
-    final qrData = '$_primaryConnectScheme://connect/$userId/$displayName';
+    final qrData = 'vespara://connect/$userId/$displayName';
     state = state.copyWith(myQrCode: qrData);
     return qrData;
   }

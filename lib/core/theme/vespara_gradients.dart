@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
 /// ╔═══════════════════════════════════════════════════════════════════════════╗
-/// ║                KULT GRADIENT SYSTEM                                        ║
+/// ║              VESPARA GRADIENT SYSTEM                                       ║
 /// ║  Rich, layered gradients for the Celestial Luxury aesthetic               ║
 /// ╚═══════════════════════════════════════════════════════════════════════════╝
 
-/// Legacy class name retained for compatibility.
 class VesparaGradients {
   VesparaGradients._();
 

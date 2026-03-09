@@ -47,7 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Title
                 const Text(
-                  'KULT',
+                  'VESPARA',
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w500,
@@ -59,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 8),
 
                 const Text(
-                  'How do you know?',
+                  'Infinite Experiences',
                   style: TextStyle(
                     fontSize: 14,
                     color: _muted,

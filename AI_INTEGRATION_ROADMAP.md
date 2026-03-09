@@ -1,4 +1,4 @@
-# 🧠 Kult AI Integration Roadmap
+# 🧠 Vespara AI Integration Roadmap
 
 > **Goal**: Empower the system with AI that feels invisible to users - enhancing experiences without adding friction.
 
@@ -16,7 +16,7 @@
 
 ### 1.3 Engagement Analytics
 - Track which prompts get best responses
-- Identify conversation patterns that lead to real-world community meetups
+- Identify conversation patterns that lead to dates
 - Measure game completion rates by content type
 - **User Experience**: App subtly improves over time
 

@@ -1,6 +1,6 @@
-# 🤖 KULT AI CONTEXT FILE
+# 🤖 VESPARA AI CONTEXT FILE
 
-> **AI CONTEXT FILE:** Primary reference for AI assistants working on Kult.
+> **AI CONTEXT FILE:** Primary reference for AI assistants working on Vespara.
 > Read this file first before making any changes.
 
 ---
@@ -17,13 +17,13 @@ supabase db push  # Push to remote
 ```
 
 ### No Blue Colors
-The brand explicitly forbids blue. Use the Kult Night palette only.
+The brand explicitly forbids blue. Use the Vespara Night palette only.
 
 ---
 
 ## 📱 Project Overview
 
-**Kult** is a community operating system and relationship management platform.
+**Vespara** is a Social Operating System and Relationship Management System (RMS).
 
 | Attribute | Value |
 |-----------|-------|
@@ -104,12 +104,12 @@ lib/
 | Supabase | ✅ LIVE | Database, Auth, Realtime, Edge Functions |
 | OpenAI | ✅ LIVE | GPT-4 for AI features |
 | Google Maps | ✅ LIVE | Location services |
-| Vercel | ✅ LIVE | Web hosting (kult.app) |
+| Vercel | ✅ LIVE | Web hosting (vespara.co) |
 
 ### Edge Functions
 | Function | Purpose |
 |----------|---------|
-| `strategist` | AI connection advice |
+| `strategist` | AI dating advice |
 | `ghost-protocol` | Closure messages |
 | `resuscitator` | Revive stale chats |
 | `vouch-chain` | Social verification |
@@ -212,7 +212,7 @@ auth.role() = 'authenticated'
 ## ✅ Pre-Flight Checklist
 
 Before every change:
-- [ ] Using Kult Night colors? (No blue)
+- [ ] Using Vespara Night colors? (No blue)
 - [ ] State via Riverpod? (No setState for business logic)
 - [ ] Models map to Supabase tables?
 - [ ] RLS policies on new tables?
@@ -251,4 +251,4 @@ supabase db push
 
 ---
 
-**© 2026 Kult. All Rights Reserved.**
+**© 2026 Vespara. All Rights Reserved.**
