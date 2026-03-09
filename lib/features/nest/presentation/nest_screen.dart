@@ -1017,6 +1017,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
           builder: (context) => WireChatScreen(conversation: conversation),
         ),
       );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open chat right now. Please try again.'),
+          backgroundColor: VesparaColors.error,
+        ),
+      );
     }
   }
 
