@@ -972,23 +972,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   Widget _buildHostActions() => Row(
         children: [
           Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _editEvent,
-              icon: const Icon(Icons.edit, color: VesparaColors.glow),
-              label: const Text('Edit',
-                  style: TextStyle(color: VesparaColors.glow),),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: VesparaColors.glow),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
             child: ElevatedButton.icon(
               onPressed: _inviteGuests,
               icon:

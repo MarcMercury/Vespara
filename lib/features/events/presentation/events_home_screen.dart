@@ -488,6 +488,21 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
                   _addToCalendar(event);
                 },
               ),
+              _buildOptionTile(
+                Icons.notifications_off,
+                'Mute Notifications',
+                () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Notifications muted for this event'),
+                      backgroundColor: VesparaColors.glow,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
       ),
     );
   }
