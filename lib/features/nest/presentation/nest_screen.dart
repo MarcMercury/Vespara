@@ -137,7 +137,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
             Column(
               children: [
                 VesparaNeonText(
-                  text: 'My Cult',
+                  text: 'THE SANCTUM',
                   style: GoogleFonts.cinzel(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -149,7 +149,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'My Followers, organized',
+                  'Your connections, organized',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
