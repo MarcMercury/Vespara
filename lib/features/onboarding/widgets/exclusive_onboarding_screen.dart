@@ -602,7 +602,6 @@ class _ExclusiveOnboardingScreenState
     {'title': 'THE BASICS', 'subtitle': 'Name, identity, location'},
     {'title': 'LOGISTICS', 'subtitle': 'Status, availability, hosting'},
     {'title': 'THE SEARCH', 'subtitle': 'What you\'re looking for'},
-    {'title': 'THE VIBE', 'subtitle': 'Your dynamic & heat level'},
     {'title': 'THE DOSSIER', 'subtitle': 'Photos & your hook'},
     {'title': 'AI PROFILE', 'subtitle': 'Let AI craft your story'},
   ];
@@ -636,11 +635,9 @@ class _ExclusiveOnboardingScreenState
             _hostingStatus != null;
       case 3: // THE SEARCH - What you're looking for
         return _seeking.isNotEmpty;
-      case 4: // THE VIBE - Dynamics & heat level
-        return _selectedTraits.length >= 3 && _heatLevel != null;
-      case 5: // THE DOSSIER - Photos & hook
+      case 4: // THE DOSSIER - Photos & hook
         return true; // Optional but encouraged
-      case 6: // AI PROFILE - Bio generation
+      case 5: // AI PROFILE - Bio generation
         return true;
       default:
         return false;
@@ -671,7 +668,7 @@ class _ExclusiveOnboardingScreenState
       setState(() => _currentStep++);
 
       // Auto-generate bio when entering AI Profile step
-      if (_currentStep == 6 && _bioController.text.isEmpty) {
+      if (_currentStep == 5 && _bioController.text.isEmpty) {
         _generateAIBio();
       }
     } else {
@@ -1199,7 +1196,7 @@ class _ExclusiveOnboardingScreenState
 
         // Onboarding status
         'onboarding_complete': true,
-        'onboarding_step': 9,
+        'onboarding_step': 7,
         'onboarding_completed_at': DateTime.now().toIso8601String(),
         'is_verified': true,
         'updated_at': DateTime.now().toIso8601String(),
@@ -1368,9 +1365,8 @@ class _ExclusiveOnboardingScreenState
                   _buildBasicsStep(), // 1: Name, identity, location
                   _buildLogisticsStep(), // 2: Status, availability, hosting
                   _buildSearchStep(), // 3: What you're looking for
-                  _buildVibeStep(), // 4: Dynamics & heat level
-                  _buildDossierStep(), // 5: Photos & hook
-                  _buildAIProfileStep(), // 6: AI-generated bio
+                  _buildDossierStep(), // 4: Photos & hook
+                  _buildAIProfileStep(), // 5: AI-generated bio
                 ],
               ),
             ),

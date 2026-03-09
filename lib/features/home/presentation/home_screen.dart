@@ -13,10 +13,12 @@ import '../../../core/widgets/page_transitions.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../../discover/presentation/discover_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
+import '../../minis/presentation/minis_screen.dart';
 // Import module screens
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
+import 'welcome_tutorial.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// VESPARA HOME SCREEN
@@ -37,6 +39,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late AnimationController _pulseController;
   late AnimationController _shimmerController;
   late List<Animation<double>> _tileAnimations;
+  bool _showTutorial = false;
+  bool _tutorialChecked = false;
 
   /// The 6 Modules — richer accent colors matching VesparaGradients
   static const List<Map<String, dynamic>> _modules = [
@@ -72,6 +76,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'color': Color(0xFFFFD54F), // Bright gold
       'description': 'Games for the daring',
     },
+    {
+      'name': 'MINIS',
+      'subtitle': 'Quick Hits',
+      'icon': Icons.auto_awesome_rounded,
+      'emoji': '🎯',
+      'color': Color(0xFFFF6B9D), // Electric rose
+      'description': 'Solo mini-games',
+    },
   ];
 
   /// Screens for each module
@@ -80,6 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     NestScreen(), // 1: Nest/Sanctum
     ShredderScreen(), // 2: Shredder
     TagScreen(), // 3: TAG
+    MinisScreen(), // 4: Mini's
   ];
 
   @override
@@ -119,6 +132,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
 
     _staggerController.forward();
+
+    // Check if first-time user needs tutorial
+    _checkTutorial();
+  }
+
+  Future<void> _checkTutorial() async {
+    final seen = await WelcomeTutorial.hasSeenTutorial();
+    if (mounted && !seen) {
+      setState(() {
+        _showTutorial = true;
+        _tutorialChecked = true;
+      });
+    } else if (mounted) {
+      setState(() => _tutorialChecked = true);
+    }
   }
 
   @override
@@ -139,6 +167,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Show welcome tutorial for first-time users
+    if (_showTutorial) {
+      return WelcomeTutorial(
+        onComplete: () {
+          setState(() => _showTutorial = false);
+        },
+      );
+    }
+
     final analyticsAsync = ref.watch(userAnalyticsProvider);
     final analytics = analyticsAsync.valueOrNull;
 
@@ -623,6 +660,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return 'assets/Main Page Tile Icons/Shredder1.png';
       case 'TAG':
         return 'assets/Main Page Tile Icons/TAG1.png';
+      case 'MINIS':
+        return 'assets/Main Page Tile Icons/Minis.png';
       default:
         return 'assets/Main Page Tile Icons/Discover1.png';
     }
