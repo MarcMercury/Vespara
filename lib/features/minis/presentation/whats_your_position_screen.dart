@@ -46,28 +46,34 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
     '3p1','3p2','3p3','3p4','3p5','3p6','3p7','3p8','3p9','3p10','3p11','3p12','3p13','3p14','3p15','3p16','3p17','3p18','3p19','3p20','3p21','3p22','3p23','3p24','3p25','3p26','3p27','3p28','3p29','3p30','3p31','3p32',
   ];
 
-  static const List<String> _namePartA = [
-    'Pretzel', 'Meteor', 'Balcony', 'Origami', 'Velvet', 'Ceiling Fan',
-    'Goblin', 'Whiplash', 'Pirouette', 'Tornado', 'Glitter', 'Diplomat',
-    'Algorithm', 'Moonwalk', 'Chaos', 'Kamikaze', 'Syllabus', 'Yacht',
-  ];
-
-  static const List<String> _namePartB = [
-    'Handshake', 'Paradox', 'Cabaret', 'Negotiation', 'Cartwheel',
-    'Uprising', 'Jenga', 'Detour', 'Mirage', 'Tax Evasion', 'Monsoon',
-    'Afterparty', 'Renaissance', 'Blueprint', 'Orbit', 'Equation',
-    'Conspiracy', 'Speedrun',
+  static const List<String> _positionNamePool = [
+    'Balcony Negotiation',
+    'Velvet Panic Protocol',
+    'Moonlight Logistics Crisis',
+    'Gremlin Cartwheel Treaty',
+    'Afterparty Orbit Collapse',
+    'Diplomatic Whiplash',
+    'Chaotic Renaissance',
+    'Tornado Blueprint',
+    'Glitter Monsoon Maneuver',
+    'Pretzel Conspiracy',
+    'Goblin Speedrun',
+    'Algorithm Uprising',
   ];
 
   static const List<String> _descriptorTemplates = [
-    'You are this position because your energy says "why choose calm when chaos is free."',
-    'This is you in one move: dramatic setup, flawless confidence, zero concern for furniture.',
-    'You represent this position because you treat balance like a rumor and commitment like cardio.',
-    'Your vibe matches this one: confusing, iconic, and somehow still on schedule.',
-    'You got this because your personality is 60% chemistry, 40% stunt coordination.',
-    'This position screams your name: bold decisions, loud playlists, no user manual.',
-    'You map to this because subtlety left your body years ago and never came back.',
-    'The algorithm picked this after detecting elite levels of playful nonsense.',
+    'You get this because you turn "just one experiment" into a fully staffed operation by midnight.',
+    'You match this move because you hear "optional" and immediately launch phase two.',
+    'You are this position because you recruit backup before explaining the plan.',
+    'You unlocked this because your confidence treats logistics like an improv game.',
+    'You map to this one because you escalate responsibly, loudly, and with suspicious optimism.',
+    'You got this because you wander into a room and accidentally become activity director.',
+    'You match this because your foreplay is a checklist and a countdown timer.',
+    'You earned this because you call chaos "community building" and nobody argues.',
+    'You got this because you volunteer for advanced ideas with beginner-level caution.',
+    'You match this because your favorite move is "yes, and now with more people."',
+    'You earned this by turning playful curiosity into operational theater.',
+    'You fit this because you hear "maybe" and immediately schedule a sequel.',
   ];
 
   static const List<String> _rareNames = [
@@ -150,8 +156,7 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
     if (isRare) {
       positionName = _rareNames[rng.nextInt(_rareNames.length)];
     } else {
-      positionName =
-          '${_namePartA[rng.nextInt(_namePartA.length)]} ${_namePartB[rng.nextInt(_namePartB.length)]}';
+      positionName = _positionNamePool[rng.nextInt(_positionNamePool.length)];
     }
 
     final descriptor = _descriptorTemplates[rng.nextInt(_descriptorTemplates.length)];

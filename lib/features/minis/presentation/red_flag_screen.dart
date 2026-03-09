@@ -50,91 +50,67 @@ class _RedFlagScreenState extends State<RedFlagScreen>
   // ═══════════════════════════════════════════════════════════════════════
 
   static const List<List<String>> _flagsByVibe = [
-    // 0: Flirting
     [
-      'Still has their ex\'s Netflix password AND their nudes saved in a folder called "Tax Documents"',
-      'Sends unsolicited voice memos at 3am that are just heavy breathing and "you up?"',
-      'Thinks foreplay is just aggressively winking from across the room',
-      'Considers watching someone\'s Instagram story as "the first move"',
-      'Types "haha" but has never actually laughed in person',
-      'Their go-to flirting technique is showing you their credit score',
-      'Describes themselves as "sexually advanced" on the first date like it\'s a LinkedIn skill',
-      'Screenshots every flirty DM and sends it to the group chat for peer review',
-      'Uses finger guns after every orgasm and winks at themselves in the mirror',
-      'Still uses pickup lines from 2008 and gets genuinely offended when they don\'t work',
-      'Has customized their phone\'s autocorrect to change "sorry" to "your loss"',
-      'Sends "u up?" texts to 6 people simultaneously and picks the first responder',
-    ],
-    // 1: Chaos
-    [
-      'Has a body count spreadsheet with a rating system and Yelp-style reviews',
-      'Has been banned from 3 different dating apps and considers it a flex',
-      'Refers to their genitals by a name and introduces them separately',
-      'Has an alarm set for "weekly sext quota" and treats it like a KPI',
-      'Rates every kiss on a 1-10 scale out loud, in real time',
-      'Has a Google Calendar invite for breakups scheduled 6 weeks out',
-      'Keeps a drawer of "trophies" from past hookups like a serial killer',
-      'Has a Costco-sized bottle of lube on the nightstand and calls it "the essentials"',
-      'Calls orgasms "arrivals" and announces them like a flight attendant',
-      'Sets a timer during sex and gets competitive about beating their personal record',
-      'Brings a whiteboard to the bedroom for "strategic planning"',
-      'Has a finsta dedicated entirely to rating their Hinge matches',
-    ],
-    // 2: Trouble
-    [
-      'Makes you sign an NDA before the second date',
-      'Has a vision board that\'s just pictures of their ex with X\'s through them',
-      'Still sleeps with a body pillow that has their ex\'s face printed on it',
-      'Their safe word is their ex\'s name and they "forget" every time',
-      'Takes a selfie mid-hookup for their "private collection"',
-      'Keeps score of who initiates sex and brings up the stats during arguments',
-      'Brings measuring tape to the bedroom and won\'t explain why',
-      'Has a loyalty card for the STD clinic and is two stamps away from a free test',
-      'Moans their own name during sex and sees nothing wrong with it',
-      'Tests your loyalty by creating a fake dating profile and matching with you',
-      'Wears sunglasses indoors during sex for "the aesthetic"',
-      'Records voice notes to themselves after dates titled "performance review"',
-    ],
-    // 3: Romance
-    [
-      'Asks "what are we" on the first date while the appetizers are still coming',
-      'Has a playlist for every stage of a situationship including "the ghost"',
-      'Has matching underwear for every zodiac sign and wears them accordingly',
-      'Brings a PowerPoint presentation to the first date titled "Why I\'m Worth It"',
-      'Replies to "I love you" with "I know" and genuinely thinks they\'re Han Solo',
-      'Cries during sex but insists it\'s "happy tears" every single time',
-      'Their idea of dirty talk is reading their horoscope in a seductive voice',
-      'Uses the phrase "I\'m kind of a big deal on Tinder" unironically',
-      'Brings their emotional support animal to every hookup',
-      'Says "that\'s what she said" DURING intimate moments without a hint of irony',
-      'Has a highlight reel of their best thirst traps saved as their phone wallpaper',
-      'Their pillow talk is literally just them reading tweets out loud',
-    ],
-    // 4: Bad Decisions
-    [
-      'Calls their mom DURING sex to ask what temperature to set the oven to',
-      'Has a "signature move" they named after themselves and demonstrates at parties',
-      'Brings a clipboard to bed and asks you to fill out a feedback form after',
-      'Orders for you at restaurants AND in the bedroom',
-      'Takes protein shakes to bed and calls it "pre-workout"',
-      'Considers "ghosting" a legitimate conflict resolution strategy',
-      'Has named every piece of lingerie in their drawer and introduces them like pets',
-      'Texts "we need to talk" and then sends a link to their SoundCloud',
-      'Still has Tinder notifications on during your anniversary dinner',
-      'Has a dating profile that says "fluent in sarcasm" and "not looking for drama"',
-      'Has a spreadsheet tracking the ROI of every date they\'ve ever been on',
-      'Thinks "Netflix and chill" literally means watching Netflix and being cold',
+      'You say you\'re "just going to watch tonight" and are fully naked within eight minutes.',
+      'You treat the play space like a buffet and immediately start sampling the menu.',
+      'You once turned harmless flirting into a situation requiring a group meeting.',
+      'You wander through rooms like a very friendly tornado.',
+      'You think "let\'s just see what happens" is a fully formed life plan.',
+      'You once described a hookup afterward as excellent cardio.',
+      'You treat flirtation like extreme sports with better lighting.',
+      'You have confidently said "this will make a great story later" during a terrible decision.',
+      'You bring a backpack to the party and unpack it like a traveling kink salesman.',
+      'You say "I\'m pacing myself tonight" and then immediately forget that plan.',
+      'You treat awkward silence like a challenge.',
+      'You have accidentally created two separate love triangles in the same room.',
+      'You once said "this will definitely not get weird" and it immediately got weird.',
+      'You think tequila reveals your true self, which is unfortunate.',
+      'You say "trust me" immediately before something that absolutely should not be trusted.',
+      'You treat eye contact across the room like an invitation from fate.',
+      'You believe stamina is mostly a confidence issue.',
+      'You wander into cuddle piles like it\'s an open seat on public transit.',
+      'You once said "don\'t worry, I\'ve done this before" right before attempting something extremely ambitious.',
+      'You have used the phrase "okay but in my defense... chaos."',
+      'You treat parties like a choose-your-own-adventure book.',
+      'You once explained your dating situation and someone responded "I\'m going to need a diagram."',
+      'You believe consequences are a future version of you problem.',
+      'You say "I\'ll be right back" and return two hours later with a completely new friend group.',
+      'You once paused mid-chaos to ask "has anyone tried this configuration before?"',
+      'You think warm-up stretches are a perfectly reasonable thing to do before the party starts.',
+      'You once tried to fix a bad decision by making another worse decision.',
+      'You approach the night like a scientific field experiment.',
+      'You have walked into a room, assessed the chaos, and decided to contribute.',
+      'You believe chaos isn\'t something that happens around you - you are the chaos.',
+      'You treat the toy table like a hardware store where you forgot your shopping list.',
+      'You once said "I\'m just here for the vibe" and then became the vibe.',
+      'You believe the phrase "this should work in theory" applies to bedroom logistics.',
+      'You say "hold on, I have an idea" and everyone nearby immediately gets nervous.',
+      'You once turned a casual moment into an extremely ambitious group activity.',
+      'You treat curiosity like a competitive advantage.',
+      'You once said "this might require teamwork."',
+      'You think every party secretly needs a volunteer coordinator.',
+      'You once paused and said "this is getting logistically impressive."',
+      'You believe the phrase "just go with it" is a solid operating principle.',
+      'You once said "I should probably stretch first."',
+      'You approach the night like an Olympic qualifier.',
+      'You have the confidence of someone who read half the instructions.',
+      'You once said "this is either a great idea or a terrible one."',
+      'You think the phrase "let\'s see what happens if..." is irresistible.',
+      'You once declared "okay now it\'s a science experiment."',
+      'You believe chaos improves with enthusiasm and hydration.',
+      'You once said "I regret nothing... yet."',
+      'You believe the best stories always start with "so there were more people than expected."',
     ],
   ];
 
   // Escalation add-ons for repeat plays
   static const List<String> _escalation = [
-    '...and genuinely thinks it\'s a green flag',
-    '...and has done this at EVERY relationship milestone',
-    '...and made a TikTok about it that went viral',
-    '...and their therapist already knows about this one',
-    '...and they WILL do it again',
-    '...and posted about it on LinkedIn',
+    '...and immediately recruits two more volunteers',
+    '...and somehow turns it into a community project',
+    '...and insists this is "actually very organized"',
+    '...and proposes a sequel before hydration break',
+    '...and calls this phase one with alarming confidence',
+    '...and asks who wants to workshop it live',
   ];
 
   // Rare results (1-2% chance)
@@ -147,11 +123,24 @@ class _RedFlagScreenState extends State<RedFlagScreen>
   ];
 
   static const List<String> _chaosAddons = [
-    'Also your close friends list is 92% exes and one dentist.',
-    'Three strangers in your comments just typed "girl run" in sync.',
-    'The algorithm tried to warn us, then clocked out early.',
-    'Your archived stories should legally require goggles.',
-    'Someone reported this behavior to astrology and astrology resigned.',
+    'The room gave this idea side-eye and then participated anyway.',
+    'Three strangers heard this plan and asked for a signup sheet.',
+    'The algorithm tried to warn us, then joined the afterparty.',
+    'Your archived stories now require waivers and hydration reminders.',
+    'Someone reported this behavior to astrology and astrology said "fair."',
+  ];
+
+  static const List<String> _extremeFlags = [
+    'You start every event saying "I\'m just observing" and then recruit a task force 12 minutes later.',
+    'You hear "optional group activity" and treat it like your Olympic qualifying round.',
+    'You turn one innocent flirt into a logistics map with arrows, initials, and hydration breaks.',
+    'You walk into a room, clap once, and accidentally become the unofficial chaos facilitator.',
+    'You treat consent check-ins like halftime strategy talks and everyone somehow says yes.',
+    'You whisper "what if we escalated responsibly" and suddenly there\'s a sign-up list.',
+    'You keep saying "this is a terrible idea" while actively assigning roles.',
+    'You call it aftercare, but it\'s mostly a debrief for your latest questionable masterpiece.',
+    'You start with "I have a tiny idea" and end with furniture being moved by committee.',
+    'You collect people with eye contact and launch projects nobody requested but everyone remembers.',
   ];
 
   @override
@@ -231,8 +220,7 @@ class _RedFlagScreenState extends State<RedFlagScreen>
     if (isRare) {
       flag = _rareFlags[rng.nextInt(_rareFlags.length)];
     } else {
-      final allFlags = _flagsByVibe.expand((group) => group).toList();
-      flag = allFlags[rng.nextInt(allFlags.length)];
+      flag = _extremeFlags[rng.nextInt(_extremeFlags.length)];
 
       // Escalation after 3+ plays
       if (_playCount >= 3) {

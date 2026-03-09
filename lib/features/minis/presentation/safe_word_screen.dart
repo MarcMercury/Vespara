@@ -45,57 +45,41 @@ class _SafeWordScreenState extends State<SafeWordScreen>
 
   static const Color _accentColor = Color(0xFFE91E63);
 
-  static const List<String> _safeWordFirst = [
-    'Toaster',
-    'Velcro',
-    'Wombat',
-    'Bazooka',
-    'Ketchup',
-    'Mango',
-    'LavaLamp',
-    'Taxidermy',
-    'Goose',
-    'Parmesan',
-    'Sprinkler',
-    'Goblin',
-  ];
-  static const List<String> _safeWordSecond = [
-    'Monsoon',
-    'Protocol',
-    'Coupons',
-    'Ballet',
-    'Helicopter',
-    'Crouton',
-    'Detergent',
-    'NightShift',
-    'Dinosaur',
-    'Falsetto',
-    'Audit',
-    'Moonwalk',
-  ];
-  static const List<String> _safeWordThird = [
-    'Supreme',
-    'Deluxe',
-    'Emergency',
-    'AfterDark',
-    '3000',
-    'Director\'sCut',
-    'Unplugged',
-    'MkII',
-    'NoRefunds',
-    'Ultra',
-    'Turbo',
-    'Offline',
+  static const List<String> _safeWordPool = [
+    'Emergency Glitter Protocol',
+    'Consensual Chaos Shutdown',
+    'Hydration Break Apocalypse',
+    'Velvet Logistics Failure',
+    'Cuddle Pile Evacuation',
+    'Too Many Volunteers',
+    'Soft Limits Meteor Strike',
+    'Afterparty Risk Committee',
+    'Disco Ball Time-Out',
+    'Certified Bad Planning',
+    'Moonlight Coordination Error',
+    'Respectfully Abort Mission',
+    'Overbooked Makeout Calendar',
+    'Advanced Group Project',
+    'Friendly Panic Button',
   ];
   static const List<String> _safeWordChaos = [
-    'under a disco ball',
-    'in a mall fountain',
-    'while the microwave beeps',
-    'next to a haunted ring light',
-    'during an emotional weather event',
-    'behind a suspicious curtain',
-    'while someone yells "plot twist"',
-    'inside a ceremonial hoodie',
+    'under the playroom disco ball',
+    'while someone shouts "consent check" like a battle cry',
+    'next to a suspiciously overbooked cuddle pile',
+    'during a logistics conversation nobody can finish',
+    'while the group chat votes in real time',
+    'behind the room divider with excellent acoustics',
+    'while someone says "we can definitely make this work"',
+    'inside a very committed afterparty plan',
+  ];
+
+  static const List<String> _actionExplanations = [
+    'Deploy it when your "quick experiment" suddenly needs a full planning committee.',
+    'Use it the second your curiosity turns into a five-person scheduling conflict.',
+    'Shout it before your "for science" idea recruits more volunteers than expected.',
+    'Activate it when confidence outruns your stretching routine.',
+    'Drop it when the vibe shifts from playful chaos to advanced group project.',
+    'Say it before someone turns this into a workshop with no instructor.',
   ];
 
   // Rare results (1-2% chance)
@@ -193,18 +177,17 @@ class _SafeWordScreenState extends State<SafeWordScreen>
       safeWord = _rareWords[idx];
       explanation = _rareExplanations[idx];
     } else {
-      safeWord =
-          '${_safeWordFirst[rng.nextInt(_safeWordFirst.length)]} '
-          '${_safeWordSecond[rng.nextInt(_safeWordSecond.length)]} '
-          '${_safeWordThird[rng.nextInt(_safeWordThird.length)]}';
+        safeWord = _safeWordPool[rng.nextInt(_safeWordPool.length)];
 
       if (_playCount >= 2 || rng.nextBool()) {
         safeWord += ' ${_safeWordChaos[rng.nextInt(_safeWordChaos.length)]}';
       }
 
-      explanation = _isFriendMode
-          ? '$name + @$igHandle radiates elite confusion and avoidable choices.'
-          : 'Algorithm says @$igHandle should keep this word in a fireproof envelope.';
+        final action =
+          _actionExplanations[rng.nextInt(_actionExplanations.length)];
+        explanation = _isFriendMode
+          ? '$name + @$igHandle radiates elite chaos. $action'
+          : 'Algorithm says @$igHandle should keep this in a fireproof envelope. $action';
     }
 
     await _runFakeIgReview(igHandle);

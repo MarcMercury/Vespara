@@ -53,6 +53,64 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
     'A random influencer declares this a "public learning moment."',
   ];
 
+  static const List<_LocationResult> _communityLocations = [
+    _LocationResult(
+      location: 'Play Party Upstairs Hallway',
+      emoji: '🕯️',
+      punchline: 'You said "quick check-in" and came back with a three-step expansion plan.',
+    ),
+    _LocationResult(
+      location: 'Consent Workshop Breakout Corner',
+      emoji: '📝',
+      punchline: 'You tried one demonstration and immediately requested live audience participation.',
+    ),
+    _LocationResult(
+      location: 'Aftercare Lounge Beanbags',
+      emoji: '🛋️',
+      punchline: 'You arrived for water and left organizing a spontaneous cuddle rotation.',
+    ),
+    _LocationResult(
+      location: 'Rooftop Polycule Debrief Circle',
+      emoji: '🌃',
+      punchline: 'You asked one clarifying question and accidentally triggered strategic planning mode.',
+    ),
+    _LocationResult(
+      location: 'Toy Sanitizing Station',
+      emoji: '🧴',
+      punchline: 'You called it efficient multitasking and the room called it historic chaos.',
+    ),
+    _LocationResult(
+      location: 'Dungeon Queue Line',
+      emoji: '⛓️',
+      punchline: 'You said "we can optimize this" and now there is a handwritten sign-up board.',
+    ),
+    _LocationResult(
+      location: 'Sex-Positive Festival Quiet Tent',
+      emoji: '⛺',
+      punchline: 'You entered whispering and exited with volunteers for an ambitious side quest.',
+    ),
+    _LocationResult(
+      location: 'Community Potluck Kitchen',
+      emoji: '🍲',
+      punchline: 'You went in for snacks and pitched a logistics-heavy adventure by the fridge.',
+    ),
+    _LocationResult(
+      location: 'Dungeon St. Andrew\'s Cross Queue',
+      emoji: '🖤',
+      punchline: 'You offered to "speed things up" and accidentally launched organized chaos.',
+    ),
+    _LocationResult(
+      location: 'Workshop Demo Mat',
+      emoji: '🎓',
+      punchline: 'You asked one question and somehow ended up running the demonstration.',
+    ),
+    _LocationResult(
+      location: 'Polycule Planning Couch',
+      emoji: '🛋️',
+      punchline: 'You tried to simplify one plan and generated three parallel timelines.',
+    ),
+  ];
+
   // ═══════════════════════════════════════════════════════════════════════
   // LOCATION RESULTS — By vibe
   // Format: Location + short funny punchline
@@ -216,8 +274,7 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
     if (isRare) {
       location = _rareLocations[rng.nextInt(_rareLocations.length)];
     } else {
-      final allLocations = _locationsByVibe.expand((group) => group).toList();
-      final picked = allLocations[rng.nextInt(allLocations.length)];
+      final picked = _communityLocations[rng.nextInt(_communityLocations.length)];
       location = _LocationResult(
         location: picked.location,
         emoji: picked.emoji,

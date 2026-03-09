@@ -45,11 +45,33 @@ class _CocktailScreenState extends State<CocktailScreen>
   static const Color _accentColor = Color(0xFF9C27B0);
 
   static const List<String> _chaosAddons = [
-    'You also own a cursed ring light and call it leadership.',
-    'Your close friends story is legally a weather warning.',
-    'Someone in your DMs typed "respectfully no" and then stayed anyway.',
-    'Your profile suggests you have three alter egos and one fake passport.',
-    'Your aura smells like lime, static, and poor decisions.',
+    'You also volunteered to "coordinate" and nobody stopped you.',
+    'You just turned one flirty idea into a full logistics puzzle.',
+    'You said "we can absolutely improvise this" and recruited backup.',
+    'Your confidence now has a group chat and a waitlist.',
+    'Your aura smells like citrus, glitter, and questionable planning.',
+  ];
+
+  static const List<String> _actionProfiles = [
+    'You enter softly, then recruit strangers for a "tiny experiment" that gets wildly organized.',
+    'You promise one casual moment and accidentally launch a full afterparty operation.',
+    'You treat every room like a choose-your-own-adventure and keep picking the chaotic option.',
+    'You confidently improvise a multi-person plan using enthusiasm as your only credential.',
+    'You call it "keeping things playful" while escalating everything by two difficulty levels.',
+    'You start with a harmless suggestion and end with volunteers, spreadsheets, and applause.',
+  ];
+
+  static const List<_CocktailResult> _chaosCocktailPool = [
+    _CocktailResult(name: 'Dungeon Daiquiri', emoji: '🍓', color: Color(0xFFE91E63), personality: ''),
+    _CocktailResult(name: 'Boundary Bellini', emoji: '🥂', color: Color(0xFFFFD54F), personality: ''),
+    _CocktailResult(name: 'Aftercare Negroni', emoji: '🍷', color: Color(0xFFE53935), personality: ''),
+    _CocktailResult(name: 'Polycule Paloma', emoji: '🌸', color: Color(0xFFF48FB1), personality: ''),
+    _CocktailResult(name: 'Consent Mojito', emoji: '🌿', color: Color(0xFF4CAF50), personality: ''),
+    _CocktailResult(name: 'Chaotic Spritz', emoji: '🍊', color: Color(0xFFFF7043), personality: ''),
+    _CocktailResult(name: 'Velvet Rope Vesper', emoji: '🕴️', color: Color(0xFF546E7A), personality: ''),
+    _CocktailResult(name: 'Gremlin Gimlet', emoji: '💚', color: Color(0xFF76FF03), personality: ''),
+    _CocktailResult(name: 'Main Character Mule', emoji: '🫏', color: Color(0xFFFFB74D), personality: ''),
+    _CocktailResult(name: 'Questionable Espresso Martini', emoji: '☕', color: Color(0xFF5D4037), personality: ''),
   ];
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -227,14 +249,14 @@ class _CocktailScreenState extends State<CocktailScreen>
     if (isRare) {
       cocktail = _rareCocktails[rng.nextInt(_rareCocktails.length)];
     } else {
-      final allCocktails = _cocktailsByVibe.expand((group) => group).toList();
-      final picked = allCocktails[rng.nextInt(allCocktails.length)];
+      final picked = _chaosCocktailPool[rng.nextInt(_chaosCocktailPool.length)];
+      final actionProfile = _actionProfiles[rng.nextInt(_actionProfiles.length)];
       cocktail = _CocktailResult(
         name: picked.name,
         emoji: picked.emoji,
         color: picked.color,
         personality:
-            '${picked.personality} ${_chaosAddons[rng.nextInt(_chaosAddons.length)]}',
+        '$actionProfile ${_chaosAddons[rng.nextInt(_chaosAddons.length)]}',
       );
     }
 
