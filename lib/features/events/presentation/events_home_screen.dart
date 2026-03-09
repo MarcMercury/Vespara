@@ -502,8 +502,8 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
                 },
               ),
             ],
-          ],
-      ),
+          ),
+        ),
     );
   }
 
