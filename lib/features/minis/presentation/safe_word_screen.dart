@@ -61,16 +61,9 @@ class _SafeWordScreenState extends State<SafeWordScreen>
     'Overbooked Makeout Calendar',
     'Advanced Group Project',
     'Friendly Panic Button',
-  ];
-  static const List<String> _safeWordChaos = [
-    'under the playroom disco ball',
-    'while someone shouts "consent check" like a battle cry',
-    'next to a suspiciously overbooked cuddle pile',
-    'during a logistics conversation nobody can finish',
-    'while the group chat votes in real time',
-    'behind the room divider with excellent acoustics',
-    'while someone says "we can definitely make this work"',
-    'inside a very committed afterparty plan',
+    'Cobalt Safeword',
+    'Velvet Timeout',
+    'Panic Pineapple',
   ];
 
   static const List<String> _actionExplanations = [
@@ -84,11 +77,11 @@ class _SafeWordScreenState extends State<SafeWordScreen>
 
   // Rare results (1-2% chance)
   static const List<String> _rareWords = [
-    'Pineapple on Pizza During an Exorcism',
+    'Pineapple Exorcism',
     'Certified Emotional Damage',
-    'The IRS Called — They Know',
-    'Mercury Retrograde\'s Personal Victim',
-    'Witness Protection With Benefits',
+    'IRS Panic',
+    'Retrograde Victim',
+    'Witness Benefits',
   ];
 
   static const List<String> _rareExplanations = [
@@ -177,15 +170,10 @@ class _SafeWordScreenState extends State<SafeWordScreen>
       safeWord = _rareWords[idx];
       explanation = _rareExplanations[idx];
     } else {
-        safeWord = _safeWordPool[rng.nextInt(_safeWordPool.length)];
-
-      if (_playCount >= 2 || rng.nextBool()) {
-        safeWord += ' ${_safeWordChaos[rng.nextInt(_safeWordChaos.length)]}';
-      }
-
-        final action =
+      safeWord = _safeWordPool[rng.nextInt(_safeWordPool.length)];
+      final action =
           _actionExplanations[rng.nextInt(_actionExplanations.length)];
-        explanation = _isFriendMode
+      explanation = _isFriendMode
           ? '$name + @$igHandle radiates elite chaos. $action'
           : 'Algorithm says @$igHandle should keep this in a fireproof envelope. $action';
     }
