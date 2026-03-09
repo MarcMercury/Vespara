@@ -11,7 +11,6 @@ import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
-import 'event_creation_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// EVENT DETAIL SCREEN - Full Event View with RSVP
@@ -1166,25 +1165,6 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             ),
             if (_isHost) ...[
               ListTile(
-                leading: const Icon(Icons.edit, color: VesparaColors.glow),
-                title: const Text('Edit Event',
-                    style: TextStyle(color: VesparaColors.primary),),
-                onTap: () {
-                  Navigator.pop(context);
-                  _editEvent();
-                },
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.content_copy, color: VesparaColors.glow),
-                title: const Text('Duplicate Event',
-                    style: TextStyle(color: VesparaColors.primary),),
-                onTap: () {
-                  Navigator.pop(context);
-                  _duplicateEvent();
-                },
-              ),
-              ListTile(
                 leading: const Icon(Icons.cancel, color: VesparaColors.warning),
                 title: const Text('Cancel Event',
                     style: TextStyle(color: VesparaColors.warning),),
@@ -1263,41 +1243,6 @@ Join me on Vespara!
     final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
     final period = date.hour >= 12 ? 'PM' : 'AM';
     return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day} at $hour:${date.minute.toString().padLeft(2, '0')} $period';
-  }
-
-  /// Duplicate event as a new draft
-  void _duplicateEvent() async {
-    HapticFeedback.mediumImpact();
-    
-    // Create a copy of the event with new ID and reset time to future
-    final duplicatedEvent = _event.copyWith(
-      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
-      title: '${_event.title} (Copy)',
-      startTime: DateTime.now().add(const Duration(days: 7)),
-      endTime: _event.endTime != null 
-          ? DateTime.now().add(const Duration(days: 7, hours: 3))
-          : null,
-      isDraft: true,
-      createdAt: DateTime.now(),
-      rsvps: [], // Clear RSVPs for the new event
-    );
-    
-    // Navigate to creation screen with the duplicated event
-    final result = await Navigator.push<VesparaEvent>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventCreationScreen(eventToEdit: duplicatedEvent),
-      ),
-    );
-    
-    if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Created "${result.title}"! 🎉'),
-          backgroundColor: VesparaColors.success,
-        ),
-      );
-    }
   }
 
   /// Cancel event (soft delete - keeps record but marks as cancelled)
@@ -1491,28 +1436,6 @@ Join me on Vespara!
               updatedAt: DateTime.now(),
             ),
           ),
-        ),
-      );
-    }
-  }
-
-  void _editEvent() async {
-    final result = await Navigator.push<VesparaEvent>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventCreationScreen(eventToEdit: _event),
-      ),
-    );
-
-    // If the event was updated, refresh the local state
-    if (result != null && mounted) {
-      setState(() {
-        _event = result;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event updated!'),
-          backgroundColor: VesparaColors.success,
         ),
       );
     }

@@ -21,7 +21,6 @@ import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/photo_ranking_sheet.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../../ludus/presentation/tags_screen.dart' show TagScreen;
-import '../../planner/presentation/planner_screen.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
 import 'group_detail_screen.dart';
@@ -921,6 +920,45 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           .toList(),
                     ),
                   ],
+
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showPlanDateDialog(match),
+                          icon: const Icon(Icons.event_available, size: 16),
+                          label: const Text('Plan'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: VesparaColors.success,
+                            side: const BorderSide(
+                              color: VesparaColors.success,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openMessageWithMatch(match),
+                          icon: const Icon(Icons.chat_bubble, size: 16),
+                          label: const Text('Message'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: VesparaColors.glow,
+                            foregroundColor: VesparaColors.background,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -938,8 +976,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
       isScrollControlled: true,
       builder: (context) => _MatchProfileSheet(
         match: match,
-        onMessage: () => _openMessageWithMatch(match),
-        onAskOut: () => _openPlannerWithMatch(match),
+        onMessage: () => _openMessageWithMatch(match, closeCurrentSheet: true),
+        onAskOut: () => _showPlanDateDialog(match),
         onRankPhotos: () => _openPhotoRankingForMatch(match),
         onShredder: () => _moveToShredder(match),
         onUpdateNotes: (notes) => _updateMatchNotes(match, notes),
@@ -948,9 +986,14 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   /// Open Wire chat with this match
-  Future<void> _openMessageWithMatch(Match match) async {
+  Future<void> _openMessageWithMatch(
+    Match match, {
+    bool closeCurrentSheet = false,
+  }) async {
     final navigator = Navigator.of(context);
-    navigator.pop();
+    if (closeCurrentSheet) {
+      navigator.pop();
+    }
     
     final conversationId = await ref
         .read(wireProvider.notifier)
@@ -976,19 +1019,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
         ),
       );
     }
-  }
-
-  /// Open Planner with match pre-selected for "Ask them out"
-  void _openPlannerWithMatch(Match match) {
-    Navigator.pop(context);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => PlannerScreen(
-          preselectedMatchId: match.matchedUserId,
-          preselectedMatchName: match.matchedUserName,
-        ),
-      ),
-    );
   }
 
   /// Update notes for a match
@@ -1186,6 +1216,9 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   void _showPlanDateDialog(Match match) {
+    final recommendation = _recommendPlanSlot(match);
+    final recommendationLabel = _formatPlanDateTime(recommendation.startTime);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
@@ -1205,112 +1238,236 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         color: VesparaColors.secondary,
                         borderRadius: BorderRadius.circular(2),),),),
             const SizedBox(height: 20),
-            Text('Plan a Date with ${match.matchedUserName}',
+            Text('Plan with ${match.matchedUserName ?? 'this connection'}',
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: VesparaColors.primary,),),
-            const SizedBox(height: 20),
-            ...[
-              'Drinks Tonight',
-              'Dinner This Week',
-              'Weekend Adventure',
-              'Something Special',
-            ].map(
-              (option) => ListTile(
-                leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                        color: VesparaColors.success.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),),
-                    child: const Icon(Icons.calendar_today,
-                        color: VesparaColors.success, size: 20,),),
-                title: Text(option,
-                    style: const TextStyle(
-                        color: VesparaColors.primary,
-                        fontWeight: FontWeight.w500,),),
-                trailing: const Icon(Icons.chevron_right,
-                    color: VesparaColors.secondary,),
-                onTap: () async {
-                  Navigator.pop(context);
-                  
-                  // Calculate start time based on option
-                  DateTime startTime;
-                  switch (option) {
-                    case 'Drinks Tonight':
-                      startTime = DateTime.now().copyWith(hour: 19, minute: 0);
-                      break;
-                    case 'Dinner This Week':
-                      startTime = DateTime.now().add(const Duration(days: 3)).copyWith(hour: 19, minute: 0);
-                      break;
-                    case 'Weekend Adventure':
-                      // Find next Saturday
-                      final today = DateTime.now();
-                      final daysUntilSaturday = (DateTime.saturday - today.weekday) % 7;
-                      startTime = today.add(Duration(days: daysUntilSaturday == 0 ? 7 : daysUntilSaturday)).copyWith(hour: 14, minute: 0);
-                      break;
-                    default:
-                      startTime = DateTime.now().add(const Duration(days: 7)).copyWith(hour: 18, minute: 0);
-                  }
-                  
-                  // Create the plan event
-                  try {
-                    final connection = EventConnection(
-                      id: match.matchedUserId ?? match.id,
-                      name: match.matchedUserName ?? 'Match',
-                      avatarUrl: match.matchedUserAvatar,
-                    );
-                    
-                    final event = PlanEvent(
-                      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
-                      userId: Supabase.instance.client.auth.currentUser?.id ?? '',
-                      title: '$option with ${match.matchedUserName}',
-                      startTime: startTime,
-                      endTime: startTime.add(const Duration(hours: 2)),
-                      connections: [connection],
-                      certainty: EventCertainty.exploring,
-                      createdAt: DateTime.now(),
-                    );
-                    
-                    await ref.read(planProvider.notifier).createEvent(event);
-                    
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                          '"$option" scheduled with ${match.matchedUserName}!',),
-                        backgroundColor: VesparaColors.success,
-                        action: SnackBarAction(
-                          label: 'View',
-                          textColor: VesparaColors.background,
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => PlannerScreen(
-                                  preselectedMatchId: match.matchedUserId,
-                                  preselectedMatchName: match.matchedUserName,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),);
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Failed to schedule: $e'),
-                        backgroundColor: VesparaColors.error,
-                      ),);
-                    }
-                  }
-                },
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: VesparaColors.background.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Recommended shared time',
+                    style: TextStyle(
+                      color: VesparaColors.secondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    recommendationLabel,
+                    style: const TextStyle(
+                      color: VesparaColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              recommendation.title,
+              style: const TextStyle(
+                color: VesparaColors.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _sendPlanInviteMessage(
+                        match,
+                        recommendation.startTime,
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                    label: const Text('Message'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: VesparaColors.glow,
+                      side: const BorderSide(color: VesparaColors.glow),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _savePlanRecommendation(match, recommendation);
+                    },
+                    icon: const Icon(Icons.check, size: 16),
+                    label: const Text('Save Plan'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VesparaColors.success,
+                      foregroundColor: VesparaColors.background,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  _PlanRecommendation _recommendPlanSlot(Match match) {
+    final planState = ref.read(planProvider);
+    final now = DateTime.now();
+    final busyEvents = planState.allEvents.where((e) => !e.isCancelled).toList();
+
+    final candidates = <_PlanRecommendation>[
+      _PlanRecommendation(
+        title: 'Tonight check-in',
+        startTime: DateTime(now.year, now.month, now.day, 19),
+      ),
+      _PlanRecommendation(
+        title: 'Midweek dinner',
+        startTime: DateTime(now.year, now.month, now.day + 2, 19),
+      ),
+      _PlanRecommendation(
+        title: 'Weekend hang',
+        startTime: DateTime(now.year, now.month, now.day + 5, 14),
+      ),
+      _PlanRecommendation(
+        title: 'Next-week meetup',
+        startTime: DateTime(now.year, now.month, now.day + 7, 18),
+      ),
+    ];
+
+    final firstOpen = candidates.firstWhere(
+      (candidate) =>
+          candidate.startTime.isAfter(now.add(const Duration(hours: 2))) &&
+          !_hasPlanConflict(candidate.startTime, busyEvents),
+      orElse: () => candidates.last,
+    );
+
+    return firstOpen;
+  }
+
+  bool _hasPlanConflict(DateTime startTime, List<PlanEvent> events) {
+    final endTime = startTime.add(const Duration(hours: 2));
+    for (final event in events) {
+      final eventEnd = event.endTime ?? event.startTime.add(const Duration(hours: 2));
+      final overlaps = event.startTime.isBefore(endTime) && eventEnd.isAfter(startTime);
+      if (overlaps) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _formatPlanDateTime(DateTime dateTime) {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final hour12 = dateTime.hour == 0
+        ? 12
+        : (dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour);
+    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '${weekdays[dateTime.weekday - 1]}, ${months[dateTime.month - 1]} ${dateTime.day} at $hour12:$minute $period';
+  }
+
+  Future<void> _savePlanRecommendation(
+    Match match,
+    _PlanRecommendation recommendation,
+  ) async {
+    try {
+      final connection = EventConnection(
+        id: match.matchedUserId,
+        name: match.matchedUserName ?? 'Connection',
+        avatarUrl: match.matchedUserAvatar,
+      );
+
+      final event = PlanEvent(
+        id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+        userId: Supabase.instance.client.auth.currentUser?.id ?? '',
+        title: '${recommendation.title} with ${match.matchedUserName ?? 'connection'}',
+        startTime: recommendation.startTime,
+        endTime: recommendation.startTime.add(const Duration(hours: 2)),
+        connections: [connection],
+        certainty: EventCertainty.exploring,
+        createdAt: DateTime.now(),
+      );
+
+      await ref.read(planProvider.notifier).createEvent(event);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Plan saved for ${_formatPlanDateTime(recommendation.startTime)}',
+            ),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save plan: $e'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendPlanInviteMessage(Match match, DateTime planTime) async {
+    final conversationId = await ref
+        .read(wireProvider.notifier)
+        .getOrCreateDirectConversation(match.matchedUserId);
+
+    if (conversationId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open conversation'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    final message =
+        'Hey ${match.matchedUserName ?? ''}! Want to connect on ${_formatPlanDateTime(planTime)}?';
+    final sent = await ref.read(wireProvider.notifier).sendMessage(
+          conversationId: conversationId,
+          content: message,
+        );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            sent != null
+                ? 'Message sent to ${match.matchedUserName ?? 'connection'}'
+                : 'Failed to send message',
+          ),
+          backgroundColor:
+              sent != null ? VesparaColors.success : VesparaColors.error,
+        ),
+      );
+    }
   }
 
   void _showPlayTagDialog(Match match) {
@@ -1583,6 +1740,16 @@ class _NestScreenState extends ConsumerState<NestScreen>
       }
     }
   }
+}
+
+class _PlanRecommendation {
+  const _PlanRecommendation({
+    required this.title,
+    required this.startTime,
+  });
+
+  final String title;
+  final DateTime startTime;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1979,7 +2146,7 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
             child: OutlinedButton.icon(
               onPressed: widget.onAskOut,
               icon: const Icon(Icons.calendar_today, size: 18),
-              label: const Text('Ask Out'),
+              label: const Text('Plan'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: VesparaColors.success,
                 side: const BorderSide(color: VesparaColors.success),

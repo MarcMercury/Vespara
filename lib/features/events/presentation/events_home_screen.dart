@@ -11,7 +11,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../widgets/event_tile_card.dart';
-import 'event_creation_screen.dart';
 import 'event_detail_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -120,18 +119,6 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
                   sliver: _buildEventGrid(),
                 ),
               ],
-            ),
-          ),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _createEvent,
-          backgroundColor: VesparaColors.glow,
-          icon: const Icon(Icons.add, color: VesparaColors.background),
-          label: const Text(
-            'Create Experience',
-            style: TextStyle(
-              color: VesparaColors.background,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -427,20 +414,6 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            if (_selectedFilter == 'Hosting') ...[
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _createEvent,
-                icon: const Icon(Icons.add),
-                label: const Text('Create Experience'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VesparaColors.glow,
-                  foregroundColor: VesparaColors.background,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -452,21 +425,6 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
       context: context,
       delegate: EventSearchDelegate(_allEvents),
     );
-  }
-
-  Future<void> _createEvent() async {
-    final result = await Navigator.push<VesparaEvent>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const EventCreationScreen(),
-      ),
-    );
-
-    // If an event was created, refresh the list
-    if (result != null) {
-      // The provider already has the event, just trigger rebuild
-      setState(() {});
-    }
   }
 
   void _openEvent(VesparaEvent event) {
@@ -513,22 +471,6 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
             ),
             if (isHost) ...[
               _buildOptionTile(
-                Icons.edit,
-                'Edit Event',
-                () {
-                  Navigator.pop(context);
-                  _editEvent(event);
-                },
-              ),
-              _buildOptionTile(
-                Icons.content_copy,
-                'Duplicate Event',
-                () {
-                  Navigator.pop(context);
-                  _duplicateEvent(event);
-                },
-              ),
-              _buildOptionTile(
                 Icons.delete,
                 'Delete Event',
                 () {
@@ -546,22 +488,6 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
                   _addToCalendar(event);
                 },
               ),
-              _buildOptionTile(
-                Icons.notifications_off,
-                'Mute Notifications',
-                () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Notifications muted for this event'),
-                      backgroundColor: VesparaColors.glow,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -593,54 +519,6 @@ Join me on Vespara!
         backgroundColor: VesparaColors.success,
       ),
     );
-  }
-
-  Future<void> _editEvent(VesparaEvent event) async {
-    final result = await Navigator.push<VesparaEvent>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventCreationScreen(eventToEdit: event),
-      ),
-    );
-    
-    if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event updated!'),
-          backgroundColor: VesparaColors.success,
-        ),
-      );
-    }
-  }
-
-  Future<void> _duplicateEvent(VesparaEvent event) async {
-    final duplicatedEvent = event.copyWith(
-      id: 'event-${DateTime.now().millisecondsSinceEpoch}',
-      title: '${event.title} (Copy)',
-      startTime: DateTime.now().add(const Duration(days: 7)),
-      endTime: event.endTime != null 
-          ? DateTime.now().add(const Duration(days: 7, hours: 3))
-          : null,
-      isDraft: true,
-      createdAt: DateTime.now(),
-      rsvps: [],
-    );
-    
-    final result = await Navigator.push<VesparaEvent>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventCreationScreen(eventToEdit: duplicatedEvent),
-      ),
-    );
-    
-    if (result != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Created "${result.title}"! 🎉'),
-          backgroundColor: VesparaColors.success,
-        ),
-      );
-    }
   }
 
   void _deleteEvent(VesparaEvent event) {

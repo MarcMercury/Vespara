@@ -4,7 +4,6 @@ library;
 
 // Models
 export 'package:vespara/core/domain/models/vespara_event.dart';
-export 'package:vespara/features/events/presentation/event_creation_screen.dart';
 export 'package:vespara/features/events/presentation/event_detail_screen.dart';
 // Screens
 export 'package:vespara/features/events/presentation/events_home_screen.dart';

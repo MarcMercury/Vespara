@@ -17,7 +17,6 @@ import '../../ludus/presentation/tags_screen.dart';
 // Import module screens
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
-import '../../planner/presentation/planner_screen.dart';
 import '../../shredder/presentation/shredder_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -59,14 +58,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'CRM for connections',
     },
     {
-      'name': 'PLANNER',
-      'subtitle': 'Rendezvous',
-      'icon': Icons.event_available_rounded,
-      'emoji': '🌙',
-      'color': Color(0xFFCE93D8), // Soft violet
-      'description': 'Schedule encounters',
-    },
-    {
       'name': 'EXPERIENCES',
       'subtitle': 'The Scene',
       'icon': Icons.local_fire_department_rounded,
@@ -96,10 +87,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const List<Widget> _screens = [
     DiscoverScreen(), // 0: Discover
     NestScreen(), // 1: Nest/Sanctum
-    PlannerScreen(), // 2: Planner
-    EventsHomeScreen(), // 3: Experiences
-    ShredderScreen(), // 4: Shredder
-    TagScreen(), // 5: TAG
+    EventsHomeScreen(), // 2: Experiences
+    ShredderScreen(), // 3: Shredder
+    TagScreen(), // 4: TAG
   ];
 
   @override
@@ -125,7 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     )..repeat();
 
     // Staggered tile entrance with elastic overshoot
-    _tileAnimations = List.generate(6, (index) {
+    _tileAnimations = List.generate(_modules.length, (index) {
       final startTime = index * 0.12;
       final endTime = startTime + 0.45;
       return CurvedAnimation(
@@ -392,16 +382,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         builder: (context, constraints) {
           const spacing = 14.0;
           final tileHeight = (constraints.maxWidth - spacing) / 2 * 0.72;
+          final rows = <Widget>[];
+
+          for (var i = 0; i < _modules.length; i += 2) {
+            final rightIndex = i + 1 < _modules.length ? i + 1 : null;
+            rows.add(_buildModuleRow(i, rightIndex, tileHeight, spacing));
+            if (i + 2 < _modules.length) {
+              rows.add(const SizedBox(height: spacing));
+            }
+          }
 
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                _buildModuleRow([0, 1], tileHeight, spacing),
-                SizedBox(height: spacing),
-                _buildModuleRow([2, 3], tileHeight, spacing),
-                SizedBox(height: spacing),
-                _buildModuleRow([4, 5], tileHeight, spacing),
+                ...rows,
                 const SizedBox(height: 24),
               ],
             ),
@@ -409,12 +404,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         },
       );
 
-  Widget _buildModuleRow(List<int> indices, double height, double spacing) =>
+  Widget _buildModuleRow(
+    int leftIndex,
+    int? rightIndex,
+    double height,
+    double spacing,
+  ) =>
       Row(
         children: [
-          Expanded(child: _buildModuleTile(indices[0], height)),
+          Expanded(child: _buildModuleTile(leftIndex, height)),
           SizedBox(width: spacing),
-          Expanded(child: _buildModuleTile(indices[1], height)),
+          Expanded(
+            child: rightIndex != null
+                ? _buildModuleTile(rightIndex, height)
+                : const SizedBox.shrink(),
+          ),
         ],
       );
 
@@ -625,8 +629,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return 'assets/Main Page Tile Icons/Discover1.png';
       case 'NEST':
         return 'assets/Main Page Tile Icons/Sanctum1.png';
-      case 'PLANNER':
-        return 'assets/Main Page Tile Icons/Planner1.png';
       case 'EXPERIENCES':
         return 'assets/Main Page Tile Icons/Experiences1.png';
       case 'SHREDDER':

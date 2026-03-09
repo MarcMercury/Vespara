@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/domain/models/events.dart';
 import '../../../core/providers/events_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../events/presentation/event_creation_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -872,19 +871,14 @@ class _GroupScreenState extends ConsumerState<GroupScreen>
                 style: const TextStyle(color: VesparaColors.glow),),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.edit, color: VesparaColors.glow),
-              title: const Text('Edit Details',
+              leading: const Icon(Icons.info_outline, color: VesparaColors.glow),
+              title: const Text('Event creation removed',
                   style: TextStyle(color: VesparaColors.primary),),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => EventCreationScreen(
-                      editEvent: event,
-                    ),
-                  ),
-                );
-              },
+              subtitle: const Text(
+                'Planning now happens in Sanctum.',
+                style: TextStyle(color: VesparaColors.secondary),
+              ),
+              onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.share, color: VesparaColors.glow),
