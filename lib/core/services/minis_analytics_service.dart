@@ -43,6 +43,7 @@ class MinisAnalyticsService {
     'cocktail',
     'get_caught',
     'bad_idea',
+    'whats_your_position',
   ];
 
   Future<void> trackHubVisit() async {

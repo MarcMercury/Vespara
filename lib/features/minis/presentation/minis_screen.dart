@@ -13,6 +13,7 @@ import 'red_flag_screen.dart';
 import 'cocktail_screen.dart';
 import 'caught_in_the_act_screen.dart';
 import 'bad_idea_screen.dart';
+import 'whats_your_position_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// MINI'S — Quick Solo Mini-Games
@@ -38,6 +39,7 @@ class _MinisScreenState extends State<MinisScreen>
     'Cocktail',
     'Get Caught',
     'Bad Idea',
+    'Position',
   ];
 
   @override
@@ -102,6 +104,9 @@ class _MinisScreenState extends State<MinisScreen>
         break;
       case 4:
         screen = const BadIdeaScreen();
+        break;
+      case 5:
+        screen = const WhatsYourPositionScreen();
         break;
       default:
         return;
@@ -304,6 +309,8 @@ class _MinisScreenState extends State<MinisScreen>
         return 'assets/images/GAME ICONS/Get Caught.png';
       case 4:
         return 'assets/images/GAME ICONS/Bad Idea.png';
+      case 5:
+        return 'assets/images/GAME ICONS/Position.png';
       default:
         return 'assets/images/GAME ICONS/Safe Word.png';
     }
@@ -321,6 +328,8 @@ class _MinisScreenState extends State<MinisScreen>
         return const Color(0xFFFF6D00); // Get Caught — orange
       case 4:
         return const Color(0xFF00BFA5); // Bad Idea — teal
+      case 5:
+        return const Color(0xFF00ACC1); // Position — cyan
       default:
         return const Color(0xFFFF6B9D);
     }
@@ -338,6 +347,8 @@ class _MinisScreenState extends State<MinisScreen>
         return 'get_caught';
       case 4:
         return 'bad_idea';
+      case 5:
+        return 'whats_your_position';
       default:
         return null;
     }
@@ -355,6 +366,8 @@ class _MinisScreenState extends State<MinisScreen>
         return 'Get Caught';
       case 'bad_idea':
         return 'Bad Idea';
+      case 'whats_your_position':
+        return 'Position';
       default:
         return 'None';
     }
