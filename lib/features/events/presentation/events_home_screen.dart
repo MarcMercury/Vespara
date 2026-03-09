@@ -438,6 +438,54 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
 
   void _showEventOptions(VesparaEvent event) {
     final isHost = event.hostId == _currentUserId;
+    final options = <Widget>[
+      _buildOptionTile(
+        Icons.share,
+        'Share Event',
+        () {
+          Navigator.pop(context);
+          _shareEvent(event);
+        },
+      ),
+    ];
+
+    if (isHost) {
+      options.add(
+        _buildOptionTile(
+          Icons.delete,
+          'Delete Event',
+          () {
+            Navigator.pop(context);
+            _deleteEvent(event);
+          },
+          isDestructive: true,
+        ),
+      );
+    } else {
+      options.addAll([
+        _buildOptionTile(
+          Icons.calendar_today,
+          'Add to Calendar',
+          () {
+            Navigator.pop(context);
+            _addToCalendar(event);
+          },
+        ),
+        _buildOptionTile(
+          Icons.notifications_off,
+          'Mute Notifications',
+          () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Notifications muted for this event'),
+                backgroundColor: VesparaColors.glow,
+              ),
+            );
+          },
+        ),
+      ]);
+    }
 
     showModalBottomSheet(
       context: context,
@@ -460,50 +508,10 @@ class _EventsHomeScreenState extends ConsumerState<EventsHomeScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Share - available for everyone
-            _buildOptionTile(
-              Icons.share,
-              'Share Event',
-              () {
-                Navigator.pop(context);
-                _shareEvent(event);
-              },
-            ),
-            if (isHost) ...[
-              _buildOptionTile(
-                Icons.delete,
-                'Delete Event',
-                () {
-                  Navigator.pop(context);
-                  _deleteEvent(event);
-                },
-                isDestructive: true,
-              ),
-            ] else ...[
-              _buildOptionTile(
-                Icons.calendar_today,
-                'Add to Calendar',
-                () {
-                  Navigator.pop(context);
-                  _addToCalendar(event);
-                },
-              ),
-              _buildOptionTile(
-                Icons.notifications_off,
-                'Mute Notifications',
-                () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Notifications muted for this event'),
-                      backgroundColor: VesparaColors.glow,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+            ...options,
+          ],
         ),
+      ),
     );
   }
 
