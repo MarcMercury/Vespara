@@ -28,8 +28,7 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
   _PositionResult? _result;
   bool _isRevealing = false;
   bool _isFriendMode = false;
-  bool _isRare = false;
-  int _playCount = 0;
+
   double _analysisProgress = 0;
   String _analysisLabel = 'Queued for acrobatic profile scan...';
 
@@ -39,155 +38,317 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
 
   static const Color _accentColor = Color(0xFF00ACC1);
 
-  // Real sexual position names used by this standalone mini game.
+  // Curated position pool — each with a one-liner zinger.
   static const List<_PositionProfile> _positionProfiles = [
     _PositionProfile(
       name: 'Missionary',
       descriptor:
-          'You value trust, eye contact, and emotional closeness before anything else.',
+          'You\'re basic but reliable — like hotel Wi-Fi that actually works.',
     ),
     _PositionProfile(
-      name: 'Doggy',
+      name: 'Doggy Style',
       descriptor:
-          'You are bold, direct, and confident about what you want without overexplaining.',
+          'You don\'t need eye contact to know you\'re running the show.',
+    ),
+    _PositionProfile(
+      name: 'Cowgirl',
+      descriptor:
+          'You\'re a control freak who calls it "taking initiative."',
     ),
     _PositionProfile(
       name: 'Reverse Cowgirl',
       descriptor:
-          'You are independent, self-driven, and happiest when you set the pace.',
+          'You like being in charge but absolutely hate small talk.',
     ),
     _PositionProfile(
-      name: 'Sixty-Nine',
+      name: 'Spooning',
       descriptor:
-          'You are all about reciprocity and making sure everyone feels seen and satisfied.',
+          'You\'re suspiciously warm and emotionally available — red flag honestly.',
     ),
     _PositionProfile(
-      name: 'Pretzel',
+      name: '69',
       descriptor:
-          'You are creative, flexible, and low-key competitive when things get playful.',
+          'You\'re a giver who always expects a receipt.',
     ),
     _PositionProfile(
-      name: 'Helicopter',
+      name: 'Standing',
       descriptor:
-          'You are spontaneous chaos in the best way and keep energy high wherever you go.',
+          'You have commitment issues — even your positions refuse to sit down.',
     ),
     _PositionProfile(
-      name: 'Table Delight',
+      name: 'Sideways',
       descriptor:
-          'You are practical and strategic, turning any environment into an opportunity.',
+          'You do everything the unconventional way and call it "vibes."',
     ),
     _PositionProfile(
-      name: 'Wall Hug',
+      name: 'Lazy Dog',
       descriptor:
-          'You thrive on intensity, urgency, and that thrilling in-the-moment vibe.',
+          'You want all the reward with absolutely none of the effort.',
     ),
     _PositionProfile(
-      name: 'Tree Hugger',
+      name: 'The Seated',
       descriptor:
-          'You are affectionate and grounded, balancing passion with warmth.',
+          'You bring the same energy to the bedroom as you do to Zoom meetings.',
     ),
     _PositionProfile(
-      name: 'Hammock',
+      name: 'The Lotus',
       descriptor:
-          'You are calm, reassuring, and naturally good at helping people relax.',
+          'You went to one yoga class and made it your whole personality.',
     ),
     _PositionProfile(
-      name: 'Superman',
+      name: 'The Splitting Bamboo',
       descriptor:
-          'You are adventurous, fearless, and always down to try something memorable.',
+          'You peaked in gymnastics and never let anyone forget it.',
     ),
     _PositionProfile(
-      name: 'Ballerina',
+      name: 'The Suspended Congress',
       descriptor:
-          'You bring elegance and control, with a flair for dramatic timing.',
+          'You treat the bedroom like a CrossFit box with worse lighting.',
     ),
     _PositionProfile(
-      name: 'Acrobat',
+      name: 'The Padlock',
       descriptor:
-          'You are disciplined, ambitious, and weirdly good under pressure.',
+          'Once you latch on, there\'s no escape — emotionally or physically.',
     ),
     _PositionProfile(
-      name: 'Pump and Grind',
+      name: 'The Glowing Triangle',
       descriptor:
-          'You are persistent and rhythm-driven, and you do not quit halfway.',
+          'You\'re way too into geometry for someone who failed math.',
     ),
     _PositionProfile(
-      name: 'Power Pump',
+      name: 'The Spider',
       descriptor:
-          'You are high-energy, assertive, and naturally take charge of the moment.',
+          'You\'re creepy, flexible, and somehow always upside down.',
     ),
     _PositionProfile(
-      name: 'Head Over Heels',
+      name: 'The Rowing Boat',
       descriptor:
-          'You are romantic, all-in, and unafraid to fully commit to your feelings.',
+          'You think teamwork makes the dream work — even horizontally.',
     ),
     _PositionProfile(
-      name: 'Body Surfing',
+      name: 'The Yawning',
       descriptor:
-          'You are playful, social, and thrive when the chemistry is mutual and fun.',
+          'You make everything look effortless because you\'re half asleep.',
     ),
     _PositionProfile(
-      name: 'Front Row Seat',
+      name: 'The Tigress',
       descriptor:
-          'You are observant and detail-oriented, and you notice what others miss.',
+          'You\'re fierce until you pull a hamstring two minutes in.',
     ),
     _PositionProfile(
-      name: 'Treasure Hunt',
+      name: 'The Churning',
       descriptor:
-          'You are curious and attentive, and you enjoy the build-up as much as the payoff.',
+          'You bring the same intensity to the bedroom as a 6 AM spin class.',
     ),
     _PositionProfile(
-      name: 'Celebration',
+      name: 'The Milk and Water',
       descriptor:
-          'You bring positive energy and make people feel like every moment is an occasion.',
+          'You\'re smooth, blended, and impossible to explain to your parents.',
     ),
     _PositionProfile(
-      name: 'Web of Desire',
+      name: 'The Erotic V',
       descriptor:
-          'You are magnetic and intuitive, reading the room before anyone says a word.',
+          'You peaked during cheerleading tryouts and this is your final form.',
     ),
     _PositionProfile(
-      name: 'Best Seat in the House',
+      name: 'The Wheelbarrow',
       descriptor:
-          'You are confident and charismatic, and people naturally follow your lead.',
+          'You treat romance like a trip to Home Depot — functional and sweaty.',
     ),
     _PositionProfile(
-      name: 'Octopus',
+      name: 'The Pretzel',
       descriptor:
-          'You are adaptable and multitask like a pro when things get complicated.',
+          'You\'re complex, twisted, and best enjoyed with salt.',
     ),
     _PositionProfile(
-      name: 'Threesome',
+      name: 'The Helicopter',
       descriptor:
-          'You are collaborative, open-minded, and excellent at managing group dynamics.',
+          'You\'re a showoff who peaked on the playground merry-go-round.',
     ),
     _PositionProfile(
-      name: 'Deep Throat',
+      name: 'The Piledriver',
       descriptor:
-          'You are intense, committed, and not afraid of a challenge most people avoid.',
+          'You have zero chill and your chiropractor has a yacht because of you.',
     ),
     _PositionProfile(
-      name: 'Zombie',
+      name: 'The London Bridge',
       descriptor:
-          'You are relentless, resilient, and somehow still standing after a wild night.',
-    ),
-  ];
-
-  static const List<_PositionProfile> _rareProfiles = [
-    _PositionProfile(
-      name: 'Helicopter',
-      descriptor:
-          'You are rare-tier unpredictable: dramatic entrance, loud confidence, unforgettable exit.',
+          'You\'re architectural, dramatic, and structurally unsound.',
     ),
     _PositionProfile(
-      name: 'Web of Desire',
+      name: 'The Face Off',
       descriptor:
-          'You are rare-tier magnetic: one look and people are fully locked into your orbit.',
+          'You maintain eye contact like a psychopath and call it "intimacy."',
     ),
     _PositionProfile(
-      name: 'Octopus',
+      name: 'The Lazy Susan',
       descriptor:
-          'You are rare-tier versatile: no matter the scenario, you make it work beautifully.',
+          'You spin through life doing the bare minimum in every direction.',
+    ),
+    _PositionProfile(
+      name: 'The Crab Walk',
+      descriptor:
+          'You move sideways through problems, relationships, and furniture.',
+    ),
+    _PositionProfile(
+      name: 'The Butter Churner',
+      descriptor:
+          'You treat romance like an Amish side hustle.',
+    ),
+    _PositionProfile(
+      name: 'The Amazon',
+      descriptor:
+          'You\'re dominant, fearless, and deliver in two days or less.',
+    ),
+    _PositionProfile(
+      name: 'The Flatiron',
+      descriptor:
+          'You press hard, run hot, and leave a lasting impression.',
+    ),
+    _PositionProfile(
+      name: 'The Seashell',
+      descriptor:
+          'You look peaceful on the outside but it\'s absolute chaos in there.',
+    ),
+    _PositionProfile(
+      name: 'The Eiffel Tower',
+      descriptor:
+          'You\'re cultured, tall, and require two other people minimum.',
+    ),
+    _PositionProfile(
+      name: 'The Spit Roast',
+      descriptor:
+          'You\'re a people person who literally hates being left out.',
+    ),
+    _PositionProfile(
+      name: 'The Lucky Pierre',
+      descriptor:
+          'You\'re the ultimate middle child — finally getting attention from both sides.',
+    ),
+    _PositionProfile(
+      name: 'The Daisy Chain',
+      descriptor:
+          'You take "the more the merrier" as a personal lifestyle mission.',
+    ),
+    _PositionProfile(
+      name: 'The Sandwich',
+      descriptor:
+          'You\'re layered, filling, and always better with extra hands.',
+    ),
+    _PositionProfile(
+      name: 'The Train',
+      descriptor:
+          'You\'re punctual, efficient, and everyone lines up for a ride.',
+    ),
+    _PositionProfile(
+      name: 'The Menage Stack',
+      descriptor:
+          'You treat intimacy like a competitive sport with a deep roster.',
+    ),
+    _PositionProfile(
+      name: 'The Triangle',
+      descriptor:
+          'You peaked in geometry and never emotionally recovered.',
+    ),
+    _PositionProfile(
+      name: 'The Throne Room',
+      descriptor:
+          'You sit back and let everyone else do the work — royally.',
+    ),
+    _PositionProfile(
+      name: 'The Human Centipede',
+      descriptor:
+          'You watched that movie and thought "challenge accepted."',
+    ),
+    _PositionProfile(
+      name: 'The Double Decker',
+      descriptor:
+          'You\'re extra in every sense and somehow still want the top bunk.',
+    ),
+    _PositionProfile(
+      name: 'The Square Dance',
+      descriptor:
+          'You\'re wholesome on the surface but absolutely unhinged with a partner.',
+    ),
+    _PositionProfile(
+      name: 'The Four Corners',
+      descriptor:
+          'You need a GPS and a safety briefing before getting started.',
+    ),
+    _PositionProfile(
+      name: 'The Orgy Circle',
+      descriptor:
+          'You\'re inclusive, organized, and suspiciously good at event logistics.',
+    ),
+    _PositionProfile(
+      name: 'The Plus Sign',
+      descriptor:
+          'You\'re mathematical about love and always looking to add more.',
+    ),
+    _PositionProfile(
+      name: 'The Stand and Carry',
+      descriptor:
+          'You never skip leg day and this is exactly why.',
+    ),
+    _PositionProfile(
+      name: 'The Shoulder Holder',
+      descriptor:
+          'You\'re supportive in the most physically uncomfortable way possible.',
+    ),
+    _PositionProfile(
+      name: 'The Flying Dutchman',
+      descriptor:
+          'You\'re legendary, mysterious, and no one\'s quite sure you\'re real.',
+    ),
+    _PositionProfile(
+      name: 'The Dancer',
+      descriptor:
+          'You have rhythm, grace, and zero regard for nearby furniture.',
+    ),
+    _PositionProfile(
+      name: 'The Suspended Lotus',
+      descriptor:
+          'You combined yoga with reckless endangerment into one glorious flex.',
+    ),
+    _PositionProfile(
+      name: 'The Headstand',
+      descriptor:
+          'You see the world differently — mostly because all the blood rushed to your head.',
+    ),
+    _PositionProfile(
+      name: 'The Bridge of Sighs',
+      descriptor:
+          'You\'re romantic, dramatic, and structurally questionable at best.',
+    ),
+    _PositionProfile(
+      name: 'The Valedictorian',
+      descriptor:
+          'You studied for this and still somehow need the instruction manual.',
+    ),
+    _PositionProfile(
+      name: 'Yab-Yum',
+      descriptor:
+          'You googled "tantric" once and never shut up about it.',
+    ),
+    _PositionProfile(
+      name: 'The Embrace',
+      descriptor:
+          'You hug like you\'re trying to absorb someone\'s entire soul.',
+    ),
+    _PositionProfile(
+      name: 'The Soul Gaze',
+      descriptor:
+          'You stare into eyes so hard people start filing restraining orders.',
+    ),
+    _PositionProfile(
+      name: 'Synchronized Breathing',
+      descriptor:
+          'You turned breathing into a couples activity — peak overachiever energy.',
+    ),
+    _PositionProfile(
+      name: 'The Melting Hug',
+      descriptor:
+          'You\'re so warm and clingy people genuinely check you for a fever.',
     ),
   ];
 
@@ -249,19 +410,10 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
       _analysisProgress = 0;
       _analysisLabel = 'Queued for acrobatic profile scan...';
     });
-    _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('whats_your_position'));
 
-    final seed = DateTime.now().microsecondsSinceEpoch ^
-        name.hashCode ^
-        igHandle.hashCode ^
-        _playCount;
-    final rng = Random(seed);
-
-    final isRare = rng.nextInt(100) < 3;
-    final profile = isRare
-        ? _rareProfiles[rng.nextInt(_rareProfiles.length)]
-        : _positionProfiles[rng.nextInt(_positionProfiles.length)];
+    final rng = Random.secure();
+    final profile = _positionProfiles[rng.nextInt(_positionProfiles.length)];
 
     await _runFakeIgReview(igHandle);
     if (!mounted) return;
@@ -271,7 +423,6 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
         name: profile.name,
         descriptor: profile.descriptor,
       );
-      _isRare = isRare;
       _isRevealing = false;
     });
 
@@ -545,14 +696,12 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF1A1A2E),
           border: Border.all(
-            color: (_isRare ? const Color(0xFFFFD700) : _accentColor)
-                .withOpacity(0.45),
-            width: _isRare ? 2.5 : 2,
+            color: _accentColor.withOpacity(0.45),
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: (_isRare ? const Color(0xFFFFD700) : _accentColor)
-                  .withOpacity(0.15),
+              color: _accentColor.withOpacity(0.15),
               blurRadius: 24,
               spreadRadius: -4,
             ),
@@ -584,7 +733,7 @@ class _WhatsYourPositionScreenState extends State<WhatsYourPositionScreen>
               style: GoogleFonts.cinzel(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: _isRare ? const Color(0xFFFFD700) : _accentColor,
+                color: _accentColor,
               ),
               textAlign: TextAlign.center,
             ),

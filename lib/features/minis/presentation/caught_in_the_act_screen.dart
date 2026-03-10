@@ -13,10 +13,7 @@ import '../../../core/widgets/premium_effects.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// WHERE YOU'D DEFINITELY GET CAUGHT 📍
-/// Name + vibe → where you'd get busted in public
-/// Result format: Location + "You thought X. You were wrong."
-/// Addictive: vibe selector, friend challenge, rare results, escalation,
-/// cross-game suggestions, screenshot cards
+/// Name + IG handle → random place where you'd get busted in public
 /// ════════════════════════════════════════════════════════════════════════════
 
 class CaughtInTheActScreen extends StatefulWidget {
@@ -33,9 +30,7 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
   final _friendController = TextEditingController();
   _LocationResult? _result;
   bool _isRevealing = false;
-  bool _isRare = false;
   bool _isFriendMode = false;
-  int _playCount = 0;
   double _analysisProgress = 0;
   String _analysisLabel = 'Queued for location scandal scan...';
 
@@ -45,161 +40,257 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
 
   static const Color _accentColor = Color(0xFFFF6D00);
 
-  static const List<String> _chaosAddons = [
-    'A drone appears, records everything, then posts a recap thread.',
-    'Three aunties in sunglasses nod and take notes.',
-    'A nearby Bluetooth speaker starts playing dramatic violin music.',
-    'Security politely applauds and asks for encore tickets.',
-    'A random influencer declares this a "public learning moment."',
-  ];
-
   static const List<_LocationResult> _communityLocations = [
     _LocationResult(
-      location: 'Play Party Upstairs Hallway',
-      emoji: '🕯️',
-      punchline: 'You said "quick check-in" and came back with a three-step expansion plan.',
+      location: 'Inside the walk-in freezer of a Dave & Buster\'s',
+      emoji: '🧊',
+      punchline: 'You finally found a way to make the skee-ball tickets feel meaningful.',
     ),
     _LocationResult(
-      location: 'Consent Workshop Breakout Corner',
-      emoji: '📝',
-      punchline: 'You tried one demonstration and immediately requested live audience participation.',
+      location: 'Behind the animatronic band at a Chuck E. Cheese',
+      emoji: '🐭',
+      punchline: 'Nothing humbles a person like robotic rats judging their life choices.',
     ),
     _LocationResult(
-      location: 'Aftercare Lounge Beanbags',
-      emoji: '🛋️',
-      punchline: 'You arrived for water and left organizing a spontaneous cuddle rotation.',
+      location: 'The staff breakroom at an Olive Garden during unlimited breadsticks',
+      emoji: '🥖',
+      punchline: 'You briefly forgot the phrase "when you\'re here, you\'re family" has limits.',
     ),
     _LocationResult(
-      location: 'Rooftop Polycule Debrief Circle',
-      emoji: '🌃',
-      punchline: 'You asked one clarifying question and accidentally triggered strategic planning mode.',
+      location: 'A yoga studio during a very serious sound bath',
+      emoji: '🧘',
+      punchline: 'You misunderstood what they meant by "finding your center."',
     ),
     _LocationResult(
-      location: 'Toy Sanitizing Station',
-      emoji: '🧴',
-      punchline: 'You called it efficient multitasking and the room called it historic chaos.',
+      location: 'The broom closet at a Planet Fitness',
+      emoji: '🧹',
+      punchline: 'You\'ve clearly misunderstood the whole "Judgement Free Zone" concept.',
     ),
     _LocationResult(
-      location: 'Dungeon Queue Line',
-      emoji: '⛓️',
-      punchline: 'You said "we can optimize this" and now there is a handwritten sign-up board.',
+      location: 'The sample aisle at Costco while someone rings the tiny bell',
+      emoji: '🛒',
+      punchline: 'You thought the bell meant all bets were off.',
     ),
     _LocationResult(
-      location: 'Sex-Positive Festival Quiet Tent',
-      emoji: '⛺',
-      punchline: 'You entered whispering and exited with volunteers for an ambitious side quest.',
+      location: 'A church basement during a very intense bingo night',
+      emoji: '⛪',
+      punchline: 'Nothing gets the grandmas gossiping like this.',
     ),
     _LocationResult(
-      location: 'Community Potluck Kitchen',
-      emoji: '🍲',
-      punchline: 'You went in for snacks and pitched a logistics-heavy adventure by the fridge.',
+      location: 'The employee training room at a Best Buy',
+      emoji: '💻',
+      punchline: 'You\'ve taken "Geek Squad support" way too literally.',
     ),
     _LocationResult(
-      location: 'Dungeon St. Andrew\'s Cross Queue',
-      emoji: '🖤',
-      punchline: 'You offered to "speed things up" and accidentally launched organized chaos.',
+      location: 'A pottery class where everyone else is quietly making bowls',
+      emoji: '🏺',
+      punchline: 'Your interpretation of "hands-on learning" went in a different direction.',
     ),
     _LocationResult(
-      location: 'Workshop Demo Mat',
+      location: 'The shark tunnel at a mid-tier aquarium',
+      emoji: '🦈',
+      punchline: 'The sharks are the only ones not judging you.',
+    ),
+    _LocationResult(
+      location: 'A community theater dressing room during Fiddler on the Roof intermission',
+      emoji: '🎭',
+      punchline: 'Somewhere a stage manager is quietly losing their mind.',
+    ),
+    _LocationResult(
+      location: 'The lost-and-found office at a ski resort',
+      emoji: '🎿',
+      punchline: 'Somehow you still managed to lose your dignity.',
+    ),
+    _LocationResult(
+      location: 'A public library genealogy section surrounded by retirees',
+      emoji: '📚',
+      punchline: 'Congratulations, you\'re now part of someone\'s family history.',
+    ),
+    _LocationResult(
+      location: 'The backstage hallway of a small-town magician show',
+      emoji: '🎩',
+      punchline: 'Even the magician didn\'t see this trick coming.',
+    ),
+    _LocationResult(
+      location: 'A trampoline park foam pit',
+      emoji: '🤸',
+      punchline: 'Turns out the real bounce was your reputation.',
+    ),
+    _LocationResult(
+      location: 'A Home Depot shed display labeled "DIY Backyard Oasis"',
+      emoji: '🪚',
+      punchline: 'The employee helping customers pick mulch did not need to see that.',
+    ),
+    _LocationResult(
+      location: 'The bird enclosure at a petting zoo',
+      emoji: '🦜',
+      punchline: 'The parrots are absolutely repeating what they saw.',
+    ),
+    _LocationResult(
+      location: 'A mall Santa photo set in July',
+      emoji: '🎅',
+      punchline: 'Santa has seen some things, but this is new.',
+    ),
+    _LocationResult(
+      location: 'The mechanical room behind a hotel ice machine',
+      emoji: '🧊',
+      punchline: 'The ice machine will never emotionally recover from this.',
+    ),
+    _LocationResult(
+      location: 'A university lecture hall during an extremely boring economics class',
       emoji: '🎓',
-      punchline: 'You asked one question and somehow ended up running the demonstration.',
+      punchline: 'Finally, someone made supply and demand interesting.',
     ),
     _LocationResult(
-      location: 'Polycule Planning Couch',
-      emoji: '🛋️',
-      punchline: 'You tried to simplify one plan and generated three parallel timelines.',
-    ),
-  ];
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // LOCATION RESULTS — By vibe
-  // Format: Location + short funny punchline
-  // ═══════════════════════════════════════════════════════════════════════
-
-  static const List<List<_LocationResult>> _locationsByVibe = [
-    // 0: Flirting
-    [
-      _LocationResult(location: 'Hotel Elevator', emoji: '🛗', punchline: 'You thought 45 seconds between floors was enough. The bellhop disagrees.'),
-      _LocationResult(location: 'Rooftop Bar Bathroom', emoji: '🍸', punchline: 'You thought the "occupied" sign was enough. The line of 12 people wasn\'t.'),
-      _LocationResult(location: 'Beach After Midnight', emoji: '🏖️', punchline: 'You thought the moonlight was romantic. The dog walkers thought otherwise.'),
-      _LocationResult(location: 'Hot Tub at an Airbnb', emoji: '♨️', punchline: 'You thought it was private. The Ring doorbell thought differently.'),
-      _LocationResult(location: 'Yacht Club Dock', emoji: '⛵', punchline: 'You thought rich people sleep early. The dock master has night vision.'),
-      _LocationResult(location: 'Cruise Ship Balcony', emoji: '🚢', punchline: 'You thought international waters meant no witnesses. The retired couple from Ohio saw everything.'),
-      _LocationResult(location: 'Private Cabana', emoji: '🏝️', punchline: 'You thought the curtains were enough. The pool boy schedules around you now.'),
-      _LocationResult(location: 'Wine Cellar', emoji: '🍷', punchline: 'You thought nobody goes down there. The sommelier has a schedule.'),
-    ],
-    // 1: Chaos
-    [
-      _LocationResult(location: 'Ikea Showroom Bedroom', emoji: '🛏️', punchline: 'You thought testing the MALM bed was a joke. A family of 4 rounded the corner.'),
-      _LocationResult(location: 'Music Festival Porta-Potty', emoji: '🎵', punchline: 'You thought the bass would cover you. The 200 people in line heard everything.'),
-      _LocationResult(location: 'Costco Parking Lot', emoji: '🛒', punchline: 'You thought bulk toilet paper provided cover. The receipt checker saw you leave.'),
-      _LocationResult(location: 'Ferris Wheel', emoji: '🎡', punchline: 'You thought 4 minutes was enough. The operator knows exactly what that rocking means.'),
-      _LocationResult(location: 'Corn Maze', emoji: '🌽', punchline: 'You thought you were lost on purpose. The family on the hayride was not amused.'),
-      _LocationResult(location: 'Escape Room', emoji: '🔑', punchline: 'You paid to be locked in with cameras. The game master buzzed in: "Need a hint?"'),
-      _LocationResult(location: 'Bounce House', emoji: '🏰', punchline: 'You thought no one was watching. A child\'s birthday party arrived 10 minutes early.'),
-      _LocationResult(location: 'Drive-In Movie', emoji: '🎬', punchline: 'You thought the foggy windows were subtle. The car next to you started clapping.'),
-    ],
-    // 2: Trouble
-    [
-      _LocationResult(location: 'Your Ex\'s Neighborhood', emoji: '💀', punchline: 'You thought parking on their street was coincidental. They walked their dog past your car.'),
-      _LocationResult(location: 'Company Parking Garage', emoji: '🅿️', punchline: 'You thought Level 4 was empty. Steve from Accounting parks there. Monday will be awkward.'),
-      _LocationResult(location: 'Rooftop of Your Office', emoji: '🏢', punchline: 'You thought skyline views were worth it. You\'re now starring in the HR training video.'),
-      _LocationResult(location: 'Walk-In Freezer at Work', emoji: '🥶', punchline: 'You thought passion would keep you warm. The cook needed the salmon in 90 seconds.'),
-      _LocationResult(location: 'Your Therapist\'s Waiting Room', emoji: '🧠', punchline: 'You thought creating new problems where you solve them was efficient. Your 3pm was early.'),
-      _LocationResult(location: 'Library Study Room', emoji: '📚', punchline: 'You forgot the study rooms have glass walls. GLASS. WALLS.'),
-      _LocationResult(location: 'Airport TSA Line', emoji: '✈️', punchline: 'You called it "mile high club pregame." TSA called it a security incident.'),
-      _LocationResult(location: 'Jury Duty Bathroom', emoji: '⚖️', punchline: 'You thought civic duty was boring. The bailiff knocking changed your mind.'),
-    ],
-    // 3: Romance
-    [
-      _LocationResult(location: 'Museum After Hours', emoji: '🎨', punchline: 'You thought a Monet backdrop was romantic. The motion sensors near the art thought otherwise.'),
-      _LocationResult(location: 'Golf Course at Night', emoji: '⛳', punchline: 'You thought starlit grass was perfect. The automated sprinklers at 11pm had zero mercy.'),
-      _LocationResult(location: 'National Park Trail', emoji: '🏕️', punchline: 'You thought nature was calling. A Boy Scout troop answered instead.'),
-      _LocationResult(location: 'Train Sleeper Car', emoji: '🚂', punchline: 'You thought the rocking was romantic. The conductor\'s judgment said otherwise.'),
-      _LocationResult(location: 'Botanical Garden', emoji: '🌺', punchline: 'You thought the flowers provided cover. The groundskeeper has seen things.'),
-      _LocationResult(location: 'Castle Tower', emoji: '🏰', punchline: 'You thought fairy tales were real. The tour group rounding the spiral staircase wasn\'t.'),
-      _LocationResult(location: 'Lighthouse', emoji: '🗼', punchline: 'You thought the rotating beam added ambiance. The coast guard was doing inspections.'),
-      _LocationResult(location: 'Covered Bridge', emoji: '🌉', punchline: 'You thought it was secluded. The photographer shooting engagement photos didn\'t.'),
-    ],
-    // 4: Bad Decisions
-    [
-      _LocationResult(location: 'Dressing Room at Nordstrom', emoji: '👗', punchline: 'You thought "checking the fit" was believable. The sales associate always knows.'),
-      _LocationResult(location: 'Movie Theater Back Row', emoji: '🎬', punchline: 'You picked a terrible movie nobody watches. The usher\'s flashlight found you in the one quiet scene.'),
-      _LocationResult(location: 'Laundromat at 2am', emoji: '🧺', punchline: 'You thought the vibrating washer was "just for balance." The insomniac doing whites disagreed.'),
-      _LocationResult(location: 'Wedding Reception Coat Room', emoji: '🎩', punchline: 'You thought the ceremony was long enough. The mother of the bride needed her shawl.'),
-      _LocationResult(location: 'Gym Sauna', emoji: '🧖', punchline: 'You thought the steam provided cover. The personal trainer does sauna sessions at this hour.'),
-      _LocationResult(location: 'Trampoline Park After Hours', emoji: '🤸', punchline: 'You thought bouncing was fun. The security camera footage became staff training material.'),
-      _LocationResult(location: 'IHOP Bathroom', emoji: '🥞', punchline: 'You thought 3am pancake runs provided anonymity. The staff has seen everything.'),
-      _LocationResult(location: 'Storage Unit', emoji: '📦', punchline: 'You rented a 10x10 for this. The guy in Unit 7B can hear through the walls.'),
-    ],
-  ];
-
-  // Rare results (1-2% chance)
-  static const List<_LocationResult> _rareLocations = [
-    _LocationResult(
-      location: 'The International Space Station',
-      emoji: '🚀',
-      punchline: 'Zero gravity. Zero privacy. NASA\'s live feed had its highest viewership in history.',
+      location: 'The rotating sushi bar conveyor belt area',
+      emoji: '🍣',
+      punchline: 'That was not on the menu.',
     ),
     _LocationResult(
-      location: 'The Oval Office',
+      location: 'A meditation retreat kitchen where everyone has taken a vow of silence',
+      emoji: '🧘',
+      punchline: 'The silence just made the scandal louder.',
+    ),
+    _LocationResult(
+      location: 'The dairy aisle of a 24-hour grocery store at 3 AM',
+      emoji: '🥛',
+      punchline: 'The milk wasn\'t the only thing going bad.',
+    ),
+    _LocationResult(
+      location: 'The janitor\'s closet of a luxury spa',
+      emoji: '🧽',
+      punchline: 'Not exactly the wellness treatment they were advertising.',
+    ),
+    _LocationResult(
+      location: 'A suburban HOA meeting in someone\'s living room',
+      emoji: '🏘️',
+      punchline: 'The minutes from this meeting are going to be incredible.',
+    ),
+    _LocationResult(
+      location: 'A museum exhibit titled "Early Farming Equipment"',
       emoji: '🏛️',
-      punchline: 'This location is classified. The Secret Service has revoked your clearance.',
+      punchline: 'Historians will have questions.',
     ),
     _LocationResult(
-      location: 'A Time Machine',
-      emoji: '⏰',
-      punchline: 'You got caught in every timeline simultaneously. Paradox achieved.',
+      location: 'A bowling alley birthday party for a 9-year-old',
+      emoji: '🎳',
+      punchline: 'The parents are absolutely cancelling cake.',
     ),
-  ];
-
-  // Escalation flavor for repeat plays
-  static const List<String> _escalation = [
-    'At this point, you should be on a list somewhere.',
-    'This is a pattern now. Seek help.',
-    'Your location history is a crime spree.',
-    'Even Google Maps is judging you.',
-    'Authorities have been notified. (Just kidding. Maybe.)',
+    _LocationResult(
+      location: 'The projection booth of an old movie theater',
+      emoji: '🎬',
+      punchline: 'This was not the director\'s cut.',
+    ),
+    _LocationResult(
+      location: 'A haunted house attraction emergency exit',
+      emoji: '👻',
+      punchline: 'You\'ve somehow made it the scariest part of the tour.',
+    ),
+    _LocationResult(
+      location: 'The dressing room hallway at a Nordstrom Rack',
+      emoji: '👗',
+      punchline: 'Even the clearance rack is embarrassed.',
+    ),
+    _LocationResult(
+      location: 'A tiny independent tax preparation office in April',
+      emoji: '🧾',
+      punchline: 'You just created a deduction nobody can explain.',
+    ),
+    _LocationResult(
+      location: 'A dog obedience class while the instructor is explaining "sit"',
+      emoji: '🐕',
+      punchline: 'Even the dogs know this isn\'t right.',
+    ),
+    _LocationResult(
+      location: 'The balcony of a cruise ship during mandatory safety drills',
+      emoji: '🛳️',
+      punchline: 'This was not the lifeboat plan.',
+    ),
+    _LocationResult(
+      location: 'A pumpkin patch gift shop in October',
+      emoji: '🎃',
+      punchline: 'The scarecrows are now traumatized.',
+    ),
+    _LocationResult(
+      location: 'The inflatable bounce house at a county fair',
+      emoji: '🎪',
+      punchline: 'The structural integrity report will mention you.',
+    ),
+    _LocationResult(
+      location: 'The employee locker room of a laser tag arena',
+      emoji: '🔫',
+      punchline: 'The scoreboard will never recover.',
+    ),
+    _LocationResult(
+      location: 'A city council meeting livestream room',
+      emoji: '🏛️',
+      punchline: 'The public comments section is going to explode.',
+    ),
+    _LocationResult(
+      location: 'The produce refrigerator at a Whole Foods',
+      emoji: '🥒',
+      punchline: 'Those organic cucumbers didn\'t sign up for this.',
+    ),
+    _LocationResult(
+      location: 'A public transit lost luggage warehouse',
+      emoji: '🧳',
+      punchline: 'You\'ve officially become part of the inventory.',
+    ),
+    _LocationResult(
+      location: 'A craft brewery tour halfway through the fermentation explanation',
+      emoji: '🍺',
+      punchline: 'The guide just skipped to the end of the tour.',
+    ),
+    _LocationResult(
+      location: 'The roof of a small-town planetarium',
+      emoji: '🔭',
+      punchline: 'Somewhere an astronomer is rethinking the universe.',
+    ),
+    _LocationResult(
+      location: 'A wedding venue coat check room during speeches',
+      emoji: '💒',
+      punchline: 'The coats know everything now.',
+    ),
+    _LocationResult(
+      location: 'The ticket booth of a closed roller coaster',
+      emoji: '🎢',
+      punchline: 'Turns out the ride wasn\'t actually closed.',
+    ),
+    _LocationResult(
+      location: 'A kids\' science museum electricity demonstration area',
+      emoji: '⚡',
+      punchline: 'This experiment escalated quickly.',
+    ),
+    _LocationResult(
+      location: 'The backstage prop storage at a Renaissance fair',
+      emoji: '🛡️',
+      punchline: 'The knights will be talking about this for years.',
+    ),
+    _LocationResult(
+      location: 'A hospital gift shop after visiting hours',
+      emoji: '🧸',
+      punchline: 'Even the teddy bears are concerned.',
+    ),
+    _LocationResult(
+      location: 'A tiny Airbnb themed "Rustic Lighthouse Escape"',
+      emoji: '🏠',
+      punchline: 'The host is definitely leaving a review.',
+    ),
+    _LocationResult(
+      location: 'A campground ranger station office',
+      emoji: '🏕️',
+      punchline: 'Smokey the Bear would like a word.',
+    ),
+    _LocationResult(
+      location: 'A suburban cul-de-sac during a neighborhood watch meeting',
+      emoji: '🚨',
+      punchline: 'The Nextdoor app is about to explode.',
+    ),
+    _LocationResult(
+      location: 'The waiting room of a DMV five minutes before your number is called',
+      emoji: '📋',
+      punchline: 'You somehow made the DMV even more uncomfortable.',
+    ),
   ];
 
   @override
@@ -259,36 +350,17 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
       _analysisProgress = 0;
       _analysisLabel = 'Queued for location scandal scan...';
     });
-    _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('get_caught'));
 
-    final seed = DateTime.now().microsecondsSinceEpoch ^
-      name.hashCode ^
-      _playCount ^
-      igHandle.hashCode;
-    final rng = Random(seed);
-
-    final isRare = rng.nextInt(100) < 2;
-    _LocationResult location;
-
-    if (isRare) {
-      location = _rareLocations[rng.nextInt(_rareLocations.length)];
-    } else {
-      final picked = _communityLocations[rng.nextInt(_communityLocations.length)];
-      location = _LocationResult(
-        location: picked.location,
-        emoji: picked.emoji,
-        punchline:
-            '${picked.punchline} ${_chaosAddons[rng.nextInt(_chaosAddons.length)]}',
-      );
-    }
+    final rng = Random.secure();
+    final location =
+        _communityLocations[rng.nextInt(_communityLocations.length)];
 
     await _runFakeIgReview(igHandle);
     if (!mounted) return;
 
     setState(() {
       _result = location;
-      _isRare = isRare;
       _isRevealing = false;
     });
     _revealController.forward(from: 0);
@@ -388,7 +460,7 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter name + IG handle and let this app\nfake-investigate your public downfall.',
+              'Enter name + IG handle for a place people\nwould never do it, plus why you did and how you got caught.',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -555,7 +627,7 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
         ? _friendController.text.trim()
         : _nameController.text.trim();
     final loc = _result!;
-    final displayColor = _isRare ? const Color(0xFFFFD700) : _accentColor;
+    const displayColor = _accentColor;
 
     return AnimatedBuilder(
       animation: _revealAnimation,
@@ -575,8 +647,8 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF1A1A2E),
           border: Border.all(
-            color: displayColor.withOpacity(_isRare ? 0.6 : 0.4),
-            width: _isRare ? 2.5 : 2,
+            color: displayColor.withOpacity(0.4),
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
@@ -588,28 +660,6 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
         ),
         child: Column(
           children: [
-            if (_isRare) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFFFFD700).withOpacity(0.15),
-                  border: Border.all(
-                    color: const Color(0xFFFFD700).withOpacity(0.4),
-                  ),
-                ),
-                child: Text(
-                  '✨ ULTRA RARE ✨',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFFFD700),
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
             Text(
               'PARTY MINI\'S',
               style: GoogleFonts.inter(
@@ -653,18 +703,6 @@ class _CaughtInTheActScreenState extends State<CaughtInTheActScreen>
               ),
               textAlign: TextAlign.center,
             ),
-            if (_playCount >= 3) ...[
-              const SizedBox(height: 12),
-              Text(
-                _escalation[_playCount % _escalation.length],
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: VesparaColors.secondary.withOpacity(0.5),
-                  fontStyle: FontStyle.italic,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
             const SizedBox(height: 12),
           ],
         ),

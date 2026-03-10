@@ -13,9 +13,7 @@ import '../../../core/widgets/premium_effects.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// WHAT'S YOUR RED FLAG? 🚩
-/// Name + vibe → hilarious, brutally honest red flag
-/// Addictive: vibe selector, friend challenge, rare results, escalation,
-/// cross-game suggestions, screenshot cards
+/// Name + IG handle → random hilarious red flag output
 /// ════════════════════════════════════════════════════════════════════════════
 
 class RedFlagScreen extends StatefulWidget {
@@ -32,9 +30,7 @@ class _RedFlagScreenState extends State<RedFlagScreen>
   final _friendController = TextEditingController();
   String? _generatedFlag;
   bool _isRevealing = false;
-  bool _isRare = false;
   bool _isFriendMode = false;
-  int _playCount = 0;
   double _analysisProgress = 0;
   String _analysisLabel = 'Queued for red-flag inspection...';
 
@@ -45,102 +41,39 @@ class _RedFlagScreenState extends State<RedFlagScreen>
 
   static const Color _accentColor = Color(0xFFFF1744);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // RED FLAG DATA — Organized by vibe
-  // ═══════════════════════════════════════════════════════════════════════
-
-  static const List<List<String>> _flagsByVibe = [
-    [
-      'You say you\'re "just going to watch tonight" and are fully naked within eight minutes.',
-      'You treat the play space like a buffet and immediately start sampling the menu.',
-      'You once turned harmless flirting into a situation requiring a group meeting.',
-      'You wander through rooms like a very friendly tornado.',
-      'You think "let\'s just see what happens" is a fully formed life plan.',
-      'You once described a hookup afterward as excellent cardio.',
-      'You treat flirtation like extreme sports with better lighting.',
-      'You have confidently said "this will make a great story later" during a terrible decision.',
-      'You bring a backpack to the party and unpack it like a traveling kink salesman.',
-      'You say "I\'m pacing myself tonight" and then immediately forget that plan.',
-      'You treat awkward silence like a challenge.',
-      'You have accidentally created two separate love triangles in the same room.',
-      'You once said "this will definitely not get weird" and it immediately got weird.',
-      'You think tequila reveals your true self, which is unfortunate.',
-      'You say "trust me" immediately before something that absolutely should not be trusted.',
-      'You treat eye contact across the room like an invitation from fate.',
-      'You believe stamina is mostly a confidence issue.',
-      'You wander into cuddle piles like it\'s an open seat on public transit.',
-      'You once said "don\'t worry, I\'ve done this before" right before attempting something extremely ambitious.',
-      'You have used the phrase "okay but in my defense... chaos."',
-      'You treat parties like a choose-your-own-adventure book.',
-      'You once explained your dating situation and someone responded "I\'m going to need a diagram."',
-      'You believe consequences are a future version of you problem.',
-      'You say "I\'ll be right back" and return two hours later with a completely new friend group.',
-      'You once paused mid-chaos to ask "has anyone tried this configuration before?"',
-      'You think warm-up stretches are a perfectly reasonable thing to do before the party starts.',
-      'You once tried to fix a bad decision by making another worse decision.',
-      'You approach the night like a scientific field experiment.',
-      'You have walked into a room, assessed the chaos, and decided to contribute.',
-      'You believe chaos isn\'t something that happens around you - you are the chaos.',
-      'You treat the toy table like a hardware store where you forgot your shopping list.',
-      'You once said "I\'m just here for the vibe" and then became the vibe.',
-      'You believe the phrase "this should work in theory" applies to bedroom logistics.',
-      'You say "hold on, I have an idea" and everyone nearby immediately gets nervous.',
-      'You once turned a casual moment into an extremely ambitious group activity.',
-      'You treat curiosity like a competitive advantage.',
-      'You once said "this might require teamwork."',
-      'You think every party secretly needs a volunteer coordinator.',
-      'You once paused and said "this is getting logistically impressive."',
-      'You believe the phrase "just go with it" is a solid operating principle.',
-      'You once said "I should probably stretch first."',
-      'You approach the night like an Olympic qualifier.',
-      'You have the confidence of someone who read half the instructions.',
-      'You once said "this is either a great idea or a terrible one."',
-      'You think the phrase "let\'s see what happens if..." is irresistible.',
-      'You once declared "okay now it\'s a science experiment."',
-      'You believe chaos improves with enthusiasm and hydration.',
-      'You once said "I regret nothing... yet."',
-      'You believe the best stories always start with "so there were more people than expected."',
-    ],
-  ];
-
-  // Escalation add-ons for repeat plays
-  static const List<String> _escalation = [
-    '...and immediately recruits two more volunteers',
-    '...and somehow turns it into a community project',
-    '...and insists this is "actually very organized"',
-    '...and proposes a sequel before hydration break',
-    '...and calls this phase one with alarming confidence',
-    '...and asks who wants to workshop it live',
-  ];
-
-  // Rare results (1-2% chance)
-  static const List<String> _rareFlags = [
-    'They ARE the red flag. Like, the whole flag. The entire flag store. Red Flags R Us. They own the franchise.',
-    'Their red flag is so powerful it has its own gravitational pull. Entire dating apps have been destroyed trying to contain it.',
-    'Scientists named a new shade of red after this person\'s red flag. It\'s called "Run."',
-    'This red flag is visible from space. NASA confirmed.',
-    'Their red flag has a red flag. It\'s red flags all the way down.',
-  ];
-
-  static const List<String> _chaosAddons = [
-    'The room gave this idea side-eye and then participated anyway.',
-    'Three strangers heard this plan and asked for a signup sheet.',
-    'The algorithm tried to warn us, then joined the afterparty.',
-    'Your archived stories now require waivers and hydration reminders.',
-    'Someone reported this behavior to astrology and astrology said "fair."',
-  ];
-
-  static const List<String> _extremeFlags = [
-    'You start every event saying "I\'m just observing" and then recruit a task force 12 minutes later.',
-    'You hear "optional group activity" and treat it like your Olympic qualifying round.',
-    'You turn one innocent flirt into a logistics map with arrows, initials, and hydration breaks.',
-    'You walk into a room, clap once, and accidentally become the unofficial chaos facilitator.',
-    'You treat consent check-ins like halftime strategy talks and everyone somehow says yes.',
-    'You whisper "what if we escalated responsibly" and suddenly there\'s a sign-up list.',
-    'You keep saying "this is a terrible idea" while actively assigning roles.',
-    'You call it aftercare, but it\'s mostly a debrief for your latest questionable masterpiece.',
-    'You start with "I have a tiny idea" and end with furniture being moved by committee.',
-    'You collect people with eye contact and launch projects nobody requested but everyone remembers.',
+  static const List<String> _randomFlags = [
+    'Your name is also the adjective people use to describe you.',
+    'You keep a laminated Consent Flowchart in your phone.',
+    'You own a small suitcase labeled "Afterparty Logistics."',
+    'You\'ve started a cuddle pile that required two safewords and a group moderator.',
+    'You\'ve told someone, "Don\'t worry, the rules only exist because of something I did last year."',
+    'You walk into a party and immediately start reorganizing the lighting, the music, and the energy like a chaotic cruise director.',
+    'You\'ve been asked to stop bringing props without emailing the host first.',
+    'You\'ve turned a quiet gathering into a three-hour negotiation about boundaries and snacks.',
+    'You keep a mental map of which houses have the good bathroom.',
+    'You\'ve referred to a poor relationship choice as "a successful experiment."',
+    'You bring a portable disco light because you refuse to let bad lighting ruin good decisions.',
+    'You\'ve been told, "Please don\'t turn this into a workshop again."',
+    'You\'ve started a game that accidentally required a whiteboard to track.',
+    'You\'ve been introduced to someone as "the person who escalates things."',
+    'You\'ve organized a "low-key hang" that required three different group chats and a Partiful invite to coordinate.',
+    'You\'ve been banned from starting icebreaker games after midnight.',
+    'You once turned a casual hangout into an over the top costumed/themed event.',
+    'You\'ve walked into a party and someone immediately handed you the responsibility clipboard.',
+    'You\'ve referred to yourself as "a facilitator of vibes."',
+    'You\'ve been told, "You\'re the reason we had to clarify that rule."',
+    'You turn a calm conversation into a full-blown group discussion about feelings.',
+    'You look at a completely fine evening and think, "We can make this more interesting."',
+    'You say, "Don\'t worry, I\'ve done this before," to things you\'ve never done before.',
+    'You\'ve accidentally created a cult.',
+    'You\'ve stared at a Taco Bell menu at 2 AM like a medieval scholar decoding prophecy.',
+    'You\'ve chased a lost vape like a bloodhound tracking a fugitive.',
+    'You\'ve opened the fridge 14 times like it might suddenly generate new food out of fear.',
+    'You\'ve looked for your phone while holding your phone like a confused TSA agent.',
+    'You have sat in total silence in an Uber at 2am because you know the driver knows you\'re naked under that coat.',
+    'You have a dozen sets of black lingerie you are not sure are yours.',
+    'You are colloquially known as "everybody\'s boyfriend/girlfriend."',
+    'You refuse to get to know someone until you\'ve slept with them.',
   ];
 
   @override
@@ -205,37 +138,16 @@ class _RedFlagScreenState extends State<RedFlagScreen>
       _analysisProgress = 0;
       _analysisLabel = 'Queued for red-flag inspection...';
     });
-    _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('red_flag'));
 
-    final seed = DateTime.now().microsecondsSinceEpoch ^
-      name.hashCode ^
-      _playCount ^
-      igHandle.hashCode;
-    final rng = Random(seed);
-
-    final isRare = rng.nextInt(100) < 2;
-
-    String flag;
-    if (isRare) {
-      flag = _rareFlags[rng.nextInt(_rareFlags.length)];
-    } else {
-      flag = _extremeFlags[rng.nextInt(_extremeFlags.length)];
-
-      // Escalation after 3+ plays
-      if (_playCount >= 3) {
-        flag += '\n\n${_escalation[rng.nextInt(_escalation.length)]}';
-      }
-    }
-
-    flag += '\n\n${_chaosAddons[rng.nextInt(_chaosAddons.length)]}';
+    final rng = Random.secure();
+    final flag = _randomFlags[rng.nextInt(_randomFlags.length)];
 
     await _runFakeIgReview(igHandle);
     if (!mounted) return;
 
     setState(() {
       _generatedFlag = flag;
-      _isRare = isRare;
       _isRevealing = false;
     });
     _revealController.forward(from: 0);
@@ -523,15 +435,12 @@ class _RedFlagScreenState extends State<RedFlagScreen>
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF1A1A2E),
           border: Border.all(
-            color: _isRare
-                ? const Color(0xFFFFD700).withOpacity(0.6)
-                : _accentColor.withOpacity(0.4),
-            width: _isRare ? 2.5 : 2,
+            color: _accentColor.withOpacity(0.4),
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: (_isRare ? const Color(0xFFFFD700) : _accentColor)
-                  .withOpacity(0.15),
+              color: _accentColor.withOpacity(0.15),
               blurRadius: 24,
               spreadRadius: -4,
             ),
@@ -539,28 +448,6 @@ class _RedFlagScreenState extends State<RedFlagScreen>
         ),
         child: Column(
           children: [
-            if (_isRare) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFFFFD700).withOpacity(0.15),
-                  border: Border.all(
-                    color: const Color(0xFFFFD700).withOpacity(0.4),
-                  ),
-                ),
-                child: Text(
-                  '✨ ULTRA RARE ✨',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFFFD700),
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
             Text(
               'PARTY MINI\'S',
               style: GoogleFonts.inter(
@@ -585,7 +472,7 @@ class _RedFlagScreenState extends State<RedFlagScreen>
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: _isRare ? const Color(0xFFFFD700) : _accentColor,
+                color: _accentColor,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,

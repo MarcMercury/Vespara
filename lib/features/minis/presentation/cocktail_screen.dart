@@ -13,9 +13,7 @@ import '../../../core/widgets/premium_effects.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// WHAT COCKTAIL ARE YOU? 🍸
-/// Name + vibe → cocktail personality match
-/// Addictive: vibe selector, friend challenge, rare results, escalation,
-/// cross-game suggestions, screenshot cards
+/// Name + IG handle → random real cocktail personality match
 /// ════════════════════════════════════════════════════════════════════════════
 
 class CocktailScreen extends StatefulWidget {
@@ -32,9 +30,7 @@ class _CocktailScreenState extends State<CocktailScreen>
   final _friendController = TextEditingController();
   _CocktailResult? _result;
   bool _isRevealing = false;
-  bool _isRare = false;
   bool _isFriendMode = false;
-  int _playCount = 0;
   double _analysisProgress = 0;
   String _analysisLabel = 'Queued for cocktail profiling...';
 
@@ -44,137 +40,57 @@ class _CocktailScreenState extends State<CocktailScreen>
 
   static const Color _accentColor = Color(0xFF9C27B0);
 
-  static const List<String> _chaosAddons = [
-    'You also volunteered to "coordinate" and nobody stopped you.',
-    'You just turned one flirty idea into a full logistics puzzle.',
-    'You said "we can absolutely improvise this" and recruited backup.',
-    'Your confidence now has a group chat and a waitlist.',
-    'Your aura smells like citrus, glitter, and questionable planning.',
-  ];
-
-  static const List<String> _actionProfiles = [
-    'You enter softly, then recruit strangers for a "tiny experiment" that gets wildly organized.',
-    'You promise one casual moment and accidentally launch a full afterparty operation.',
-    'You treat every room like a choose-your-own-adventure and keep picking the chaotic option.',
-    'You confidently improvise a multi-person plan using enthusiasm as your only credential.',
-    'You call it "keeping things playful" while escalating everything by two difficulty levels.',
-    'You start with a harmless suggestion and end with volunteers, spreadsheets, and applause.',
-  ];
-
   static const List<_CocktailResult> _chaosCocktailPool = [
-    _CocktailResult(name: 'Dungeon Daiquiri', emoji: '🍓', color: Color(0xFFE91E63), personality: ''),
-    _CocktailResult(name: 'Boundary Bellini', emoji: '🥂', color: Color(0xFFFFD54F), personality: ''),
-    _CocktailResult(name: 'Aftercare Negroni', emoji: '🍷', color: Color(0xFFE53935), personality: ''),
-    _CocktailResult(name: 'Polycule Paloma', emoji: '🌸', color: Color(0xFFF48FB1), personality: ''),
-    _CocktailResult(name: 'Consent Mojito', emoji: '🌿', color: Color(0xFF4CAF50), personality: ''),
-    _CocktailResult(name: 'Chaotic Spritz', emoji: '🍊', color: Color(0xFFFF7043), personality: ''),
-    _CocktailResult(name: 'Velvet Rope Vesper', emoji: '🕴️', color: Color(0xFF546E7A), personality: ''),
-    _CocktailResult(name: 'Gremlin Gimlet', emoji: '💚', color: Color(0xFF76FF03), personality: ''),
-    _CocktailResult(name: 'Main Character Mule', emoji: '🫏', color: Color(0xFFFFB74D), personality: ''),
-    _CocktailResult(name: 'Questionable Espresso Martini', emoji: '☕', color: Color(0xFF5D4037), personality: ''),
-  ];
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // COCKTAIL RESULTS — By vibe
-  // ═══════════════════════════════════════════════════════════════════════
-
-  static const List<List<_CocktailResult>> _cocktailsByVibe = [
-    // 0: Flirting
-    [
-      _CocktailResult(name: 'Dirty Martini', emoji: '🍸', color: Color(0xFF8BC34A), personality: 'You walk in like you own the room, even when you definitely don\'t.'),
-      _CocktailResult(name: 'Cosmopolitan', emoji: '🍸', color: Color(0xFFEC407A), personality: 'Your entire personality is a Sex and the City episode and you\'re fine with that.'),
-      _CocktailResult(name: 'Aperol Spritz', emoji: '🍊', color: Color(0xFFFF7043), personality: 'You ordered this for the color. Your entire personality is "European Summer."'),
-      _CocktailResult(name: 'French 75', emoji: '🎩', color: Color(0xFFE0E0E0), personality: 'You seduce people with vocabulary and wine knowledge. You own linen pants.'),
-      _CocktailResult(name: 'Daiquiri', emoji: '🍓', color: Color(0xFFE91E63), personality: 'You look sweet and innocent but you\'ve done things that would make a sailor blush.'),
-      _CocktailResult(name: 'Mojito', emoji: '🌿', color: Color(0xFF4CAF50), personality: 'Fresh, fun, and absolutely will not be pinned down. "We\'re vibing" is your catchphrase.'),
-      _CocktailResult(name: 'Champagne Cocktail', emoji: '🥂', color: Color(0xFFFFD54F), personality: 'Bougie on a budget. Your "luxury lifestyle" is a face mask from CVS.'),
-      _CocktailResult(name: 'Vesper', emoji: '🕴️', color: Color(0xFF546E7A), personality: 'Licensed to kill hearts. You disappear into the night before they realize you\'re trouble.'),
-      _CocktailResult(name: 'Paloma', emoji: '🌸', color: Color(0xFFF48FB1), personality: 'Lowkey dangerous. You suggest body shots at 11pm on a Tuesday.'),
-      _CocktailResult(name: 'Pisco Sour', emoji: '🏔️', color: Color(0xFFF0F4C3), personality: 'Nobody sees you coming and that\'s your superpower. A wolf in introvert\'s clothing.'),
-    ],
-    // 1: Chaos
-    [
-      _CocktailResult(name: 'Long Island Iced Tea', emoji: '🥃', color: Color(0xFFAB47BC), personality: 'Seems chill at first. By round three you\'re the reason someone texted their ex.'),
-      _CocktailResult(name: 'Jägerbomb', emoji: '💣', color: Color(0xFF1B5E20), personality: 'Walking bad decision. Your friends have a bail money fund named after you.'),
-      _CocktailResult(name: 'Hurricane', emoji: '🌀', color: Color(0xFFE65100), personality: 'Category 5 dating disaster. Your dating history reads like a FEMA report.'),
-      _CocktailResult(name: 'Tequila Shot', emoji: '🥃', color: Color(0xFFFFD740), personality: 'No thoughts just vibes. You skip foreplay in every area of life.'),
-      _CocktailResult(name: 'Absinthe', emoji: '🧚', color: Color(0xFF69F0AE), personality: 'Artistic and unhinged. You journal about hookups in third person.'),
-      _CocktailResult(name: 'Kamikaze', emoji: '✈️', color: Color(0xFF2979FF), personality: 'Self-destructive legend. You say "I love you" on the third date and mean it.'),
-      _CocktailResult(name: 'Frozen Margarita', emoji: '🧊', color: Color(0xFF00E676), personality: 'Brain freeze energy. You once swiped right on your boss and didn\'t realize until the date.'),
-      _CocktailResult(name: 'Rum Punch', emoji: '🥊', color: Color(0xFFEF5350), personality: 'Physically incapable of a quiet evening. You started a conga line at a funeral once.'),
-      _CocktailResult(name: 'Harvey Wallbanger', emoji: '🧱', color: Color(0xFFFFAB00), personality: 'Relentlessly persistent. You showed up to a date you weren\'t invited to.'),
-      _CocktailResult(name: 'Jungle Bird', emoji: '🦜', color: Color(0xFFFF3D00), personality: 'Loud and unfiltered. People either love you or block you. No in-between.'),
-    ],
-    // 2: Trouble
-    [
-      _CocktailResult(name: 'Negroni', emoji: '🍷', color: Color(0xFFE53935), personality: 'Pretentious but hot. Your dating profile says "sapiosexual" unironically.'),
-      _CocktailResult(name: 'Dark & Stormy', emoji: '⛈️', color: Color(0xFF455A64), personality: 'Brooding heartbreaker. You don\'t ghost — you "drift," which is somehow worse.'),
-      _CocktailResult(name: 'Porn Star Martini', emoji: '⭐', color: Color(0xFFFF6F00), personality: 'Zero shame, full send. You\'ve been described as "a lot" and took it as a compliment.'),
-      _CocktailResult(name: 'Gimlet', emoji: '💚', color: Color(0xFF76FF03), personality: 'Sarcastic and untouchable. Your Bumble bio is just "no."'),
-      _CocktailResult(name: 'Screwdriver', emoji: '🔧', color: Color(0xFFFF6F00), personality: 'Straightforward menace. You text "come over" with no context and everyone says yes.'),
-      _CocktailResult(name: 'Boulevardier', emoji: '🎻', color: Color(0xFFB71C1C), personality: 'Emotionally intelligent but morally ambiguous. You weaponize therapy speak.'),
-      _CocktailResult(name: 'Last Word', emoji: '🎤', color: Color(0xFF558B2F), personality: 'Has to win every argument. Your relationships end in closing statements, not breakups.'),
-      _CocktailResult(name: 'Sidecar', emoji: '🏎️', color: Color(0xFFFF8F00), personality: 'Vintage heartbreaker. Your love letters could start wars and your DMs could end marriages.'),
-      _CocktailResult(name: 'Grasshopper', emoji: '🦗', color: Color(0xFF4CAF50), personality: 'Suspiciously sweet. You weaponize cuteness. Emotional warfare in pastel colors.'),
-      _CocktailResult(name: 'Sazerac', emoji: '🎷', color: Color(0xFF6D4C41), personality: 'Old soul, young chaos. Music taste of a jazz musician, hookup history of a sophomore.'),
-    ],
-    // 3: Romance
-    [
-      _CocktailResult(name: 'Sex on the Beach', emoji: '🏖️', color: Color(0xFFFF7043), personality: 'Shameless flirt. You\'ve never met a stranger — just future mistakes.'),
-      _CocktailResult(name: 'Piña Colada', emoji: '🍍', color: Color(0xFFFFF176), personality: 'Delusional optimist. You think every toxic situationship ends differently "this time."'),
-      _CocktailResult(name: 'Old Fashioned', emoji: '🥃', color: Color(0xFF8D6E63), personality: 'Emotionally unavailable hot person. People obsess over "cracking your code" but there is no code.'),
-      _CocktailResult(name: 'Whiskey Sour', emoji: '🥃', color: Color(0xFFFFCA28), personality: 'Cynical romantic. You roast happy couples then cry to Adele alone in your car.'),
-      _CocktailResult(name: 'Amaretto Sour', emoji: '🍑', color: Color(0xFFFFAB40), personality: 'Hopeless romantic disaster. You fall in love with everyone who makes eye contact for 3 seconds.'),
-      _CocktailResult(name: 'Manhattan', emoji: '🌃', color: Color(0xFFC62828), personality: 'Intimidatingly attractive. Your resting face alone has rejected at least 30 people this year.'),
-      _CocktailResult(name: 'Lemon Drop', emoji: '🍋', color: Color(0xFFFFEB3B), personality: 'Sweet now, sour later. You love-bomb then ghost. Emotionally inconsistent.'),
-      _CocktailResult(name: 'Caipirinha', emoji: '🍋', color: Color(0xFFCDDC39), personality: 'International heartbreaker. You have an ex on every continent.'),
-      _CocktailResult(name: 'Singapore Sling', emoji: '🌴', color: Color(0xFFFF80AB), personality: 'Dramatic internationalist. Every story starts with "so I was in [country]."'),
-      _CocktailResult(name: 'Corpse Reviver', emoji: '💀', color: Color(0xFFB0BEC5), personality: 'Back from the dead. You\'ve been ghosted, bred-crumbed, and zombied — and survived.'),
-    ],
-    // 4: Bad Decisions
-    [
-      _CocktailResult(name: 'Espresso Martini', emoji: '☕', color: Color(0xFF5D4037), personality: 'Chaotic overachiever. You close the bar at 2am and send a work email at 2:47am.'),
-      _CocktailResult(name: 'Tequila Sunrise', emoji: '🌅', color: Color(0xFFFF9800), personality: 'Main character energy. "I don\'t have exes, I have origin stories."'),
-      _CocktailResult(name: 'Margarita', emoji: '🍹', color: Color(0xFF66BB6A), personality: 'Life of the party. First on the dance floor, last to leave. Salsa danced with a mannequin once.'),
-      _CocktailResult(name: 'Moscow Mule', emoji: '🫏', color: Color(0xFFFFB74D), personality: 'Trendy contrarian. You broke up with someone over the wrong font in a text.'),
-      _CocktailResult(name: 'Bloody Mary', emoji: '🍅', color: Color(0xFFD32F2F), personality: 'Chaos before noon. You treat hangovers as a personality trait.'),
-      _CocktailResult(name: 'Gin & Tonic', emoji: '🫧', color: Color(0xFF81D4FA), personality: 'Type-A party animal. Your Google Calendar has color codes for "shenanigans."'),
-      _CocktailResult(name: 'Blue Lagoon', emoji: '💎', color: Color(0xFF00B0FF), personality: 'Genetically blessed and emotionally cursed. Never single for more than 3 weeks.'),
-      _CocktailResult(name: 'White Russian', emoji: '🥛', color: Color(0xFFBCAAA4), personality: 'Unbothered legend. Showed up in sweatpants to a formal event and still got hit on.'),
-      _CocktailResult(name: 'Irish Coffee', emoji: '☘️', color: Color(0xFF33691E), personality: 'Functioning wreck. Held together by caffeine and spite.'),
-      _CocktailResult(name: 'Mai Tai', emoji: '🌺', color: Color(0xFFFF5722), personality: 'Tropical unhinged. Your love language is "spontaneous bad decisions."'),
-    ],
-  ];
-
-  // Rare cocktails (1-2% chance)
-  static const List<_CocktailResult> _rareCocktails = [
-    _CocktailResult(
-      name: 'The Forbidden Elixir',
-      emoji: '🔮',
-      color: Color(0xFFFFD700),
-      personality: 'This cocktail doesn\'t exist on any menu. It materialized from pure chaotic energy. You are the drink. The drink is you. Bartenders weep.',
-    ),
-    _CocktailResult(
-      name: 'Liquid Audacity',
-      emoji: '⚡',
-      color: Color(0xFFFFD700),
-      personality: 'One sip and you become unstoppable. Two sips and you become a wanted person in three states. This is the rarest cocktail assignment in existence.',
-    ),
-    _CocktailResult(
-      name: 'The Main Character',
-      emoji: '👑',
-      color: Color(0xFFFFD700),
-      personality: 'You didn\'t get a cocktail. You ARE the cocktail. Every bar was built in your honor. The algorithm broke trying to contain your energy.',
-    ),
-  ];
-
-  // Escalation flavor texts for repeat plays
-  static const List<String> _escalation = [
-    'The bartender is concerned about you.',
-    'Your liver filed a formal complaint.',
-    'This is your villain origin story.',
-    'Somewhere, a therapist just got a new client.',
-    'Your friends made a group chat about this.',
+    _CocktailResult(name: 'Margarita', emoji: '🍹', color: Color(0xFF66BB6A), personality: 'You treat minor inconveniences like they\'re betrayal arcs in a long-running drama.'),
+    _CocktailResult(name: 'Negroni', emoji: '🍷', color: Color(0xFFE53935), personality: 'You make eye contact with animals like you\'re negotiating something.'),
+    _CocktailResult(name: 'Old Fashioned', emoji: '🥃', color: Color(0xFF8D6E63), personality: 'You maintain a suspicious level of confidence about things you clearly just made up.'),
+    _CocktailResult(name: 'Espresso Martini', emoji: '☕', color: Color(0xFF5D4037), personality: 'You operate like every situation secretly requires a dramatic speech.'),
+    _CocktailResult(name: 'Martini', emoji: '🍸', color: Color(0xFFB0BEC5), personality: 'You behave like you are constantly seconds away from revealing a master plan.'),
+    _CocktailResult(name: 'Cosmopolitan', emoji: '🍸', color: Color(0xFFEC407A), personality: 'You talk about normal life events like they\'re legendary stories from a war.'),
+    _CocktailResult(name: 'Mojito', emoji: '🌿', color: Color(0xFF4CAF50), personality: 'You radiate the energy of someone who would absolutely escalate things "for the plot."'),
+    _CocktailResult(name: 'Manhattan', emoji: '🌃', color: Color(0xFFC62828), personality: 'You carry yourself like a person who has beef with at least one bird species.'),
+    _CocktailResult(name: 'Whiskey Sour', emoji: '🥃', color: Color(0xFFFFCA28), personality: 'You pause mid-conversation like you\'re remembering a prophecy.'),
+    _CocktailResult(name: 'Dark \u0027n\u0027 Stormy', emoji: '⛈️', color: Color(0xFF455A64), personality: 'You look at everyday problems like they\'re puzzles you plan to defeat personally.'),
+    _CocktailResult(name: 'Paloma', emoji: '🌸', color: Color(0xFFF48FB1), personality: 'You treat coincidence like it\'s proof of a larger conspiracy.'),
+    _CocktailResult(name: 'Mai Tai', emoji: '🌺', color: Color(0xFFFF5722), personality: 'You maintain the energy of someone who absolutely has a fake backstory prepared.'),
+    _CocktailResult(name: 'French 75', emoji: '🎩', color: Color(0xFFE0E0E0), personality: 'You behave like background music should start playing when you enter a room.'),
+    _CocktailResult(name: 'Daiquiri', emoji: '🍓', color: Color(0xFFE91E63), personality: 'You give advice with the confidence of someone who learned it five minutes ago.'),
+    _CocktailResult(name: 'Bloody Mary', emoji: '🍅', color: Color(0xFFD32F2F), personality: 'You treat brunch like a strategic summit.'),
+    _CocktailResult(name: 'Sidecar', emoji: '🏎️', color: Color(0xFFFF8F00), personality: 'You react to small victories like you\'ve conquered a kingdom.'),
+    _CocktailResult(name: 'Aperol Spritz', emoji: '🍊', color: Color(0xFFFF7043), personality: 'You describe simple tasks like they\'re complex operations.'),
+    _CocktailResult(name: 'Sazerac', emoji: '🎷', color: Color(0xFF6D4C41), personality: 'You give off the energy of someone who has quietly declared a rivalry with a household appliance.'),
+    _CocktailResult(name: 'Pisco Sour', emoji: '🏔️', color: Color(0xFFF0F4C3), personality: 'You treat mild inconveniences like they\'re evidence of a larger plot against you.'),
+    _CocktailResult(name: 'Long Island Iced Tea', emoji: '🥃', color: Color(0xFFAB47BC), personality: 'Subtlety is something you\'ve heard about but never attempted.'),
+    _CocktailResult(name: 'Mint Julep', emoji: '🌿', color: Color(0xFF8BC34A), personality: 'You behave like politeness is a competitive sport.'),
+    _CocktailResult(name: 'Boulevardier', emoji: '🎻', color: Color(0xFFB71C1C), personality: 'You look at maps like you\'re planning something questionable.'),
+    _CocktailResult(name: 'Tom Collins', emoji: '🍋', color: Color(0xFFFFEB3B), personality: 'You maintain the confidence of someone who absolutely will try something again after it fails.'),
+    _CocktailResult(name: 'Caipirinha', emoji: '🍋', color: Color(0xFFCDDC39), personality: 'You behave like every moment might become a story later.'),
+    _CocktailResult(name: 'Vesper Martini', emoji: '🕴️', color: Color(0xFF546E7A), personality: 'You act like you\'re undercover in normal life.'),
+    _CocktailResult(name: 'White Russian', emoji: '🥛', color: Color(0xFFBCAAA4), personality: 'You bring the calm presence of someone who is clearly about to do something ridiculous.'),
+    _CocktailResult(name: 'Black Russian', emoji: '🖤', color: Color(0xFF424242), personality: 'You have the quiet intensity of someone who absolutely judges furniture.'),
+    _CocktailResult(name: 'Hurricane', emoji: '🌀', color: Color(0xFFE65100), personality: 'You escalate situations with the enthusiasm of a reality TV producer.'),
+    _CocktailResult(name: 'Singapore Sling', emoji: '🌴', color: Color(0xFFFF80AB), personality: 'You behave like you\'re part of a secret society that never actually meets.'),
+    _CocktailResult(name: 'Paper Plane', emoji: '✈️', color: Color(0xFF2979FF), personality: 'You treat random ideas like startup pitches.'),
+    _CocktailResult(name: 'Clover Club', emoji: '🍀', color: Color(0xFF7E57C2), personality: 'You give off the energy of someone who would absolutely start a cult by accident.'),
+    _CocktailResult(name: 'Corpse Reviver #2', emoji: '💀', color: Color(0xFFB0BEC5), personality: 'You maintain the vibe of someone who wakes up already skeptical of the day.'),
+    _CocktailResult(name: 'Penicillin', emoji: '🧪', color: Color(0xFFFFB300), personality: 'You describe basic self-care like it\'s advanced survival strategy.'),
+    _CocktailResult(name: 'Zombie', emoji: '🧟', color: Color(0xFF8BC34A), personality: 'You move through life like you\'re waiting for something extremely weird to happen.'),
+    _CocktailResult(name: 'Painkiller', emoji: '💊', color: Color(0xFFFF8A65), personality: 'You treat mild discomfort like it\'s character development.'),
+    _CocktailResult(name: 'Bee\'s Knees', emoji: '🐝', color: Color(0xFFFFD54F), personality: 'You behave like you personally approve or disapprove of the weather.'),
+    _CocktailResult(name: 'Grasshopper', emoji: '🦗', color: Color(0xFF4CAF50), personality: 'You get suspiciously excited about desserts.'),
+    _CocktailResult(name: 'Brandy Alexander', emoji: '🥛', color: Color(0xFFA1887F), personality: 'You act like every gathering could turn into a tradition.'),
+    _CocktailResult(name: 'Irish Coffee', emoji: '☘️', color: Color(0xFF33691E), personality: 'You operate with the quiet determination of someone trying to fix everything at once.'),
+    _CocktailResult(name: 'Rusty Nail', emoji: '🔩', color: Color(0xFF795548), personality: 'You hold grudges against inanimate objects.'),
+    _CocktailResult(name: 'Last Word', emoji: '🎤', color: Color(0xFF558B2F), personality: 'You carry the energy of someone who will absolutely continue an argument in the shower later.'),
+    _CocktailResult(name: 'Aviation', emoji: '🛩️', color: Color(0xFF90CAF9), personality: 'You behave like obscure trivia is a form of currency.'),
+    _CocktailResult(name: 'Gimlet', emoji: '💚', color: Color(0xFF76FF03), personality: 'You react to nonsense with intense analytical focus.'),
+    _CocktailResult(name: 'Tequila Sunrise', emoji: '🌅', color: Color(0xFFFF9800), personality: 'You treat aesthetics like they\'re legally binding.'),
+    _CocktailResult(name: 'Blue Hawaiian', emoji: '💎', color: Color(0xFF00B0FF), personality: 'You commit to ideas with reckless enthusiasm.'),
+    _CocktailResult(name: 'Sex on the Beach', emoji: '🏖️', color: Color(0xFFFF7043), personality: 'You laugh at things five seconds after everyone else stops laughing.'),
+    _CocktailResult(name: 'Lemon Drop', emoji: '🍋', color: Color(0xFFFFEB3B), personality: 'You celebrate small wins like they\'re national holidays.'),
+    _CocktailResult(name: 'French Martini', emoji: '🍸', color: Color(0xFFF06292), personality: 'You give the impression you know exactly what\'s going on even when you absolutely do not.'),
+    _CocktailResult(name: 'Amaretto Sour', emoji: '🍑', color: Color(0xFFFFAB40), personality: 'You look innocent but clearly have questionable instincts.'),
+    _CocktailResult(name: 'Kamikaze', emoji: '✈️', color: Color(0xFF2979FF), personality: 'You approach new situations with the confidence of someone who hasn\'t considered consequences.'),
   ];
 
   @override
@@ -234,38 +150,17 @@ class _CocktailScreenState extends State<CocktailScreen>
       _analysisProgress = 0;
       _analysisLabel = 'Queued for cocktail profiling...';
     });
-    _playCount++;
     unawaited(MinisAnalyticsService.instance.trackGamePlay('cocktail'));
 
-    final seed = DateTime.now().microsecondsSinceEpoch ^
-      name.hashCode ^
-      _playCount ^
-      igHandle.hashCode;
-    final rng = Random(seed);
-
-    final isRare = rng.nextInt(100) < 2;
-    _CocktailResult cocktail;
-
-    if (isRare) {
-      cocktail = _rareCocktails[rng.nextInt(_rareCocktails.length)];
-    } else {
-      final picked = _chaosCocktailPool[rng.nextInt(_chaosCocktailPool.length)];
-      final actionProfile = _actionProfiles[rng.nextInt(_actionProfiles.length)];
-      cocktail = _CocktailResult(
-        name: picked.name,
-        emoji: picked.emoji,
-        color: picked.color,
-        personality:
-        '$actionProfile ${_chaosAddons[rng.nextInt(_chaosAddons.length)]}',
-      );
-    }
+    final rng = Random.secure();
+    final cocktail =
+        _chaosCocktailPool[rng.nextInt(_chaosCocktailPool.length)];
 
     await _runFakeIgReview(igHandle);
     if (!mounted) return;
 
     setState(() {
       _result = cocktail;
-      _isRare = isRare;
       _isRevealing = false;
     });
     _revealController.forward(from: 0);
@@ -532,7 +427,7 @@ class _CocktailScreenState extends State<CocktailScreen>
         ? _friendController.text.trim()
         : _nameController.text.trim();
     final cocktail = _result!;
-    final displayColor = _isRare ? const Color(0xFFFFD700) : cocktail.color;
+    final displayColor = cocktail.color;
 
     return AnimatedBuilder(
       animation: _revealAnimation,
@@ -552,8 +447,8 @@ class _CocktailScreenState extends State<CocktailScreen>
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF1A1A2E),
           border: Border.all(
-            color: displayColor.withOpacity(_isRare ? 0.6 : 0.5),
-            width: _isRare ? 2.5 : 2,
+            color: displayColor.withOpacity(0.5),
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
@@ -565,28 +460,6 @@ class _CocktailScreenState extends State<CocktailScreen>
         ),
         child: Column(
           children: [
-            if (_isRare) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFFFFD700).withOpacity(0.15),
-                  border: Border.all(
-                    color: const Color(0xFFFFD700).withOpacity(0.4),
-                  ),
-                ),
-                child: Text(
-                  '✨ ULTRA RARE ✨',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFFFD700),
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
             Text(
               'PARTY MINI\'S',
               style: GoogleFonts.inter(
@@ -630,18 +503,6 @@ class _CocktailScreenState extends State<CocktailScreen>
               ),
               textAlign: TextAlign.center,
             ),
-            if (_playCount >= 3) ...[
-              const SizedBox(height: 12),
-              Text(
-                _escalation[_playCount % _escalation.length],
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: VesparaColors.secondary.withOpacity(0.5),
-                  fontStyle: FontStyle.italic,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
             const SizedBox(height: 12),
           ],
         ),
