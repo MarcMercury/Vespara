@@ -17,7 +17,7 @@ import '../../minis/presentation/minis_screen.dart';
 // Import module screens
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
-import '../../shredder/presentation/shredder_screen.dart';
+import '../../wire/presentation/wire_home_screen.dart';
 import 'welcome_tutorial.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -45,28 +45,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// The 6 Modules — richer accent colors matching VesparaGradients
   static const List<Map<String, dynamic>> _modules = [
     {
-      'name': 'DISCOVER',
-      'subtitle': 'The Hunt',
+      'name': 'BROWSE',
+      'subtitle': 'Explore Members',
       'icon': Icons.travel_explore_rounded,
       'emoji': '🔮',
       'color': Color(0xFFFF6B9D), // Electric rose
-      'description': 'Find your next obsession',
+      'description': 'Browse the community',
     },
     {
-      'name': 'NEST',
-      'subtitle': 'Your Conquests',
-      'icon': Icons.favorite_rounded,
-      'emoji': '💜',
+      'name': 'SANCTUM',
+      'subtitle': 'Inner Circle',
+      'icon': Icons.diamond_rounded,
+      'emoji': '💎',
       'color': Color(0xFF4ECDC4), // Vibrant teal
-      'description': 'CRM for connections',
+      'description': 'Full member access',
     },
     {
-      'name': 'SHREDDER',
-      'subtitle': 'Clean Slate',
-      'icon': Icons.auto_delete_rounded,
-      'emoji': '🥀',
-      'color': Color(0xFFEF5350), // Vivid crimson
-      'description': 'AI cleanup crew',
+      'name': 'WIRE',
+      'subtitle': 'Messages',
+      'icon': Icons.chat_bubble_rounded,
+      'emoji': '💬',
+      'color': Color(0xFF7C4DFF), // Deep purple
+      'description': 'Chat & group messages',
     },
     {
       'name': 'TAG',
@@ -88,9 +88,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   /// Screens for each module
   static const List<Widget> _screens = [
-    DiscoverScreen(), // 0: Discover
-    NestScreen(), // 1: Nest/Sanctum
-    ShredderScreen(), // 2: Shredder
+    DiscoverScreen(), // 0: Browse members
+    NestScreen(), // 1: Sanctum (full access)
+    WireHomeScreen(), // 2: Wire chat
     TagScreen(), // 3: TAG
     MinisScreen(), // 4: Mini's
   ];

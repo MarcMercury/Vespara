@@ -47,10 +47,19 @@ dependencies:
   # HTTP & API
   http: ^1.1.2
   
-  # Authentication
-  sign_in_with_apple: ^5.0.0
-  google_sign_in: ^6.2.1
+  # AI - Google Gemini
+  google_generative_ai: ^0.4.6
+  
+  # Authentication (members-only, email+password with TOTP MFA)
   crypto: ^3.0.3
+  
+  # Chat (Stream Chat)
+  stream_chat_flutter: ^8.3.0
+  
+  # Media Optimization (Cloudinary)
+  cloudinary_url_gen: ^1.6.0
+  
+  # Email (Resend - server-side only, HTTP calls)
   
   # Image Handling
   image_picker: ^1.1.2

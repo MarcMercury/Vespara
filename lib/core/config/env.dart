@@ -17,6 +17,10 @@ class Env {
       String.fromEnvironment('OPENAI_API_KEY');
   static const String _googleMapsApiKeyDef =
       String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+  static const String _geminiApiKeyDef =
+      String.fromEnvironment('GEMINI_API_KEY');
+  static const String _meshyApiKeyDef =
+      String.fromEnvironment('MESHY_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // APP IDENTITY
@@ -63,4 +67,43 @@ class Env {
   static String get googleMapsApiKey => _googleMapsApiKeyDef.isNotEmpty
       ? _googleMapsApiKeyDef
       : (dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GEMINI AI
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get geminiApiKey => _geminiApiKeyDef.isNotEmpty
+      ? _geminiApiKeyDef
+      : (dotenv.env['GEMINI_API_KEY'] ?? '');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MESHY (3D AI Generation)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get meshyApiKey => _meshyApiKeyDef.isNotEmpty
+      ? _meshyApiKeyDef
+      : (dotenv.env['MESHY_API_KEY'] ?? '');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STREAM CHAT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get streamChatApiKey =>
+      dotenv.env['STREAM_CHAT_API_KEY'] ?? '';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CLOUDINARY (Media Optimization)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get cloudinaryCloudName =>
+      dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
+
+  static String get cloudinaryUploadPreset =>
+      dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RESEND (Transactional Email - key used server-side in Edge Functions)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get resendApiKey => dotenv.env['RESEND_API_KEY'] ?? '';
 }

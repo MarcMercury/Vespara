@@ -11,7 +11,7 @@ class SupabaseService {
   static User? get currentUser => _client.auth.currentUser;
 
   // ============================================
-  // AUTH
+  // AUTH (Email + Password + Required MFA)
   // ============================================
 
   static Future<AuthResponse> signUp({
@@ -39,6 +39,21 @@ class SupabaseService {
   static Future<void> resetPassword(String email) async {
     await _client.auth.resetPasswordForEmail(email);
   }
+
+  /// Check if user has completed MFA enrollment
+  static Future<bool> hasMfaEnrolled() async {
+    final factors = await _client.auth.mfa.listFactors();
+    return factors.totp.any((f) => f.status == FactorStatus.verified);
+  }
+
+  /// Get current MFA assurance level
+  static Future<AuthMFAGetAuthenticatorAssuranceLevelResponse>
+      getMfaAssuranceLevel() async {
+    return _client.auth.mfa.getAuthenticatorAssuranceLevel();
+  }
+
+  /// Get active sessions for session management
+  static Session? get currentSession => _client.auth.currentSession;
 
   // ============================================
   // PROFILE
