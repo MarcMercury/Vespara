@@ -38,6 +38,12 @@ verify_jwt = true
 [functions.stream-chat-token]
 verify_jwt = true
 
+[functions.send-email]
+verify_jwt = true
+
+[functions.admin-approve-member]
+verify_jwt = true
+
 # Edge Functions require these environment variables
 # Set in Supabase Dashboard > Project Settings > Edge Functions > Secrets
 # - OPENAI_API_KEY
@@ -45,3 +51,4 @@ verify_jwt = true
 # - STREAM_CHAT_API_KEY
 # - STREAM_CHAT_API_SECRET
 # - RESEND_API_KEY
+# - ADMIN_USER_IDS (comma-separated list of admin user UUIDs)

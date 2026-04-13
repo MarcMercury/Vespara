@@ -21,6 +21,14 @@ class Env {
       String.fromEnvironment('GEMINI_API_KEY');
   static const String _meshyApiKeyDef =
       String.fromEnvironment('MESHY_API_KEY');
+  static const String _giphyApiKeyDef =
+      String.fromEnvironment('GIPHY_API_KEY');
+  static const String _ipinfoApiKeyDef =
+      String.fromEnvironment('IPINFO_API_KEY');
+  static const String _abstractApiKeyDef =
+      String.fromEnvironment('ABSTRACT_API_KEY');
+  static const String _huggingfaceKeyDef =
+      String.fromEnvironment('HUGGINGFACE_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // APP IDENTITY
@@ -85,6 +93,30 @@ class Env {
       : (dotenv.env['MESHY_API_KEY'] ?? '');
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // GIPHY (GIF Search & Chat Reactions)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get giphyApiKey => _giphyApiKeyDef.isNotEmpty
+      ? _giphyApiKeyDef
+      : (dotenv.env['GIPHY_API_KEY'] ?? '');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IPINFO (IP Geolocation)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get ipinfoApiKey => _ipinfoApiKeyDef.isNotEmpty
+      ? _ipinfoApiKeyDef
+      : (dotenv.env['IPINFO_API_KEY'] ?? '');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ABSTRACT API (Email Validation)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get abstractApiKey => _abstractApiKeyDef.isNotEmpty
+      ? _abstractApiKeyDef
+      : (dotenv.env['ABSTRACT_API_KEY'] ?? '');
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // STREAM CHAT
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -106,4 +138,26 @@ class Env {
   // ═══════════════════════════════════════════════════════════════════════════
 
   static String get resendApiKey => dotenv.env['RESEND_API_KEY'] ?? '';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIVEKIT (Voice/Video — Phase 2)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get livekitUrl => dotenv.env['LIVEKIT_URL'] ?? '';
+  static String get livekitApiKey => dotenv.env['LIVEKIT_API_KEY'] ?? '';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MAPBOX (Optional — enhanced location UX)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get mapboxAccessToken =>
+      dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? '';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HUGGING FACE (AI Inference API)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  static String get huggingfaceKey => _huggingfaceKeyDef.isNotEmpty
+      ? _huggingfaceKeyDef
+      : (dotenv.env['HUGGINGFACE_KEY'] ?? '');
 }

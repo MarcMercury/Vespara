@@ -19,7 +19,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../widgets/qr_connect_modal.dart';
+import 'admin_panel_screen.dart';
 import 'edit_profile_screen.dart';
+import 'security_settings_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// THE MIRROR - Module 1
@@ -2897,6 +2899,23 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   s.phone ?? 'Not set', 
                   Icons.phone_outlined,
                   () => _showEditPhoneDialog(s),),
+            ]),
+            const SizedBox(height: 16),
+            _buildSettingsSection('Security', [
+              _buildSettingTile(
+                  'Security & Privacy',
+                  'MFA, sessions, data',
+                  Icons.security,
+                  () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const SecuritySettingsScreen(),
+                  )),),
+              _buildSettingTile(
+                  'Admin Panel',
+                  'Manage members',
+                  Icons.admin_panel_settings,
+                  () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const AdminPanelScreen(),
+                  )),),
             ]),
             const SizedBox(height: 24),
             _buildDangerZone(s),

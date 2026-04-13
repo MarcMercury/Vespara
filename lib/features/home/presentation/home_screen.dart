@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -11,13 +10,13 @@ import '../../../core/theme/vespara_gradients.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/page_transitions.dart';
 import '../../../core/widgets/premium_effects.dart';
-import '../../discover/presentation/discover_screen.dart';
+import '../../browse/presentation/browse_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
 import '../../minis/presentation/minis_screen.dart';
 // Import module screens
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
-import '../../wire/presentation/wire_home_screen.dart';
+import '../../wire/presentation/wire_entry_screen.dart';
 import 'welcome_tutorial.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -87,12 +86,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ];
 
   /// Screens for each module
-  static const List<Widget> _screens = [
-    DiscoverScreen(), // 0: Browse members
-    NestScreen(), // 1: Sanctum (full access)
-    WireHomeScreen(), // 2: Wire chat
-    TagScreen(), // 3: TAG
-    MinisScreen(), // 4: Mini's
+  static final List<Widget> _screens = [
+    const BrowseScreen(), // 0: Browse members
+    const NestScreen(), // 1: Sanctum (full access)
+    WireEntryScreen(), // 2: Wire chat
+    const TagScreen(), // 3: TAG
+    const MinisScreen(), // 4: Mini's
   ];
 
   @override
