@@ -40,10 +40,22 @@ class SupabaseService {
     await _client.auth.resetPasswordForEmail(email);
   }
 
-  /// Check if user has completed MFA enrollment
+  /// Check if user has completed MFA enrollment (TOTP or email)
   static Future<bool> hasMfaEnrolled() async {
+    // Check TOTP first
     final factors = await _client.auth.mfa.listFactors();
-    return factors.totp.any((f) => f.status == FactorStatus.verified);
+    if (factors.totp.any((f) => f.status == FactorStatus.verified)) {
+      return true;
+    }
+    // Check email OTP
+    if (currentUser == null) return false;
+    final profile = await _client
+        .from('profiles')
+        .select('mfa_method, mfa_enrolled')
+        .eq('id', currentUser!.id)
+        .maybeSingle();
+    return profile?['mfa_method'] == 'email' &&
+        (profile?['mfa_enrolled'] == true);
   }
 
   /// Get current MFA assurance level

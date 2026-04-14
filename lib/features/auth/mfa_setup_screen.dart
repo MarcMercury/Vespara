@@ -93,6 +93,12 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
         code: code,
       );
 
+      // Mark TOTP as the chosen MFA method in profile
+      await supabase
+          .from('profiles')
+          .update({'mfa_method': 'totp', 'mfa_enrolled': true})
+          .eq('id', supabase.auth.currentUser!.id);
+
       // MFA is now enrolled and verified. AuthGate will handle navigation.
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);

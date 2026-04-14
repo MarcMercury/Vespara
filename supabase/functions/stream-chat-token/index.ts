@@ -35,10 +35,27 @@ serve(async (req: Request) => {
       })
     }
 
-    // Verify MFA is completed (AAL2)
-    // The JWT should have aal2 claim if MFA was verified
+    // Verify MFA is completed (AAL2 for TOTP, or email OTP verification)
+    // The JWT should have aal2 claim if TOTP MFA was verified
     const jwt = JSON.parse(atob(token.split('.')[1]))
-    if (jwt.aal !== 'aal2') {
+    let mfaVerified = jwt.aal === 'aal2'
+
+    // If not AAL2, check if user has email OTP verified recently (within 24 hours)
+    if (!mfaVerified) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('mfa_method, mfa_email_verified_at')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.mfa_method === 'email' && profile?.mfa_email_verified_at) {
+        const verifiedAt = new Date(profile.mfa_email_verified_at)
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+        mfaVerified = verifiedAt > twentyFourHoursAgo
+      }
+    }
+
+    if (!mfaVerified) {
       return new Response(JSON.stringify({ error: 'MFA verification required' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

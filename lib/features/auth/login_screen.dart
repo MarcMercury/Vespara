@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'mfa_email_verify_screen.dart';
+import 'mfa_method_screen.dart';
 import 'mfa_setup_screen.dart';
 import 'mfa_verify_screen.dart';
 
@@ -59,10 +61,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
 
         if (response.user != null && mounted) {
-          // After signup, navigate to MFA setup (required)
+          // After signup, let user choose MFA method
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => const MfaSetupScreen(),
+              builder: (_) => const MfaMethodScreen(),
             ),
           );
         }
@@ -81,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
         if (totpFactors.isNotEmpty &&
             totpFactors.any((f) => f.status == FactorStatus.verified)) {
-          // User has MFA enrolled, need to verify
+          // User has TOTP MFA enrolled, need to verify
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => MfaVerifyScreen(
@@ -92,12 +94,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           );
         } else {
-          // User doesn't have MFA yet - force setup
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const MfaSetupScreen(),
-            ),
-          );
+          // Check if user has email OTP enrolled
+          final profile = await supabase
+              .from('profiles')
+              .select('mfa_method, mfa_enrolled')
+              .eq('id', supabase.auth.currentUser!.id)
+              .maybeSingle();
+
+          final mfaMethod = profile?['mfa_method'] as String?;
+          final mfaEnrolled = profile?['mfa_enrolled'] as bool? ?? false;
+
+          if (mfaMethod == 'email' && mfaEnrolled && mounted) {
+            // User uses email OTP - send code and verify
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const MfaEmailVerifyScreen(),
+              ),
+            );
+          } else if (mounted) {
+            // User doesn't have any MFA yet - let them choose
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const MfaMethodScreen(),
+              ),
+            );
+          }
         }
       }
     } on AuthException catch (e) {
