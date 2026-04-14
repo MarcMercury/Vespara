@@ -26,14 +26,13 @@ class TravelService {
           .from('travel_plans')
           .select('*, travel_companions(*)')
           .eq('user_id', _userId!)
-          .eq('is_cancelled', false)
-          .order('start_date');
+          .eq('is_cancelled', false);
 
       if (!includePast) {
         query = query.gte('end_date', DateTime.now().toIso8601String().split('T').first);
       }
 
-      final data = await query;
+      final data = await query.order('start_date');
       return (data as List)
           .map((json) => TravelPlan.fromJson(json as Map<String, dynamic>))
           .toList();

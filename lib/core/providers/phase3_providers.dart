@@ -36,7 +36,7 @@ final matchInsightsProvider =
 final bioOptionsProvider =
     FutureProvider.family<List<BioOption>, String>((ref, currentBio) async {
   final coach = ref.watch(aiProfileCoachProvider);
-  return coach.getImprovedBios(currentBio);
+  return coach.getImprovedBios();
 });
 
 /// Get conversation starters for a match
@@ -89,7 +89,7 @@ class BioEditorNotifier extends StateNotifier<BioEditorState> {
   Future<void> loadOptions(String currentBio) async {
     state = state.copyWith(isLoading: true, originalBio: currentBio);
 
-    final options = await _coach.getImprovedBios(currentBio);
+    final options = await _coach.getImprovedBios();
 
     state = state.copyWith(
       isLoading: false,

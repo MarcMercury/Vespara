@@ -8,7 +8,7 @@ import 'core/config/env.dart';
 import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart' as auth;
-import 'features/home/presentation/home_screen.dart';
+import 'features/home/presentation/home_screen_v2.dart';
 import 'features/onboarding/widgets/exclusive_onboarding_screen.dart';
 
 Future<void> main() async {

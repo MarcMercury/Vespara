@@ -136,7 +136,7 @@ class AiPhotoEditService {
   /// then apply the recommended Cloudinary transformations.
   Future<Map<String, dynamic>> analyzeAndRecommend(String imageUrl) async {
     try {
-      final apiKey = Env.openAiKey;
+      final apiKey = Env.openaiApiKey;
       if (apiKey.isEmpty) {
         return {
           'recommendations': ['enhance', 'crop_smart'],

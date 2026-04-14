@@ -741,6 +741,7 @@ class _StickFigurePainter extends CustomPainter {
 
   /// Card 9: Flirty text at work — stick figure at desk, phone with hearts popping out
   void _drawFlirtyText(Canvas canvas, Size size, Paint paint, Paint fillPaint, double unit) {
+    // ignore: unused_local_variable
     final cx = size.width / 2;
     // Desk
     canvas.drawLine(Offset(unit, 6 * unit), Offset(6 * unit, 6 * unit), paint);
@@ -1115,6 +1116,7 @@ class _StickFigurePainter extends CustomPainter {
 
   /// Card 21: Masturbation — solo figure reclining on couch, sparkles, content face
   void _drawMasturbation(Canvas canvas, Size size, Paint paint, Paint fillPaint, double unit) {
+    // ignore: unused_local_variable
     final cx = size.width / 2;
     // Couch
     final couchPath = Path();
@@ -1290,7 +1292,8 @@ class _StickFigurePainter extends CustomPainter {
 
   /// Card 30: All-night session — moon, clock, two bumps in bed
   void _drawAllNighter(Canvas canvas, Size size, Paint paint, Paint fillPaint, double unit) {
-    final cx = size.width / 2;
+    // ignore: unused_local_variable
+    final cx2 = size.width / 2;
     canvas.drawArc(Rect.fromCircle(center: Offset(1.5 * unit, 1.5 * unit), radius: unit * 0.6), 0.5, 4.5, false, paint);
     _drawSparkle(canvas, Offset(3.5 * unit, unit), unit * 0.2, paint);
     _drawSparkle(canvas, Offset(6 * unit, 0.8 * unit), unit * 0.25, paint);
@@ -2804,6 +2807,7 @@ class _StickFigurePainter extends CustomPainter {
   // ═══════════════════════════════════════════════════════════════════════════
   void _drawPlaceholder(Canvas canvas, Size size, Paint paint, Paint fillPaint, double unit) {
     final cx = size.width / 2;
+    // ignore: unused_local_variable
     final cy = size.height / 2;
     // Simple flame as placeholder
     final flamePath = Path();

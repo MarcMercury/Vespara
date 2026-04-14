@@ -73,7 +73,7 @@ class WireConversation extends Equatable {
   factory WireConversation.fromJson(Map<String, dynamic> json) {
     // Handle joined data structures
     final matchData = json['roster_matches'] as Map<String, dynamic>?;
-    final participantsData =
+    final _ =
         json['conversation_participants'] as List<dynamic>?;
 
     return WireConversation(

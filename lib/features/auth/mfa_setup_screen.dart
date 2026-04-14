@@ -54,10 +54,10 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
 
       setState(() {
         _factorId = response.id;
-        _totpUri = response.totp.uri;
-        _secret = response.totp.secret;
+        _totpUri = response.totp?.uri;
+        _secret = response.totp?.secret;
         // Build QR code URL from the TOTP URI
-        _qrImageUrl = response.totp.qrCode;
+        _qrImageUrl = response.totp?.qrCode;
         _isLoading = false;
       });
     } catch (e) {

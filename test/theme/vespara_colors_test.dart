@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vespara/core/theme/vespara_colors.dart';
+import 'package:vespara/core/theme/app_theme.dart';
 
 void main() {
   group('VesparaColors', () {

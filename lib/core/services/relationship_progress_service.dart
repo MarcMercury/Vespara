@@ -89,6 +89,7 @@ class RelationshipProgressService {
 
       final matchedAt = DateTime.parse(match['created_at'] as String);
       final isUser1 = match['user1_id'] == _userId;
+      // ignore: unused_local_variable
       final otherId = isUser1 ? match['user2_id'] : match['user1_id'];
 
       // Get message stats

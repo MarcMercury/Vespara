@@ -400,7 +400,7 @@ class GroupsNotifier extends StateNotifier<GroupsState> {
 
   /// Leave a group
   Future<bool> leaveGroup(String groupId) async {
-    final group = state.groups.firstWhere(
+    final _ = state.groups.firstWhere(
       (g) => g.id == groupId,
       orElse: () => throw Exception('Group not found'),
     );

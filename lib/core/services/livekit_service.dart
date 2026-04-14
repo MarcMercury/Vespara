@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../config/env.dart';
-
 /// LiveKit Service — Phase 2 scaffolding for voice/video rooms.
 /// This service is a placeholder. When LiveKit credentials are configured,
 /// it will handle room creation, joining, and audio/video track management.

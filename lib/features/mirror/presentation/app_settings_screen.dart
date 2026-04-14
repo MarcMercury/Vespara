@@ -165,7 +165,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           indicator: BoxDecoration(
-            color: VesparaColors.glow.withValues(alpha: 0.2),
+            color: VesparaColors.glow.withOpacity(0.2),
             borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
           ),
           indicatorSize: TabBarIndicatorSize.tab,
@@ -264,7 +264,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
           border: Border.all(
             color: isEnabled
-                ? VesparaColors.glow.withValues(alpha: 0.3)
+                ? VesparaColors.glow.withOpacity(0.3)
                 : VesparaColors.border,
           ),
         ),
@@ -275,7 +275,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isEnabled
-                      ? VesparaColors.glow.withValues(alpha: 0.2)
+                      ? VesparaColors.glow.withOpacity(0.2)
                       : VesparaColors.background,
                   borderRadius:
                       BorderRadius.circular(VesparaBorderRadius.button),
@@ -301,7 +301,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               trailing: Switch(
                 value: isEnabled,
                 onChanged: (_) => onToggle(),
-                activeThumbColor: VesparaColors.glow,
+                thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
               ),
             ),
             if (!isEnabled)
@@ -346,9 +346,9 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
   Widget _buildPrivacyNote() => Container(
         padding: const EdgeInsets.all(VesparaSpacing.md),
         decoration: BoxDecoration(
-          color: VesparaColors.glow.withValues(alpha: 0.1),
+          color: VesparaColors.glow.withOpacity(0.1),
           borderRadius: BorderRadius.circular(VesparaBorderRadius.button),
-          border: Border.all(color: VesparaColors.glow.withValues(alpha: 0.3)),
+          border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
         ),
         child: const Row(
           children: [
@@ -511,7 +511,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                               color: VesparaColors.secondary, fontSize: 12,),),
                       value: option.value,
                       onChanged: option.onChanged,
-                      activeThumbColor: VesparaColors.glow,
+                      thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                     ),
                   )
                   .toList(),
@@ -545,7 +545,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 Switch(
                   value: false,
                   onChanged: (v) {},
-                  activeThumbColor: VesparaColors.glow,
+                  thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                 ),
               ],
             ),
@@ -657,7 +657,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                         color: VesparaColors.glow,),
                     value: _showVerifiedOnly,
                     onChanged: (v) => setState(() => _showVerifiedOnly = v),
-                    activeThumbColor: VesparaColors.glow,
+                    thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                   ),
                   const Divider(height: 1, color: VesparaColors.border),
                   SwitchListTile(
@@ -671,7 +671,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                         color: VesparaColors.glow,),
                     value: _showActiveRecently,
                     onChanged: (v) => setState(() => _showActiveRecently = v),
-                    activeThumbColor: VesparaColors.glow,
+                    thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                   ),
                 ],
               ),
@@ -711,7 +711,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: VesparaColors.glow.withValues(alpha: 0.2),
+                    color: VesparaColors.glow.withOpacity(0.2),
                     borderRadius:
                         BorderRadius.circular(VesparaBorderRadius.small),
                   ),
@@ -776,7 +776,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       padding: const EdgeInsets.all(VesparaSpacing.sm),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? VesparaColors.glow.withValues(alpha: 0.2)
+                            ? VesparaColors.glow.withOpacity(0.2)
                             : VesparaColors.background,
                         borderRadius:
                             BorderRadius.circular(VesparaBorderRadius.button),
@@ -1054,7 +1054,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     }
                     onChanged(newValues);
                   },
-                  selectedColor: VesparaColors.glow.withValues(alpha: 0.3),
+                  selectedColor: VesparaColors.glow.withOpacity(0.3),
                   checkmarkColor: VesparaColors.glow,
                   labelStyle: TextStyle(
                     color:
@@ -1095,13 +1095,13 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    VesparaColors.glow.withValues(alpha: 0.2),
-                    VesparaColors.secondary.withValues(alpha: 0.2),
+                    VesparaColors.glow.withOpacity(0.2),
+                    VesparaColors.secondary.withOpacity(0.2),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(VesparaBorderRadius.card),
                 border: Border.all(
-                    color: VesparaColors.glow.withValues(alpha: 0.5),),
+                    color: VesparaColors.glow.withOpacity(0.5),),
               ),
               child: SwitchListTile(
                 title: const Text(
@@ -1120,7 +1120,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     color: VesparaColors.glow, size: 32,),
                 value: _aiSuggestionsEnabled,
                 onChanged: (v) => setState(() => _aiSuggestionsEnabled = v),
-                activeThumbColor: VesparaColors.glow,
+                thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
               ),
             ),
 
@@ -1145,7 +1145,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                           color: VesparaColors.glow,),
                       value: _aiMatchInsights,
                       onChanged: (v) => setState(() => _aiMatchInsights = v),
-                      activeThumbColor: VesparaColors.glow,
+                      thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                     ),
                     const Divider(height: 1, color: VesparaColors.border),
                     SwitchListTile(
@@ -1159,7 +1159,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                           color: VesparaColors.glow,),
                       value: _aiConversationTips,
                       onChanged: (v) => setState(() => _aiConversationTips = v),
-                      activeThumbColor: VesparaColors.glow,
+                      thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                     ),
                     const Divider(height: 1, color: VesparaColors.border),
                     SwitchListTile(
@@ -1174,7 +1174,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       value: _aiExperienceRecommendations,
                       onChanged: (v) =>
                           setState(() => _aiExperienceRecommendations = v),
-                      activeThumbColor: VesparaColors.glow,
+                      thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                     ),
                   ],
                 ),
@@ -1270,7 +1270,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                         style: TextStyle(color: VesparaColors.error),),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                          color: VesparaColors.error.withValues(alpha: 0.5),),
+                          color: VesparaColors.error.withOpacity(0.5),),
                     ),
                   ),
                 ],
@@ -1291,7 +1291,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           setState(() => _aiPersonality = value);
         }
       },
-      selectedColor: VesparaColors.glow.withValues(alpha: 0.3),
+      selectedColor: VesparaColors.glow.withOpacity(0.3),
       labelStyle: TextStyle(
         color: isSelected ? VesparaColors.glow : VesparaColors.primary,
         fontSize: 12,

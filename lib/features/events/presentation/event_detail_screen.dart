@@ -669,7 +669,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: VesparaColors.glow.withValues(alpha: 0.15),
+                        color: VesparaColors.glow.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
@@ -696,8 +696,8 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: _event.isFull
-                          ? VesparaColors.error.withValues(alpha: 0.2)
-                          : VesparaColors.glow.withValues(alpha: 0.2),
+                          ? VesparaColors.error.withOpacity(0.2)
+                          : VesparaColors.glow.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -833,7 +833,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: VesparaColors.glow.withValues(alpha: 0.3),
+                backgroundColor: VesparaColors.glow.withOpacity(0.3),
                 backgroundImage: guest.userAvatarUrl != null
                     ? NetworkImage(guest.userAvatarUrl!)
                     : null,

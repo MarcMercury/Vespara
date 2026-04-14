@@ -322,15 +322,18 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Photo
-                member.photos.isNotEmpty
-                    ? Image.network(
-                        member.photos.first,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _buildPlaceholder(member),
-                      )
-                    : _buildPlaceholder(member),
+                // Photo with swipeable carousel for multiple photos
+                if (member.photos.length > 1)
+                  _MiniPhotoCarousel(photos: member.photos)
+                else if (member.photos.isNotEmpty)
+                  Image.network(
+                    member.photos.first,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        _buildPlaceholder(member),
+                  )
+                else
+                  _buildPlaceholder(member),
 
                 // Gradient overlay
                 DecoratedBox(
@@ -340,18 +343,64 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        VesparaColors.background.withOpacity(0.85),
+                        Colors.transparent,
+                        VesparaColors.background.withOpacity(0.65),
+                        VesparaColors.background.withOpacity(0.95),
                       ],
-                      stops: const [0.5, 1.0],
+                      stops: const [0.0, 0.4, 0.7, 1.0],
                     ),
                   ),
                 ),
 
-                // Info
+                // Online indicator
                 Positioned(
-                  bottom: 12,
-                  left: 12,
-                  right: 12,
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: VesparaColors.online,
+                      border: Border.all(color: VesparaColors.background, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: VesparaColors.online.withOpacity(0.5),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Photo count indicator
+                if (member.photos.length > 1)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.background.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.photo_library, size: 10, color: Colors.white70),
+                          const SizedBox(width: 3),
+                          Text('${member.photos.length}',
+                              style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Info overlay
+                Positioned(
+                  bottom: 10,
+                  left: 10,
+                  right: 10,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -360,8 +409,8 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                           Expanded(
                             child: Text(
                               '${member.displayName ?? "?"}, ${member.age ?? "?"}',
-                              style: const TextStyle(
-                                fontSize: 16,
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: VesparaColors.primary,
                               ),
@@ -370,19 +419,70 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                             ),
                           ),
                           if (member.isVerified)
-                            const Icon(Icons.verified,
-                                color: VesparaColors.glow, size: 16),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(Icons.verified,
+                                  color: VesparaColors.glow, size: 15),
+                            ),
                         ],
                       ),
-                      if (member.location != null)
-                        Text(
-                          member.location!,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: VesparaColors.secondary,
+                      if (member.headline != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            member.headline!,
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: VesparaColors.secondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                      if (member.location != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.location_on,
+                                  size: 10, color: VesparaColors.accentCyan),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  member.location!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    color: VesparaColors.secondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      // Tags preview
+                      if (member.relationshipTypes.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Wrap(
+                            spacing: 4,
+                            children: member.relationshipTypes.take(2).map((t) =>
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: VesparaColors.glow.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(t,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 8,
+                                      color: VesparaColors.glow,
+                                    )),
+                              ),
+                            ).toList(),
+                          ),
                         ),
                     ],
                   ),
@@ -778,12 +878,13 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Browse Filters',
-                style: TextStyle(
-                  fontSize: 22,
+                style: GoogleFonts.cinzel(
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: VesparaColors.primary,
+                  letterSpacing: 2,
                 ),
               ),
               const SizedBox(height: 24),
@@ -791,7 +892,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               // Age Range
               Text(
                 'Age Range: ${_ageRange.start.toInt()} - ${_ageRange.end.toInt()}',
-                style: const TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: VesparaColors.secondary,
@@ -802,7 +903,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 min: 18,
                 max: 65,
                 divisions: 47,
-                activeColor: VesparaColors.glow,
+                activeColor: VesparaColors.accentRose,
                 onChanged: (v) {
                   setModalState(() => _ageRange = v);
                   setState(() => _ageRange = v);
@@ -813,7 +914,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
               const SizedBox(height: 16),
               Text(
                 'Max Distance: ${_maxDistance.toInt()} miles',
-                style: const TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: VesparaColors.secondary,
@@ -823,7 +924,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 value: _maxDistance,
                 min: 1,
                 max: 200,
-                activeColor: VesparaColors.glow,
+                activeColor: VesparaColors.accentRose,
                 onChanged: (v) {
                   setModalState(() => _maxDistance = v);
                   setState(() => _maxDistance = v);
@@ -839,11 +940,15 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                     _loadMembers();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: VesparaColors.glow,
-                    foregroundColor: VesparaColors.background,
+                    backgroundColor: VesparaColors.accentRose,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('Apply Filters'),
+                  child: const Text('Apply Filters',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -853,4 +958,71 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       ),
     );
   }
+}
+
+/// Mini Photo Carousel for Browse grid cards
+class _MiniPhotoCarousel extends StatefulWidget {
+  const _MiniPhotoCarousel({required this.photos});
+  final List<String> photos;
+
+  @override
+  State<_MiniPhotoCarousel> createState() => _MiniPhotoCarouselState();
+}
+
+class _MiniPhotoCarouselState extends State<_MiniPhotoCarousel> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity == null) return;
+          if (details.primaryVelocity! < 0 &&
+              _currentIndex < widget.photos.length - 1) {
+            setState(() => _currentIndex++);
+          } else if (details.primaryVelocity! > 0 && _currentIndex > 0) {
+            setState(() => _currentIndex--);
+          }
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Image.network(
+                widget.photos[_currentIndex],
+                key: ValueKey(_currentIndex),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: VesparaColors.surface,
+                  child: const Icon(Icons.broken_image,
+                      color: VesparaColors.inactive),
+                ),
+              ),
+            ),
+            // Photo indicators at top
+            Positioned(
+              top: 6,
+              left: 6,
+              right: 6,
+              child: Row(
+                children: List.generate(
+                  widget.photos.length.clamp(0, 6),
+                  (i) => Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      decoration: BoxDecoration(
+                        color: i == _currentIndex
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }

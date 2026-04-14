@@ -21,7 +21,6 @@ import '../../../core/widgets/photo_ranking_sheet.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../../ludus/presentation/tags_screen.dart' show TagScreen;
 import '../../wire/presentation/wire_chat_screen.dart';
-import '../../wire/presentation/wire_screen.dart';
 import 'group_detail_screen.dart';
 import 'groups_section.dart';
 

@@ -502,7 +502,7 @@ class _WireGroupInfoScreenState extends ConsumerState<WireGroupInfoScreen> {
                 'Mute Notifications',
                 style: TextStyle(color: VesparaColors.primary),
               ),
-              activeThumbColor: VesparaColors.glow,
+              thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
             ),
             const Divider(height: 1, color: VesparaColors.border, indent: 56),
 

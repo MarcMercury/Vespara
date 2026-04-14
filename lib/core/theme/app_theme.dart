@@ -300,7 +300,7 @@ class VesparaTheme {
         // ═══════════════════════════════════════════════════════════════════════
         // CARD THEME
         // ═══════════════════════════════════════════════════════════════════════
-        cardTheme: CardThemeData(
+        cardTheme: CardTheme(
           color: VesparaColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -472,7 +472,7 @@ class VesparaTheme {
         // ═══════════════════════════════════════════════════════════════════════
         // DIALOG
         // ═══════════════════════════════════════════════════════════════════════
-        dialogTheme: DialogThemeData(
+        dialogTheme: DialogTheme(
           backgroundColor: VesparaColors.surfaceElevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VesparaBorderRadius.tile),

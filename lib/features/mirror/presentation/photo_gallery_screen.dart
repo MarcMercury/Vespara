@@ -2,17 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/providers/profile_photos_provider.dart';
 import '../../../core/services/ai_photo_edit_service.dart';
-import '../../../core/services/cloudinary_service.dart';
 import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/premium_effects.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// PHOTO GALLERY SCREEN
@@ -395,7 +391,7 @@ class _PhotoGalleryScreenState extends ConsumerState<PhotoGalleryScreen> {
           _showTimeSensitiveSheet(photo);
         },
         onSetPrimary: () {
-          ref.read(profilePhotosProvider.notifier).setPrimary(photo.id);
+          ref.read(profilePhotosProvider.notifier).setAsPrimary(photo.id);
           Navigator.pop(context);
         },
         onDelete: () {

@@ -50,7 +50,7 @@ void main() {
         'user_b_priority': 'new',
       };
 
-      final match = Match.fromJson(json, currentUserId: 'user-a-id');
+      final match = Match.fromJson(json, 'user-a-id');
 
       expect(match.id, 'test-id-123');
       expect(match.matchedUserId, 'user-b-id');
@@ -69,10 +69,10 @@ void main() {
         'is_super_match': false,
       };
 
-      final matchAsUserA = Match.fromJson(json, currentUserId: 'user-a-id');
+      final matchAsUserA = Match.fromJson(json, 'user-a-id');
       expect(matchAsUserA.matchedUserId, 'user-b-id');
 
-      final matchAsUserB = Match.fromJson(json, currentUserId: 'user-b-id');
+      final matchAsUserB = Match.fromJson(json, 'user-b-id');
       expect(matchAsUserB.matchedUserId, 'user-a-id');
     });
   });

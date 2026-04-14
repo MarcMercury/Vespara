@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ai_service.dart';
@@ -462,6 +461,7 @@ Energy balance: ${dna1.socialEnergyProfile} ↔ ${dna2.socialEnergyProfile}
     final hasGentle = traits.any((t) => t.contains('Gentle'));
     final hasRoleplay = traits.any((t) => t.contains('Roleplay'));
     final hasExhibitionist = traits.any((t) => t.contains('Exhibitionist'));
+    // ignore: unused_local_variable
     final hasVoyeur = traits.any((t) => t.contains('Voyeur'));
     final isBeginner = traits.any((t) => t.contains('Beginner') || t.contains('Curious'));
     final isExperienced = traits.any((t) => t.contains('Experienced'));

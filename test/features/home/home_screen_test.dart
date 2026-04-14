@@ -1,24 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
   group('Home Screen Structure', () {
     testWidgets('home screen should have 6 module tiles', (tester) async {
       // Note: This test validates the expected structure
       // Full widget test requires mocking Supabase
-      
-      // The home screen should contain exactly 6 tiles:
-      // Mirror, Discover, Sanctum (Nest), Planner, Groups (Events), Shredder, TAG
-      const expectedModules = [
-        'MIRROR',
-        'DISCOVER', 
-        'SANCTUM',
-        'PLANNER',
-        'GROUPS',
-        'SHREDDER',
-        'TAG',
-      ];
       
       // Verify we have the expected module count (6 after consolidation)
       // Note: Mirror was removed from tiles, added to header

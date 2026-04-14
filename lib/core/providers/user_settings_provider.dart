@@ -33,7 +33,7 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
       }
 
       // Create default settings if none exist
-      final defaults = UserSettings.defaults(user.id);
+      final _ = UserSettings.defaults(user.id);
       final insertResponse = await _supabase
           .from('user_settings')
           .insert({
@@ -55,6 +55,19 @@ class UserSettingsNotifier extends AsyncNotifier<UserSettings?> {
     'notify_new_matches',
     'notify_date_reminders',
     'notify_ai_insights',
+    'notify_photo_views',
+    'notify_photo_expiring',
+    'notify_new_events',
+    'notify_group_activity',
+    'notify_game_invites',
+    'notify_travel_overlaps',
+    'notify_community_updates',
+    'notify_weekly_digest',
+    'quiet_hours_start',
+    'quiet_hours_end',
+    'push_enabled',
+    'email_enabled',
+    'sms_enabled',
     'show_online_status',
     'read_receipts',
     'profile_visible',

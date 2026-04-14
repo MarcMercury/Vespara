@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/services/admin_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -369,6 +368,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
 
   Widget _buildUserCard(AdminUser user) {
     final name = user.displayName ?? 'Unknown';
+    // ignore: unused_local_variable
     final createdAt = user.createdAt;
     final lastLogin = user.lastLoginAt;
 

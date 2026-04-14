@@ -206,9 +206,6 @@ class StreamChatWireScreen extends StatelessWidget {
             textLowEmphasis: VesparaColors.secondary,
             accentPrimary: VesparaColors.glow,
           ),
-      channelListViewTheme: const stream.StreamChannelListViewThemeData(
-        backgroundColor: VesparaColors.background,
-      ),
       channelPreviewTheme: stream.StreamChannelPreviewThemeData(
         titleStyle: const TextStyle(
           color: VesparaColors.primary,

@@ -305,6 +305,7 @@ class MatchStateNotifier extends StateNotifier<MatchState> {
     // Persist to database
     if (_currentUserId != null) {
       try {
+        // ignore: unused_local_variable
         final isUserA = state.matches.any((m) => m.id == matchId);
         // Determine which column to update based on user position in match
         final matchData = await _supabase

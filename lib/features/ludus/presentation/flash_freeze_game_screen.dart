@@ -289,6 +289,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
 
       // Generate next signal - never repeat the same signal back-to-back
       // Get available signals (excluding current signal)
+      // ignore: unused_local_variable
       final availableSignals =
           SignalType.values.where((s) => s != _currentSignal).toList();
 
@@ -394,7 +395,7 @@ class _FlashFreezeGameScreenState extends State<FlashFreezeGameScreen>
 
   Future<void> _savePhoto(FreezeCapture capture) async {
     try {
-      final result = await ImageGallerySaver.saveImage(
+      await ImageGallerySaver.saveImage(
         capture.imageData,
         quality: 90,
         name: 'flash_freeze_${capture.timestamp.millisecondsSinceEpoch}',

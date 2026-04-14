@@ -262,7 +262,7 @@ class _BioImproveButtonState extends ConsumerState<BioImproveButton> {
     });
 
     final coach = AIProfileCoach.instance;
-    final options = await coach.getImprovedBios(widget.currentBio);
+    final options = await coach.getImprovedBios();
 
     if (mounted) {
       setState(() {

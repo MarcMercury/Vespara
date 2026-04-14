@@ -830,11 +830,15 @@ class _ExclusiveOnboardingScreenState
     final seekingIds = _seeking.toList();
     final traits = _selectedTraits.toList();
     final isSpontaneous = _availability.contains('spontaneous');
+    // ignore: unused_local_variable
     final isNightOwl = traits.any((t) => t.contains('Night Owl'));
+    // ignore: unused_local_variable
     final isEarlyRiser = traits.any((t) => t.contains('Early Riser'));
     final isHighEnergy = traits.any((t) => t.contains('High Energy'));
     final isCalm = traits.any((t) => t.contains('Calm'));
+    // ignore: unused_local_variable
     final isLifeOfParty = traits.any((t) => t.contains('Life of the Party'));
+    // ignore: unused_local_variable
     final isHomebody = traits.any((t) => t.contains('Homebody'));
     final isWitty = traits.any((t) => t.contains('Witty'));
     final isRomantic = traits.any((t) => t.contains('Romantic'));
@@ -845,6 +849,7 @@ class _ExclusiveOnboardingScreenState
     final isSwitch = traits.any((t) => t.contains('Switch'));
     final isBeginner =
         traits.any((t) => t.contains('Beginner') || t.contains('Learning'));
+    // ignore: unused_local_variable
     final isExperienced = traits.any((t) => t.contains('Experienced'));
     final canTeach = traits.any((t) => t.contains('Teach'));
 

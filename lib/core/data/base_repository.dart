@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:postgrest/postgrest.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/result.dart';
 import '../utils/retry.dart';
@@ -178,19 +179,21 @@ abstract class BaseRepository {
             }
           }
 
+          PostgrestTransformBuilder<PostgrestList> transformQuery = query;
+
           if (orderBy != null) {
-            query = query.order(orderBy, ascending: ascending);
+            transformQuery = transformQuery.order(orderBy, ascending: ascending);
           }
 
           if (limit != null) {
-            query = query.limit(limit);
+            transformQuery = transformQuery.limit(limit);
           }
 
           if (offset != null) {
-            query = query.range(offset, offset + (limit ?? 20) - 1);
+            transformQuery = transformQuery.range(offset, offset + (limit ?? 20) - 1);
           }
 
-          final response = await query;
+          final response = await transformQuery;
           return (response as List)
               .map((json) => fromJson(json as Map<String, dynamic>))
               .toList();

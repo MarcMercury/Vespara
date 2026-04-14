@@ -344,7 +344,9 @@ class GamePersonalizationService {
 
   /// Get suggested intensity adjustment based on session engagement
   IntensityAdjustment getIntensityAdjustment() {
-    final recentReactions = _pendingReactions.takeLast(10).toList();
+    final recentReactions = _pendingReactions.length > 10
+        ? _pendingReactions.sublist(_pendingReactions.length - 10)
+        : _pendingReactions.toList();
 
     if (recentReactions.length < 5) {
       return IntensityAdjustment.maintain;

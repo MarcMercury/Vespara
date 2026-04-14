@@ -198,7 +198,7 @@ class _TagActionButtonState extends State<TagActionButton>
         TagHaptics.error();
         break;
       case TagHapticPattern.impact:
-        TagHaptics.heavyImpact();
+        TagHaptics.heavy();
         break;
     }
   }

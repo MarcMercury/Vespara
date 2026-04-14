@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,6 +19,8 @@ import '../../../core/widgets/premium_effects.dart';
 import '../widgets/qr_connect_modal.dart';
 import 'admin_panel_screen.dart';
 import 'edit_profile_screen.dart';
+import 'notification_settings_screen.dart';
+import 'photo_gallery_screen.dart';
 import 'security_settings_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -1137,6 +1137,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
   Widget _buildMetricRow(String label, double value, Color color) {
     final percentage = (value * 100).toInt();
+    // ignore: unused_local_variable
     final isGood = label == 'Response Rate' || label == 'Match Rate'
         ? value > 0.5
         : value < 0.3;
@@ -2834,6 +2835,25 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // ── Photo Gallery & Content ──
+            _buildSettingsSection('Photos & Gallery', [
+              _buildSettingTile(
+                  'My Gallery',
+                  'Manage up to 30 photos',
+                  Icons.photo_library_rounded,
+                  () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const PhotoGalleryScreen(),
+                  )),),
+              _buildSettingTile(
+                  'AI Photo Tools',
+                  'Enhance, retouch, and transform',
+                  Icons.auto_fix_high_rounded,
+                  () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const PhotoGalleryScreen(),
+                  )),),
+            ]),
+            const SizedBox(height: 16),
+
             _buildSettingsSection('Discovery Preferences', [
               _buildSettingTile(
                   'Age Range', 
@@ -2858,6 +2878,13 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ]),
             const SizedBox(height: 16),
             _buildSettingsSection('Notifications', [
+              _buildSettingTile(
+                  'Notification Preferences',
+                  'Manage all notification settings',
+                  Icons.notifications_rounded,
+                  () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const NotificationSettingsScreen(),
+                  )),),
               _buildSettingToggleWithProvider('New Matches', 'notify_new_matches', s.notifyNewMatches),
               _buildSettingToggleWithProvider('Messages', 'notify_new_messages', s.notifyNewMessages),
               _buildSettingToggleWithProvider('Date Reminders', 'notify_date_reminders', s.notifyDateReminders),

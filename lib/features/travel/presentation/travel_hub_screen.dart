@@ -2,14 +2,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/domain/models/travel_plan.dart';
 import '../../../core/services/travel_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../widgets/travel_map_view.dart';
-import '../widgets/travel_timeline_view.dart';
 import '../widgets/overlap_card.dart';
 import '../widgets/trip_card.dart';
 import 'add_trip_screen.dart';
