@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/env.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
+import '../../admin/presentation/admin_portal_screen.dart';
 
 /// Admin Panel — Approve / Reject / Suspend pending members
 class AdminPanelScreen extends StatefulWidget {
@@ -137,6 +138,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
             ),
             const Spacer(),
+            IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
+              ),
+              icon: const Icon(Icons.admin_panel_settings,
+                  color: VesparaColors.glow),
+              tooltip: 'Full Admin Portal',
+            ),
             IconButton(
               onPressed: _loadMembers,
               icon: const Icon(Icons.refresh, color: VesparaColors.secondary),

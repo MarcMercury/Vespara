@@ -30,6 +30,41 @@ class VesparaColors {
   static const Color glowWithOpacity = Color(0x33BFA6D8); // 20% opacity
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // MODULE ACCENT COLORS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Browse - Electric Rose
+  static const Color accentRose = Color(0xFFFF6B9D);
+
+  /// Sanctum - Vibrant Teal
+  static const Color accentTeal = Color(0xFF4ECDC4);
+
+  /// Wire - Deep Violet
+  static const Color accentViolet = Color(0xFF7C4DFF);
+
+  /// TAG - Bright Gold
+  static const Color accentGold = Color(0xFFFFD54F);
+
+  /// Voyager - Teal Cyan
+  static const Color accentCyan = Color(0xFF00BFA6);
+
+  /// Minis - Coral
+  static const Color accentCoral = Color(0xFFFF7F6B);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NOTIFICATION & STATUS COLORS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Online indicator
+  static const Color online = Color(0xFF4CAF50);
+
+  /// Urgent / important
+  static const Color urgent = Color(0xFFFF4444);
+
+  /// New content badge
+  static const Color badge = Color(0xFFFF6B9D);
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // TAGS CONSENT METER COLORS - Game Ratings
   // ═══════════════════════════════════════════════════════════════════════════
 

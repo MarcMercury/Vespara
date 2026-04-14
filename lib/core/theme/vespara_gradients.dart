@@ -55,6 +55,13 @@ class VesparaGradients {
     colors: [Color(0xFFFFD54F), Color(0xFFFFA726)],
   );
 
+  /// Voyager — teal-to-deep-teal
+  static const LinearGradient voyager = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF00BFA6), Color(0xFF00897B)],
+  );
+
   /// Get gradient by module index
   static LinearGradient forModule(int index) {
     switch (index) {
@@ -62,6 +69,8 @@ class VesparaGradients {
       case 1: return nest;
       case 2: return shredder;
       case 3: return tag;
+      case 4: return discover; // Minis
+      case 5: return voyager;
       default: return discover;
     }
   }

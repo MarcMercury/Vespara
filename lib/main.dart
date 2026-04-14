@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env.dart';
+import 'core/services/admin_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart' as auth;
 import 'features/home/presentation/home_screen.dart';
@@ -88,6 +89,10 @@ class _AuthGateState extends State<AuthGate> {
           // Check onboarding status when session changes OR on token refresh
           if (data.session != null && (sessionChanged || isTokenRefresh)) {
             _checkOnboardingStatus(data.session!.user.id);
+            // Track login for admin portal
+            if (data.event == AuthChangeEvent.signedIn) {
+              AdminService.trackLogin();
+            }
           } else if (data.session == null) {
             _hasCompletedOnboarding = null;
           }
@@ -185,3 +190,13 @@ class _AuthGateState extends State<AuthGate> {
     if (_session == null) {
       return const auth.LoginScreen();
     }
+
+    // Onboarding not yet complete
+    if (_hasCompletedOnboarding == false) {
+      return const ExclusiveOnboardingScreen();
+    }
+
+    // Fully authenticated and onboarded
+    return const HomeScreen();
+  }
+}
