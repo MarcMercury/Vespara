@@ -4,6 +4,7 @@ import '../domain/models/analytics.dart';
 import '../domain/models/conversation.dart';
 import '../domain/models/roster_match.dart';
 import '../domain/models/tags_game.dart';
+import 'edge_function_cache.dart';
 
 /// Supabase Service for all database operations
 class SupabaseService {
@@ -33,6 +34,7 @@ class SupabaseService {
       );
 
   static Future<void> signOut() async {
+    EdgeFunctionCache.instance.clearAll();
     await _client.auth.signOut();
   }
 
@@ -399,16 +401,24 @@ class SupabaseService {
   }
 
   static Future<Map<String, dynamic>> generateVouchLink() async {
-    final response = await _client.functions.invoke(
-      'vouch-chain',
-      queryParameters: {'action': 'generate'},
+    return EdgeFunctionCache.instance.cached(
+      cacheKey: EdgeFunctionCache.key('vouch-chain-generate', {
+        'userId': currentUser?.id ?? '',
+      }),
+      ttl: const Duration(minutes: 30),
+      fetcher: () async {
+        final response = await _client.functions.invoke(
+          'vouch-chain',
+          queryParameters: {'action': 'generate'},
+        );
+
+        if (response.status != 200) {
+          throw Exception(response.data['error'] ?? 'Vouch link error');
+        }
+
+        return response.data as Map<String, dynamic>;
+      },
     );
-
-    if (response.status != 200) {
-      throw Exception(response.data['error'] ?? 'Vouch link error');
-    }
-
-    return response.data;
   }
 
   static Future<void> redeemVouchLink(String code) async {
@@ -457,20 +467,31 @@ class SupabaseService {
     required double lng,
     double radiusKm = 1.0,
   }) async {
-    final response = await _client.functions.invoke(
-      'tonight-mode',
-      queryParameters: {'action': 'nearby'},
-      body: {
-        'lat': lat,
-        'lng': lng,
+    // Cache nearby results for 2 minutes to avoid rapid re-fetches
+    return EdgeFunctionCache.instance.cached(
+      cacheKey: EdgeFunctionCache.key('tonight-nearby', {
+        'lat': lat.toStringAsFixed(3), // ~111m precision
+        'lng': lng.toStringAsFixed(3),
         'radiusKm': radiusKm,
+      }),
+      ttl: const Duration(minutes: 2),
+      fetcher: () async {
+        final response = await _client.functions.invoke(
+          'tonight-mode',
+          queryParameters: {'action': 'nearby'},
+          body: {
+            'lat': lat,
+            'lng': lng,
+            'radiusKm': radiusKm,
+          },
+        );
+
+        if (response.status != 200) {
+          throw Exception(response.data['error'] ?? 'Nearby error');
+        }
+
+        return List<Map<String, dynamic>>.from(response.data['nearby'] ?? []);
       },
     );
-
-    if (response.status != 200) {
-      throw Exception(response.data['error'] ?? 'Nearby error');
-    }
-
-    return List<Map<String, dynamic>>.from(response.data['nearby'] ?? []);
   }
 }

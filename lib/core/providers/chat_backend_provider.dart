@@ -26,12 +26,33 @@ final chatBackendProvider = Provider<ChatBackend>((ref) {
   return ChatBackendConfig.activeBackend;
 });
 
-/// Fetches a Stream Chat user token from the Supabase Edge Function
-/// This ensures tokens are minted server-side with MFA verification
-Future<String?> fetchStreamChatToken() async {
+/// Cached Stream Chat token to avoid repeated edge function calls
+String? _cachedStreamToken;
+DateTime? _cachedStreamTokenAt;
+String? _cachedStreamTokenUserId;
+const _streamTokenCacheTTL = Duration(minutes: 55); // tokens typically last 1h
+
+/// Fetches a Stream Chat user token from the Supabase Edge Function.
+/// Uses an in-memory cache to avoid redundant edge function invocations.
+Future<String?> fetchStreamChatToken({bool forceRefresh = false}) async {
   try {
     final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) return null;
+    if (session == null) {
+      _cachedStreamToken = null;
+      return null;
+    }
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+
+    // Return cached token if still valid for the same user
+    if (!forceRefresh &&
+        _cachedStreamToken != null &&
+        _cachedStreamTokenAt != null &&
+        _cachedStreamTokenUserId == userId &&
+        DateTime.now().difference(_cachedStreamTokenAt!) < _streamTokenCacheTTL) {
+      debugPrint('Stream Chat token: using cached token');
+      return _cachedStreamToken;
+    }
 
     final response = await http.post(
       Uri.parse('${Env.supabaseUrl}/functions/v1/stream-chat-token'),
@@ -43,7 +64,12 @@ Future<String?> fetchStreamChatToken() async {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['token'] as String?;
+      final token = data['token'] as String?;
+      // Cache the token
+      _cachedStreamToken = token;
+      _cachedStreamTokenAt = DateTime.now();
+      _cachedStreamTokenUserId = userId;
+      return token;
     } else if (response.statusCode == 403) {
       debugPrint('Stream Chat token: MFA verification required');
       return null;
@@ -55,6 +81,13 @@ Future<String?> fetchStreamChatToken() async {
     debugPrint('Stream Chat token fetch error: $e');
     return null;
   }
+}
+
+/// Clears the cached Stream Chat token (call on sign-out)
+void clearStreamChatTokenCache() {
+  _cachedStreamToken = null;
+  _cachedStreamTokenAt = null;
+  _cachedStreamTokenUserId = null;
 }
 
 /// Initializes Stream Chat connection after successful auth + MFA

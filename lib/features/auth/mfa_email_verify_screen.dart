@@ -24,6 +24,10 @@ class _MfaEmailVerifyScreenState extends State<MfaEmailVerifyScreen> {
   static const _glow = Color(0xFFD4A8FF);
   static const _error = Color(0xFFEF5350);
 
+  // Class-level guard: prevent re-sending if the screen is re-mounted within cooldown
+  static DateTime? _lastSendTime;
+  static const _minSendInterval = Duration(seconds: 60);
+
   final _codeController = TextEditingController();
   bool _isSending = false;
   bool _isVerifying = false;
@@ -35,7 +39,20 @@ class _MfaEmailVerifyScreenState extends State<MfaEmailVerifyScreen> {
   @override
   void initState() {
     super.initState();
-    _sendCode();
+    // Only auto-send if we haven't sent recently (prevents re-mount spam)
+    if (_lastSendTime == null ||
+        DateTime.now().difference(_lastSendTime!) > _minSendInterval) {
+      _sendCode();
+    } else {
+      // Already sent recently - show the code input immediately
+      _codeSent = true;
+      final remaining = _minSendInterval.inSeconds -
+          DateTime.now().difference(_lastSendTime!).inSeconds;
+      if (remaining > 0) {
+        _resendCooldown = remaining;
+        _startCooldown();
+      }
+    }
   }
 
   @override
@@ -84,6 +101,7 @@ class _MfaEmailVerifyScreenState extends State<MfaEmailVerifyScreen> {
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        _lastSendTime = DateTime.now();
         setState(() => _codeSent = true);
         _startCooldown();
       } else {

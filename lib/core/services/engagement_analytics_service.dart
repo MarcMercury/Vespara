@@ -22,11 +22,11 @@ class EngagementAnalyticsService {
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Batch events for efficiency
+  // Batch events for efficiency — flush less often to reduce DB writes
   final List<AnalyticsEvent> _eventQueue = [];
   Timer? _flushTimer;
-  final int _batchSize = 20;
-  final Duration _flushInterval = const Duration(seconds: 30);
+  final int _batchSize = 50;
+  final Duration _flushInterval = const Duration(minutes: 5);
 
   String? get _userId => _supabase.auth.currentUser?.id;
 

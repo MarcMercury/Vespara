@@ -58,6 +58,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _performAction(String memberId, String action) async {
+    // Optimistic removal — avoid a full list reload edge function + DB query
+    final removedIndex =
+        _pendingMembers.indexWhere((m) => m['id'] == memberId);
+    Map<String, dynamic>? removedMember;
+    if (removedIndex != -1) {
+      removedMember = _pendingMembers[removedIndex];
+      setState(() {
+        _pendingMembers.removeAt(removedIndex);
+      });
+    }
+
     try {
       final session = _supabase.auth.currentSession;
       if (session == null) return;
@@ -83,9 +94,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           );
         }
-        _loadMembers(); // Refresh list
+        // No full list reload — already removed optimistically
       } else {
         final body = jsonDecode(response.body);
+        // Rollback optimistic removal on failure
+        if (removedMember != null && removedIndex != -1) {
+          setState(() {
+            _pendingMembers.insert(
+                removedIndex.clamp(0, _pendingMembers.length), removedMember!);
+          });
+        }
         throw Exception(body['error'] ?? 'Unknown error');
       }
     } catch (e) {

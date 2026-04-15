@@ -25,6 +25,10 @@ class _MfaEmailSetupScreenState extends State<MfaEmailSetupScreen> {
   static const _error = Color(0xFFEF5350);
   static const _success = Color(0xFF4ECDC4);
 
+  // Class-level guard: prevent re-sending if the screen is re-mounted within cooldown
+  static DateTime? _lastSendTime;
+  static const _minSendInterval = Duration(seconds: 60);
+
   final _codeController = TextEditingController();
   bool _isSending = false;
   bool _isVerifying = false;
@@ -38,7 +42,20 @@ class _MfaEmailSetupScreenState extends State<MfaEmailSetupScreen> {
   void initState() {
     super.initState();
     _userEmail = Supabase.instance.client.auth.currentUser?.email;
-    _sendCode();
+    // Only auto-send if we haven't sent recently (prevents re-mount spam)
+    if (_lastSendTime == null ||
+        DateTime.now().difference(_lastSendTime!) > _minSendInterval) {
+      _sendCode();
+    } else {
+      // Already sent recently - show the code input immediately
+      _codeSent = true;
+      final remaining = _minSendInterval.inSeconds -
+          DateTime.now().difference(_lastSendTime!).inSeconds;
+      if (remaining > 0) {
+        _resendCooldown = remaining;
+        _startCooldown();
+      }
+    }
   }
 
   @override
@@ -87,6 +104,7 @@ class _MfaEmailSetupScreenState extends State<MfaEmailSetupScreen> {
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        _lastSendTime = DateTime.now();
         setState(() {
           _codeSent = true;
         });
