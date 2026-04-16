@@ -171,7 +171,7 @@ class AIService {
           failure: (error) => null,
         );
         if (result is Success<AIResponse>) {
-          yield Success((result as Success<AIResponse>).value.content);
+          yield Success((result as Success<AIResponse>).data.content);
           return;
         }
         if (result is Failure<AIResponse>) {
@@ -494,7 +494,7 @@ Be creative, fun, and engaging.''',
     if (apiKey.isEmpty) {
       throw const AppError(
         message: 'AI service not configured',
-        type: ErrorType.server,
+        type: ErrorType.serverError,
       );
     }
 
