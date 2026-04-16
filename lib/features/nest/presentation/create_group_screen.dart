@@ -504,7 +504,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             // Name
             Expanded(
               child: Text(
-                member.displayName,
+                member.displayName ?? 'Unknown',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -754,7 +754,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              member.displayName,
+              member.displayName ?? 'Unknown',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

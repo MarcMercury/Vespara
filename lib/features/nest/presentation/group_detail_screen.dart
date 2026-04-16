@@ -885,7 +885,7 @@ class _InviteMemberTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                member.displayName,
+                member.displayName ?? 'Unknown',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,

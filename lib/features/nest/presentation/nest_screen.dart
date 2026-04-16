@@ -288,7 +288,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
         final filtered = _searchQuery.isEmpty
             ? members
             : members
-                .where((m) => m.displayName
+                .where((m) => (m.displayName ?? '')
                     .toLowerCase()
                     .contains(_searchQuery.toLowerCase()))
                 .toList();
@@ -361,7 +361,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Center(
                                   child: Text(
-                                    member.displayName[0].toUpperCase(),
+                                    (member.displayName ?? '?')[0].toUpperCase(),
                                     style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w600,
@@ -373,7 +373,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             )
                           : Center(
                               child: Text(
-                                member.displayName[0].toUpperCase(),
+                                (member.displayName ?? '?')[0].toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w600,
@@ -392,7 +392,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           Row(
                             children: [
                               Text(
-                                member.displayName,
+                                member.displayName ?? 'Unknown',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -967,7 +967,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
     try {
       final connection = EventConnection(
         id: member.id,
-        name: member.displayName,
+        name: member.displayName ?? 'Unknown',
         avatarUrl: member.avatarUrl,
       );
 
@@ -975,7 +975,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
         id: 'event-${DateTime.now().millisecondsSinceEpoch}',
         userId: Supabase.instance.client.auth.currentUser?.id ?? '',
         title:
-            '${recommendation.title} with ${member.displayName}',
+            '${recommendation.title} with ${member.displayName ?? 'Unknown'}',
         startTime: recommendation.startTime,
         endTime: recommendation.startTime.add(const Duration(hours: 2)),
         connections: [connection],
@@ -1280,7 +1280,7 @@ class _MemberProfileSheetState extends ConsumerState<_MemberProfileSheet> {
         ),
         child: Center(
           child: Text(
-            widget.member.displayName[0].toUpperCase(),
+            (widget.member.displayName ?? '?')[0].toUpperCase(),
             style: const TextStyle(
               fontSize: 80,
               fontWeight: FontWeight.bold,
@@ -1341,7 +1341,7 @@ class _MemberProfileSheetState extends ConsumerState<_MemberProfileSheet> {
 
   Widget _buildProfileHeader() {
     final name =
-        _profile?.displayName ?? widget.member.displayName;
+        _profile?.displayName ?? widget.member.displayName ?? 'Unknown';
     final age = _profile?.age ?? widget.member.age;
     final headline = _profile?.headline;
     final location = _profile?.city ?? _profile?.location;
