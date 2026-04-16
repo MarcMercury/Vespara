@@ -12,7 +12,6 @@ import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/page_transitions.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../../browse/presentation/browse_screen.dart';
-import '../../events/presentation/events_home_screen.dart';
 import '../../ludus/presentation/tags_screen.dart';
 import '../../minis/presentation/minis_screen.dart';
 import '../../mirror/presentation/mirror_screen.dart';
@@ -36,21 +35,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
-  int _currentTab = 0;
   late AnimationController _staggerController;
   late AnimationController _pulseController;
   late List<Animation<double>> _tileAnimations;
   bool _showTutorial = false;
   bool _tutorialChecked = false;
-
-  // Bottom nav destinations
-  static const List<_NavItem> _navItems = [
-    _NavItem('Home', Icons.dashboard_rounded, VesparaColors.primary),
-    _NavItem('Browse', Icons.travel_explore_rounded, Color(0xFFFF6B9D)),
-    _NavItem('Wire', Icons.chat_bubble_rounded, Color(0xFF7C4DFF)),
-    _NavItem('Events', Icons.event_rounded, Color(0xFF00BFA6)),
-    _NavItem('Mirror', Icons.account_circle_rounded, VesparaColors.glow),
-  ];
 
   /// The 6 Dashboard Modules (shown on Home tab)
   static const List<Map<String, dynamic>> _modules = [
@@ -173,100 +162,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       backgroundColor: VesparaColors.background,
-      body: IndexedStack(
-        index: _currentTab,
-        children: [
-          _buildDashboard(),
-          const BrowseScreen(),
-          WireEntryScreen(),
-          const EventsHomeScreen(),
-          const MirrorScreen(),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
+      body: _buildDashboard(),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // BOTTOM NAV
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  Widget _buildBottomNav() => Container(
-        decoration: BoxDecoration(
-          color: VesparaColors.surface.withOpacity(0.95),
-          border: Border(
-            top: BorderSide(color: VesparaColors.glow.withOpacity(0.1)),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: VesparaColors.glow.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(_navItems.length, (i) {
-                    final item = _navItems[i];
-                    final isActive = _currentTab == i;
-
-                    return GestureDetector(
-                      onTap: () => setState(() => _currentTab = i),
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: isActive
-                            ? BoxDecoration(
-                                color: item.color.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(16),
-                              )
-                            : null,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              item.icon,
-                              size: 24,
-                              color: isActive
-                                  ? item.color
-                                  : VesparaColors.inactive,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.label,
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: isActive
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: isActive
-                                    ? item.color
-                                    : VesparaColors.inactive,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DASHBOARD (Home Tab)
+  // DASHBOARD
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildDashboard() {
@@ -386,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       builder: (context, child) {
         final pulse = _pulseController.value;
         return GestureDetector(
-          onTap: () => setState(() => _currentTab = 4),
+          onTap: () => context.pushPortal(const MirrorScreen(), color: VesparaColors.glow),
           child: Container(
             width: 48,
             height: 48,
@@ -793,6 +694,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return 'assets/Main Page Tile Icons/Discover1.png';
       case 'SANCTUM':
         return 'assets/Main Page Tile Icons/Sanctum1.png';
+      case 'WIRE':
+        return 'assets/Main Page Tile Icons/Wire1.png';
       case 'TAG':
         return 'assets/Main Page Tile Icons/TAG1.png';
       case 'MINIS':
@@ -812,13 +715,6 @@ class _StatData {
   final String value;
   final String label;
   final IconData icon;
-}
-
-class _NavItem {
-  const _NavItem(this.label, this.icon, this.color);
-  final String label;
-  final IconData icon;
-  final Color color;
 }
 
 /// In-App Notifications Panel

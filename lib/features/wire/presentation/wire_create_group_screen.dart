@@ -59,55 +59,26 @@ class _WireCreateGroupScreenState extends ConsumerState<WireCreateGroupScreen> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
-      // Fetch user's connections from matches table (where they are user_a or user_b)
-      final matchesAsA = await Supabase.instance.client
-          .from('matches')
-          .select('''
-            id,
-            user_b_id,
-            matched_user:profiles!matches_user_b_id_fkey (
-              id,
-              display_name,
-              avatar_url
-            )
-          ''')
-          .eq('user_a_id', userId);
+      // Fetch all members (excluding current user)
+      final profiles = await Supabase.instance.client
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .neq('id', userId)
+          .order('display_name');
 
-      final matchesAsB = await Supabase.instance.client
-          .from('matches')
-          .select('''
-            id,
-            user_a_id,
-            matched_user:profiles!matches_user_a_id_fkey (
-              id,
-              display_name,
-              avatar_url
-            )
-          ''')
-          .eq('user_b_id', userId);
-
-      // Normalize both results into a consistent format
-      final connections = <Map<String, dynamic>>[
-        ...(matchesAsA as List).map((m) => {
-          'id': m['id'],
-          'connected_user_id': m['user_b_id'],
-          'connected_user': m['matched_user'],
-        }),
-        ...(matchesAsB as List).map((m) => {
-          'id': m['id'],
-          'connected_user_id': m['user_a_id'],
-          'connected_user': m['matched_user'],
-        }),
-      ];
+      final connections = (profiles as List).map((p) => {
+        'id': p['id'],
+        'connected_user_id': p['id'],
+        'connected_user': p,
+      }).toList();
 
       setState(() {
         _connections = connections;
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error loading connections: $e');
+      debugPrint('Error loading members: $e');
       setState(() => _isLoading = false);
-      // No connections found - show empty state
       _connections = [];
       setState(() {});
     }

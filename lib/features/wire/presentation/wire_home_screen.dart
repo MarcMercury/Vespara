@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/wire_models.dart';
 import '../../../core/providers/wire_provider.dart';
@@ -222,7 +223,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
         context,
         icon: Icons.chat_bubble_outline,
         title: 'No conversations yet',
-        subtitle: 'Start chatting with your connections',
+        subtitle: 'Start chatting with any member',
       );
     }
 
@@ -246,7 +247,7 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
         context,
         icon: Icons.group,
         title: 'No groups yet',
-        subtitle: 'Create a group to chat with multiple connections',
+        subtitle: 'Create a group to chat with multiple members',
         actionLabel: 'Create Group',
         onAction: () => _navigateToCreateGroup(context),
       );
@@ -719,18 +720,18 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
             ),
             const SizedBox(height: VesparaSpacing.md),
             Text(
-              'Select a connection to start chatting',
+              'Select a member to start chatting',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: VesparaSpacing.md),
-            // TODO: Show list of connections from roster
+            // Show list of all members
             SizedBox(
-              height: 200,
-              child: Center(
-                child: Text(
-                  'Connections will appear here',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+              height: 300,
+              child: _NewChatMemberList(
+                onMemberSelected: (userId) {
+                  Navigator.pop(context);
+                  _startDirectChat(context, userId);
+                },
               ),
             ),
           ],
@@ -921,5 +922,143 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
       default:
         return Icons.chat;
     }
+  }
+
+  void _startDirectChat(BuildContext context, String otherUserId) async {
+    final wireNotifier = ref.read(wireProvider.notifier);
+    final conversationId =
+        await wireNotifier.getOrCreateDirectConversation(otherUserId);
+    if (conversationId != null && mounted) {
+      final wireState = ref.read(wireProvider);
+      final conversation = wireState.conversations.firstWhere(
+        (c) => c.id == conversationId,
+        orElse: () => WireConversation(
+          id: conversationId,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      _openConversation(context, conversation);
+    }
+  }
+}
+
+/// Widget that loads and displays all members for starting a new chat
+class _NewChatMemberList extends StatefulWidget {
+  const _NewChatMemberList({required this.onMemberSelected});
+  final void Function(String userId) onMemberSelected;
+
+  @override
+  State<_NewChatMemberList> createState() => _NewChatMemberListState();
+}
+
+class _NewChatMemberListState extends State<_NewChatMemberList> {
+  List<Map<String, dynamic>> _members = [];
+  bool _isLoading = true;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembers();
+  }
+
+  Future<void> _loadMembers() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final profiles = await Supabase.instance.client
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .neq('id', userId)
+          .order('display_name');
+
+      if (mounted) {
+        setState(() {
+          _members = List<Map<String, dynamic>>.from(profiles as List);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredMembers {
+    if (_searchQuery.isEmpty) return _members;
+    return _members.where((m) {
+      final name = (m['display_name'] ?? '').toString().toLowerCase();
+      return name.contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        TextField(
+          style: const TextStyle(color: VesparaColors.primary),
+          decoration: InputDecoration(
+            hintText: 'Search members...',
+            hintStyle: const TextStyle(color: VesparaColors.secondary),
+            prefixIcon:
+                const Icon(Icons.search, color: VesparaColors.secondary),
+            filled: true,
+            fillColor: VesparaColors.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          ),
+          onChanged: (v) => setState(() => _searchQuery = v),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _filteredMembers.isEmpty
+              ? Center(
+                  child: Text(
+                    'No members found',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _filteredMembers.length,
+                  itemBuilder: (context, index) {
+                    final member = _filteredMembers[index];
+                    final name =
+                        member['display_name']?.toString() ?? 'Unknown';
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                        backgroundImage: member['avatar_url'] != null
+                            ? NetworkImage(member['avatar_url'])
+                            : null,
+                        child: member['avatar_url'] == null
+                            ? Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: const TextStyle(
+                                    color: VesparaColors.primary),
+                              )
+                            : null,
+                      ),
+                      title: Text(
+                        name,
+                        style: const TextStyle(color: VesparaColors.primary),
+                      ),
+                      onTap: () =>
+                          widget.onMemberSelected(member['id'] as String),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/chat.dart';
-import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -339,7 +338,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Match with someone in Discover to start chatting',
+              'Tap + to start a conversation with any member',
               style: TextStyle(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -387,7 +386,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
             TextField(
               style: const TextStyle(color: VesparaColors.primary),
               decoration: InputDecoration(
-                hintText: 'Search your matches...',
+                hintText: 'Search members...'
                 hintStyle: const TextStyle(color: VesparaColors.secondary),
                 prefixIcon: const Icon(Icons.search, color: VesparaColors.glow),
                 filled: true,
@@ -398,7 +397,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Recent Matches',
+            const Text('Recent Chats',
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
