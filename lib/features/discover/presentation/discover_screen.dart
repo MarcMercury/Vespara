@@ -128,7 +128,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         _currentIndex = 0; // Reset index when reloading
       });
 
-      debugPrint('Discover: Loaded ${profiles.length} profiles (excluded ${swipedIds.length} swiped, ${matchedIds.length} matched)');
+      debugPrint('Discover: Loaded ${profiles.length} profiles (excluded ${swipedIds.length} swiped)');
 
       // Score profiles with DeepConnectionEngine in background
       _scoreProfilesInBackground(currentUserId, profiles);
