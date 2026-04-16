@@ -253,8 +253,8 @@ Energy balance: ${dna1.socialEnergyProfile} ↔ ${dna2.socialEnergyProfile}
             gender, pronouns, orientation, relationship_status, seeking,
             partner_involvement, looking_for, heat_level, hard_limits,
             availability_general, scheduling_style, hosting_status,
-            travel_radius, bandwidth, discretion_level, interests,
-            photos, city, state, zip_code, created_at, last_active
+            travel_radius, bandwidth, discretion_level, interest_tags,
+            photos, city, state, zip_code, created_at, last_active_at
           ''')
           .eq('id', userId)
           .maybeSingle();

@@ -59,6 +59,7 @@ Future<String?> fetchStreamChatToken({bool forceRefresh = false}) async {
       headers: {
         'Authorization': 'Bearer ${session.accessToken}',
         'Content-Type': 'application/json',
+        'apikey': Env.supabaseAnonKey,
       },
     );
 

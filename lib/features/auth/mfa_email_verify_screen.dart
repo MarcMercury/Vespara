@@ -94,6 +94,7 @@ class _MfaEmailVerifyScreenState extends State<MfaEmailVerifyScreen> {
         headers: {
           'Authorization': 'Bearer ${session.accessToken}',
           'Content-Type': 'application/json',
+          'apikey': Env.supabaseAnonKey,
         },
         body: jsonEncode({'action': 'send'}),
       );
@@ -141,6 +142,7 @@ class _MfaEmailVerifyScreenState extends State<MfaEmailVerifyScreen> {
         headers: {
           'Authorization': 'Bearer ${session.accessToken}',
           'Content-Type': 'application/json',
+          'apikey': Env.supabaseAnonKey,
         },
         body: jsonEncode({'action': 'verify', 'code': code}),
       );

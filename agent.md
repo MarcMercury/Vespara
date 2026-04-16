@@ -10,6 +10,31 @@
 ### Credentials Access
 All credentials are in [`CREDENTIALS.md`](CREDENTIALS.md). **Never ask for credentials.**
 
+### Supabase Credentials & Migrations — ALWAYS DO FIRST
+**Before starting any task**, you MUST:
+1. **Review Supabase credentials** — Load the `.env` file for `SUPABASE_ACCESS_TOKEN`, then run:
+   ```bash
+   export SUPABASE_ACCESS_TOKEN=$(grep SUPABASE_ACCESS_TOKEN .env | cut -d= -f2)
+   supabase link --project-ref nazcwlfirmbuxuzlzjtz
+   ```
+2. **Check & apply all pending migrations**:
+   ```bash
+   supabase db push --dry-run   # See what's pending
+   supabase db push             # Apply them
+   ```
+3. **Verify edge function secrets** if working on edge functions:
+   ```bash
+   supabase secrets list --project-ref nazcwlfirmbuxuzlzjtz
+   ```
+   All Resend email config is stored as edge function secrets (RESEND_API_KEY).
+   Edge function secrets are managed in the Supabase Dashboard or via `supabase secrets set`.
+
+| Detail | Value |
+|--------|-------|
+| **Project Ref** | `nazcwlfirmbuxuzlzjtz` |
+| **Access Token** | In `.env` (`SUPABASE_ACCESS_TOKEN`) |
+| **DB Version** | PostgreSQL 17 |
+
 ### Auto-Push Migrations
 When creating SQL migrations:
 ```bash
@@ -115,6 +140,27 @@ lib/
 | `vouch-chain` | Social verification |
 | `tonight-mode` | Location features |
 | `generate-bio` | AI bio generation |
+| `mfa-email-otp` | Email 2FA codes (uses RESEND_API_KEY) |
+| `send-email` | Transactional email (uses RESEND_API_KEY) |
+| `stream-chat-token` | Stream Chat auth tokens |
+| `admin-manage-user` | Admin user management |
+| `admin-approve-member` | Member approval |
+| `ai-proxy` | AI request proxy |
+| `background-jobs` | Background processing |
+
+### Edge Function HTTP Calls
+When calling edge functions from Dart, **ALWAYS** include the `apikey` header:
+```dart
+final response = await http.post(
+  Uri.parse('${Env.supabaseUrl}/functions/v1/<function-name>'),
+  headers: {
+    'Authorization': 'Bearer ${session.accessToken}',
+    'Content-Type': 'application/json',
+    'apikey': Env.supabaseAnonKey,  // ← REQUIRED by Supabase gateway
+  },
+  body: jsonEncode({...}),
+);
+```
 
 ---
 

@@ -14,10 +14,31 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 1. CREATE SECURITY DEFINER HELPER FUNCTIONS (bypass RLS for lookups)
+-- 1. DROP EXISTING POLICIES FIRST (before dropping functions they depend on)
 -- ════════════════════════════════════════════════════════════════════════════
 
--- Drop existing functions first (parameter name mismatch prevents CREATE OR REPLACE)
+-- Drop any policy that might reference the helper functions we need to recreate
+DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_owner_update" ON public.profiles;
+
+-- From migration 064
+DROP POLICY IF EXISTS "Members can view profiles" ON public.profiles;
+
+-- From migration 053 (superseded)
+DROP POLICY IF EXISTS "profiles_authenticated_select" ON public.profiles;
+
+-- From migration 066
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can update all profiles" ON public.profiles;
+
+-- From migration 048 (may still exist)
+DROP POLICY IF EXISTS "Users can view discoverable profiles" ON public.profiles;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 2. CREATE SECURITY DEFINER HELPER FUNCTIONS (bypass RLS for lookups)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Drop existing functions now that dependent policies are removed
 DROP FUNCTION IF EXISTS public.is_approved_member(UUID);
 DROP FUNCTION IF EXISTS public.is_admin_user(UUID);
 
@@ -50,23 +71,6 @@ AS $$
     AND is_admin = TRUE
   );
 $$;
-
--- ════════════════════════════════════════════════════════════════════════════
--- 2. DROP RECURSIVE POLICIES
--- ════════════════════════════════════════════════════════════════════════════
-
--- From migration 064
-DROP POLICY IF EXISTS "Members can view profiles" ON public.profiles;
-
--- From migration 053 (superseded)
-DROP POLICY IF EXISTS "profiles_authenticated_select" ON public.profiles;
-
--- From migration 066
-DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
-DROP POLICY IF EXISTS "Admins can update all profiles" ON public.profiles;
-
--- From migration 048 (may still exist)
-DROP POLICY IF EXISTS "Users can view discoverable profiles" ON public.profiles;
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- 3. RECREATE NON-RECURSIVE POLICIES

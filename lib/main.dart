@@ -224,10 +224,12 @@ class _AuthGateState extends State<AuthGate> {
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// PENDING APPROVAL SCREEN
-/// Shown after onboarding while waiting for admin approval
+/// Shown after onboarding while waiting for admin approval.
+/// Subscribes to real-time changes on the user's profile so the app
+/// automatically transitions once an admin approves.
 /// ════════════════════════════════════════════════════════════════════════════
 
-class PendingApprovalScreen extends StatelessWidget {
+class PendingApprovalScreen extends StatefulWidget {
   const PendingApprovalScreen({
     super.key,
     required this.onRefresh,
@@ -236,6 +238,51 @@ class PendingApprovalScreen extends StatelessWidget {
 
   final VoidCallback onRefresh;
   final VoidCallback onLogout;
+
+  @override
+  State<PendingApprovalScreen> createState() => _PendingApprovalScreenState();
+}
+
+class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
+  RealtimeChannel? _channel;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeToApproval();
+  }
+
+  @override
+  void dispose() {
+    _channel?.unsubscribe();
+    super.dispose();
+  }
+
+  void _subscribeToApproval() {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    _channel = Supabase.instance.client
+        .channel('pending-approval-$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'profiles',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: userId,
+          ),
+          callback: (payload) {
+            final newStatus = payload.newRecord['membership_status'] as String?;
+            debugPrint('Vespara: Real-time membership_status update: $newStatus');
+            if (newStatus != null && newStatus != 'pending' && mounted) {
+              widget.onRefresh();
+            }
+          },
+        )
+        .subscribe();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +344,7 @@ class PendingApprovalScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: onRefresh,
+                  onPressed: widget.onRefresh,
                   icon: const Icon(Icons.refresh, color: VesparaColors.background),
                   label: const Text(
                     'Check Status',
@@ -318,7 +365,7 @@ class PendingApprovalScreen extends StatelessWidget {
               const Spacer(),
               // Logout
               TextButton(
-                onPressed: onLogout,
+                onPressed: widget.onLogout,
                 child: const Text(
                   'Sign Out',
                   style: TextStyle(
