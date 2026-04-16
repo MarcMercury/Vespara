@@ -134,8 +134,29 @@ class AiPhotoEditService {
 
   /// Generate an AI-enhanced version using OpenAI Vision for analysis
   /// then apply the recommended Cloudinary transformations.
+  /// Routes through edge function proxy when available for security.
   Future<Map<String, dynamic>> analyzeAndRecommend(String imageUrl) async {
     try {
+      // Route through edge function proxy (secure)
+      if (Env.supabaseUrl.isNotEmpty) {
+        final response = await Supabase.instance.client.functions.invoke(
+          'ai-proxy',
+          body: {
+            'action': 'photo_analysis',
+            'prompt': 'Analyze this dating profile photo and suggest the best 2-3 edits. Photo URL: $imageUrl',
+          },
+        );
+
+        if (response.status == 200) {
+          final content = response.data['content'] as String? ?? '';
+          final jsonMatch = RegExp(r'\{[^}]+\}').firstMatch(content);
+          if (jsonMatch != null) {
+            return jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
+          }
+        }
+      }
+
+      // Fallback: direct call (local dev only)
       final apiKey = Env.openaiApiKey;
       if (apiKey.isEmpty) {
         return {
@@ -172,7 +193,6 @@ class AiPhotoEditService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final content = data['choices'][0]['message']['content'] as String;
-        // Try to parse JSON from the response
         final jsonMatch = RegExp(r'\{[^}]+\}').firstMatch(content);
         if (jsonMatch != null) {
           return jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;

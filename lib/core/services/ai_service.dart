@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/env.dart';
 import '../utils/result.dart';
 import '../utils/retry.dart';
@@ -24,8 +25,10 @@ class AIService {
   static AIService get instance => _instance ??= AIService._();
 
   // Configuration
-  final String _baseUrl = 'https://api.openai.com/v1';
   final Duration _timeout = const Duration(seconds: 60);
+
+  /// Whether to use server-side AI proxy (secure) or direct calls (dev only)
+  bool get _useProxy => Env.supabaseUrl.isNotEmpty;
 
   // Rate limiting
   final _rateLimiter = RateLimiter(
@@ -154,9 +157,33 @@ class AIService {
     messages.add({'role': 'user', 'content': prompt});
 
     try {
+      // For streaming, fall back to proxy non-streaming if proxy is enabled
+      if (_useProxy) {
+        final result = await chat(
+          prompt: prompt,
+          systemPrompt: systemPrompt,
+          model: model,
+          temperature: temperature,
+          useCache: false,
+        );
+        result.when(
+          success: (response) => null, // handled below
+          failure: (error) => null,
+        );
+        if (result is Success<AIResponse>) {
+          yield Success((result as Success<AIResponse>).value.content);
+          return;
+        }
+        if (result is Failure<AIResponse>) {
+          yield Failure((result as Failure<AIResponse>).error);
+          return;
+        }
+        return;
+      }
+
       final request = http.Request(
         'POST',
-        Uri.parse('$_baseUrl/chat/completions'),
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
       );
 
       request.headers.addAll({
@@ -199,6 +226,54 @@ class AIService {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // PROXY HELPER
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Call AI via edge function proxy (secure, rate-limited server-side)
+  Future<Result<String>> _proxyAction({
+    required String action,
+    required String prompt,
+    String? systemPromptOverride,
+  }) async {
+    if (!_rateLimiter.allowRequest()) {
+      return Failure(
+        AppError.rateLimited(
+          message: 'AI request rate limit exceeded. Please wait.',
+        ),
+      );
+    }
+
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'ai-proxy',
+        body: {
+          'action': action,
+          'prompt': prompt,
+          if (systemPromptOverride != null)
+            'systemPromptOverride': systemPromptOverride,
+        },
+      );
+
+      if (response.status != 200) {
+        final errorData = response.data;
+        return Failure(AppError.server(
+          message: errorData?['error'] ?? 'AI request failed',
+          statusCode: response.status,
+        ));
+      }
+
+      final data = response.data;
+      final content = data['content'] as String? ?? '';
+      final tokensUsed = data['tokensUsed'] as int? ?? 0;
+      _totalTokensUsed += tokensUsed;
+
+      return Success(content);
+    } catch (e, stack) {
+      return Failure(_transformError(e, stack));
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // SPECIALIZED METHODS
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -207,6 +282,12 @@ class AIService {
     required String userContext,
     required String style,
   }) async {
+    if (_useProxy) {
+      return _proxyAction(
+        action: 'generate_bio',
+        prompt: 'Style: $style\nCreate a bio based on: $userContext',
+      );
+    }
     final result = await chat(
       systemPrompt:
           '''You are a creative writer helping users craft engaging bios.
@@ -226,6 +307,20 @@ Don't use clichés or overused phrases.''',
     required String profile2Context,
     int count = 3,
   }) async {
+    if (_useProxy) {
+      final result = await _proxyAction(
+        action: 'ice_breakers',
+        prompt: 'Person 1: $profile1Context\nPerson 2: $profile2Context\nGenerate $count conversation starters.',
+      );
+      return result.map(
+        (content) => content
+            .split('\n')
+            .where((line) => line.trim().isNotEmpty)
+            .map((line) => line.replaceAll(RegExp(r'^\d+[\.\)]\s*'), '').trim())
+            .take(count)
+            .toList(),
+      );
+    }
     final result = await chat(
       systemPrompt:
           '''You are a dating coach helping create genuine conversation starters.
@@ -254,6 +349,24 @@ Generate $count conversation starters.''',
   Future<Result<MessageAnalysis>> analyzeMessage({
     required String message,
   }) async {
+    if (_useProxy) {
+      final result = await _proxyAction(
+        action: 'analyze_message',
+        prompt: message,
+      );
+      return result.map((content) {
+        try {
+          final json = jsonDecode(content);
+          return MessageAnalysis(
+            sentiment: json['sentiment'] ?? 'neutral',
+            toxicity: (json['toxicity'] as num?)?.toDouble() ?? 0.0,
+            flags: List<String>.from(json['flags'] ?? []),
+          );
+        } catch (e) {
+          return MessageAnalysis(sentiment: 'neutral', toxicity: 0.0, flags: []);
+        }
+      });
+    }
     final result = await chat(
       systemPrompt: '''Analyze the following message for:
 1. Sentiment (positive/neutral/negative)
@@ -291,6 +404,12 @@ Respond in JSON format:
     required String contentRating,
     required String context,
   }) async {
+    if (_useProxy) {
+      return _proxyAction(
+        action: 'game_content',
+        prompt: 'Game: $gameType\nRating: $contentRating\n$context',
+      );
+    }
     final result = await chat(
       systemPrompt: '''You are creating content for adult party games.
 Game: $gameType
@@ -312,12 +431,79 @@ Be creative, fun, and engaging.''',
     required String endpoint,
     required Map<String, dynamic> body,
   }) async {
+    if (_useProxy) {
+      return _makeProxyRequest(body);
+    }
+    return _makeDirectRequest(endpoint: endpoint, body: body);
+  }
+
+  /// Route AI call through Supabase Edge Function (secure, no key exposed)
+  Future<Map<String, dynamic>> _makeProxyRequest(
+    Map<String, dynamic> body,
+  ) async {
+    final messages = body['messages'] as List<dynamic>? ?? [];
+    final systemMsg = messages.firstWhere(
+      (m) => m['role'] == 'system',
+      orElse: () => null,
+    );
+    final userMsg = messages.lastWhere(
+      (m) => m['role'] == 'user',
+      orElse: () => null,
+    );
+
+    final response = await Supabase.instance.client.functions.invoke(
+      'ai-proxy',
+      body: {
+        'action': 'generate_bio', // default; overridden by specialized methods
+        'prompt': userMsg?['content'] ?? '',
+        if (systemMsg != null) 'systemPromptOverride': systemMsg['content'],
+      },
+    );
+
+    if (response.status != 200) {
+      final errorData = response.data;
+      throw AppError.server(
+        message: errorData?['error'] ?? 'AI proxy request failed',
+        statusCode: response.status,
+      );
+    }
+
+    final data = response.data;
+    // Re-wrap into OpenAI-compatible format for existing parsing
+    return {
+      'choices': [
+        {
+          'message': {'content': data['content'] ?? ''},
+          'finish_reason': 'stop',
+        }
+      ],
+      'usage': {
+        'prompt_tokens': 0,
+        'completion_tokens': 0,
+        'total_tokens': data['tokensUsed'] ?? 0,
+      }
+    };
+  }
+
+  /// Direct OpenAI call (fallback for local dev without edge functions)
+  Future<Map<String, dynamic>> _makeDirectRequest({
+    required String endpoint,
+    required Map<String, dynamic> body,
+  }) async {
+    final apiKey = Env.openaiApiKey;
+    if (apiKey.isEmpty) {
+      throw const AppError(
+        message: 'AI service not configured',
+        type: ErrorType.server,
+      );
+    }
+
     final response = await http
         .post(
-          Uri.parse('$_baseUrl$endpoint'),
+          Uri.parse('https://api.openai.com/v1$endpoint'),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${Env.openaiApiKey}',
+            'Authorization': 'Bearer $apiKey',
           },
           body: jsonEncode(body),
         )
@@ -327,7 +513,6 @@ Be creative, fun, and engaging.''',
       return jsonDecode(response.body);
     }
 
-    // Handle specific error codes
     if (response.statusCode == 429) {
       throw AppError.rateLimited();
     }

@@ -65,6 +65,6 @@ class AppConstants {
   // OPENAI
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const String openaiModel = 'gpt-4-turbo-preview';
+  static const String openaiModel = 'gpt-4o-mini';
   static const int maxTokens = 500;
 }

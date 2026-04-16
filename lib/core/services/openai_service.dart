@@ -1,12 +1,46 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/env.dart';
 import '../constants/app_constants.dart';
 
 /// OpenAI Service for Strategist and Ghost Protocol features
+/// Now routes through server-side edge functions to protect API keys
 class OpenAIService {
   static const String _baseUrl = 'https://api.openai.com/v1';
+
+  // ── Rate Limiting ──────────────────────────────────────────────────────
+  static final List<DateTime> _requestTimestamps = [];
+  static const int _maxRequestsPerMinute = 30;
+
+  static bool _checkRateLimit() {
+    final now = DateTime.now();
+    final windowStart = now.subtract(const Duration(minutes: 1));
+    _requestTimestamps.removeWhere((t) => t.isBefore(windowStart));
+    if (_requestTimestamps.length >= _maxRequestsPerMinute) return false;
+    _requestTimestamps.add(now);
+    return true;
+  }
+
+  // ── Response Caching ───────────────────────────────────────────────────
+  static final Map<String, _CachedResult> _cache = {};
+  static const Duration _cacheTtl = Duration(minutes: 15);
+
+  static String? _getFromCache(String key) {
+    final entry = _cache[key];
+    if (entry == null) return null;
+    if (DateTime.now().isAfter(entry.expiresAt)) {
+      _cache.remove(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  static void _addToCache(String key, String value) {
+    _cache[key] = _CachedResult(value, DateTime.now().add(_cacheTtl));
+    if (_cache.length > 50) _cache.remove(_cache.keys.first);
+  }
 
   /// Generate a polite closure message for Ghost Protocol
   static Future<String> generateClosureMessage({
@@ -29,7 +63,7 @@ ${reason != null ? 'Reason for ending: $reason' : ''}
 Generate ONLY the message text, no quotes or explanation.
 ''';
 
-    return _chat(prompt);
+    return _chat(prompt, action: 'closure_message');
   }
 
   /// Generate conversation resuscitator prompt
@@ -53,7 +87,7 @@ Match interests: $matchInterests
 Generate ONLY the message text, no quotes or explanation.
 ''';
 
-    return _chat(prompt);
+    return _chat(prompt, action: 'resuscitate');
   }
 
   /// Generate strategic advice for The Strategist
@@ -75,7 +109,7 @@ Response Rate: ${(responseRate * 100).toStringAsFixed(1)}%
 Keep it under 50 words. Be direct and practical.
 ''';
 
-    return _chat(prompt);
+    return _chat(prompt, action: 'strategic_advice');
   }
 
   /// Generate Ghost Protocol closure message
@@ -108,7 +142,7 @@ Guidelines:
 Generate ONLY the message text, no quotes or explanation.
 ''';
 
-    return _chat(prompt);
+    return _chat(prompt, action: 'closure_message');
   }
 
   /// Generate Truth or Dare prompts for TAGS
@@ -131,7 +165,7 @@ Current level: $consentLevel
 Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
 ''';
 
-    final response = await _chat(prompt);
+    final response = await _chat(prompt, action: 'game_content');
     try {
       final List<dynamic> parsed = jsonDecode(response);
       return parsed.map((e) => e.toString()).toList();
@@ -140,8 +174,41 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
     }
   }
 
-  /// Core chat completion method
-  static Future<String> _chat(String prompt) async {
+  /// Core chat completion method — routes through edge function proxy
+  static Future<String> _chat(String prompt, {String action = 'strategic_advice'}) async {
+    if (!_checkRateLimit()) {
+      throw Exception('Rate limit exceeded. Please wait a moment.');
+    }
+
+    // Check cache
+    final cacheKey = '${action}_${prompt.hashCode}';
+    final cached = _getFromCache(cacheKey);
+    if (cached != null) return cached;
+
+    // Route through Supabase edge function proxy (secure)
+    if (Env.supabaseUrl.isNotEmpty) {
+      try {
+        final response = await Supabase.instance.client.functions.invoke(
+          'ai-proxy',
+          body: {
+            'action': action,
+            'prompt': prompt,
+          },
+        );
+
+        if (response.status == 200) {
+          final content = response.data['content']?.toString().trim() ?? '';
+          _addToCache(cacheKey, content);
+          return content;
+        }
+        throw Exception('AI proxy error: ${response.status}');
+      } catch (e) {
+        // Fall through to direct call as fallback
+        if (Env.openaiApiKey.isEmpty) rethrow;
+      }
+    }
+
+    // Fallback: direct call (local dev only)
     final response = await http.post(
       Uri.parse('$_baseUrl/chat/completions'),
       headers: {
@@ -168,9 +235,17 @@ Return as a JSON array of strings. Example: ["prompt 1", "prompt 2"]
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['choices'][0]['message']['content'].toString().trim();
+      final content = data['choices'][0]['message']['content'].toString().trim();
+      _addToCache(cacheKey, content);
+      return content;
     } else {
       throw Exception('OpenAI API Error: ${response.statusCode}');
     }
   }
+}
+
+class _CachedResult {
+  _CachedResult(this.value, this.expiresAt);
+  final String value;
+  final DateTime expiresAt;
 }

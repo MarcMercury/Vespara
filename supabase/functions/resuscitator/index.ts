@@ -122,7 +122,7 @@ Generate a single opener message to restart the conversation.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4-turbo",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

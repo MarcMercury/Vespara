@@ -8,6 +8,7 @@ import '../../../core/domain/models/wire_models.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/haptics.dart';
+import '../widgets/giphy_picker.dart';
 import '../widgets/wire_message_bubble.dart';
 import 'wire_group_info_screen.dart';
 
@@ -482,6 +483,12 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
               onTap: _shareContact,
             ),
             _buildAttachmentOption(
+              icon: Icons.gif_box,
+              label: 'GIF',
+              color: VesparaColors.glow,
+              onTap: _openGiphyPicker,
+            ),
+            _buildAttachmentOption(
               icon: Icons.poll,
               label: 'Poll',
               color: VesparaColors.tagsYellow,
@@ -759,6 +766,27 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
 
   void _createPoll() {
     // TODO: Implement poll creation
+  }
+
+  void _openGiphyPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => GiphyPickerSheet(
+        onGifSelected: (gifUrl, title) => _sendGifMessage(gifUrl),
+      ),
+    );
+  }
+
+  Future<void> _sendGifMessage(String gifUrl) async {
+    VesparaHaptics.lightTap();
+    await ref.read(wireProvider.notifier).sendMessage(
+          conversationId: widget.conversation.id,
+          content: gifUrl,
+          replyToId: _replyingTo?.id,
+        );
+    setState(() => _replyingTo = null);
   }
 
   void _setReplyingTo(WireMessage message) {

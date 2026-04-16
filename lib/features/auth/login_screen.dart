@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/services/email_validation_service.dart';
 import 'mfa_email_verify_screen.dart';
 import 'mfa_method_screen.dart';
 import 'mfa_setup_screen.dart';
@@ -54,6 +55,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final supabase = Supabase.instance.client;
 
       if (_isSignUp) {
+        // Validate email via Abstract API before signup
+        final emailError = await EmailValidationService.checkForSignup(
+          _emailController.text.trim(),
+        );
+        if (emailError != null && mounted) {
+          setState(() {
+            _serverEmailError = emailError;
+            _isLoading = false;
+          });
+          return;
+        }
+
         // Sign up with email + password
         final response = await supabase.auth.signUp(
           email: _emailController.text.trim(),
@@ -169,6 +182,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final emailRegex = RegExp(r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$');
     if (!emailRegex.hasMatch(value.trim())) return 'Enter a valid email';
     return null;
+  }
+
+  /// Deep email validation via Abstract API (signup only, non-blocking)
+  String? _serverEmailError;
+
+  Future<void> _validateEmailDeep(String email) async {
+    if (!_isSignUp) return;
+    final error = await EmailValidationService.checkForSignup(email.trim());
+    if (mounted && error != null) {
+      setState(() => _serverEmailError = error);
+    } else if (mounted) {
+      setState(() => _serverEmailError = null);
+    }
   }
 
   String? _validatePassword(String? value) {
