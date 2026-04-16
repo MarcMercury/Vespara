@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/services/email_validation_service.dart';
-import 'mfa_email_verify_screen.dart';
-import 'mfa_method_screen.dart';
-import 'mfa_setup_screen.dart';
-import 'mfa_verify_screen.dart';
-
-/// Members-Only Login Screen - Email + Password with required MFA
+/// Members-Only Login Screen - Email + Password
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -55,84 +49,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final supabase = Supabase.instance.client;
 
       if (_isSignUp) {
-        // Validate email via Abstract API before signup
-        final emailError = await EmailValidationService.checkForSignup(
-          _emailController.text.trim(),
-        );
-        if (emailError != null && mounted) {
-          setState(() {
-            _serverEmailError = emailError;
-            _isLoading = false;
-          });
-          return;
-        }
-
-        // Sign up with email + password
-        final response = await supabase.auth.signUp(
+        // Sign up with email + password — no email verification needed
+        await supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-
-        if (response.user != null && mounted) {
-          // After signup, let user choose MFA method
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const MfaMethodScreen(),
-            ),
-          );
-        }
+        // AuthGate will handle routing automatically
       } else {
         // Sign in
         await supabase.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-
-        if (!mounted) return;
-
-        // Check MFA enrollment - require MFA verification
-        final factors = await supabase.auth.mfa.listFactors();
-        final totpFactors = factors.totp;
-
-        if (totpFactors.isNotEmpty &&
-            totpFactors.any((f) => f.status == FactorStatus.verified)) {
-          // User has TOTP MFA enrolled, need to verify
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MfaVerifyScreen(
-                factorId: totpFactors
-                    .firstWhere((f) => f.status == FactorStatus.verified)
-                    .id,
-              ),
-            ),
-          );
-        } else {
-          // Check if user has email OTP enrolled
-          final profile = await supabase
-              .from('profiles')
-              .select('mfa_method, mfa_enrolled')
-              .eq('id', supabase.auth.currentUser!.id)
-              .maybeSingle();
-
-          final mfaMethod = profile?['mfa_method'] as String?;
-          final mfaEnrolled = profile?['mfa_enrolled'] as bool? ?? false;
-
-          if (mfaMethod == 'email' && mfaEnrolled && mounted) {
-            // User uses email OTP - send code and verify
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const MfaEmailVerifyScreen(),
-              ),
-            );
-          } else if (mounted) {
-            // User doesn't have any MFA yet - let them choose
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const MfaMethodScreen(),
-              ),
-            );
-          }
-        }
+        // AuthGate will handle routing automatically
       }
     } on AuthException catch (e) {
       setState(() {
@@ -184,18 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return null;
   }
 
-  /// Deep email validation via Abstract API (signup only, non-blocking)
-  String? _serverEmailError;
 
-  Future<void> _validateEmailDeep(String email) async {
-    if (!_isSignUp) return;
-    final error = await EmailValidationService.checkForSignup(email.trim());
-    if (mounted && error != null) {
-      setState(() => _serverEmailError = error);
-    } else if (mounted) {
-      setState(() => _serverEmailError = null);
-    }
-  }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
@@ -446,27 +364,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // MFA badge
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _surface.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.shield_outlined, color: _glow, size: 16),
-                        SizedBox(width: 6),
-                        Text(
-                          'Protected by 2-Factor Authentication',
-                          style: TextStyle(color: _muted, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
 
                   const SizedBox(height: 24),
 
