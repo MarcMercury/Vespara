@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/domain/models/match.dart';
+import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/groups_provider.dart';
-import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// CREATE GROUP SCREEN - Wizard Flow
 /// Step 1: Name & Description
-/// Step 2: Invite Members (from matches)
+/// Step 2: Invite Members (all community members)
 /// Step 3: Confirmation
 /// ════════════════════════════════════════════════════════════════════════════
 
@@ -347,7 +346,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildStep2InviteMembers() {
-    final matches = ref.watch(matchStateProvider).matches;
+    final membersAsync = ref.watch(allMembersProvider);
 
     return Column(
       children: [
@@ -405,20 +404,24 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             ),
           ),
         Expanded(
-          child: matches.isEmpty
-              ? _buildNoMatchesState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: matches.length,
-                  itemBuilder: (context, index) =>
-                      _buildMemberTile(matches[index]),
-                ),
+          child: membersAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => const Center(child: Text('Error loading members')),
+            data: (members) => members.isEmpty
+                ? _buildNoMembersState()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: members.length,
+                    itemBuilder: (context, index) =>
+                        _buildMemberTile(members[index]),
+                  ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildNoMatchesState() => const Center(
+  Widget _buildNoMembersState() => const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -429,7 +432,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             ),
             SizedBox(height: 16),
             Text(
-              'No matches yet',
+              'No members yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -438,7 +441,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             ),
             SizedBox(height: 8),
             Text(
-              'You can invite people after you match with them',
+              'Members will appear here once they join the community',
               style: TextStyle(
                 fontSize: 14,
                 color: VesparaColors.secondary,
@@ -448,17 +451,17 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
         ),
       );
 
-  Widget _buildMemberTile(Match match) {
-    final isSelected = _selectedMemberIds.contains(match.matchedUserId);
+  Widget _buildMemberTile(CommunityMember member) {
+    final isSelected = _selectedMemberIds.contains(member.id);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() {
           if (isSelected) {
-            _selectedMemberIds.remove(match.matchedUserId);
+            _selectedMemberIds.remove(member.id);
           } else {
-            _selectedMemberIds.add(match.matchedUserId);
+            _selectedMemberIds.add(member.id);
           }
         });
       },
@@ -484,10 +487,10 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 shape: BoxShape.circle,
                 color: VesparaColors.glow.withOpacity(0.2),
               ),
-              child: match.matchedUserAvatar != null
+              child: member.avatarUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        match.matchedUserAvatar!,
+                        member.avatarUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.person,
@@ -500,25 +503,13 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             const SizedBox(width: 12),
             // Name
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    match.matchedUserName ?? 'Unknown',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary,
-                    ),
-                  ),
-                  Text(
-                    'Matched ${_formatDate(match.matchedAt)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: VesparaColors.secondary,
-                    ),
-                  ),
-                ],
+              child: Text(
+                member.displayName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                ),
               ),
             ),
             // Checkbox
@@ -546,24 +537,18 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) return 'today';
-    if (diff.inDays == 1) return 'yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
-    return '${(diff.inDays / 30).floor()} months ago';
-  }
-
   // ════════════════════════════════════════════════════════════════════════════
   // STEP 3: CONFIRMATION
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildStep3Confirmation() {
-    final matches = ref.watch(matchStateProvider).matches;
-    final selectedMembers = matches
-        .where((m) => _selectedMemberIds.contains(m.matchedUserId))
-        .toList();
+    final membersAsync = ref.watch(allMembersProvider);
+    final selectedMembers = membersAsync.when(
+      loading: () => <CommunityMember>[],
+      error: (_, __) => <CommunityMember>[],
+      data: (members) =>
+          members.where((m) => _selectedMemberIds.contains(m.id)).toList(),
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -735,7 +720,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
         ],
       );
 
-  Widget _buildInviteChip(Match match) => Container(
+  Widget _buildInviteChip(CommunityMember member) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: VesparaColors.surface,
@@ -752,10 +737,10 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 shape: BoxShape.circle,
                 color: VesparaColors.glow.withOpacity(0.2),
               ),
-              child: match.matchedUserAvatar != null
+              child: member.avatarUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        match.matchedUserAvatar!,
+                        member.avatarUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.person,
@@ -769,7 +754,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              match.matchedUserName ?? 'Unknown',
+              member.displayName,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

@@ -54,6 +54,60 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// COMMUNITY MEMBERS PROVIDER
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Simple member data for lists (invite sheets, member pickers, etc.)
+class CommunityMember {
+  const CommunityMember({
+    required this.id,
+    this.displayName,
+    this.avatarUrl,
+    this.age,
+  });
+
+  factory CommunityMember.fromJson(Map<String, dynamic> json) {
+    final photos = json['photos'] as List?;
+    final avatarUrl = (photos != null && photos.isNotEmpty)
+        ? photos.first as String?
+        : json['avatar_url'] as String?;
+    return CommunityMember(
+      id: json['id'] as String,
+      displayName: json['display_name'] as String?,
+      avatarUrl: avatarUrl,
+      age: json['age'] as int?,
+    );
+  }
+
+  final String id;
+  final String? displayName;
+  final String? avatarUrl;
+  final int? age;
+}
+
+/// Provider that fetches all approved community members (excluding current user)
+final allMembersProvider = FutureProvider<List<CommunityMember>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+
+  try {
+    final response = await _supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, photos, age')
+        .eq('membership_status', 'approved')
+        .neq('id', user.id)
+        .order('display_name');
+
+    return (response as List)
+        .map((json) => CommunityMember.fromJson(json as Map<String, dynamic>))
+        .toList();
+  } catch (e) {
+    debugPrint('Error loading community members: $e');
+    return [];
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // STRATEGIST PROVIDERS (Tile 1)
 // ═══════════════════════════════════════════════════════════════════════════
 

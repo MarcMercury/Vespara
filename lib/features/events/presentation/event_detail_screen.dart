@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/vespara_event.dart';
 import '../../../core/domain/models/wire_models.dart';
+import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/events_provider.dart';
-import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
@@ -1537,7 +1536,7 @@ Join me on Vespara!
 }
 
 /// ════════════════════════════════════════════════════════════════════════════
-/// INVITE GUESTS SHEET - Shows matches to invite to event
+/// INVITE GUESTS SHEET - Shows all community members to invite to event
 /// ════════════════════════════════════════════════════════════════════════════
 
 class _InviteGuestsSheet extends ConsumerStatefulWidget {
@@ -1564,21 +1563,17 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
     super.dispose();
   }
 
-  List<Match> get _filteredMatches {
-    final matchState = ref.watch(matchStateProvider);
-    final matches = matchState.matches.where((m) => !m.isArchived).toList();
-    
-    if (_searchQuery.isEmpty) return matches;
-    
-    return matches.where((m) {
-      final name = m.matchedUserName?.toLowerCase() ?? '';
+  List<CommunityMember> _getFilteredMembers(List<CommunityMember> members) {
+    if (_searchQuery.isEmpty) return members;
+    return members.where((m) {
+      final name = m.displayName?.toLowerCase() ?? '';
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final matches = _filteredMatches;
+    final membersAsync = ref.watch(allMembersProvider);
     
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -1597,7 +1592,7 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
                   children: [
                     const Expanded(
                       child: Text(
-                        'Invite from Sanctum',
+                        'Invite Members',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -1628,7 +1623,7 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
                   controller: _searchController,
                   onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
-                    hintText: 'Search matches...',
+                    hintText: 'Search members...',
                     hintStyle: const TextStyle(color: VesparaColors.secondary),
                     prefixIcon: const Icon(Icons.search, color: VesparaColors.secondary),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -1657,21 +1652,28 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
             ),
           ),
 
-          // Matches list
+          // Members list
           Expanded(
-            child: matches.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: matches.length,
-                    itemBuilder: (context, index) {
-                      final match = matches[index];
-                      final isSelected = _selectedIds.contains(match.matchedUserId);
-                      
-                      return _buildMatchTile(match, isSelected);
-                    },
-                  ),
+            child: membersAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error loading members', style: TextStyle(color: VesparaColors.secondary))),
+              data: (allMembers) {
+                final members = _getFilteredMembers(allMembers);
+                if (members.isEmpty) {
+                  return _buildEmptyState();
+                }
+                return ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: members.length,
+                  itemBuilder: (context, index) {
+                    final member = members[index];
+                    final isSelected = _selectedIds.contains(member.id);
+                    return _buildMemberTile(member, isSelected);
+                  },
+                );
+              },
+            ),
           ),
 
           // Send button
@@ -1712,8 +1714,6 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
   }
 
   Widget _buildEmptyState() {
-    final hasMatches = ref.watch(matchStateProvider).matches.isNotEmpty;
-    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1721,13 +1721,13 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              hasMatches ? Icons.search_off : Icons.favorite_border,
+              _searchQuery.isNotEmpty ? Icons.search_off : Icons.people_outline,
               size: 64,
               color: VesparaColors.secondary.withOpacity(0.5),
             ),
             const SizedBox(height: 16),
             Text(
-              hasMatches ? 'No matches found' : 'No matches yet',
+              _searchQuery.isNotEmpty ? 'No members found' : 'No members yet',
               style: const TextStyle(
                 color: VesparaColors.primary,
                 fontSize: 18,
@@ -1736,9 +1736,9 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              hasMatches
+              _searchQuery.isNotEmpty
                   ? 'Try a different search'
-                  : 'Match with people in Discover to invite them to events',
+                  : 'Members will appear here once they join',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: VesparaColors.secondary.withOpacity(0.8),
@@ -1751,13 +1751,13 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
     );
   }
 
-  Widget _buildMatchTile(Match match, bool isSelected) => GestureDetector(
+  Widget _buildMemberTile(CommunityMember member, bool isSelected) => GestureDetector(
         onTap: () {
           setState(() {
             if (isSelected) {
-              _selectedIds.remove(match.matchedUserId);
+              _selectedIds.remove(member.id);
             } else {
-              _selectedIds.add(match.matchedUserId);
+              _selectedIds.add(member.id);
             }
           });
           HapticFeedback.selectionClick();
@@ -1778,16 +1778,15 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
           ),
           child: Row(
             children: [
-              // Avatar
               CircleAvatar(
                 radius: 24,
                 backgroundColor: VesparaColors.glow.withOpacity(0.3),
-                backgroundImage: match.matchedUserAvatar != null
-                    ? NetworkImage(match.matchedUserAvatar!)
+                backgroundImage: member.avatarUrl != null
+                    ? NetworkImage(member.avatarUrl!)
                     : null,
-                child: match.matchedUserAvatar == null
+                child: member.avatarUrl == null
                     ? Text(
-                        (match.matchedUserName ?? '?')[0].toUpperCase(),
+                        (member.displayName ?? '?')[0].toUpperCase(),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -1797,34 +1796,18 @@ class _InviteGuestsSheetState extends ConsumerState<_InviteGuestsSheet> {
                     : null,
               ),
               const SizedBox(width: 12),
-
-              // Name and status
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      match.matchedUserName ?? 'Unknown',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? VesparaColors.glow
-                            : VesparaColors.primary,
-                      ),
-                    ),
-                    Text(
-                      match.priority.label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: VesparaColors.secondary,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  member.displayName ?? 'Unknown',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? VesparaColors.glow
+                        : VesparaColors.primary,
+                  ),
                 ),
               ),
-
-              // Checkbox
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 24,
