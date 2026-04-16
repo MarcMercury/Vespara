@@ -29,14 +29,29 @@ class Env {
       String.fromEnvironment('ABSTRACT_API_KEY');
   static const String _huggingfaceKeyDef =
       String.fromEnvironment('HUGGINGFACE_KEY');
+  static const String _streamChatApiKeyDef =
+      String.fromEnvironment('STREAM_CHAT_API_KEY');
+  static const String _cloudinaryCloudNameDef =
+      String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
+  static const String _cloudinaryUploadPresetDef =
+      String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET');
+
+  /// Safe dotenv access — returns fallback when dotenv is not loaded
+  static String _dotenv(String key, [String fallback = '']) {
+    try {
+      return dotenv.env[key] ?? fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // APP IDENTITY
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get appName => dotenv.env['APP_NAME'] ?? 'Vespara';
-  static String get appDomain => dotenv.env['APP_DOMAIN'] ?? 'www.vespara.co';
-  static String get appVersion => dotenv.env['APP_VERSION'] ?? '0.1.0-alpha';
+  static String get appName => _dotenv('APP_NAME', 'Vespara');
+  static String get appDomain => _dotenv('APP_DOMAIN', 'www.vespara.co');
+  static String get appVersion => _dotenv('APP_VERSION', '0.1.0-alpha');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SUPABASE CONFIGURATION
@@ -44,14 +59,13 @@ class Env {
 
   static String get supabaseUrl => _supabaseUrlDef.isNotEmpty
       ? _supabaseUrlDef
-      : (dotenv.env['SUPABASE_URL'] ?? '');
+      : _dotenv('SUPABASE_URL');
 
   static String get supabaseAnonKey => _supabaseAnonKeyDef.isNotEmpty
       ? _supabaseAnonKeyDef
-      : (dotenv.env['SUPABASE_ANON_KEY'] ?? '');
+      : _dotenv('SUPABASE_ANON_KEY');
 
-  static String get supabaseServiceRole =>
-      dotenv.env['SUPABASE_SERVICE_ROLE'] ?? '';
+  static String get supabaseServiceRole => _dotenv('SUPABASE_SERVICE_ROLE');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // OPENAI CONFIGURATION
@@ -59,22 +73,21 @@ class Env {
 
   static String get openaiApiKey => _openaiApiKeyDef.isNotEmpty
       ? _openaiApiKeyDef
-      : (dotenv.env['OPENAI_API_KEY'] ?? '');
+      : _dotenv('OPENAI_API_KEY');
 
-  static String get openaiAdminKey => dotenv.env['OPENAI_ADMIN_KEY'] ?? '';
+  static String get openaiAdminKey => _dotenv('OPENAI_ADMIN_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // GOOGLE CLOUD SERVICES
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get googleProjectId =>
-      dotenv.env['GOOGLE_PROJECT_ID'] ?? '';
+  static String get googleProjectId => _dotenv('GOOGLE_PROJECT_ID');
 
-  static String get googleClientId => dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
+  static String get googleClientId => _dotenv('GOOGLE_CLIENT_ID');
 
   static String get googleMapsApiKey => _googleMapsApiKeyDef.isNotEmpty
       ? _googleMapsApiKeyDef
-      : (dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '');
+      : _dotenv('GOOGLE_MAPS_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // GEMINI AI
@@ -82,7 +95,7 @@ class Env {
 
   static String get geminiApiKey => _geminiApiKeyDef.isNotEmpty
       ? _geminiApiKeyDef
-      : (dotenv.env['GEMINI_API_KEY'] ?? '');
+      : _dotenv('GEMINI_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // MESHY (3D AI Generation)
@@ -90,7 +103,7 @@ class Env {
 
   static String get meshyApiKey => _meshyApiKeyDef.isNotEmpty
       ? _meshyApiKeyDef
-      : (dotenv.env['MESHY_API_KEY'] ?? '');
+      : _dotenv('MESHY_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // GIPHY (GIF Search & Chat Reactions)
@@ -98,7 +111,7 @@ class Env {
 
   static String get giphyApiKey => _giphyApiKeyDef.isNotEmpty
       ? _giphyApiKeyDef
-      : (dotenv.env['GIPHY_API_KEY'] ?? '');
+      : _dotenv('GIPHY_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // IPINFO (IP Geolocation)
@@ -106,7 +119,7 @@ class Env {
 
   static String get ipinfoApiKey => _ipinfoApiKeyDef.isNotEmpty
       ? _ipinfoApiKeyDef
-      : (dotenv.env['IPINFO_API_KEY'] ?? '');
+      : _dotenv('IPINFO_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ABSTRACT API (Email Validation)
@@ -114,44 +127,46 @@ class Env {
 
   static String get abstractApiKey => _abstractApiKeyDef.isNotEmpty
       ? _abstractApiKeyDef
-      : (dotenv.env['ABSTRACT_API_KEY'] ?? '');
+      : _dotenv('ABSTRACT_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STREAM CHAT
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get streamChatApiKey =>
-      dotenv.env['STREAM_CHAT_API_KEY'] ?? '';
+  static String get streamChatApiKey => _streamChatApiKeyDef.isNotEmpty
+      ? _streamChatApiKeyDef
+      : _dotenv('STREAM_CHAT_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CLOUDINARY (Media Optimization)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get cloudinaryCloudName =>
-      dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
+  static String get cloudinaryCloudName => _cloudinaryCloudNameDef.isNotEmpty
+      ? _cloudinaryCloudNameDef
+      : _dotenv('CLOUDINARY_CLOUD_NAME');
 
-  static String get cloudinaryUploadPreset =>
-      dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
+  static String get cloudinaryUploadPreset => _cloudinaryUploadPresetDef.isNotEmpty
+      ? _cloudinaryUploadPresetDef
+      : _dotenv('CLOUDINARY_UPLOAD_PRESET');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RESEND (Transactional Email - key used server-side in Edge Functions)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get resendApiKey => dotenv.env['RESEND_API_KEY'] ?? '';
+  static String get resendApiKey => _dotenv('RESEND_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // LIVEKIT (Voice/Video — Phase 2)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get livekitUrl => dotenv.env['LIVEKIT_URL'] ?? '';
-  static String get livekitApiKey => dotenv.env['LIVEKIT_API_KEY'] ?? '';
+  static String get livekitUrl => _dotenv('LIVEKIT_URL');
+  static String get livekitApiKey => _dotenv('LIVEKIT_API_KEY');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // MAPBOX (Optional — enhanced location UX)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static String get mapboxAccessToken =>
-      dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? '';
+  static String get mapboxAccessToken => _dotenv('MAPBOX_ACCESS_TOKEN');
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HUGGING FACE (AI Inference API)
@@ -159,5 +174,5 @@ class Env {
 
   static String get huggingfaceKey => _huggingfaceKeyDef.isNotEmpty
       ? _huggingfaceKeyDef
-      : (dotenv.env['HUGGINGFACE_KEY'] ?? '');
+      : _dotenv('HUGGINGFACE_KEY');
 }

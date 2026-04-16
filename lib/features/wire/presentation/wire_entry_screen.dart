@@ -16,10 +16,15 @@ class WireEntryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final backend = ref.watch(chatBackendProvider);
+    try {
+      final backend = ref.watch(chatBackendProvider);
 
-    if (backend == ChatBackend.stream) {
-      return StreamChatWireScreen();
+      if (backend == ChatBackend.stream) {
+        return StreamChatWireScreen();
+      }
+    } catch (e) {
+      debugPrint('Wire backend error: $e');
+      // Stream Chat not configured — fall through to Supabase Wire
     }
 
     // Fallback: existing Supabase-powered Wire

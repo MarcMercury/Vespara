@@ -127,8 +127,13 @@ class WireNotifier extends StateNotifier<WireState> {
   Timer? _typingTimer;
 
   Future<void> _initialize() async {
-    await loadConversations();
-    _subscribeToRealtime();
+    if (_currentUserId.isEmpty) return;
+    try {
+      await loadConversations();
+      _subscribeToRealtime();
+    } catch (e) {
+      debugPrint('Wire initialization error: $e');
+    }
   }
 
   @override

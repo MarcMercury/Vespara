@@ -3,9 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/models/group.dart';
-import '../../../core/domain/models/match.dart';
+import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/groups_provider.dart';
-import '../../../core/providers/match_state_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../wire/presentation/wire_screen.dart';
 
@@ -684,11 +683,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
   }
 
   void _showInviteDialog(VesparaGroup group) {
-    final matches = ref.read(matchStateProvider).matches;
     final existingMemberIds = _members.map((m) => m.userId).toSet();
-    final invitableMatches = matches
-        .where((m) => !existingMemberIds.contains(m.matchedUserId))
-        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -702,76 +697,103 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
         minChildSize: 0.5,
         maxChildSize: 0.9,
         expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: VesparaColors.inactive,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Invite to ${group.name}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: invitableMatches.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'All your matches are already in this group',
-                        style: TextStyle(color: VesparaColors.secondary),
+        builder: (context, scrollController) => Consumer(
+          builder: (context, ref, _) {
+            final membersAsync = ref.watch(allMembersProvider);
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: VesparaColors.inactive,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    )
-                  : ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: invitableMatches.length,
-                      itemBuilder: (context, index) {
-                        final match = invitableMatches[index];
-                        return _InviteMatchTile(
-                          match: match,
-                          onInvite: () async {
-                            final success = await ref
-                                .read(groupsProvider.notifier)
-                                .sendInvitation(
-                                  groupId: group.id,
-                                  inviteeId: match.matchedUserId,
-                                );
-                            if (mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    success
-                                        ? 'Invitation sent to ${match.matchedUserName}!'
-                                        : 'Failed to send invitation',
-                                  ),
-                                  backgroundColor: success
-                                      ? VesparaColors.success
-                                      : VesparaColors.error,
-                                ),
-                              );
-                            }
-                          },
+                      const SizedBox(height: 16),
+                      Text(
+                        'Invite to ${group.name}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: membersAsync.when(
+                    loading: () => const Center(
+                        child: CircularProgressIndicator(
+                            color: VesparaColors.glow)),
+                    error: (_, __) => const Center(
+                        child: Text('Error loading members',
+                            style: TextStyle(
+                                color: VesparaColors.secondary))),
+                    data: (members) {
+                      final invitable = members
+                          .where(
+                              (m) => !existingMemberIds.contains(m.id))
+                          .toList();
+
+                      if (invitable.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'All members are already in this group',
+                            style: TextStyle(
+                                color: VesparaColors.secondary),
+                          ),
                         );
-                      },
-                    ),
-            ),
-          ],
+                      }
+
+                      return ListView.builder(
+                        controller: scrollController,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: invitable.length,
+                        itemBuilder: (context, index) {
+                          final member = invitable[index];
+                          return _InviteMemberTile(
+                            member: member,
+                            onInvite: () async {
+                              final success = await ref
+                                  .read(groupsProvider.notifier)
+                                  .sendInvitation(
+                                    groupId: group.id,
+                                    inviteeId: member.id,
+                                  );
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      success
+                                          ? 'Invitation sent to ${member.displayName}!'
+                                          : 'Failed to send invitation',
+                                    ),
+                                    backgroundColor: success
+                                        ? VesparaColors.success
+                                        : VesparaColors.error,
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -826,12 +848,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
   }
 }
 
-class _InviteMatchTile extends StatelessWidget {
-  const _InviteMatchTile({
-    required this.match,
+class _InviteMemberTile extends StatelessWidget {
+  const _InviteMemberTile({
+    required this.member,
     required this.onInvite,
   });
-  final Match match;
+  final CommunityMember member;
   final VoidCallback onInvite;
 
   @override
@@ -851,10 +873,10 @@ class _InviteMatchTile extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: VesparaColors.glow.withOpacity(0.2),
               ),
-              child: match.matchedUserAvatar != null
+              child: member.avatarUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        match.matchedUserAvatar!,
+                        member.avatarUrl!,
                         fit: BoxFit.cover,
                       ),
                     )
@@ -863,7 +885,7 @@ class _InviteMatchTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                match.matchedUserName ?? 'Unknown',
+                member.displayName,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,

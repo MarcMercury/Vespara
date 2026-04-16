@@ -4,30 +4,23 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/group.dart';
-import '../../../core/domain/models/match.dart';
 import '../../../core/domain/models/plan_event.dart';
-import '../../../core/domain/models/profile_photo.dart';
 import '../../../core/domain/models/user_profile.dart';
 import '../../../core/domain/models/wire_models.dart';
+import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/groups_provider.dart';
-import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/plan_provider.dart';
 import '../../../core/providers/wire_provider.dart';
-import '../../../core/services/match_insights_service.dart';
-import '../../../core/services/deep_connection_engine.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
-import '../../../core/widgets/photo_ranking_sheet.dart';
 import '../../../core/widgets/premium_effects.dart';
-import '../../ludus/presentation/tags_screen.dart' show TagScreen;
 import '../../wire/presentation/wire_chat_screen.dart';
 import 'group_detail_screen.dart';
 import 'groups_section.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
-/// CRM-style match management with AI-driven priorities
-/// Columns: Priority | In Waiting | On the Way Out | Legacy
+/// Community member directory & circles
 /// ════════════════════════════════════════════════════════════════════════════
 
 class NestScreen extends ConsumerStatefulWidget {
@@ -41,20 +34,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late AnimationController _glowController;
-
-  final List<MatchPriority> _priorities = [
-    MatchPriority.new_,
-    MatchPriority.priority,
-    MatchPriority.inWaiting,
-    MatchPriority.onWayOut,
-    MatchPriority.legacy,
-  ];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    // +1 for Circles tab
-    _tabController = TabController(length: _priorities.length + 1, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -66,27 +51,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
     _tabController.dispose();
     _glowController.dispose();
     super.dispose();
-  }
-
-  List<Match> _getMatchesForPriority(MatchPriority priority) {
-    // Get matches from global state provider
-    final state = ref.watch(matchStateProvider);
-    return state.getMatchesByPriority(priority);
-  }
-
-  void _updateMatchPriority(Match match, MatchPriority newPriority) {
-    // Use global state notifier
-    ref
-        .read(matchStateProvider.notifier)
-        .updateMatchPriority(match.id, newPriority);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${match.matchedUserName} moved to ${newPriority.label}'),
-        backgroundColor: VesparaColors.surface,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
@@ -146,7 +110,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Your connections, organized',
+                  'Your community',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
@@ -163,11 +127,14 @@ class _NestScreenState extends ConsumerState<NestScreen>
       );
 
   Widget _buildStats() {
-    final matchState = ref.watch(matchStateProvider);
-    final totalMatches = matchState.matches.where((m) => !m.isArchived).length;
-    final priorityCount =
-        matchState.getMatchesByPriority(MatchPriority.priority).length;
-    final newCount = matchState.getMatchesByPriority(MatchPriority.new_).length;
+    final membersAsync = ref.watch(allMembersProvider);
+    final groupsState = ref.watch(groupsProvider);
+
+    final memberCount = membersAsync.when(
+      loading: () => 0,
+      error: (_, __) => 0,
+      data: (members) => members.length,
+    );
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -181,12 +148,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem(
-              'Total', totalMatches.toString(), VesparaColors.primary,),
-          _buildStatDivider(),
-          _buildStatItem('New', newCount.toString(), VesparaColors.tagsYellow),
+              'Members', memberCount.toString(), VesparaColors.primary),
           _buildStatDivider(),
           _buildStatItem(
-              'Priority', priorityCount.toString(), VesparaColors.success,),
+              'Circles', groupsState.groupCount.toString(), VesparaColors.glow),
         ],
       ),
     );
@@ -220,12 +185,18 @@ class _NestScreenState extends ConsumerState<NestScreen>
 
   Widget _buildTabBar() {
     final groupsState = ref.watch(groupsProvider);
+    final membersAsync = ref.watch(allMembersProvider);
+
+    final memberCount = membersAsync.when(
+      loading: () => 0,
+      error: (_, __) => 0,
+      data: (members) => members.length,
+    );
 
     return Container(
       margin: const EdgeInsets.only(top: 16),
       child: TabBar(
         controller: _tabController,
-        isScrollable: true,
         labelColor: VesparaColors.primary,
         unselectedLabelColor: VesparaColors.secondary,
         indicatorColor: VesparaColors.glow,
@@ -236,36 +207,31 @@ class _NestScreenState extends ConsumerState<NestScreen>
           letterSpacing: 1,
         ),
         tabs: [
-          // Priority tabs
-          ..._priorities.map((p) {
-            final count = _getMatchesForPriority(p).length;
-            return Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(p.emoji),
+          Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('👥'),
+                const SizedBox(width: 6),
+                const Text('MEMBERS'),
+                if (memberCount > 0) ...[
                   const SizedBox(width: 6),
-                  Text(p.label.toUpperCase()),
-                  if (count > 0) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2,),
-                      decoration: BoxDecoration(
-                        color: VesparaColors.glow.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        count.toString(),
-                        style: const TextStyle(fontSize: 10),
-                      ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ],
+                    child: Text(
+                      memberCount.toString(),
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  ),
                 ],
-              ),
-            );
-          }),
-          // Circles tab at the end
+              ],
+            ),
+          ),
           Tab(
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -299,31 +265,219 @@ class _NestScreenState extends ConsumerState<NestScreen>
   Widget _buildTabBarView() => TabBarView(
         controller: _tabController,
         children: [
-          // Priority tabs content
-          ..._priorities.map((priority) {
-            final matches = _getMatchesForPriority(priority);
-
-            if (matches.isEmpty) {
-              return _buildEmptyColumn(priority);
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: matches.length,
-              itemBuilder: (context, index) => _buildMatchCard(matches[index]),
-            );
-          }),
-          // Circles tab content
+          _buildMembersTab(),
           _buildCirclesTab(),
         ],
       );
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // MEMBERS TAB
+  // ════════════════════════════════════════════════════════════════════════════
+
+  Widget _buildMembersTab() {
+    final membersAsync = ref.watch(allMembersProvider);
+
+    return membersAsync.when(
+      loading: () => const Center(
+          child: CircularProgressIndicator(color: VesparaColors.glow)),
+      error: (e, _) => Center(
+        child: Text('Error loading members',
+            style: TextStyle(color: VesparaColors.error)),
+      ),
+      data: (members) {
+        final filtered = _searchQuery.isEmpty
+            ? members
+            : members
+                .where((m) => m.displayName
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase()))
+                .toList();
+
+        if (filtered.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.people_outline,
+                    size: 48, color: VesparaColors.secondary),
+                SizedBox(height: 16),
+                Text('No members yet',
+                    style:
+                        TextStyle(fontSize: 16, color: VesparaColors.secondary)),
+                SizedBox(height: 8),
+                Text('Members will appear here once they join',
+                    style:
+                        TextStyle(fontSize: 13, color: VesparaColors.inactive)),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) =>
+              _buildMemberCard(filtered[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildMemberCard(CommunityMember member) => AnimatedBuilder(
+        animation: _glowController,
+        builder: (context, child) => GestureDetector(
+          onTap: () => _showMemberDetails(member),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VesparaColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: VesparaColors.glow.withOpacity(0.1),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: VesparaColors.glow.withOpacity(0.2),
+                        border: Border.all(
+                          color: VesparaColors.glow.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: member.avatarUrl != null
+                          ? ClipOval(
+                              child: Image.network(
+                                member.avatarUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                  child: Text(
+                                    member.displayName[0].toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w600,
+                                      color: VesparaColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                member.displayName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  color: VesparaColors.primary,
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Name and info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                member.displayName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: VesparaColors.primary,
+                                ),
+                              ),
+                              if (member.age != null) ...[
+                                Text(
+                                  ', ${member.age}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: VesparaColors.secondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Community member',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: VesparaColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showPlanDateDialog(member),
+                        icon: const Icon(Icons.event_available, size: 16),
+                        label: const Text('Plan'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: VesparaColors.success,
+                          side: const BorderSide(
+                            color: VesparaColors.success,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openMessageWithMember(member),
+                        icon: const Icon(Icons.chat_bubble, size: 16),
+                        label: const Text('Message'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VesparaColors.glow,
+                          foregroundColor: VesparaColors.background,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // CIRCLES TAB
+  // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildCirclesTab() {
     final groupsState = ref.watch(groupsProvider);
 
     if (groupsState.isLoading) {
       return const Center(
-          child: CircularProgressIndicator(color: VesparaColors.glow),);
+          child: CircularProgressIndicator(color: VesparaColors.glow));
     }
 
     if (groupsState.groups.isEmpty) {
@@ -332,7 +486,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.group_outlined,
-                size: 48, color: VesparaColors.secondary,),
+                size: 48, color: VesparaColors.secondary),
             const SizedBox(height: 16),
             const Text(
               'No circles yet',
@@ -343,7 +497,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               'Create a circle to organize your connections',
               style: TextStyle(
                   fontSize: 13,
-                  color: VesparaColors.secondary.withOpacity(0.7),),
+                  color: VesparaColors.secondary.withOpacity(0.7)),
             ),
           ],
         ),
@@ -359,10 +513,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   Widget _buildCircleListItem(VesparaGroup group) {
-    // Calculate idle members (those who haven't communicated in 7+ days)
-    // For now we'll use a placeholder since we need to track last_message_at per member
-    const idleCount = 0; // TODO: Calculate from message activity
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -380,7 +530,6 @@ class _NestScreenState extends ConsumerState<NestScreen>
         children: [
           Row(
             children: [
-              // Avatar
               Container(
                 width: 48,
                 height: 48,
@@ -395,11 +544,9 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             Image.network(group.avatarUrl!, fit: BoxFit.cover),
                       )
                     : const Icon(Icons.group,
-                        color: VesparaColors.glow, size: 24,),
+                        color: VesparaColors.glow, size: 24),
               ),
               const SizedBox(width: 12),
-
-              // Name and stats
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +566,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         if (group.isCreator)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2,),
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: VesparaColors.glow.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
@@ -439,11 +586,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     Row(
                       children: [
                         _buildStatChip(
-                            '${group.memberCount} members', VesparaColors.glow,),
-                        const SizedBox(width: 8),
-                        if (idleCount > 0)
-                          _buildStatChip(
-                              '$idleCount idle', VesparaColors.warning,),
+                            '${group.memberCount} members', VesparaColors.glow),
                       ],
                     ),
                   ],
@@ -451,16 +594,18 @@ class _NestScreenState extends ConsumerState<NestScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
-          // Action buttons
           Row(
             children: [
               if (group.isCreator) ...[
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _showInviteWizard(group),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              GroupDetailScreen(groupId: group.id)),
+                    ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
@@ -473,7 +618,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.person_add,
-                              color: VesparaColors.background, size: 18,),
+                              color: VesparaColors.background, size: 18),
                           SizedBox(width: 6),
                           Text(
                             'Invite',
@@ -498,13 +643,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         color: VesparaColors.error.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: VesparaColors.error.withOpacity(0.3),),
+                            color: VesparaColors.error.withOpacity(0.3)),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.delete_outline,
-                              color: VesparaColors.error, size: 18,),
+                              color: VesparaColors.error, size: 18),
                           SizedBox(width: 6),
                           Text(
                             'Delete',
@@ -525,7 +670,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => GroupDetailScreen(groupId: group.id),),
+                          builder: (_) =>
+                              GroupDetailScreen(groupId: group.id)),
                     ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -533,13 +679,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
                         color: VesparaColors.glow.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: VesparaColors.glow.withOpacity(0.3),),
+                            color: VesparaColors.glow.withOpacity(0.3)),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.visibility,
-                              color: VesparaColors.glow, size: 18,),
+                              color: VesparaColors.glow, size: 18),
                           SizedBox(width: 6),
                           Text(
                             'View Circle',
@@ -578,393 +724,11 @@ class _NestScreenState extends ConsumerState<NestScreen>
         ),
       );
 
-  void _showInviteWizard(VesparaGroup group) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => GroupDetailScreen(groupId: group.id)),
-    );
-  }
+  // ════════════════════════════════════════════════════════════════════════════
+  // ACTIONS
+  // ════════════════════════════════════════════════════════════════════════════
 
-  void _confirmDeleteGroup(VesparaGroup group) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VesparaColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Delete Circle?',
-          style: TextStyle(color: VesparaColors.primary),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${group.name}"? This will remove all members and cannot be undone.',
-          style: const TextStyle(color: VesparaColors.secondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: VesparaColors.secondary),),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await ref.read(groupsProvider.notifier).deleteGroup(group.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Circle deleted'),
-                      backgroundColor: VesparaColors.surface,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Failed to delete circle'),
-                      backgroundColor: VesparaColors.error,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Delete',
-                style: TextStyle(color: VesparaColors.error),),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMatchCard(Match match) => AnimatedBuilder(
-        animation: _glowController,
-        builder: (context, child) {
-          final isHot = match.priority == MatchPriority.priority;
-
-          return GestureDetector(
-            onTap: () => _showMatchDetails(match),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: VesparaColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isHot
-                      ? VesparaColors.glow
-                          .withOpacity(0.2 + _glowController.value * 0.2)
-                      : VesparaColors.glow.withOpacity(0.1),
-                ),
-                boxShadow: isHot
-                    ? [
-                        BoxShadow(
-                          color: VesparaColors.glow
-                              .withOpacity(0.1 + _glowController.value * 0.1),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // Avatar
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: VesparaColors.glow.withOpacity(0.2),
-                          border: Border.all(
-                            color: match.isSuperMatch
-                                ? VesparaColors.tagsYellow
-                                : VesparaColors.glow.withOpacity(0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            match.matchedUserName?[0].toUpperCase() ?? '?',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                              color: VesparaColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Name and info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  match.matchedUserName ?? 'Unknown',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: VesparaColors.primary,
-                                  ),
-                                ),
-                                if (match.matchedUserAge != null) ...[
-                                  Text(
-                                    ', ${match.matchedUserAge}',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: VesparaColors.secondary,
-                                    ),
-                                  ),
-                                ],
-                                if (match.isSuperMatch) ...[
-                                  const SizedBox(width: 8),
-                                  const Icon(
-                                    Icons.star,
-                                    size: 16,
-                                    color: VesparaColors.tagsYellow,
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                // Compatibility
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getCompatibilityColor(
-                                            match.compatibilityScore,)
-                                        .withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '${match.compatibilityPercent}% match',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: _getCompatibilityColor(
-                                          match.compatibilityScore,),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // Last active
-                                Text(
-                                  match.lastMessage != null
-                                      ? '${match.daysSinceLastMessage}d ago'
-                                      : 'New match!',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: match.isGoingCold
-                                        ? VesparaColors.warning
-                                        : VesparaColors.secondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Unread badge
-                      if (match.unreadCount > 0)
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: VesparaColors.glow,
-                          ),
-                          child: Center(
-                            child: Text(
-                              match.unreadCount.toString(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: VesparaColors.background,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // Priority menu
-                      PopupMenuButton<MatchPriority>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          color: VesparaColors.secondary,
-                        ),
-                        color: VesparaColors.surfaceElevated,
-                        onSelected: (priority) =>
-                            _updateMatchPriority(match, priority),
-                        itemBuilder: (context) => _priorities
-                            .map(
-                              (p) => PopupMenuItem(
-                                value: p,
-                                child: Row(
-                                  children: [
-                                    Text(p.emoji),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Move to ${p.label}',
-                                      style: const TextStyle(
-                                        color: VesparaColors.primary,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ],
-                  ),
-
-                  // Last message preview
-                  if (match.lastMessage != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: VesparaColors.background.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.chat_bubble_outline,
-                            size: 14,
-                            color: VesparaColors.secondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              match.lastMessage!,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: VesparaColors.secondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // AI suggestions
-                  if (match.suggestedTopics.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.lightbulb_outline,
-                          size: 14,
-                          color: VesparaColors.tagsYellow,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            match.suggestedTopics.first,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: VesparaColors.tagsYellow.withOpacity(0.8),
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  // Shared interests
-                  if (match.sharedInterests.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: match.sharedInterests
-                          .map(
-                            (interest) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: VesparaColors.glow.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                interest,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: VesparaColors.glow,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showPlanDateDialog(match),
-                          icon: const Icon(Icons.event_available, size: 16),
-                          label: const Text('Plan'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: VesparaColors.success,
-                            side: const BorderSide(
-                              color: VesparaColors.success,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _openMessageWithMatch(match),
-                          icon: const Icon(Icons.chat_bubble, size: 16),
-                          label: const Text('Message'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: VesparaColors.glow,
-                            foregroundColor: VesparaColors.background,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-
-  void _showMatchDetails(Match match) {
+  void _showMemberDetails(CommunityMember member) {
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
@@ -972,45 +736,41 @@ class _NestScreenState extends ConsumerState<NestScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       isScrollControlled: true,
-      builder: (context) => _MatchProfileSheet(
-        match: match,
-        onMessage: () => _openMessageWithMatch(match, closeCurrentSheet: true),
-        onAskOut: () => _showPlanDateDialog(match),
-        onRankPhotos: () => _openPhotoRankingForMatch(match),
-        onShredder: () => _moveToShredder(match),
-        onUpdateNotes: (notes) => _updateMatchNotes(match, notes),
+      builder: (context) => _MemberProfileSheet(
+        member: member,
+        onMessage: () {
+          Navigator.pop(context);
+          _openMessageWithMember(member);
+        },
+        onPlan: () {
+          Navigator.pop(context);
+          _showPlanDateDialog(member);
+        },
       ),
     );
   }
 
-  /// Open Wire chat with this match
-  Future<void> _openMessageWithMatch(
-    Match match, {
-    bool closeCurrentSheet = false,
-  }) async {
+  Future<void> _openMessageWithMember(CommunityMember member) async {
     final navigator = Navigator.of(context);
-    if (closeCurrentSheet) {
-      navigator.pop();
-    }
-    
+
     final conversationId = await ref
         .read(wireProvider.notifier)
-        .getOrCreateDirectConversation(match.matchedUserId);
-    
+        .getOrCreateDirectConversation(member.id);
+
     if (conversationId != null && mounted) {
       final wireState = ref.read(wireProvider);
       final conversation = wireState.conversations.firstWhere(
         (c) => c.id == conversationId,
         orElse: () => WireConversation(
           id: conversationId,
-          matchId: match.matchedUserId,
-          matchName: match.matchedUserName,
-          matchAvatarUrl: match.matchedUserAvatar,
+          matchId: member.id,
+          matchName: member.displayName,
+          matchAvatarUrl: member.avatarUrl,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),
       );
-      
+
       navigator.push(
         MaterialPageRoute(
           builder: (context) => WireChatScreen(conversation: conversation),
@@ -1026,209 +786,15 @@ class _NestScreenState extends ConsumerState<NestScreen>
     }
   }
 
-  /// Update notes for a match
-  Future<void> _updateMatchNotes(Match match, String notes) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return;
-    
-    try {
-      // Determine which column to update based on which user we are
-      final matchData = await Supabase.instance.client
-          .from('matches')
-          .select('user_a_id')
-          .eq('id', match.id)
-          .single();
-      
-      final isUserA = matchData['user_a_id'] == userId;
-      final notesColumn = isUserA ? 'user_a_notes' : 'user_b_notes';
-      
-      await Supabase.instance.client
-          .from('matches')
-          .update({notesColumn: notes})
-          .eq('id', match.id);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Notes saved'),
-            backgroundColor: VesparaColors.success,
-            duration: Duration(seconds: 1),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error saving notes: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save notes'),
-            backgroundColor: VesparaColors.error,
-          ),
-        );
-      }
-    }
-  }
-
-  Widget _buildQuickAction({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) =>
-      GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.3)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildSectionTitle(String title) => Text(
-        title,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1,
-          color: VesparaColors.secondary,
-        ),
-      );
-
-  Widget _buildEmptyColumn(MatchPriority priority) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                priority.emoji,
-                style: const TextStyle(fontSize: 48),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No ${priority.label} matches',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _getEmptyMessage(priority),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: VesparaColors.secondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-  String _getEmptyMessage(MatchPriority priority) {
-    switch (priority) {
-      case MatchPriority.new_:
-        return 'Keep swiping in Discover to find new connections!';
-      case MatchPriority.priority:
-        return 'Move promising matches here to focus your energy.';
-      case MatchPriority.inWaiting:
-        return 'Matches that need a bit more time go here.';
-      case MatchPriority.onWayOut:
-        return 'Connections fading? They\'ll appear here.';
-      case MatchPriority.legacy:
-        return 'Past connections live here for reference.';
-    }
-  }
-
-  Color _getCompatibilityColor(double score) {
-    if (score >= 0.8) return VesparaColors.success;
-    if (score >= 0.6) return VesparaColors.glow;
-    if (score >= 0.4) return VesparaColors.warning;
-    return VesparaColors.secondary;
-  }
-
-  void _showSearchDialog() {
-    final searchController = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: VesparaColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 24,
-            right: 24,
-            top: 24,),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: searchController,
-              autofocus: true,
-              style: const TextStyle(color: VesparaColors.primary),
-              decoration: InputDecoration(
-                hintText: 'Search your roster...',
-                hintStyle: const TextStyle(color: VesparaColors.secondary),
-                prefixIcon: const Icon(Icons.search, color: VesparaColors.glow),
-                filled: true,
-                fillColor: VesparaColors.background,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,),
-              ),
-              onSubmitted: (query) {
-                Navigator.pop(context);
-                final matchState = ref.read(matchStateProvider);
-                final results = matchState.matches
-                    .where((m) =>
-                        m.matchedUserName
-                            ?.toLowerCase()
-                            .contains(query.toLowerCase()) ??
-                        false,)
-                    .toList();
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content:
-                        Text('Found ${results.length} matches for "$query"'),
-                    backgroundColor: VesparaColors.glow,),);
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showPlanDateDialog(Match match) {
-    final recommendation = _recommendPlanSlot(match);
+  void _showPlanDateDialog(CommunityMember member) {
+    final recommendation = _recommendPlanSlot();
     final recommendationLabel = _formatPlanDateTime(recommendation.startTime);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -1241,13 +807,13 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     height: 4,
                     decoration: BoxDecoration(
                         color: VesparaColors.secondary,
-                        borderRadius: BorderRadius.circular(2),),),),
+                        borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 20),
-            Text('Plan with ${match.matchedUserName ?? 'this connection'}',
+            Text('Plan with ${member.displayName}',
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary,),),
+                    color: VesparaColors.primary)),
             const SizedBox(height: 16),
             Container(
               width: double.infinity,
@@ -1295,7 +861,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                     onPressed: () async {
                       Navigator.pop(context);
                       await _sendPlanInviteMessage(
-                        match,
+                        member,
                         recommendation.startTime,
                       );
                     },
@@ -1313,7 +879,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       Navigator.pop(context);
-                      await _savePlanRecommendation(match, recommendation);
+                      await _savePlanRecommendation(member, recommendation);
                     },
                     icon: const Icon(Icons.check, size: 16),
                     label: const Text('Save Plan'),
@@ -1333,10 +899,11 @@ class _NestScreenState extends ConsumerState<NestScreen>
     );
   }
 
-  _PlanRecommendation _recommendPlanSlot(Match match) {
+  _PlanRecommendation _recommendPlanSlot() {
     final planState = ref.read(planProvider);
     final now = DateTime.now();
-    final busyEvents = planState.allEvents.where((e) => !e.isCancelled).toList();
+    final busyEvents =
+        planState.allEvents.where((e) => !e.isCancelled).toList();
 
     final candidates = <_PlanRecommendation>[
       _PlanRecommendation(
@@ -1370,18 +937,21 @@ class _NestScreenState extends ConsumerState<NestScreen>
   bool _hasPlanConflict(DateTime startTime, List<PlanEvent> events) {
     final endTime = startTime.add(const Duration(hours: 2));
     for (final event in events) {
-      final eventEnd = event.endTime ?? event.startTime.add(const Duration(hours: 2));
-      final overlaps = event.startTime.isBefore(endTime) && eventEnd.isAfter(startTime);
-      if (overlaps) {
-        return true;
-      }
+      final eventEnd =
+          event.endTime ?? event.startTime.add(const Duration(hours: 2));
+      final overlaps =
+          event.startTime.isBefore(endTime) && eventEnd.isAfter(startTime);
+      if (overlaps) return true;
     }
     return false;
   }
 
   String _formatPlanDateTime(DateTime dateTime) {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
     final hour12 = dateTime.hour == 0
         ? 12
         : (dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour);
@@ -1391,20 +961,21 @@ class _NestScreenState extends ConsumerState<NestScreen>
   }
 
   Future<void> _savePlanRecommendation(
-    Match match,
+    CommunityMember member,
     _PlanRecommendation recommendation,
   ) async {
     try {
       final connection = EventConnection(
-        id: match.matchedUserId,
-        name: match.matchedUserName ?? 'Connection',
-        avatarUrl: match.matchedUserAvatar,
+        id: member.id,
+        name: member.displayName,
+        avatarUrl: member.avatarUrl,
       );
 
       final event = PlanEvent(
         id: 'event-${DateTime.now().millisecondsSinceEpoch}',
         userId: Supabase.instance.client.auth.currentUser?.id ?? '',
-        title: '${recommendation.title} with ${match.matchedUserName ?? 'connection'}',
+        title:
+            '${recommendation.title} with ${member.displayName}',
         startTime: recommendation.startTime,
         endTime: recommendation.startTime.add(const Duration(hours: 2)),
         connections: [connection],
@@ -1436,10 +1007,11 @@ class _NestScreenState extends ConsumerState<NestScreen>
     }
   }
 
-  Future<void> _sendPlanInviteMessage(Match match, DateTime planTime) async {
+  Future<void> _sendPlanInviteMessage(
+      CommunityMember member, DateTime planTime) async {
     final conversationId = await ref
         .read(wireProvider.notifier)
-        .getOrCreateDirectConversation(match.matchedUserId);
+        .getOrCreateDirectConversation(member.id);
 
     if (conversationId == null) {
       if (mounted) {
@@ -1454,7 +1026,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
     }
 
     final message =
-        'Hey ${match.matchedUserName ?? ''}! Want to connect on ${_formatPlanDateTime(planTime)}?';
+        'Hey ${member.displayName}! Want to connect on ${_formatPlanDateTime(planTime)}?';
     final sent = await ref.read(wireProvider.notifier).sendMessage(
           conversationId: conversationId,
           content: message,
@@ -1465,7 +1037,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
         SnackBar(
           content: Text(
             sent != null
-                ? 'Message sent to ${match.matchedUserName ?? 'connection'}'
+                ? 'Message sent to ${member.displayName}'
                 : 'Failed to send message',
           ),
           backgroundColor:
@@ -1475,183 +1047,100 @@ class _NestScreenState extends ConsumerState<NestScreen>
     }
   }
 
-  void _showPlayTagDialog(Match match) {
+  void _showSearchDialog() {
+    final searchController = TextEditingController();
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-                child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                        color: VesparaColors.secondary,
-                        borderRadius: BorderRadius.circular(2),),),),
-            const SizedBox(height: 20),
-            Text('Play TAG with ${match.matchedUserName} 🎮',
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary,),),
-            const SizedBox(height: 12),
-            const Text('Choose a game to play together:',
-                style: TextStyle(color: VesparaColors.secondary),),
-            const SizedBox(height: 16),
-            ...[
-              '🧊 Icebreakers',
-              '🃏 Truth or Dare',
-              '🔥 Spicy Edition',
-              '💜 Fantasy Exploration',
-            ].map(
-              (game) => ListTile(
-                title: Text(game,
-                    style: const TextStyle(
-                        color: VesparaColors.primary,
-                        fontWeight: FontWeight.w500,),),
-                trailing: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                        color: VesparaColors.tagsYellow.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),),
-                    child: const Text('Play',
-                        style: TextStyle(
-                            color: VesparaColors.tagsYellow,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,),),),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Navigate to TAGs screen
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const TagScreen(),
-                    ),
-                  );
-                },
+            TextField(
+              controller: searchController,
+              autofocus: true,
+              style: const TextStyle(color: VesparaColors.primary),
+              decoration: InputDecoration(
+                hintText: 'Search members...',
+                hintStyle: const TextStyle(color: VesparaColors.secondary),
+                prefixIcon: const Icon(Icons.search, color: VesparaColors.glow),
+                filled: true,
+                fillColor: VesparaColors.background,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none),
               ),
+              onSubmitted: (query) {
+                Navigator.pop(context);
+                setState(() => _searchQuery = query);
+                _tabController.animateTo(0);
+              },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  void _moveToShredder(Match match) {
-    Navigator.pop(context);
+  void _confirmDeleteGroup(VesparaGroup group) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(children: [
-          Icon(Icons.delete_sweep, color: VesparaColors.error),
-          SizedBox(width: 8),
-          Text('Move to Shredder?',
-              style: TextStyle(color: VesparaColors.primary),),
-        ],),
+        title: const Text(
+          'Delete Circle?',
+          style: TextStyle(color: VesparaColors.primary),
+        ),
         content: Text(
-            '${match.matchedUserName} will be flagged for review in The Shredder. You can always bring them back.',
-            style: const TextStyle(color: VesparaColors.secondary),),
+          'Are you sure you want to delete "${group.name}"? This will remove all members and cannot be undone.',
+          style: const TextStyle(color: VesparaColors.secondary),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel',
-                  style: TextStyle(color: VesparaColors.secondary),),),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _updateMatchPriority(match, MatchPriority.onWayOut);
-              });
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content:
-                      Text('${match.matchedUserName} moved to On The Way Out'),
-                  backgroundColor: VesparaColors.error,),);
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel',
+                style: TextStyle(color: VesparaColors.secondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await ref.read(groupsProvider.notifier).deleteGroup(group.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Circle deleted'),
+                      backgroundColor: VesparaColors.surface,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to delete circle'),
+                      backgroundColor: VesparaColors.error,
+                    ),
+                  );
+                }
+              }
             },
-            style:
-                ElevatedButton.styleFrom(backgroundColor: VesparaColors.error),
-            child: const Text('Move', style: TextStyle(color: Colors.white)),
+            child: const Text('Delete',
+                style: TextStyle(color: VesparaColors.error)),
           ),
         ],
       ),
     );
-  }
-
-  String _formatMatchDate(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) return 'today';
-    if (diff.inDays == 1) return 'yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    if (diff.inDays < 30) return '${diff.inDays ~/ 7} weeks ago';
-    return '${diff.inDays ~/ 30} months ago';
-  }
-
-  void _openPhotoRankingForMatch(Match match) async {
-    // Fetch the user's profile to get all their photos
-    try {
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('photos')
-          .eq('id', match.matchedUserId)
-          .maybeSingle();
-
-      final photoUrls = response != null 
-          ? List<String>.from(response['photos'] ?? [])
-          : <String>[];
-
-      // Fall back to avatar if no photos array
-      if (photoUrls.isEmpty && match.matchedUserAvatar != null) {
-        photoUrls.add(match.matchedUserAvatar!);
-      }
-
-      if (photoUrls.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('This user has no photos to rank'),
-              backgroundColor: VesparaColors.surface,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Convert to ProfilePhoto objects
-      final photos = photoUrls.asMap().entries.map((entry) => ProfilePhoto.fromUrl(
-        id: '${match.matchedUserId}_photo_${entry.key}',
-        userId: match.matchedUserId,
-        photoUrl: entry.value,
-        position: entry.key + 1,
-        isPrimary: entry.key == 0,
-      )).toList();
-
-      if (mounted) {
-        PhotoRankingSheet.show(
-          context,
-          userId: match.matchedUserId,
-          userName: match.matchedUserName ?? 'This person',
-          photos: photos,
-        );
-      }
-    } catch (e) {
-      debugPrint('Error fetching photos for ranking: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to load photos'),
-            backgroundColor: VesparaColors.error,
-          ),
-        );
-      }
-    }
   }
 }
 
@@ -1666,64 +1155,42 @@ class _PlanRecommendation {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// MATCH PROFILE SHEET - Full profile popup with AI insights
+// MEMBER PROFILE SHEET
 // ════════════════════════════════════════════════════════════════════════════
 
-class _MatchProfileSheet extends ConsumerStatefulWidget {
-  const _MatchProfileSheet({
-    required this.match,
+class _MemberProfileSheet extends ConsumerStatefulWidget {
+  const _MemberProfileSheet({
+    required this.member,
     required this.onMessage,
-    required this.onAskOut,
-    required this.onRankPhotos,
-    required this.onShredder,
-    required this.onUpdateNotes,
+    required this.onPlan,
   });
 
-  final Match match;
+  final CommunityMember member;
   final VoidCallback onMessage;
-  final VoidCallback onAskOut;
-  final VoidCallback onRankPhotos;
-  final VoidCallback onShredder;
-  final void Function(String notes) onUpdateNotes;
+  final VoidCallback onPlan;
 
   @override
-  ConsumerState<_MatchProfileSheet> createState() => _MatchProfileSheetState();
+  ConsumerState<_MemberProfileSheet> createState() =>
+      _MemberProfileSheetState();
 }
 
-class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
+class _MemberProfileSheetState extends ConsumerState<_MemberProfileSheet> {
   UserProfile? _profile;
-  MatchInsight? _insight;
-  DeepCompatibility? _deepCompatibility;
   bool _isLoadingProfile = true;
-  bool _isLoadingInsight = true;
-  late TextEditingController _notesController;
-  bool _notesSaved = true;
   int _currentPhotoIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController(text: widget.match.notes ?? '');
-    _loadProfileAndInsight();
+    _loadProfile();
   }
 
-  @override
-  void dispose() {
-    // Save notes on close if changed
-    if (!_notesSaved && _notesController.text != widget.match.notes) {
-      widget.onUpdateNotes(_notesController.text);
-    }
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadProfileAndInsight() async {
-    // Load full profile from Supabase
+  Future<void> _loadProfile() async {
     try {
       final response = await Supabase.instance.client
           .from('profiles')
           .select()
-          .eq('id', widget.match.matchedUserId)
+          .eq('id', widget.member.id)
           .maybeSingle();
 
       if (response != null && mounted) {
@@ -1737,35 +1204,6 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
     } catch (e) {
       debugPrint('Error loading profile: $e');
       setState(() => _isLoadingProfile = false);
-    }
-
-    // Load AI insight
-    try {
-      final insight = await MatchInsightsService.instance
-          .getDetailedInsight(widget.match.matchedUserId);
-      if (mounted) {
-        setState(() {
-          _insight = insight;
-          _isLoadingInsight = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading insight: $e');
-      setState(() => _isLoadingInsight = false);
-    }
-
-    // Load deep compatibility in parallel
-    try {
-      final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-      if (currentUserId != null) {
-        final deepCompat = await DeepConnectionEngine.instance
-            .scoreCompatibility(userId1: currentUserId, userId2: widget.match.matchedUserId);
-        if (mounted) {
-          setState(() => _deepCompatibility = deepCompat);
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading deep compatibility: $e');
     }
   }
 
@@ -1782,7 +1220,6 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
           ),
           child: Column(
             children: [
-              // Handle
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Container(
@@ -1794,8 +1231,6 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
                   ),
                 ),
               ),
-
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
@@ -1803,46 +1238,23 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Photo carousel
                       _buildPhotoCarousel(),
                       const SizedBox(height: 20),
-
-                      // Name, age, headline
                       _buildProfileHeader(),
                       const SizedBox(height: 20),
-
-                      // Quick Action Buttons
                       _buildActionButtons(),
                       const SizedBox(height: 24),
-
-                      // AI Compatibility Insight
-                      _buildAIInsightSection(),
-                      const SizedBox(height: 24),
-
-                      // About section (bio)
                       if (_profile?.bio != null && _profile!.bio!.isNotEmpty)
                         _buildAboutSection(),
-
-                      // Shared interests
-                      if (widget.match.sharedInterests.isNotEmpty ||
-                          _insight?.sharedInterests.isNotEmpty == true)
-                        _buildSharedInterestsSection(),
-
-                      // Vibe tags
                       if (_profile?.vibeTags.isNotEmpty == true)
-                        _buildTagsSection('Vibe', _profile!.vibeTags, VesparaColors.glow),
-
-                      // Interest tags  
+                        _buildTagsSection(
+                            'Vibe', _profile!.vibeTags, VesparaColors.glow),
                       if (_profile?.interestTags.isNotEmpty == true)
-                        _buildTagsSection('Interests', _profile!.interestTags, VesparaColors.success),
-
-                      // Notes section
-                      _buildNotesSection(),
-                      const SizedBox(height: 24),
-
-                      // Danger zone
-                      _buildDangerZone(),
-                      SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                        _buildTagsSection('Interests', _profile!.interestTags,
+                            VesparaColors.success),
+                      SizedBox(
+                          height:
+                              MediaQuery.of(context).padding.bottom + 16),
                     ],
                   ),
                 ),
@@ -1854,11 +1266,9 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
 
   Widget _buildPhotoCarousel() {
     final photos = _profile?.photos ?? [];
-    final avatarUrl = widget.match.matchedUserAvatar;
-
-    // Use profile photos or fall back to avatar
-    final displayPhotos = photos.isNotEmpty 
-        ? photos 
+    final avatarUrl = widget.member.avatarUrl;
+    final displayPhotos = photos.isNotEmpty
+        ? photos
         : (avatarUrl != null ? [avatarUrl] : <String>[]);
 
     if (displayPhotos.isEmpty) {
@@ -1870,7 +1280,7 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
         ),
         child: Center(
           child: Text(
-            widget.match.matchedUserName?[0].toUpperCase() ?? '?',
+            widget.member.displayName[0].toUpperCase(),
             style: const TextStyle(
               fontSize: 80,
               fontWeight: FontWeight.bold,
@@ -1883,7 +1293,6 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
 
     return Column(
       children: [
-        // Photo
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: SizedBox(
@@ -1891,20 +1300,20 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
             width: double.infinity,
             child: PageView.builder(
               itemCount: displayPhotos.length,
-              onPageChanged: (index) => setState(() => _currentPhotoIndex = index),
+              onPageChanged: (index) =>
+                  setState(() => _currentPhotoIndex = index),
               itemBuilder: (context, index) => Image.network(
                 displayPhotos[index],
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   color: VesparaColors.background,
-                  child: const Icon(Icons.broken_image, size: 48, color: VesparaColors.secondary),
+                  child: const Icon(Icons.broken_image,
+                      size: 48, color: VesparaColors.secondary),
                 ),
               ),
             ),
           ),
         ),
-
-        // Dots indicator
         if (displayPhotos.length > 1)
           Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -1931,8 +1340,9 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
   }
 
   Widget _buildProfileHeader() {
-    final name = _profile?.displayName ?? widget.match.matchedUserName ?? 'Unknown';
-    final age = _profile?.age ?? widget.match.matchedUserAge;
+    final name =
+        _profile?.displayName ?? widget.member.displayName;
+    final age = _profile?.age ?? widget.member.age;
     final headline = _profile?.headline;
     final location = _profile?.city ?? _profile?.location;
     final isVerified = _profile?.isVerified ?? false;
@@ -1966,31 +1376,9 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
                   ],
                   if (isVerified) ...[
                     const SizedBox(width: 8),
-                    const Icon(Icons.verified, color: VesparaColors.glow, size: 24),
+                    const Icon(Icons.verified,
+                        color: VesparaColors.glow, size: 24),
                   ],
-                ],
-              ),
-            ),
-            // Compatibility badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: VesparaColors.glow.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.favorite, color: VesparaColors.glow, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${widget.match.compatibilityPercent}%',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: VesparaColors.glow,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -2011,20 +1399,11 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.location_on, size: 14, color: VesparaColors.secondary),
+              const Icon(Icons.location_on,
+                  size: 14, color: VesparaColors.secondary),
               const SizedBox(width: 4),
               Text(
                 location,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: VesparaColors.secondary,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.schedule, size: 14, color: VesparaColors.secondary),
-              const SizedBox(width: 4),
-              Text(
-                'Matched ${_formatMatchDate(widget.match.matchedAt)}',
                 style: const TextStyle(
                   fontSize: 13,
                   color: VesparaColors.secondary,
@@ -2057,7 +1436,7 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
           const SizedBox(width: 12),
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: widget.onAskOut,
+              onPressed: widget.onPlan,
               icon: const Icon(Icons.calendar_today, size: 18),
               label: const Text('Plan'),
               style: OutlinedButton.styleFrom(
@@ -2070,280 +1449,8 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.amber.withOpacity(0.5)),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: widget.onRankPhotos,
-              icon: const Icon(Icons.photo_library, color: Colors.amber),
-              tooltip: 'Rank Photos',
-            ),
-          ),
         ],
       );
-
-  Widget _buildAIInsightSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            VesparaColors.glow.withOpacity(0.15),
-            VesparaColors.glow.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: VesparaColors.glow.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Vespara Insight',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary,
-                  ),
-                ),
-              ),
-              if (_insight != null)
-                Text(
-                  _insight!.compatibilityEmoji,
-                  style: const TextStyle(fontSize: 20),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_isLoadingInsight)
-            const Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: VesparaColors.glow),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Analyzing compatibility...',
-                  style: TextStyle(fontSize: 14, color: VesparaColors.secondary),
-                ),
-              ],
-            )
-          else if (_insight != null && _insight!.hasAIInsight)
-            Text(
-              _insight!.aiInsight!,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: VesparaColors.primary,
-              ),
-            )
-          else if (_insight != null && _insight!.quickInsight.isNotEmpty)
-            Text(
-              _insight!.quickInsight,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: VesparaColors.primary,
-              ),
-            )
-          else
-            Text(
-              'Keep chatting to unlock deeper insights about your compatibility with ${widget.match.matchedUserName}!',
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: VesparaColors.secondary.withOpacity(0.8),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          
-          // Conversation starters
-          if (_insight?.conversationTopics.isNotEmpty == true) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Try talking about:',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: VesparaColors.secondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _insight!.conversationTopics.take(3).map((topic) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: VesparaColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  topic,
-                  style: const TextStyle(fontSize: 12, color: VesparaColors.primary),
-                ),
-              )).toList(),
-            ),
-          ],
-
-          // Deep compatibility breakdown
-          if (_deepCompatibility != null) ...[
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: VesparaColors.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.analytics, size: 16, color: VesparaColors.glow),
-                      const SizedBox(width: 8),
-                      Text(
-                        _deepCompatibility!.chemistryType,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: VesparaColors.glow,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${(_deepCompatibility!.overallScore * 100).round()}% match',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: VesparaColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Top dimension scores
-                  ..._deepCompatibility!.dimensions
-                      .where((d) => d.score > 0)
-                      .take(4)
-                      .map((dim) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              dim.name,
-                              style: const TextStyle(fontSize: 11, color: VesparaColors.secondary),
-                            ),
-                            Text(
-                              '${(dim.score * 100).round()}%',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: dim.score > 0.7
-                                    ? VesparaColors.success
-                                    : dim.score > 0.4
-                                        ? VesparaColors.tagsYellow
-                                        : VesparaColors.error,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: LinearProgressIndicator(
-                            value: dim.score,
-                            minHeight: 3,
-                            backgroundColor: VesparaColors.surface,
-                            color: dim.score > 0.7
-                                ? VesparaColors.success
-                                : dim.score > 0.4
-                                    ? VesparaColors.tagsYellow
-                                    : VesparaColors.error,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-                  if (_deepCompatibility!.topStrengths.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: _deepCompatibility!.topStrengths.take(3).map((s) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: VesparaColors.success.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '✓ $s',
-                          style: const TextStyle(fontSize: 10, color: VesparaColors.success),
-                        ),
-                      )).toList(),
-                    ),
-                  ],
-                  if (_deepCompatibility!.potentialFrictions.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: _deepCompatibility!.potentialFrictions.take(2).map((f) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: VesparaColors.warning.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '⚡ $f',
-                          style: const TextStyle(fontSize: 10, color: VesparaColors.warning),
-                        ),
-                      )).toList(),
-                    ),
-                  ],
-                  if (_deepCompatibility!.narrative.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      _deepCompatibility!.narrative,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 1.4,
-                        color: VesparaColors.secondary,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Widget _buildAboutSection() => Padding(
         padding: const EdgeInsets.only(bottom: 24),
@@ -2371,57 +1478,8 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
         ),
       );
 
-  Widget _buildSharedInterestsSection() {
-    final interests = _insight?.sharedInterests.isNotEmpty == true
-        ? _insight!.sharedInterests
-        : widget.match.sharedInterests;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.favorite, size: 16, color: VesparaColors.glow),
-              const SizedBox(width: 8),
-              const Text(
-                'You both enjoy',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: interests.map((interest) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: VesparaColors.glow.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
-              ),
-              child: Text(
-                interest,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: VesparaColors.glow,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            )).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTagsSection(String title, List<String> tags, Color color) => Padding(
+  Widget _buildTagsSection(String title, List<String> tags, Color color) =>
+      Padding(
         padding: const EdgeInsets.only(bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2438,114 +1496,22 @@ class _MatchProfileSheetState extends ConsumerState<_MatchProfileSheet> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: tags.map((tag) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  tag,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: color,
-                  ),
-                ),
-              )).toList(),
+              children: tags
+                  .map((tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(fontSize: 12, color: color),
+                        ),
+                      ))
+                  .toList(),
             ),
           ],
         ),
       );
-
-  Widget _buildNotesSection() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Personal Notes',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: VesparaColors.primary,
-                ),
-              ),
-              const Spacer(),
-              if (!_notesSaved)
-                TextButton.icon(
-                  onPressed: () {
-                    widget.onUpdateNotes(_notesController.text);
-                    setState(() => _notesSaved = true);
-                  },
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: VesparaColors.success,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: VesparaColors.background.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: VesparaColors.glow.withOpacity(0.1)),
-            ),
-            child: TextField(
-              controller: _notesController,
-              maxLines: 4,
-              onChanged: (_) => setState(() => _notesSaved = false),
-              decoration: InputDecoration(
-                hintText: 'Add personal notes about ${widget.match.matchedUserName}...',
-                hintStyle: TextStyle(color: VesparaColors.secondary.withOpacity(0.5)),
-                border: InputBorder.none,
-              ),
-              style: const TextStyle(color: VesparaColors.primary, height: 1.5),
-            ),
-          ),
-        ],
-      );
-
-  Widget _buildDangerZone() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Danger Zone',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-              color: VesparaColors.secondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: widget.onShredder,
-            icon: const Icon(Icons.delete_sweep, color: VesparaColors.error),
-            label: const Text(
-              'Send to Shredder',
-              style: TextStyle(color: VesparaColors.error),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: VesparaColors.error.withOpacity(0.5)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      );
-
-  String _formatMatchDate(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) return 'today';
-    if (diff.inDays == 1) return 'yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    if (diff.inDays < 30) return '${diff.inDays ~/ 7} weeks ago';
-    return '${diff.inDays ~/ 30} months ago';
-  }
 }

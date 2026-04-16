@@ -211,12 +211,23 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
       );
 
   Widget _buildAllChatsTab(BuildContext context, WireState wireState) {
-    final conversations =
-        wireState.activeConversations.where(_matchesSearch).toList();
-
     if (wireState.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+
+    if (wireState.error != null) {
+      return _buildEmptyState(
+        context,
+        icon: Icons.wifi_off,
+        title: 'Could not load chats',
+        subtitle: wireState.error!,
+        actionLabel: 'Retry',
+        onAction: () => ref.read(wireProvider.notifier).loadConversations(),
+      );
+    }
+
+    final conversations =
+        wireState.activeConversations.where(_matchesSearch).toList();
 
     if (conversations.isEmpty) {
       return _buildEmptyState(

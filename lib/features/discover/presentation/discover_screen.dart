@@ -101,33 +101,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           .map((s) => s['swiped_id'] as String)
           .toSet();
 
-      // Get matched user IDs to exclude them (matches where user is user_a or user_b)
-      final matchesAsA = await supabase
-          .from('matches')
-          .select('user_b_id')
-          .eq('user_a_id', currentUserId);
-      
-      final matchesAsB = await supabase
-          .from('matches')
-          .select('user_a_id')
-          .eq('user_b_id', currentUserId);
-      
-      final matchedIds = <String>{
-        ...(matchesAsA as List).map((m) => m['user_b_id'] as String),
-        ...(matchesAsB as List).map((m) => m['user_a_id'] as String),
-      };
-
-      // Fetch discoverable profiles (excluding current user and already swiped)
+      // Fetch all approved profiles (excluding current user and already swiped)
       final response = await supabase
           .from('profiles')
           .select('*')
-          .eq('is_discoverable', true)
           .eq('onboarding_complete', true)
           .neq('id', currentUserId)
           .limit(50);
 
       final profiles = (response as List)
-          .where((json) => !swipedIds.contains(json['id']) && !matchedIds.contains(json['id'])) // Filter out swiped AND matched profiles
+          .where((json) => !swipedIds.contains(json['id'])) // Filter out already-swiped profiles
           .map((json) {
             // Add avatar_url to photos array if photos is empty
             final photos = List<String>.from(json['photos'] ?? []);
