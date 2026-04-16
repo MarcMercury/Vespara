@@ -45,6 +45,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   double _bandwidth = 0.5;
   int _travelRadius = 25;
   List<String> _selectedPartyAvailability = [];
+  List<String> _selectedVibeTags = [];
+  List<String> _selectedInterestTags = [];
 
   bool _isSaving = false;
 
@@ -365,6 +367,50 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     'not_interested': 'Not Interested in Events',
   };
 
+  static const List<Map<String, String>> _vibeOptions = [
+    {'emoji': '🌙', 'label': 'Night Owl'},
+    {'emoji': '❄️', 'label': 'Early Riser'},
+    {'emoji': '⚡', 'label': 'High Energy'},
+    {'emoji': '🧘', 'label': 'Calm & Centered'},
+    {'emoji': '🎉', 'label': 'Life of the Party'},
+    {'emoji': '🏠', 'label': 'Cozy Homebody'},
+    {'emoji': '👥', 'label': 'Small Groups Only'},
+    {'emoji': '🦋', 'label': 'Social Butterfly'},
+    {'emoji': '😂', 'label': 'Witty & Sarcastic'},
+    {'emoji': '💝', 'label': 'Hopeless Romantic'},
+    {'emoji': '🔥', 'label': 'Passionate'},
+    {'emoji': '😌', 'label': 'Easy Going'},
+    {'emoji': '😈', 'label': 'Mischievous'},
+    {'emoji': '🏔️', 'label': 'Adventurous'},
+    {'emoji': '📚', 'label': 'Intellectual'},
+    {'emoji': '🎨', 'label': 'Creative'},
+    {'emoji': '🚀', 'label': 'Ambitious'},
+    {'emoji': '🎲', 'label': 'Spontaneous'},
+    {'emoji': '🧠', 'label': 'Deep Thinker'},
+    {'emoji': '🦅', 'label': 'Free Spirit'},
+    {'emoji': '👴', 'label': 'Old Soul'},
+    {'emoji': '❤️', 'label': 'Young at Heart'},
+  ];
+
+  static const List<Map<String, String>> _interestOptions = [
+    {'emoji': '✈️', 'label': 'Travel'},
+    {'emoji': '🎵', 'label': 'Music'},
+    {'emoji': '🎬', 'label': 'Movies & TV'},
+    {'emoji': '📚', 'label': 'Reading'},
+    {'emoji': '🎮', 'label': 'Gaming'},
+    {'emoji': '🏋️', 'label': 'Fitness'},
+    {'emoji': '🍳', 'label': 'Cooking'},
+    {'emoji': '🍷', 'label': 'Wine & Spirits'},
+    {'emoji': '🎨', 'label': 'Art'},
+    {'emoji': '📷', 'label': 'Photography'},
+    {'emoji': '🌿', 'label': 'Nature'},
+    {'emoji': '🎭', 'label': 'Theater'},
+    {'emoji': '💃', 'label': 'Dancing'},
+    {'emoji': '🧘', 'label': 'Yoga & Meditation'},
+    {'emoji': '🏖️', 'label': 'Beach Life'},
+    {'emoji': '⛷️', 'label': 'Winter Sports'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -397,6 +443,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _bandwidth = widget.profile.bandwidth;
     _travelRadius = widget.profile.travelRadius;
     _selectedPartyAvailability = List.from(widget.profile.partyAvailability);
+    _selectedVibeTags = List.from(widget.profile.vibeTags);
+    _selectedInterestTags = List.from(widget.profile.interestTags);
   }
 
   @override
@@ -448,6 +496,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'bandwidth': _bandwidth,
         'travel_radius': _travelRadius,
         'party_availability': _selectedPartyAvailability,
+        'vibe_tags': _selectedVibeTags,
+        'interest_tags': _selectedInterestTags,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
@@ -669,6 +719,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
               const SizedBox(height: 24),
 
+              // Vibe & Interests Section
+              _buildSectionHeader('Your Vibe'),
+              _buildEmojiMultiSelect(
+                'How would you describe your energy?',
+                _vibeOptions,
+                _selectedVibeTags,
+              ),
+
+              const SizedBox(height: 24),
+
+              _buildSectionHeader('Your Interests'),
+              _buildEmojiMultiSelect(
+                'What lights you up?',
+                _interestOptions,
+                _selectedInterestTags,
+              ),
+
+              const SizedBox(height: 24),
+
               // Heat & Limits Section
               _buildSectionHeader('Heat & Boundaries'),
               _buildDropdown(
@@ -886,6 +955,83 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.w400,
                       ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildEmojiMultiSelect(
+    String subtitle,
+    List<Map<String, String>> options,
+    List<String> selected,
+  ) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: options.map((opt) {
+                final label = opt['label']!;
+                final emoji = opt['emoji']!;
+                final isSelected = selected.contains(label);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        selected.remove(label);
+                      } else {
+                        selected.add(label);
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8,),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? VesparaColors.glow.withOpacity(0.2)
+                          : VesparaColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? VesparaColors.glow
+                            : VesparaColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(emoji),
+                        const SizedBox(width: 6),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isSelected
+                                ? VesparaColors.glow
+                                : VesparaColors.primary,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );

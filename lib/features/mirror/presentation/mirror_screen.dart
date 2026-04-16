@@ -1461,7 +1461,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
 
     // Get current selections from profile
     final selectedVibes =
-        profile.lookingFor; // This is where onboarding saves vibe traits
+        profile.vibeTags; // Use vibe_tags field
     final selectedInterests = profile.interestTags;
 
     return ListView(
@@ -1704,8 +1704,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               children: allVibes.map((vibe) {
                 final isSelected =
                     selectedVibes.any((v) => v.contains(vibe['label']!));
-                return _buildVibeChip(
-                    vibe['emoji']!, vibe['label']!, isSelected,);
+                return GestureDetector(
+                  onTap: () => _toggleTag('vibe_tags', vibe['label']!, selectedVibes),
+                  child: _buildVibeChip(
+                      vibe['emoji']!, vibe['label']!, isSelected,),
+                );
               }).toList(),
             ),
           ],
@@ -1728,8 +1731,11 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               children: allInterests.map((interest) {
                 final isSelected =
                     selectedInterests.contains(interest['label']);
-                return _buildVibeChip(
-                    interest['emoji']!, interest['label']!, isSelected,);
+                return GestureDetector(
+                  onTap: () => _toggleTag('interest_tags', interest['label']!, selectedInterests),
+                  child: _buildVibeChip(
+                      interest['emoji']!, interest['label']!, isSelected,),
+                );
               }).toList(),
             ),
           ],
@@ -2701,6 +2707,21 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
           ...children,
         ],
       );
+
+  Future<void> _toggleTag(String field, String label, List<String> current) async {
+    final updated = List<String>.from(current);
+    if (updated.contains(label)) {
+      updated.remove(label);
+    } else {
+      updated.add(label);
+    }
+    try {
+      await SupabaseService.updateProfile({field: updated});
+      ref.invalidate(userProfileProvider);
+    } catch (e) {
+      debugPrint('Failed to update $field: $e');
+    }
+  }
 
   Widget _buildVibeChip(String emoji, String label, bool isSelected) =>
       Container(
