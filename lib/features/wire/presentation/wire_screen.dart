@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/chat.dart';
+import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -386,7 +387,7 @@ class _WireScreenState extends ConsumerState<WireScreen> {
             TextField(
               style: const TextStyle(color: VesparaColors.primary),
               decoration: InputDecoration(
-                hintText: 'Search members...'
+                hintText: 'Search members...',
                 hintStyle: const TextStyle(color: VesparaColors.secondary),
                 prefixIcon: const Icon(Icons.search, color: VesparaColors.glow),
                 filled: true,
