@@ -262,6 +262,13 @@ class WireNotifier extends StateNotifier<WireState> {
         return existingId;
       }
 
+      // Fetch other user's profile for display name
+      final otherProfile = await _supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('id', otherUserId)
+          .maybeSingle();
+
       // Create new direct conversation
       final response = await _supabase
           .from('conversations')
@@ -269,6 +276,8 @@ class WireNotifier extends StateNotifier<WireState> {
             'user_id': _currentUserId,
             'conversation_type': 'direct',
             'match_id': otherUserId,
+            'match_name': otherProfile?['display_name'],
+            'match_avatar_url': otherProfile?['avatar_url'],
           })
           .select()
           .single();
