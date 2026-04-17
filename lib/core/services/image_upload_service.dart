@@ -130,7 +130,15 @@ class ImageUploadService {
     required String path,
   }) async {
     try {
-      final String extension = file.path.split('.').last.toLowerCase();
+      // Determine extension reliably (file.path is unreliable on web/blob URLs)
+      String extension;
+      final fileMime = file.mimeType;
+      if (fileMime != null && fileMime.startsWith('image/')) {
+        final sub = fileMime.split('/').last.toLowerCase();
+        extension = sub == 'jpeg' ? 'jpg' : sub;
+      } else {
+        extension = file.path.split('.').last.toLowerCase();
+      }
       final String fullPath = '$path.$extension';
 
       // Validate file extension

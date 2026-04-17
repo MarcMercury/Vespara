@@ -2081,7 +2081,20 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
     if (image == null) return;
     
     final bytes = await image.readAsBytes();
-    final extension = image.path.split('.').last.toLowerCase();
+    
+    // Determine MIME type and extension reliably (image.path is unreliable on web)
+    final mimeType = image.mimeType;
+    String extension;
+    if (mimeType != null && mimeType.startsWith('image/')) {
+      final sub = mimeType.split('/').last.toLowerCase();
+      extension = sub == 'jpeg' ? 'jpg' : sub;
+    } else {
+      // Fallback: try path, default to jpg
+      final pathExt = image.path.split('.').last.toLowerCase();
+      extension = const ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'].contains(pathExt)
+          ? pathExt
+          : 'jpg';
+    }
     
     final success = await ref.read(profilePhotosProvider.notifier).uploadPhoto(
       bytes,

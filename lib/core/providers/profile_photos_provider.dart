@@ -225,12 +225,17 @@ class ProfilePhotosNotifier extends StateNotifier<ProfilePhotosState> {
       final uuid = const Uuid().v4();
       final storagePath = '$_userId/$uuid.$extension';
 
+      // Normalize MIME type (Supabase requires standard types)
+      final mimeType = extension == 'jpg' || extension == 'jpeg'
+          ? 'image/jpeg'
+          : 'image/$extension';
+
       // Upload to storage
       await _supabase.storage.from('profile-photos').uploadBinary(
             storagePath,
             imageBytes,
             fileOptions: FileOptions(
-              contentType: 'image/$extension',
+              contentType: mimeType,
               upsert: true,
             ),
           );
