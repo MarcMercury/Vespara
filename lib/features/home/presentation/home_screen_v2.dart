@@ -171,8 +171,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildDashboard() {
-    final analyticsAsync = ref.watch(userAnalyticsProvider);
-    final analytics = analyticsAsync.valueOrNull;
+    final statsAsync = ref.watch(dashboardStatsProvider);
+    final stats = statsAsync.valueOrNull;
 
     return VesparaAnimatedBackground(
       enableAurora: true,
@@ -187,7 +187,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               const SizedBox(height: 8),
               _buildHeader(),
               const SizedBox(height: 16),
-              _buildQuickStats(analytics),
+              _buildQuickStats(stats),
               const SizedBox(height: 20),
               Expanded(child: _buildModuleGrid()),
             ],
@@ -326,22 +326,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildQuickStats(dynamic analytics) {
-    final stats = analytics == null
+  Widget _buildQuickStats(DashboardStats? stats) {
+    final statItems = stats == null
         ? [
             _StatData('—', 'Members', Icons.people_rounded),
             _StatData('—', 'Chats', Icons.chat_bubble_rounded),
             _StatData('—', 'Events', Icons.event_rounded),
-            _StatData('—', 'Games', Icons.local_fire_department_rounded),
+            _StatData('—', 'Active', Icons.trending_up_rounded),
           ]
         : [
-            _StatData('${analytics.totalMatches}', 'Members',
-                Icons.people_rounded),
-            _StatData('${analytics.activeConversations}', 'Chats',
-                Icons.chat_bubble_rounded),
-            _StatData('${analytics.datesScheduled}', 'Events',
-                Icons.event_rounded),
-            _StatData('${analytics.matchRate.toInt()}%', 'Active',
+            _StatData('${stats.members}', 'Members', Icons.people_rounded),
+            _StatData('${stats.chats}', 'Chats', Icons.chat_bubble_rounded),
+            _StatData('${stats.events}', 'Events', Icons.event_rounded),
+            _StatData('${stats.activePercent}%', 'Active',
                 Icons.trending_up_rounded),
           ];
 
@@ -366,7 +363,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              for (int i = 0; i < stats.length; i++) ...[
+              for (int i = 0; i < statItems.length; i++) ...[
                 if (i > 0)
                   Container(
                     width: 1,
@@ -383,7 +380,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   ),
-                _buildStatItem(stats[i]),
+                _buildStatItem(statItems[i]),
               ],
             ],
           ),

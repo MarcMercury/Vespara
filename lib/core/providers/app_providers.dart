@@ -557,6 +557,78 @@ final userAnalyticsProvider = FutureProvider<UserAnalytics?>((ref) async {
   }
 });
 
+/// Live dashboard stats computed from actual data tables
+class DashboardStats {
+  const DashboardStats({
+    this.members = 0,
+    this.chats = 0,
+    this.events = 0,
+    this.activePercent = 0,
+  });
+  final int members;
+  final int chats;
+  final int events;
+  final int activePercent;
+}
+
+final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return const DashboardStats();
+
+  try {
+    // Run all count queries in parallel
+    final results = await Future.wait([
+      // Members: count of approved members (excluding self)
+      _supabase
+          .from('profiles')
+          .select('id')
+          .eq('membership_status', 'approved')
+          .neq('id', user.id)
+          .count(CountOption.exact),
+      // Chats: active conversations the user participates in
+      _supabase
+          .from('conversation_participants')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .count(CountOption.exact),
+      // Events: events user is hosting or attending
+      _supabase
+          .from('vespara_event_rsvps')
+          .select('id')
+          .eq('user_id', user.id)
+          .inFilter('status', ['going', 'maybe'])
+          .count(CountOption.exact),
+      // Matches: mutual matches for activity calculation
+      _supabase
+          .from('matches')
+          .select('id')
+          .or('user_a_id.eq.${user.id},user_b_id.eq.${user.id}')
+          .count(CountOption.exact),
+    ]);
+
+    final membersCount = results[0].count;
+    final chatsCount = results[1].count;
+    final eventsCount = results[2].count;
+    final matchesCount = results[3].count;
+
+    // Activity: simple ratio of connections to members
+    final activePercent = membersCount > 0
+        ? ((matchesCount / membersCount) * 100).round().clamp(0, 100)
+        : 0;
+
+    return DashboardStats(
+      members: membersCount,
+      chats: chatsCount,
+      events: eventsCount,
+      activePercent: activePercent,
+    );
+  } catch (e) {
+    debugPrint('[dashboardStatsProvider] Error: $e');
+    return const DashboardStats();
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // UI STATE PROVIDERS
 // ═══════════════════════════════════════════════════════════════════════════
