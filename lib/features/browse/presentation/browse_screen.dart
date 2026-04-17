@@ -653,217 +653,491 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        maxChildSize: 0.95,
+        initialChildSize: 0.92,
+        maxChildSize: 0.96,
         minChildSize: 0.5,
         builder: (context, scrollController) => Container(
           decoration: const BoxDecoration(
             color: VesparaColors.background,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: ListView(
-            controller: scrollController,
-            padding: const EdgeInsets.all(24),
+          child: Column(
             children: [
               // Pull handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: VesparaColors.secondary,
-                    borderRadius: BorderRadius.circular(2),
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: VesparaColors.secondary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    const SizedBox(height: 12),
 
-              // Photo
-              if (member.photos.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: AspectRatio(
-                    aspectRatio: 0.8,
-                    child: Image.network(
-                      member.photos.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: VesparaColors.surface,
-                        child: const Icon(Icons.person,
+                    // ── Photo Carousel ──
+                    _buildPhotoCarousel(member),
+                    const SizedBox(height: 20),
+
+                    // ── Name, Age, Verified ──
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${member.displayName ?? "?"}, ${member.age ?? "?"}',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        ),
+                        if (member.isVerified)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: VesparaColors.glow.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified,
+                                    color: VesparaColors.glow, size: 18),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Verified',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: VesparaColors.glow,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    // ── Headline ──
+                    if (member.headline != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        member.headline!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: VesparaColors.secondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+
+                    // ── About Section ──
+                    const SizedBox(height: 20),
+                    _buildProfileSection('About', Icons.person_outline, [
+                      if (member.location != null)
+                        _profileInfoRow(
+                          Icons.location_on,
+                          '${member.location}${member.distanceKm != null ? ' • ${member.distanceKm!.toStringAsFixed(1)} km away' : ''}',
+                        ),
+                      if (member.occupation != null)
+                        _profileInfoRow(
+                          Icons.work_outline,
+                          '${member.occupation}${member.company != null ? " at ${member.company}" : ""}',
+                        ),
+                      if (member.education != null)
+                        _profileInfoRow(Icons.school, member.education!),
+                      if (member.heightCm != null)
+                        _profileInfoRow(
+                          Icons.straighten,
+                          _formatHeight(member.heightCm!),
+                        ),
+                      if (member.bodyType != null)
+                        _profileInfoRow(
+                            Icons.accessibility_new, _formatLabel(member.bodyType!)),
+                    ]),
+
+                    // ── Bio ──
+                    if (member.bio != null && member.bio!.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          member.bio!,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: VesparaColors.primary,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // ── Prompts ──
+                    if (member.prompts.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Prompts', Icons.chat_bubble_outline),
+                      const SizedBox(height: 12),
+                      ...member.prompts.map((prompt) => Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: VesparaColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: VesparaColors.glow.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  prompt.question,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: VesparaColors.secondary,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  prompt.answer,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: VesparaColors.primary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+
+                    // ── Relationship Preferences ──
+                    if (member.relationshipTypes.isNotEmpty ||
+                        member.loveLanguages.isNotEmpty ||
+                        member.communicationStyle != null) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                          'Relationship Style', Icons.favorite_border),
+                      const SizedBox(height: 12),
+                      if (member.relationshipTypes.isNotEmpty)
+                        _buildTagGroup(
+                          'Looking for',
+                          member.relationshipTypes
+                              .map(_formatType)
+                              .toList(),
+                          VesparaColors.glow,
+                        ),
+                      if (member.loveLanguages.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Love Languages',
+                          member.loveLanguages.map(_formatLabel).toList(),
+                          VesparaColors.accentRose,
+                        ),
+                      ],
+                      if (member.communicationStyle != null) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Communication',
+                          [_formatLabel(member.communicationStyle!)],
+                          VesparaColors.accentViolet,
+                        ),
+                      ],
+                    ],
+
+                    // ── Lifestyle ──
+                    if (member.drinking != null ||
+                        member.smoking != null ||
+                        member.cannabis != null) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Lifestyle', Icons.local_bar),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            if (member.drinking != null)
+                              _lifestyleRow(Icons.local_bar, 'Drinking',
+                                  _formatLabel(member.drinking!)),
+                            if (member.smoking != null)
+                              _lifestyleRow(Icons.smoking_rooms, 'Smoking',
+                                  _formatLabel(member.smoking!)),
+                            if (member.cannabis != null)
+                              _lifestyleRow(Icons.eco, 'Cannabis',
+                                  _formatLabel(member.cannabis!)),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // ── Hook ──
+                    if (member.hook != null && member.hook!.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              VesparaColors.accentRose.withOpacity(0.1),
+                              VesparaColors.accentViolet.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: VesparaColors.accentRose.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.local_fire_department,
+                                    size: 16, color: VesparaColors.accentRose),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Their Hook',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: VesparaColors.accentRose,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              member.hook!,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: VesparaColors.primary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // ── Trust & Verification ──
+                    if (member.vouchCount > 0 ||
+                        member.verifications.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Trust', Icons.shield_outlined),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            if (member.vouchCount > 0)
+                              Row(
+                                children: [
+                                  const Icon(Icons.people,
+                                      size: 18, color: VesparaColors.success),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '${member.vouchCount} ${member.vouchCount == 1 ? 'vouch' : 'vouches'}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: VesparaColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            if (member.verifications.isNotEmpty) ...[
+                              if (member.vouchCount > 0)
+                                const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: member.verifications.map((v) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: VesparaColors.success
+                                          .withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.check_circle,
+                                            size: 14,
+                                            color: VesparaColors.success),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _formatLabel(v),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: VesparaColors.success,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Like action button
+                    const SizedBox(height: 24),
+                    _buildProfileSheetLikeButton(member),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoCarousel(DiscoverableProfile profile) {
+    if (profile.photos.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: AspectRatio(
+          aspectRatio: 0.8,
+          child: Container(
+            color: VesparaColors.surface,
+            child: const Center(
+              child: Icon(Icons.person, size: 80, color: VesparaColors.secondary),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (profile.photos.length == 1) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: AspectRatio(
+          aspectRatio: 0.8,
+          child: Image.network(
+            profile.photos.first,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: VesparaColors.surface,
+              child: const Center(
+                child: Icon(Icons.person, size: 80, color: VesparaColors.secondary),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        int currentPhoto = 0;
+        final pageController = PageController();
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: AspectRatio(
+            aspectRatio: 0.8,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: pageController,
+                  itemCount: profile.photos.length,
+                  onPageChanged: (index) =>
+                      setLocalState(() => currentPhoto = index),
+                  itemBuilder: (context, index) => Image.network(
+                    profile.photos[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: VesparaColors.surface,
+                      child: const Center(
+                        child: Icon(Icons.person,
                             size: 80, color: VesparaColors.secondary),
                       ),
                     ),
                   ),
                 ),
-              const SizedBox(height: 20),
-
-              // Name & age
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${member.displayName ?? "?"}, ${member.age ?? "?"}',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: VesparaColors.primary,
-                      ),
-                    ),
-                  ),
-                  if (member.isVerified)
-                    const Icon(Icons.verified,
-                        color: VesparaColors.glow, size: 24),
-                ],
-              ),
-
-              // Headline
-              if (member.headline != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  member.headline!,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: VesparaColors.secondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-
-              // Location & occupation
-              const SizedBox(height: 12),
-              if (member.location != null)
-                _profileDetailRow(Icons.location_on, member.location!),
-              if (member.occupation != null)
-                _profileDetailRow(
-                  Icons.work_outline,
-                  '${member.occupation}${member.company != null ? " at ${member.company}" : ""}',
-                ),
-              if (member.education != null)
-                _profileDetailRow(Icons.school, member.education!),
-
-              // Bio
-              if (member.bio != null) ...[
-                const SizedBox(height: 20),
-                Text(
-                  member.bio!,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: VesparaColors.primary,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-
-              // Prompts
-              if (member.prompts.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                ...member.prompts.map((prompt) => Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: VesparaColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            prompt.question,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: VesparaColors.secondary,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            prompt.answer,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: VesparaColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )),
-              ],
-
-              // Relationship types
-              if (member.relationshipTypes.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: member.relationshipTypes
-                      .map((type) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: VesparaColors.glow.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: VesparaColors.glow.withOpacity(0.3)),
-                            ),
-                            child: Text(
-                              _formatType(type),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: VesparaColors.glow,
-                              ),
-                            ),
-                          ))
-                      .toList(),
-                ),
-              ],
-
-              // Gallery
-              if (member.photos.length > 1) ...[
-                const SizedBox(height: 24),
-                const Text(
-                  'Photos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 120,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: member.photos.length - 1,
-                    itemBuilder: (context, index) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          member.photos[index + 1],
-                          width: 100,
-                          height: 120,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 100,
-                            color: VesparaColors.surface,
-                            child: const Icon(Icons.image,
-                                color: VesparaColors.secondary),
-                          ),
+                // Photo indicators
+                Positioned(
+                  top: 12,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      profile.photos.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: index == currentPhoto ? 24 : 8,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: index == currentPhoto
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
                   ),
                 ),
+                // Photo counter
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${currentPhoto + 1}/${profile.photos.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
               ],
-
-              // Like action button
-              const SizedBox(height: 24),
-              _buildProfileSheetLikeButton(member),
-
-              const SizedBox(height: 40),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -959,24 +1233,140 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     );
   }
 
-  Widget _profileDetailRow(IconData icon, String text) => Padding(
-        padding: const EdgeInsets.only(top: 6),
+  Widget _buildProfileSection(
+      String title, IconData icon, List<Widget> children) {
+    if (children.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(title, icon),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) => Row(
+        children: [
+          Icon(icon, size: 18, color: VesparaColors.glow),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      );
+
+  Widget _profileInfoRow(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
             Icon(icon, size: 16, color: VesparaColors.secondary),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 text,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: VesparaColors.secondary,
+                  color: VesparaColors.primary,
                 ),
               ),
             ),
           ],
         ),
       );
+
+  Widget _lifestyleRow(IconData icon, String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: VesparaColors.secondary),
+            const SizedBox(width: 10),
+            Text(
+              '$label: ',
+              style: const TextStyle(
+                fontSize: 13,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildTagGroup(String label, List<String> tags, Color color) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.secondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tags
+                .map((tag) => Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: color.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(fontSize: 13, color: color),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      );
+
+  String _formatHeight(int cm) {
+    final totalInches = cm / 2.54;
+    final feet = (totalInches / 12).floor();
+    final inches = (totalInches % 12).round();
+    return "$feet'$inches\" ($cm cm)";
+  }
+
+  String _formatLabel(String value) =>
+      value
+          .replaceAllMapped(
+            RegExp(r'([a-z])([A-Z])'),
+            (m) => '${m[1]} ${m[2]}',
+          )
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map((w) =>
+              w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
+          .join(' ');
 
   String _formatType(String type) {
     switch (type) {
