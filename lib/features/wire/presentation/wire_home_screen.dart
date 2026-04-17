@@ -75,6 +75,13 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
             // Title row
             Row(
               children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: VesparaColors.primary,
+                  ),
+                ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

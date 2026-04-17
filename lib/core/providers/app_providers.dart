@@ -107,6 +107,168 @@ final allMembersProvider = FutureProvider<List<CommunityMember>>((ref) async {
   }
 });
 
+/// Sanctum connection — a mutual match with profile info
+class SanctumConnection {
+  const SanctumConnection({
+    required this.matchId,
+    required this.userId,
+    this.displayName,
+    this.avatarUrl,
+    this.age,
+    required this.matchedAt,
+    this.compatibilityScore = 0.5,
+    this.isSuperMatch = false,
+    this.conversationId,
+  });
+
+  final String matchId;
+  final String userId;
+  final String? displayName;
+  final String? avatarUrl;
+  final int? age;
+  final DateTime matchedAt;
+  final double compatibilityScore;
+  final bool isSuperMatch;
+  final String? conversationId;
+}
+
+/// Pending like — someone you liked but hasn't liked you back yet
+class PendingLike {
+  const PendingLike({
+    required this.userId,
+    this.displayName,
+    this.avatarUrl,
+    this.age,
+    required this.likedAt,
+  });
+
+  final String userId;
+  final String? displayName;
+  final String? avatarUrl;
+  final int? age;
+  final DateTime likedAt;
+}
+
+/// Provider: Sanctum connections (mutual matches with profile details)
+final sanctumConnectionsProvider =
+    FutureProvider<List<SanctumConnection>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+
+  try {
+    final response = await _supabase
+        .from('matches')
+        .select('''
+          id, matched_at, compatibility_score, is_super_match, conversation_id,
+          user_a_id, user_b_id,
+          user_a:profiles!matches_user_a_id_fkey(id, display_name, avatar_url, photos, age),
+          user_b:profiles!matches_user_b_id_fkey(id, display_name, avatar_url, photos, age)
+        ''')
+        .or('user_a_id.eq.${user.id},user_b_id.eq.${user.id}')
+        .order('matched_at', ascending: false);
+
+    return (response as List).map((row) {
+      final isUserA = row['user_a_id'] == user.id;
+      final other =
+          (isUserA ? row['user_b'] : row['user_a']) as Map<String, dynamic>;
+      final photos = other['photos'] as List?;
+      final avatarUrl = (photos != null && photos.isNotEmpty)
+          ? photos.first as String?
+          : other['avatar_url'] as String?;
+      return SanctumConnection(
+        matchId: row['id'] as String,
+        userId: other['id'] as String,
+        displayName: other['display_name'] as String?,
+        avatarUrl: avatarUrl,
+        age: other['age'] as int?,
+        matchedAt: DateTime.parse(row['matched_at'] as String),
+        compatibilityScore:
+            (row['compatibility_score'] as num?)?.toDouble() ?? 0.5,
+        isSuperMatch: row['is_super_match'] as bool? ?? false,
+        conversationId: row['conversation_id'] as String?,
+      );
+    }).toList();
+  } catch (e) {
+    debugPrint('Error loading sanctum connections: $e');
+    return [];
+  }
+});
+
+/// Provider: Pending outbound likes (you liked them, no match yet)
+final pendingLikesProvider =
+    FutureProvider<List<PendingLike>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+
+  try {
+    // Get all profiles I swiped right/super on
+    final swipesResponse = await _supabase
+        .from('swipes')
+        .select('swiped_id, created_at')
+        .eq('swiper_id', user.id)
+        .inFilter('direction', ['right', 'super'])
+        .order('created_at', ascending: false);
+
+    if ((swipesResponse as List).isEmpty) return [];
+
+    final swipedIds =
+        swipesResponse.map((s) => s['swiped_id'] as String).toList();
+    final swipeTimestamps = {
+      for (final s in swipesResponse)
+        s['swiped_id'] as String: s['created_at'] as String,
+    };
+
+    // Get all my matches to exclude mutual ones
+    final matchesResponse = await _supabase
+        .from('matches')
+        .select('user_a_id, user_b_id')
+        .or('user_a_id.eq.${user.id},user_b_id.eq.${user.id}');
+
+    final matchedIds = <String>{};
+    for (final m in matchesResponse as List) {
+      final otherId =
+          m['user_a_id'] == user.id ? m['user_b_id'] : m['user_a_id'];
+      matchedIds.add(otherId as String);
+    }
+
+    // Filter to only non-matched liked profiles
+    final pendingIds =
+        swipedIds.where((id) => !matchedIds.contains(id)).toList();
+    if (pendingIds.isEmpty) return [];
+
+    // Fetch profiles for pending likes
+    final profilesResponse = await _supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, photos, age')
+        .inFilter('id', pendingIds);
+
+    final profileMap = <String, Map<String, dynamic>>{};
+    for (final p in profilesResponse as List) {
+      profileMap[p['id'] as String] = p as Map<String, dynamic>;
+    }
+
+    return pendingIds
+        .where((id) => profileMap.containsKey(id))
+        .map((id) {
+      final p = profileMap[id]!;
+      final photos = p['photos'] as List?;
+      final avatarUrl = (photos != null && photos.isNotEmpty)
+          ? photos.first as String?
+          : p['avatar_url'] as String?;
+      return PendingLike(
+        userId: id,
+        displayName: p['display_name'] as String?,
+        avatarUrl: avatarUrl,
+        age: p['age'] as int?,
+        likedAt: DateTime.parse(swipeTimestamps[id]!),
+      );
+    }).toList();
+  } catch (e) {
+    debugPrint('Error loading pending likes: $e');
+    return [];
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // STRATEGIST PROVIDERS (Tile 1)
 // ═══════════════════════════════════════════════════════════════════════════

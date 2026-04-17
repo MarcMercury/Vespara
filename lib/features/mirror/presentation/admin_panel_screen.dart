@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
@@ -56,15 +60,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   }
 
   Future<void> _performAction(String memberId, String action) async {
-    final statusMap = {
-      'approve': 'approved',
-      'reject': 'suspended', // DB constraint only allows: pending, approved, suspended, banned
-      'suspend': 'suspended',
-    };
-    final newStatus = statusMap[action];
-    if (newStatus == null) return;
-
-    // Optimistic removal — avoid a full list reload
+    // Optimistic removal — avoid a full list reload edge function + DB query
     final removedIndex =
         _pendingMembers.indexWhere((m) => m['id'] == memberId);
     Map<String, dynamic>? removedMember;
@@ -76,32 +72,44 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     }
 
     try {
-      await _supabase.from('profiles').update({
-        'membership_status': newStatus,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-        if (action == 'approve') 'approved_at': DateTime.now().toUtc().toIso8601String(),
-        if (action == 'approve') 'approved_by': _supabase.auth.currentUser!.id,
-      }).eq('id', memberId);
+      final session = _supabase.auth.currentSession;
+      if (session == null) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Member ${action}d successfully'),
-            backgroundColor: action == 'approve'
-                ? VesparaColors.success
-                : VesparaColors.error,
-          ),
-        );
+      final response = await http.post(
+        Uri.parse('${Env.supabaseUrl}/functions/v1/admin-approve-member'),
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'Content-Type': 'application/json',
+          'apikey': Env.supabaseAnonKey,
+        },
+        body: jsonEncode({'member_id': memberId, 'action': action}),
+      );
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Member ${action}d successfully'),
+              backgroundColor: action == 'approve'
+                  ? VesparaColors.success
+                  : VesparaColors.error,
+            ),
+          );
+        }
+        // Invalidate the members provider so counts refresh
+        ref.invalidate(allMembersProvider);
+      } else {
+        final body = jsonDecode(response.body);
+        // Rollback optimistic removal on failure
+        if (removedMember != null && removedIndex != -1) {
+          setState(() {
+            _pendingMembers.insert(
+                removedIndex.clamp(0, _pendingMembers.length), removedMember!);
+          });
+        }
+        throw Exception(body['error'] ?? 'Unknown error');
       }
-      ref.invalidate(allMembersProvider);
     } catch (e) {
-      // Rollback optimistic removal on failure
-      if (removedMember != null && removedIndex != -1) {
-        setState(() {
-          _pendingMembers.insert(
-              removedIndex.clamp(0, _pendingMembers.length), removedMember!);
-        });
-      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -176,7 +184,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          children: ['pending', 'approved', 'suspended']
+          children: ['pending', 'approved', 'suspended', 'rejected']
               .map((status) => Expanded(
                     child: GestureDetector(
                       onTap: () {
@@ -345,7 +353,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
               icon: const Icon(Icons.block, color: VesparaColors.tagsYellow),
               tooltip: 'Suspend',
             ),
-          ] else if (status == 'suspended') ...[
+          ] else if (status == 'suspended' || status == 'rejected') ...[
             IconButton(
               onPressed: () => _performAction(member['id'], 'approve'),
               icon: const Icon(Icons.check_circle_outline,

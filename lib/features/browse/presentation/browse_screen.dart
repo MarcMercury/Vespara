@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/discoverable_profile.dart';
+import '../../../core/providers/match_state_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
@@ -352,25 +353,11 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   ),
                 ),
 
-                // Online indicator
+                // Like button
                 Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: VesparaColors.online,
-                      border: Border.all(color: VesparaColors.background, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: VesparaColors.online.withOpacity(0.5),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                  ),
+                  top: 8,
+                  right: 8,
+                  child: _buildLikeButton(member),
                 ),
 
                 // Photo count indicator
@@ -580,6 +567,8 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                   ],
                 ),
               ),
+              _buildLikeButton(member),
+              const SizedBox(width: 4),
               const Icon(Icons.chevron_right, color: VesparaColors.secondary),
             ],
           ),
@@ -599,6 +588,64 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           ),
         ),
       );
+
+  Widget _buildLikeButton(DiscoverableProfile member) {
+    final matchState = ref.watch(matchStateProvider);
+    final isLiked = matchState.likedProfiles.contains(member.id) ||
+        matchState.superLikedProfiles.contains(member.id);
+    final isMatched = matchState.matches.any((m) => m.matchedUserId == member.id);
+
+    return GestureDetector(
+      onTap: isLiked || isMatched
+          ? null
+          : () {
+              ref.read(matchStateProvider.notifier).likeProfile(
+                    member.id,
+                    member.displayName ?? 'Unknown',
+                    member.photos.isNotEmpty ? member.photos.first : null,
+                  );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Liked ${member.displayName ?? "member"}!'),
+                  backgroundColor: VesparaColors.accentRose,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isMatched
+              ? VesparaColors.glow.withOpacity(0.2)
+              : isLiked
+                  ? VesparaColors.accentRose.withOpacity(0.2)
+                  : VesparaColors.background.withOpacity(0.6),
+          border: Border.all(
+            color: isMatched
+                ? VesparaColors.glow.withOpacity(0.5)
+                : isLiked
+                    ? VesparaColors.accentRose.withOpacity(0.5)
+                    : VesparaColors.secondary.withOpacity(0.3),
+          ),
+        ),
+        child: Icon(
+          isMatched
+              ? Icons.people
+              : isLiked
+                  ? Icons.favorite
+                  : Icons.favorite_border,
+          size: 18,
+          color: isMatched
+              ? VesparaColors.glow
+              : isLiked
+                  ? VesparaColors.accentRose
+                  : VesparaColors.secondary,
+        ),
+      ),
+    );
+  }
 
   void _showMemberProfile(DiscoverableProfile member) {
     showModalBottomSheet(
@@ -808,8 +855,104 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 ),
               ],
 
+              // Like action button
+              const SizedBox(height: 24),
+              _buildProfileSheetLikeButton(member),
+
               const SizedBox(height: 40),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileSheetLikeButton(DiscoverableProfile member) {
+    final matchState = ref.watch(matchStateProvider);
+    final isLiked = matchState.likedProfiles.contains(member.id) ||
+        matchState.superLikedProfiles.contains(member.id);
+    final isMatched = matchState.matches.any((m) => m.matchedUserId == member.id);
+
+    if (isMatched) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: VesparaColors.glow.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: VesparaColors.glow.withOpacity(0.3)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people, color: VesparaColors.glow, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'In Your Sanctum',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.glow,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isLiked) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: VesparaColors.accentRose.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: VesparaColors.accentRose.withOpacity(0.3)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite, color: VesparaColors.accentRose, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Like Sent — Waiting for them',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.accentRose,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          ref.read(matchStateProvider.notifier).likeProfile(
+                member.id,
+                member.displayName ?? 'Unknown',
+                member.photos.isNotEmpty ? member.photos.first : null,
+              );
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Liked ${member.displayName ?? "member"}!'),
+              backgroundColor: VesparaColors.accentRose,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        },
+        icon: const Icon(Icons.favorite, size: 20),
+        label: const Text('Like This Person'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: VesparaColors.accentRose,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),

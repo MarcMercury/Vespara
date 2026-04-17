@@ -752,6 +752,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
         // Current card
         GestureDetector(
+          onTap: () => _showFullProfile(filteredProfiles[_currentIndex]),
           onPanUpdate: _onDragUpdate,
           onPanEnd: _onDragEnd,
           child: Transform.translate(
@@ -1147,6 +1148,30 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                             ],
                           ),
                         ),
+
+                      // Tap to view full profile hint
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.expand_less,
+                              size: 16,
+                              color: VesparaColors.secondary.withOpacity(0.6),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Tap to view full profile',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: VesparaColors.secondary.withOpacity(0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1180,6 +1205,794 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ),
         ),
       );
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // FULL PROFILE DETAIL SHEET
+  // ════════════════════════════════════════════════════════════════════════════
+
+  void _showFullProfile(DiscoverableProfile profile) {
+    final compatScore = _getCompatibilityScore(profile);
+    final chemistryType = _getChemistryType(profile);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        maxChildSize: 0.96,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: VesparaColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Pull handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: VesparaColors.secondary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    const SizedBox(height: 12),
+
+                    // ── Photo Carousel ──
+                    _buildPhotoCarousel(profile),
+                    const SizedBox(height: 20),
+
+                    // ── Name, Age, Verified ──
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${profile.displayName ?? "?"}, ${profile.age ?? "?"}',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: VesparaColors.primary,
+                            ),
+                          ),
+                        ),
+                        if (profile.isVerified)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: VesparaColors.glow.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.verified,
+                                    color: VesparaColors.glow, size: 18),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Verified',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: VesparaColors.glow,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    // ── Headline ──
+                    if (profile.headline != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        profile.headline!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: VesparaColors.secondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+
+                    // ── Compatibility Score ──
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            VesparaColors.glow.withOpacity(0.12),
+                            VesparaColors.surface.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: VesparaColors.glow.withOpacity(0.25),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: VesparaColors.surface,
+                              border: Border.all(
+                                color: VesparaColors.glow.withOpacity(0.5),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${(compatScore * 100).round()}%',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: VesparaColors.glow,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profile.matchQuality,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: VesparaColors.primary,
+                                  ),
+                                ),
+                                if (chemistryType != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    chemistryType,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: VesparaColors.glow,
+                                    ),
+                                  ),
+                                ],
+                                if (profile.isWildcard &&
+                                    profile.wildcardReason != null) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.auto_awesome,
+                                          size: 12,
+                                          color: VesparaColors.tagsYellow),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          profile.wildcardReason!,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: VesparaColors.tagsYellow,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Basic Info Row ──
+                    const SizedBox(height: 20),
+                    _buildProfileSection('About', Icons.person_outline, [
+                      if (profile.location != null)
+                        _profileInfoRow(
+                          Icons.location_on,
+                          '${profile.location}${profile.distanceKm != null ? ' • ${profile.distanceKm!.toStringAsFixed(1)} km away' : ''}',
+                        ),
+                      if (profile.occupation != null)
+                        _profileInfoRow(
+                          Icons.work_outline,
+                          '${profile.occupation}${profile.company != null ? " at ${profile.company}" : ""}',
+                        ),
+                      if (profile.education != null)
+                        _profileInfoRow(Icons.school, profile.education!),
+                      if (profile.heightCm != null)
+                        _profileInfoRow(
+                          Icons.straighten,
+                          _formatHeight(profile.heightCm!),
+                        ),
+                      if (profile.bodyType != null)
+                        _profileInfoRow(
+                            Icons.accessibility_new, _formatLabel(profile.bodyType!)),
+                    ]),
+
+                    // ── Bio ──
+                    if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          profile.bio!,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: VesparaColors.primary,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // ── Prompts ──
+                    if (profile.prompts.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Prompts', Icons.chat_bubble_outline),
+                      const SizedBox(height: 12),
+                      ...profile.prompts.map((prompt) => Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: VesparaColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: VesparaColors.glow.withOpacity(0.1),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  prompt.question,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: VesparaColors.secondary,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  prompt.answer,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: VesparaColors.primary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+
+                    // ── Relationship Preferences ──
+                    if (profile.relationshipTypes.isNotEmpty ||
+                        profile.loveLanguages.isNotEmpty ||
+                        profile.communicationStyle != null) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                          'Relationship Style', Icons.favorite_border),
+                      const SizedBox(height: 12),
+                      if (profile.relationshipTypes.isNotEmpty)
+                        _buildTagGroup(
+                          'Looking for',
+                          profile.relationshipTypes
+                              .map(_formatRelationshipType)
+                              .toList(),
+                          VesparaColors.glow,
+                        ),
+                      if (profile.loveLanguages.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Love Languages',
+                          profile.loveLanguages.map(_formatLabel).toList(),
+                          VesparaColors.accentRose,
+                        ),
+                      ],
+                      if (profile.communicationStyle != null) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Communication',
+                          [_formatLabel(profile.communicationStyle!)],
+                          VesparaColors.accentViolet,
+                        ),
+                      ],
+                    ],
+
+                    // ── Lifestyle ──
+                    if (profile.drinking != null ||
+                        profile.smoking != null ||
+                        profile.cannabis != null) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Lifestyle', Icons.local_bar),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            if (profile.drinking != null)
+                              _lifestyleRow(
+                                  Icons.local_bar, 'Drinking', _formatLabel(profile.drinking!)),
+                            if (profile.smoking != null)
+                              _lifestyleRow(Icons.smoking_rooms, 'Smoking',
+                                  _formatLabel(profile.smoking!)),
+                            if (profile.cannabis != null)
+                              _lifestyleRow(Icons.eco, 'Cannabis',
+                                  _formatLabel(profile.cannabis!)),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // ── Hook (opening line) ──
+                    if (profile.hook != null && profile.hook!.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              VesparaColors.accentRose.withOpacity(0.1),
+                              VesparaColors.accentViolet.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: VesparaColors.accentRose.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.local_fire_department,
+                                    size: 16, color: VesparaColors.accentRose),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Their Hook',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: VesparaColors.accentRose,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              profile.hook!,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: VesparaColors.primary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // ── Trust & Verification ──
+                    if (profile.vouchCount > 0 ||
+                        profile.verifications.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Trust', Icons.shield_outlined),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VesparaColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            if (profile.vouchCount > 0)
+                              Row(
+                                children: [
+                                  const Icon(Icons.people,
+                                      size: 18, color: VesparaColors.success),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '${profile.vouchCount} ${profile.vouchCount == 1 ? 'vouch' : 'vouches'}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: VesparaColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            if (profile.verifications.isNotEmpty) ...[
+                              if (profile.vouchCount > 0)
+                                const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: profile.verifications.map((v) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          VesparaColors.success.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.check_circle,
+                                            size: 14,
+                                            color: VesparaColors.success),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _formatLabel(v),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: VesparaColors.success,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+
+              // ── Sticky Action Buttons ──
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                decoration: BoxDecoration(
+                  color: VesparaColors.background,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSheetAction(
+                      icon: Icons.close,
+                      label: 'Pass',
+                      color: VesparaColors.error,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _onSwipe(SwipeDirection.left);
+                      },
+                    ),
+                    _buildSheetAction(
+                      icon: Icons.star,
+                      label: 'Super Like',
+                      color: VesparaColors.tagsYellow,
+                      isPrimary: true,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _onSwipe(SwipeDirection.superLike);
+                      },
+                    ),
+                    _buildSheetAction(
+                      icon: Icons.favorite,
+                      label: 'Like',
+                      color: VesparaColors.success,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _onSwipe(SwipeDirection.right);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoCarousel(DiscoverableProfile profile) {
+    if (profile.photos.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: AspectRatio(
+          aspectRatio: 0.8,
+          child: _buildPlaceholderPhoto(profile),
+        ),
+      );
+    }
+
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        int currentPhoto = 0;
+        final pageController = PageController();
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: AspectRatio(
+            aspectRatio: 0.8,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: pageController,
+                  itemCount: profile.photos.length,
+                  onPageChanged: (index) =>
+                      setLocalState(() => currentPhoto = index),
+                  itemBuilder: (context, index) => Image.network(
+                    profile.photos[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        _buildPlaceholderPhoto(profile),
+                  ),
+                ),
+                // Photo count indicator
+                if (profile.photos.length > 1)
+                  Positioned(
+                    top: 12,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        profile.photos.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: index == currentPhoto ? 24 : 8,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: index == currentPhoto
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Photo counter badge
+                if (profile.photos.length > 1)
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${currentPhoto + 1}/${profile.photos.length}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileSection(
+      String title, IconData icon, List<Widget> children) {
+    if (children.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(title, icon),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VesparaColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) => Row(
+        children: [
+          Icon(icon, size: 18, color: VesparaColors.glow),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      );
+
+  Widget _profileInfoRow(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: VesparaColors.secondary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: VesparaColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _lifestyleRow(IconData icon, String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: VesparaColors.secondary),
+            const SizedBox(width: 10),
+            Text(
+              '$label: ',
+              style: const TextStyle(
+                fontSize: 13,
+                color: VesparaColors.secondary,
+              ),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: VesparaColors.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildTagGroup(String label, List<String> tags, Color color) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.secondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tags
+                .map((tag) => Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: color.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(fontSize: 13, color: color),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      );
+
+  Widget _buildSheetAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    bool isPrimary = false,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: isPrimary ? 64 : 52,
+              height: isPrimary ? 64 : 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isPrimary ? color : VesparaColors.surface,
+                border: isPrimary
+                    ? null
+                    : Border.all(color: color.withOpacity(0.4), width: 2),
+                boxShadow: isPrimary
+                    ? [
+                        BoxShadow(
+                          color: color.withOpacity(0.4),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(icon,
+                  color: isPrimary ? VesparaColors.background : color,
+                  size: isPrimary ? 28 : 24),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  String _formatHeight(int cm) {
+    final totalInches = cm / 2.54;
+    final feet = (totalInches / 12).floor();
+    final inches = (totalInches % 12).round();
+    return "$feet'$inches\" ($cm cm)";
+  }
+
+  String _formatLabel(String value) =>
+      value.replaceAllMapped(
+        RegExp(r'([a-z])([A-Z])'),
+        (m) => '${m[1]} ${m[2]}',
+      ).replaceAll('_', ' ').split(' ').map((w) =>
+          w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w,
+      ).join(' ');
 
   Widget _buildActionButtons() => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),

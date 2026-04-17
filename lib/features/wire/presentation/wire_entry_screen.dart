@@ -104,6 +104,10 @@ class StreamChatWireScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

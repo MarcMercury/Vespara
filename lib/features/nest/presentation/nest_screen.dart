@@ -36,6 +36,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
   late TabController _tabController;
   late AnimationController _glowController;
   String _searchQuery = '';
+  RealtimeChannel? _membersChannel;
 
   @override
   void initState() {
@@ -45,10 +46,39 @@ class _NestScreenState extends ConsumerState<NestScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+
+    // Refresh connections on screen open
+    Future.microtask(() {
+      ref.invalidate(sanctumConnectionsProvider);
+      ref.invalidate(pendingLikesProvider);
+    });
+
+    // Subscribe to realtime match changes so connections update live
+    _membersChannel = Supabase.instance.client
+        .channel('nest-connections')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'matches',
+          callback: (payload) {
+            ref.invalidate(sanctumConnectionsProvider);
+            ref.invalidate(pendingLikesProvider);
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'swipes',
+          callback: (payload) {
+            ref.invalidate(pendingLikesProvider);
+          },
+        )
+        .subscribe();
   }
 
   @override
   void dispose() {
+    _membersChannel?.unsubscribe();
     _tabController.dispose();
     _glowController.dispose();
     super.dispose();
@@ -100,7 +130,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Your community',
+                  'Your connections',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: VesparaColors.secondary,
@@ -117,13 +147,20 @@ class _NestScreenState extends ConsumerState<NestScreen>
       );
 
   Widget _buildStats() {
-    final membersAsync = ref.watch(allMembersProvider);
+    final connectionsAsync = ref.watch(sanctumConnectionsProvider);
+    final pendingAsync = ref.watch(pendingLikesProvider);
     final groupsState = ref.watch(groupsProvider);
 
-    final memberCount = membersAsync.when(
+    final connectionCount = connectionsAsync.when(
       loading: () => 0,
       error: (_, __) => 0,
-      data: (members) => members.length,
+      data: (connections) => connections.length,
+    );
+
+    final pendingCount = pendingAsync.when(
+      loading: () => 0,
+      error: (_, __) => 0,
+      data: (pending) => pending.length,
     );
 
     return Container(
@@ -138,7 +175,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem(
-              'Members', memberCount.toString(), VesparaColors.primary),
+              'Connections', connectionCount.toString(), VesparaColors.primary),
+          _buildStatDivider(),
+          _buildStatItem(
+              'Pending', pendingCount.toString(), VesparaColors.accentRose),
           _buildStatDivider(),
           _buildStatItem(
               'Circles', groupsState.groupCount.toString(), VesparaColors.glow),
@@ -175,12 +215,12 @@ class _NestScreenState extends ConsumerState<NestScreen>
 
   Widget _buildTabBar() {
     final groupsState = ref.watch(groupsProvider);
-    final membersAsync = ref.watch(allMembersProvider);
+    final connectionsAsync = ref.watch(sanctumConnectionsProvider);
 
-    final memberCount = membersAsync.when(
+    final connectionCount = connectionsAsync.when(
       loading: () => 0,
       error: (_, __) => 0,
-      data: (members) => members.length,
+      data: (connections) => connections.length,
     );
 
     return Container(
@@ -201,10 +241,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('👥'),
+                const Text('💫'),
                 const SizedBox(width: 6),
-                const Text('MEMBERS'),
-                if (memberCount > 0) ...[
+                const Text('CONNECTIONS'),
+                if (connectionCount > 0) ...[
                   const SizedBox(width: 6),
                   Container(
                     padding:
@@ -214,7 +254,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      memberCount.toString(),
+                      connectionCount.toString(),
                       style: const TextStyle(fontSize: 10),
                     ),
                   ),
@@ -265,37 +305,54 @@ class _NestScreenState extends ConsumerState<NestScreen>
   // ════════════════════════════════════════════════════════════════════════════
 
   Widget _buildMembersTab() {
-    final membersAsync = ref.watch(allMembersProvider);
+    final connectionsAsync = ref.watch(sanctumConnectionsProvider);
+    final pendingAsync = ref.watch(pendingLikesProvider);
 
-    return membersAsync.when(
+    return connectionsAsync.when(
       loading: () => const Center(
           child: CircularProgressIndicator(color: VesparaColors.glow)),
       error: (e, _) => Center(
-        child: Text('Error loading members',
+        child: Text('Error loading connections',
             style: TextStyle(color: VesparaColors.error)),
       ),
-      data: (members) {
-        final filtered = _searchQuery.isEmpty
-            ? members
-            : members
-                .where((m) => (m.displayName ?? '')
+      data: (connections) {
+        final pendingLikes = pendingAsync.when(
+          loading: () => <PendingLike>[],
+          error: (_, __) => <PendingLike>[],
+          data: (p) => p,
+        );
+
+        final filteredConnections = _searchQuery.isEmpty
+            ? connections
+            : connections
+                .where((c) => (c.displayName ?? '')
                     .toLowerCase()
                     .contains(_searchQuery.toLowerCase()))
                 .toList();
 
-        if (filtered.isEmpty) {
-          return const Center(
+        final filteredPending = _searchQuery.isEmpty
+            ? pendingLikes
+            : pendingLikes
+                .where((p) => (p.displayName ?? '')
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase()))
+                .toList();
+
+        if (filteredConnections.isEmpty && filteredPending.isEmpty) {
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.people_outline,
+                Icon(Icons.favorite_border,
                     size: 48, color: VesparaColors.secondary),
-                SizedBox(height: 16),
-                Text('No members yet',
+                const SizedBox(height: 16),
+                const Text('No connections yet',
                     style:
                         TextStyle(fontSize: 16, color: VesparaColors.secondary)),
-                SizedBox(height: 8),
-                Text('Members will appear here once they join',
+                const SizedBox(height: 8),
+                const Text(
+                    'Like someone in Browse — if they like you back,\nthey\'ll appear here',
+                    textAlign: TextAlign.center,
                     style:
                         TextStyle(fontSize: 13, color: VesparaColors.inactive)),
               ],
@@ -303,17 +360,88 @@ class _NestScreenState extends ConsumerState<NestScreen>
           );
         }
 
-        return ListView.builder(
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: filtered.length,
-          itemBuilder: (context, index) =>
-              _buildMemberCard(filtered[index]),
+          children: [
+            // Mutual connections section
+            if (filteredConnections.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.people, size: 16, color: VesparaColors.glow),
+                    const SizedBox(width: 6),
+                    Text(
+                      'MUTUAL CONNECTIONS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: VesparaColors.glow.withOpacity(0.8),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${filteredConnections.length}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: VesparaColors.glow.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...filteredConnections.map(_buildConnectionCard),
+            ],
+
+            // Pending likes section
+            if (filteredPending.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.only(
+                  top: filteredConnections.isNotEmpty ? 20 : 0,
+                  bottom: 12,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.favorite, size: 16, color: VesparaColors.accentRose),
+                    const SizedBox(width: 6),
+                    Text(
+                      'PENDING LIKES',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: VesparaColors.accentRose.withOpacity(0.8),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${filteredPending.length}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: VesparaColors.accentRose.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...filteredPending.map(_buildPendingLikeCard),
+            ],
+          ],
         );
       },
     );
   }
 
-  Widget _buildMemberCard(CommunityMember member) => AnimatedBuilder(
+  Widget _buildConnectionCard(SanctumConnection connection) {
+    final member = CommunityMember(
+      id: connection.userId,
+      displayName: connection.displayName,
+      avatarUrl: connection.avatarUrl,
+      age: connection.age,
+    );
+
+    return AnimatedBuilder(
         animation: _glowController,
         builder: (context, child) => GestureDetector(
           onTap: () => _showMemberDetails(member),
@@ -324,7 +452,7 @@ class _NestScreenState extends ConsumerState<NestScreen>
               color: VesparaColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: VesparaColors.glow.withOpacity(0.1),
+                color: VesparaColors.glow.withOpacity(0.15),
               ),
             ),
             child: Column(
@@ -344,14 +472,15 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           width: 2,
                         ),
                       ),
-                      child: member.avatarUrl != null
+                      child: connection.avatarUrl != null
                           ? ClipOval(
                               child: Image.network(
-                                member.avatarUrl!,
+                                connection.avatarUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Center(
                                   child: Text(
-                                    (member.displayName ?? '?')[0].toUpperCase(),
+                                    (connection.displayName ?? '?')[0]
+                                        .toUpperCase(),
                                     style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w600,
@@ -363,7 +492,8 @@ class _NestScreenState extends ConsumerState<NestScreen>
                             )
                           : Center(
                               child: Text(
-                                (member.displayName ?? '?')[0].toUpperCase(),
+                                (connection.displayName ?? '?')[0]
+                                    .toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w600,
@@ -382,31 +512,48 @@ class _NestScreenState extends ConsumerState<NestScreen>
                           Row(
                             children: [
                               Text(
-                                member.displayName ?? 'Unknown',
+                                connection.displayName ?? 'Unknown',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: VesparaColors.primary,
                                 ),
                               ),
-                              if (member.age != null) ...[
+                              if (connection.age != null) ...[
                                 Text(
-                                  ', ${member.age}',
+                                  ', ${connection.age}',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: VesparaColors.secondary,
                                   ),
                                 ),
                               ],
+                              if (connection.isSuperMatch) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.bolt,
+                                    size: 16, color: VesparaColors.warning),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Community member',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: VesparaColors.secondary,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                '${connection.compatibilityScore >= 0.01 ? "${(connection.compatibilityScore * 100).round()}% compatible" : "Mutual connection"}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: VesparaColors.secondary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _formatTimeAgo(connection.matchedAt),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: VesparaColors.secondary.withOpacity(0.6),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -457,6 +604,125 @@ class _NestScreenState extends ConsumerState<NestScreen>
           ),
         ),
       );
+  }
+
+  Widget _buildPendingLikeCard(PendingLike pending) => Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: VesparaColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: VesparaColors.accentRose.withOpacity(0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: VesparaColors.accentRose.withOpacity(0.15),
+                border: Border.all(
+                  color: VesparaColors.accentRose.withOpacity(0.2),
+                  width: 2,
+                ),
+              ),
+              child: pending.avatarUrl != null
+                  ? ClipOval(
+                      child: Image.network(
+                        pending.avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(
+                            (pending.displayName ?? '?')[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.accentRose,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        (pending.displayName ?? '?')[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.accentRose,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
+
+            // Name and status
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        pending.displayName ?? 'Unknown',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.primary,
+                        ),
+                      ),
+                      if (pending.age != null) ...[
+                        Text(
+                          ', ${pending.age}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: VesparaColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Waiting for them to like you back',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: VesparaColors.accentRose.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Heart icon indicator
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: VesparaColors.accentRose.withOpacity(0.1),
+              ),
+              child: const Icon(
+                Icons.favorite,
+                size: 16,
+                color: VesparaColors.accentRose,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final diff = DateTime.now().difference(dateTime);
+    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()}mo ago';
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    return 'Just now';
+  }
 
   // ════════════════════════════════════════════════════════════════════════════
   // CIRCLES TAB
@@ -909,113 +1175,28 @@ class _NestScreenState extends ConsumerState<NestScreen>
 
   void _showPlanDateDialog(CommunityMember member) {
     final recommendation = _recommendPlanSlot();
-    final recommendationLabel = _formatPlanDateTime(recommendation.startTime);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: VesparaColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-                child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                        color: VesparaColors.secondary,
-                        borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 20),
-            Text('Plan with ${member.displayName}',
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: VesparaColors.primary)),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: VesparaColors.background.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: VesparaColors.glow.withOpacity(0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Recommended shared time',
-                    style: TextStyle(
-                      color: VesparaColors.secondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    recommendationLabel,
-                    style: const TextStyle(
-                      color: VesparaColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              recommendation.title,
-              style: const TextStyle(
-                color: VesparaColors.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await _sendPlanInviteMessage(
-                        member,
-                        recommendation.startTime,
-                      );
-                    },
-                    icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                    label: const Text('Message'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: VesparaColors.glow,
-                      side: const BorderSide(color: VesparaColors.glow),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await _savePlanRecommendation(member, recommendation);
-                    },
-                    icon: const Icon(Icons.check, size: 16),
-                    label: const Text('Save Plan'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VesparaColors.success,
-                      foregroundColor: VesparaColors.background,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+      builder: (context) => _PlanEditorSheet(
+        member: member,
+        initialTitle: recommendation.title,
+        initialDateTime: recommendation.startTime,
+        onSendPlan: (title, dateTime) async {
+          Navigator.pop(context);
+          await _savePlanAndMessage(member, title, dateTime);
+        },
+        onSaveOnly: (title, dateTime) async {
+          Navigator.pop(context);
+          await _savePlanRecommendation(
+            member,
+            _PlanRecommendation(title: title, startTime: dateTime),
+          );
+        },
       ),
     );
   }
@@ -1121,6 +1302,71 @@ class _NestScreenState extends ConsumerState<NestScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save plan: $e'),
+            backgroundColor: VesparaColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _savePlanAndMessage(
+    CommunityMember member,
+    String title,
+    DateTime dateTime,
+  ) async {
+    try {
+      // Save the plan event
+      final connection = EventConnection(
+        id: member.id,
+        name: member.displayName ?? 'Unknown',
+        avatarUrl: member.avatarUrl,
+      );
+
+      final event = PlanEvent(
+        id: 'event-${DateTime.now().millisecondsSinceEpoch}',
+        userId: Supabase.instance.client.auth.currentUser?.id ?? '',
+        title: '$title with ${member.displayName ?? 'Unknown'}',
+        startTime: dateTime,
+        endTime: dateTime.add(const Duration(hours: 2)),
+        connections: [connection],
+        certainty: EventCertainty.exploring,
+        createdAt: DateTime.now(),
+      );
+
+      await ref.read(planProvider.notifier).createEvent(event);
+
+      // Send the invite message via Wire
+      final conversationId = await ref
+          .read(wireProvider.notifier)
+          .getOrCreateDirectConversation(member.id);
+
+      if (conversationId != null) {
+        final formattedTime = _formatPlanDateTime(dateTime);
+        final message =
+            'Hey ${member.displayName}! I\'d love to plan "$title" — how about $formattedTime? Let me know if that works or suggest another time 🗓️';
+        await ref.read(wireProvider.notifier).sendMessage(
+              conversationId: conversationId,
+              content: message,
+            );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              conversationId != null
+                  ? 'Plan sent to ${member.displayName}!'
+                  : 'Plan saved (could not send message)',
+            ),
+            backgroundColor: VesparaColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send plan: $e'),
             backgroundColor: VesparaColors.error,
           ),
         );
@@ -1273,6 +1519,326 @@ class _PlanRecommendation {
 
   final String title;
   final DateTime startTime;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// PLAN EDITOR SHEET
+// ════════════════════════════════════════════════════════════════════════════
+
+class _PlanEditorSheet extends StatefulWidget {
+  const _PlanEditorSheet({
+    required this.member,
+    required this.initialTitle,
+    required this.initialDateTime,
+    required this.onSendPlan,
+    required this.onSaveOnly,
+  });
+
+  final CommunityMember member;
+  final String initialTitle;
+  final DateTime initialDateTime;
+  final Future<void> Function(String title, DateTime dateTime) onSendPlan;
+  final Future<void> Function(String title, DateTime dateTime) onSaveOnly;
+
+  @override
+  State<_PlanEditorSheet> createState() => _PlanEditorSheetState();
+}
+
+class _PlanEditorSheetState extends State<_PlanEditorSheet> {
+  late TextEditingController _titleController;
+  late DateTime _selectedDate;
+  late TimeOfDay _selectedTime;
+  bool _isSending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.initialTitle);
+    _selectedDate = widget.initialDateTime;
+    _selectedTime = TimeOfDay.fromDateTime(widget.initialDateTime);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  DateTime get _combinedDateTime => DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: VesparaColors.glow,
+            surface: VesparaColors.surface,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: VesparaColors.glow,
+            surface: VesparaColors.surface,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
+  }
+
+  String _formatDate(DateTime dt) {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${weekdays[dt.weekday - 1]}, ${months[dt.month - 1]} ${dt.day}';
+  }
+
+  String _formatTime(TimeOfDay t) {
+    final hour12 = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
+    final minute = t.minute.toString().padLeft(2, '0');
+    return '$hour12:$minute $period';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 24,
+        right: 24,
+        top: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: VesparaColors.secondary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Header
+          Text(
+            'Plan with ${widget.member.displayName}',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: VesparaColors.primary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'We picked a time that looks open — tweak it to fit.',
+            style: TextStyle(
+              color: VesparaColors.secondary,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Editable title
+          TextField(
+            controller: _titleController,
+            style: const TextStyle(
+              color: VesparaColors.primary,
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              labelText: 'What\'s the plan?',
+              labelStyle: const TextStyle(
+                color: VesparaColors.secondary,
+                fontSize: 13,
+              ),
+              filled: true,
+              fillColor: VesparaColors.background.withOpacity(0.6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: VesparaColors.glow.withOpacity(0.2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: VesparaColors.glow),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Date & Time pickers row
+          Row(
+            children: [
+              // Date chip
+              Expanded(
+                child: GestureDetector(
+                  onTap: _pickDate,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.background.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: VesparaColors.glow.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today,
+                            size: 16, color: VesparaColors.glow),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _formatDate(_selectedDate),
+                            style: const TextStyle(
+                              color: VesparaColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.edit,
+                            size: 14, color: VesparaColors.secondary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Time chip
+              GestureDetector(
+                onTap: _pickTime,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: VesparaColors.background.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: VesparaColors.glow.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.access_time,
+                          size: 16, color: VesparaColors.glow),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatTime(_selectedTime),
+                        style: const TextStyle(
+                          color: VesparaColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.edit,
+                          size: 14, color: VesparaColors.secondary),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Primary action: Send Plan
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isSending
+                  ? null
+                  : () async {
+                      setState(() => _isSending = true);
+                      final title = _titleController.text.trim().isEmpty
+                          ? widget.initialTitle
+                          : _titleController.text.trim();
+                      await widget.onSendPlan(title, _combinedDateTime);
+                    },
+              icon: _isSending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: VesparaColors.background))
+                  : const Icon(Icons.send_rounded, size: 18),
+              label: Text(_isSending ? 'Sending...' : 'Send Plan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.glow,
+                foregroundColor: VesparaColors.background,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Secondary action: Save without sending
+          Center(
+            child: TextButton(
+              onPressed: _isSending
+                  ? null
+                  : () async {
+                      setState(() => _isSending = true);
+                      final title = _titleController.text.trim().isEmpty
+                          ? widget.initialTitle
+                          : _titleController.text.trim();
+                      await widget.onSaveOnly(title, _combinedDateTime);
+                    },
+              child: const Text(
+                'Just save for now',
+                style: TextStyle(
+                  color: VesparaColors.secondary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════

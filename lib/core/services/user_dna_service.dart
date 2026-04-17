@@ -323,8 +323,8 @@ Energy balance: ${dna1.socialEnergyProfile} ↔ ${dna2.socialEnergyProfile}
       // Analyze patterns from past matches
       final matches = await _supabase
           .from('matches')
-          .select('matched_user_id, status, created_at')
-          .eq('user_id', userId)
+          .select('user_a_id, user_b_id, status, created_at')
+          .or('user_a_id.eq.$userId,user_b_id.eq.$userId')
           .order('created_at', ascending: false)
           .limit(50);
 
