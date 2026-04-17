@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/providers/app_providers.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 
 /// Admin User Detail — view profile, actions, token usage, audit log
-class AdminUserDetailScreen extends StatefulWidget {
+class AdminUserDetailScreen extends ConsumerStatefulWidget {
   final String userId;
 
   const AdminUserDetailScreen({super.key, required this.userId});
 
   @override
-  State<AdminUserDetailScreen> createState() => _AdminUserDetailScreenState();
+  ConsumerState<AdminUserDetailScreen> createState() => _AdminUserDetailScreenState();
 }
 
-class _AdminUserDetailScreenState extends State<AdminUserDetailScreen>
+class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen>
     with SingleTickerProviderStateMixin {
   AdminUserDetail? _detail;
   bool _isLoading = true;
@@ -69,6 +71,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen>
     try {
       await AdminService.disableUser(widget.userId);
       _showSnack('User disabled', VesparaColors.error);
+      ref.invalidate(allMembersProvider);
       _loadDetail();
     } catch (e) {
       _showSnack('Error: $e', VesparaColors.error);
@@ -87,6 +90,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen>
     try {
       await AdminService.enableUser(widget.userId);
       _showSnack('User enabled', VesparaColors.success);
+      ref.invalidate(allMembersProvider);
       _loadDetail();
     } catch (e) {
       _showSnack('Error: $e', VesparaColors.error);

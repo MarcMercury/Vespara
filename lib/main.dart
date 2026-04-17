@@ -236,7 +236,7 @@ class PendingApprovalScreen extends StatefulWidget {
     required this.onLogout,
   });
 
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
   final VoidCallback onLogout;
 
   @override
@@ -245,6 +245,7 @@ class PendingApprovalScreen extends StatefulWidget {
 
 class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
   RealtimeChannel? _channel;
+  bool _isChecking = false;
 
   @override
   void initState() {
@@ -256,6 +257,20 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
   void dispose() {
     _channel?.unsubscribe();
     super.dispose();
+  }
+
+  Future<void> _handleCheckStatus() async {
+    if (_isChecking) return;
+    setState(() => _isChecking = true);
+    try {
+      await widget.onRefresh();
+    } catch (e) {
+      debugPrint('Vespara: Check status error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isChecking = false);
+      }
+    }
   }
 
   void _subscribeToApproval() {
@@ -344,11 +359,20 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: widget.onRefresh,
-                  icon: const Icon(Icons.refresh, color: VesparaColors.background),
-                  label: const Text(
-                    'Check Status',
-                    style: TextStyle(
+                  onPressed: _isChecking ? null : _handleCheckStatus,
+                  icon: _isChecking
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: VesparaColors.background,
+                          ),
+                        )
+                      : const Icon(Icons.refresh, color: VesparaColors.background),
+                  label: Text(
+                    _isChecking ? 'Checking...' : 'Check Status',
+                    style: const TextStyle(
                       color: VesparaColors.background,
                       fontWeight: FontWeight.w600,
                     ),

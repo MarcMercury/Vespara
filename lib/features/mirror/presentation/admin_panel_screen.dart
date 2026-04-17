@@ -1,24 +1,26 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/providers/app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../admin/presentation/admin_portal_screen.dart';
 
 /// Admin Panel — Approve / Reject / Suspend pending members
-class AdminPanelScreen extends StatefulWidget {
+class AdminPanelScreen extends ConsumerStatefulWidget {
   const AdminPanelScreen({super.key});
 
   @override
-  State<AdminPanelScreen> createState() => _AdminPanelScreenState();
+  ConsumerState<AdminPanelScreen> createState() => _AdminPanelScreenState();
 }
 
-class _AdminPanelScreenState extends State<AdminPanelScreen> {
+class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _pendingMembers = [];
   bool _isLoading = true;
@@ -70,6 +72,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     }
 
     try {
+      // Refresh session to ensure token is valid before calling edge function
+      await _supabase.auth.refreshSession();
       final session = _supabase.auth.currentSession;
       if (session == null) return;
 
@@ -94,7 +98,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           );
         }
-        // No full list reload — already removed optimistically
+        // Invalidate the members provider so counts refresh
+        ref.invalidate(allMembersProvider);
       } else {
         final body = jsonDecode(response.body);
         // Rollback optimistic removal on failure
