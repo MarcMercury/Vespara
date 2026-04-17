@@ -354,6 +354,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   void _handleCreate() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
+    print('[Planner] _handleCreate called, userId: $userId');
     if (userId == null) return;
 
     setState(() => _saving = true);
@@ -400,7 +401,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       createdAt: DateTime.now(),
     );
 
+    print('[Planner] calling PlannerService.createEvent...');
     final saved = await PlannerService.instance.createEvent(calendarEvent);
+    print('[Planner] createEvent result: ${saved?.id}');
 
     if (!mounted) return;
     setState(() => _saving = false);

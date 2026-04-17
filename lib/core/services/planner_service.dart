@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/models/calendar_event.dart';
@@ -33,8 +32,8 @@ class PlannerService {
       return (data as List)
           .map((json) => CalendarEvent.fromJson(json as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      debugPrint('PlannerService.getMyEvents error: $e');
+    } catch (e, st) {
+      print('[PlannerService] getMyEvents error: $e\n$st');
       return [];
     }
   }
@@ -42,14 +41,17 @@ class PlannerService {
   /// Create a new calendar event
   Future<CalendarEvent?> createEvent(CalendarEvent event) async {
     try {
+      final json = event.toInsertJson();
+      print('[PlannerService] createEvent inserting: $json');
       final data = await _client
           .from('calendar_events')
-          .insert(event.toInsertJson())
+          .insert(json)
           .select()
           .single();
+      print('[PlannerService] createEvent success: ${data['id']}');
       return CalendarEvent.fromJson(data);
-    } catch (e) {
-      debugPrint('PlannerService.createEvent error: $e');
+    } catch (e, st) {
+      print('[PlannerService] createEvent error: $e\n$st');
       return null;
     }
   }
@@ -63,8 +65,8 @@ class PlannerService {
           .eq('id', eventId)
           .eq('user_id', _userId!);
       return true;
-    } catch (e) {
-      debugPrint('PlannerService.deleteEvent error: $e');
+    } catch (e, st) {
+      print('[PlannerService] deleteEvent error: $e\n$st');
       return false;
     }
   }
@@ -85,8 +87,8 @@ class PlannerService {
       return (data as List)
           .map((json) => TravelPlan.fromJson(json as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      debugPrint('PlannerService.getMyTrips error: $e');
+    } catch (e, st) {
+      print('[PlannerService] getMyTrips error: $e\n$st');
       return [];
     }
   }
@@ -104,8 +106,8 @@ class PlannerService {
       return (data as List)
           .map((json) => TravelPlan.fromJson(json as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      debugPrint('PlannerService.getConnectionTrips error: $e');
+    } catch (e, st) {
+      print('[PlannerService] getConnectionTrips error: $e\n$st');
       return [];
     }
   }
