@@ -899,7 +899,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
   void _shareTrip() {
     final tripInfo =
-        '✈️ ${_trip.destination}\n📅 ${_trip.startDate.month}/${_trip.startDate.day} - ${_trip.endDate.month}/${_trip.endDate.day}\n\nJoin me on Vespara!';
+        '✈️ ${_trip.destinationCity}\n📅 ${_trip.startDate.month}/${_trip.startDate.day} - ${_trip.endDate.month}/${_trip.endDate.day}\n\nJoin me on Vespara!';
     Clipboard.setData(ClipboardData(text: tripInfo));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Trip details copied to clipboard!')),
