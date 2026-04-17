@@ -1,35 +1,21 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../config/env.dart';
 
 /// Admin Service — calls admin-manage-user edge function
 class AdminService {
   static final _supabase = Supabase.instance.client;
 
-  static Map<String, String> get _headers {
-    final session = _supabase.auth.currentSession;
-    return {
-      'Authorization': 'Bearer ${session?.accessToken ?? ''}',
-      'Content-Type': 'application/json',
-      'apikey': Env.supabaseAnonKey,
-    };
-  }
-
-  static Uri get _endpoint =>
-      Uri.parse('${Env.supabaseUrl}/functions/v1/admin-manage-user');
-
   static Future<Map<String, dynamic>> _call(Map<String, dynamic> body) async {
-    final response = await http.post(
-      _endpoint,
-      headers: _headers,
-      body: jsonEncode(body),
+    final response = await _supabase.functions.invoke(
+      'admin-manage-user',
+      body: body,
     );
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
+    final data = response.data is Map
+        ? response.data as Map<String, dynamic>
+        : jsonDecode(response.data.toString()) as Map<String, dynamic>;
+    if (response.status != 200) {
       throw Exception(data['error'] ?? 'Request failed');
     }
     return data;

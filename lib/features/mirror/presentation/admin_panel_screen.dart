@@ -3,10 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/env.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
@@ -72,22 +70,12 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     }
 
     try {
-      // Refresh session to ensure token is valid before calling edge function
-      await _supabase.auth.refreshSession();
-      final session = _supabase.auth.currentSession;
-      if (session == null) return;
-
-      final response = await http.post(
-        Uri.parse('${Env.supabaseUrl}/functions/v1/admin-approve-member'),
-        headers: {
-          'Authorization': 'Bearer ${session.accessToken}',
-          'Content-Type': 'application/json',
-          'apikey': Env.supabaseAnonKey,
-        },
-        body: jsonEncode({'member_id': memberId, 'action': action}),
+      final response = await _supabase.functions.invoke(
+        'admin-approve-member',
+        body: {'member_id': memberId, 'action': action},
       );
 
-      if (response.statusCode == 200) {
+      if (response.status == 200) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -101,7 +89,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
         // Invalidate the members provider so counts refresh
         ref.invalidate(allMembersProvider);
       } else {
-        final body = jsonDecode(response.body);
+        final body = response.data is Map
+            ? response.data as Map<String, dynamic>
+            : jsonDecode(response.data.toString()) as Map<String, dynamic>;
         // Rollback optimistic removal on failure
         if (removedMember != null && removedIndex != -1) {
           setState(() {
