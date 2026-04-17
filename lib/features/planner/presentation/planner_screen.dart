@@ -227,7 +227,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           Text(
             '${months[_focusedMonth.month - 1]} ${_focusedMonth.year}',
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: Colors.white.withValues(alpha: 0.16),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -411,7 +411,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               Text(
                 'Tap + to add an event',
                 style: GoogleFonts.inter(
-                  color: Colors.white16,
+                  color: Colors.white.withValues(alpha: 0.16),
                   fontSize: 12,
                 ),
               ),

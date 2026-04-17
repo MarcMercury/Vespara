@@ -131,7 +131,7 @@ class PlannerDayCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.white16, size: 20),
+          Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.16), size: 20),
         ],
       ),
     );

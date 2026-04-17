@@ -101,15 +101,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Widget _buildModeSelector() {
     return Row(
       children: [
-        _modeChip('From Scratch', _CreateMode.scratch),
+        _modeChip(_CreateMode.scratch),
         const SizedBox(width: 12),
-        _modeChip('Paste Details', _CreateMode.paste),
+        _modeChip(_CreateMode.paste),
       ],
     );
   }
 
-  Widget _modeChip(_CreateMode mode, _CreateMode value) {
-    // Fix: compare with value param
+  Widget _modeChip(_CreateMode value) {
     final selected = _mode == value;
     return GestureDetector(
       onTap: () => setState(() => _mode = value),
@@ -125,7 +124,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               : null,
         ),
         child: Text(
-          mode.label,
+          value.label,
           style: GoogleFonts.inter(
             color: selected ? const Color(0xFFCE93D8) : Colors.white54,
             fontSize: 13,
@@ -168,7 +167,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Paste event info here...',
-              hintStyle: GoogleFonts.inter(color: Colors.white20),
+              hintStyle: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.20)),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -217,7 +216,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.inter(color: Colors.white20),
+              hintStyle: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.20)),
               border: InputBorder.none,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -263,7 +262,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ? '${_selectedDate!.month}/${_selectedDate!.day}/${_selectedDate!.year}'
                   : 'Select date',
               style: GoogleFonts.inter(
-                color: _selectedDate != null ? Colors.white70 : Colors.white20,
+                color: _selectedDate != null ? Colors.white70 : Colors.white.withValues(alpha: 0.20),
                 fontSize: 14,
               ),
             ),
@@ -306,7 +305,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ? _selectedTime!.format(context)
                   : 'Select time',
               style: GoogleFonts.inter(
-                color: _selectedTime != null ? Colors.white70 : Colors.white20,
+                color: _selectedTime != null ? Colors.white70 : Colors.white.withValues(alpha: 0.20),
                 fontSize: 14,
               ),
             ),
