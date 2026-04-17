@@ -301,6 +301,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     if (_dragOffset.abs() > 100) {
       // Swipe threshold reached
       _onSwipe(_dragOffset > 0 ? SwipeDirection.right : SwipeDirection.left);
+    } else if (_dragOffset.abs() < 10) {
+      // Tiny or no movement = tap → open full profile
+      final profiles = _filteredProfiles;
+      if (_currentIndex < profiles.length) {
+        _showFullProfile(profiles[_currentIndex]);
+      }
+      setState(() {
+        _dragOffset = 0;
+        _dragRotation = 0;
+      });
     } else {
       // Snap back
       setState(() {
@@ -752,7 +762,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
         // Current card
         GestureDetector(
-          onTap: () => _showFullProfile(filteredProfiles[_currentIndex]),
           onPanUpdate: _onDragUpdate,
           onPanEnd: _onDragEnd,
           child: Transform.translate(
@@ -955,6 +964,44 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                 ),
               ),
 
+              // View full profile button
+              if (!isBackground)
+                Positioned(
+                  top: 16,
+                  left: profile.isWildcard ? null : 16,
+                  right: profile.isWildcard ? null : null,
+                  child: GestureDetector(
+                    onTap: () => _showFullProfile(profile),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: VesparaColors.surface.withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: VesparaColors.glow.withOpacity(0.3),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.info_outline,
+                              size: 14, color: VesparaColors.glow),
+                          SizedBox(width: 4),
+                          Text(
+                            'Profile',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: VesparaColors.glow,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
               // Profile info
               Positioned(
                 bottom: 0,
@@ -1152,24 +1199,35 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       // Tap to view full profile hint
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.expand_less,
-                              size: 16,
-                              color: VesparaColors.secondary.withOpacity(0.6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: VesparaColors.glow.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: VesparaColors.glow.withOpacity(0.3),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Tap to view full profile',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: VesparaColors.secondary.withOpacity(0.6),
-                                fontWeight: FontWeight.w500,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.expand_less,
+                                size: 18,
+                                color: VesparaColors.glow,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 6),
+                              Text(
+                                'Tap for full profile',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: VesparaColors.glow,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
