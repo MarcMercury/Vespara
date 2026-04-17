@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/domain/models/calendar_event.dart';
+import '../../../core/domain/models/travel_plan.dart';
+import '../../../core/services/planner_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../widgets/planner_day_card.dart';
@@ -30,6 +33,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
   DateTime? _selectedDay;
   bool _loading = true;
   List<PlannerEntry> _entries = [];
+  final _plannerService = PlannerService.instance;
 
   String? get _userId => Supabase.instance.client.auth.currentUser?.id;
 
@@ -49,13 +53,74 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   Future<void> _loadEntries() async {
     setState(() => _loading = true);
-    // TODO: Load from travel_plans, events, dates via Supabase
-    await Future.delayed(const Duration(milliseconds: 300));
-    if (mounted) {
-      setState(() {
-        // Keep existing local entries
-        _loading = false;
-      });
+    try {
+      final results = await Future.wait([
+        _plannerService.getMyEvents(),
+        _plannerService.getMyTrips(),
+        _plannerService.getConnectionTrips(),
+      ]);
+
+      final calendarEvents = results[0] as List<CalendarEvent>;
+      final myTrips = results[1] as List<TravelPlan>;
+      final connectionTrips = results[2] as List<TravelPlan>;
+
+      final entries = <PlannerEntry>[];
+
+      // Calendar events → PlannerEntry
+      for (final e in calendarEvents) {
+        entries.add(PlannerEntry(
+          id: e.id,
+          title: e.title,
+          subtitle: e.description,
+          type: PlannerEntryType.event,
+          startDate: e.startTime,
+          endDate: e.endTime,
+          location: e.location,
+          ownerName: e.matchName,
+          ownerId: e.matchId,
+        ));
+      }
+
+      // My travel plans → PlannerEntry
+      for (final t in myTrips) {
+        entries.add(PlannerEntry(
+          id: t.id,
+          title: '${t.travelType.emoji} ${t.title}',
+          subtitle: t.destinationCity,
+          type: PlannerEntryType.travel,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          location: t.destinationCity,
+        ));
+      }
+
+      // Connection travel → PlannerEntry
+      for (final t in connectionTrips) {
+        entries.add(PlannerEntry(
+          id: t.id,
+          title: '${t.travelType.emoji} ${t.title}',
+          subtitle: t.destinationCity,
+          type: PlannerEntryType.connectionTravel,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          location: t.destinationCity,
+          ownerName: t.userName,
+          ownerId: t.userId,
+        ));
+      }
+
+      entries.sort((a, b) => a.startDate.compareTo(b.startDate));
+
+      if (mounted) {
+        setState(() {
+          _entries = entries;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -226,7 +291,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
           Text(
             '${months[_focusedMonth.month - 1]} ${_focusedMonth.year}',
             style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.16),
+              color: Colors.white.withOpacity(0.16),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -410,7 +475,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
               Text(
                 'Tap + to add an event',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.16),
+                  color: Colors.white.withOpacity(0.16),
                   fontSize: 12,
                 ),
               ),
@@ -449,7 +514,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             Text(
               'Events, travel, and dates will appear here',
               style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.16),
+                color: Colors.white.withOpacity(0.16),
                 fontSize: 13,
               ),
             ),

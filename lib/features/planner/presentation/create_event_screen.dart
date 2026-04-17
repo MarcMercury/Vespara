@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:uuid/uuid.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/domain/models/calendar_event.dart';
+import '../../../core/services/planner_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import 'planner_screen.dart';
@@ -25,6 +27,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   _CreateMode _mode = _CreateMode.scratch;
+  bool _saving = false;
 
   @override
   void dispose() {
@@ -169,7 +172,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Paste event info here...',
-              hintStyle: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.20)),
+              hintStyle: GoogleFonts.inter(color: Colors.white.withOpacity(0.20)),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -218,7 +221,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.20)),
+              hintStyle: GoogleFonts.inter(color: Colors.white.withOpacity(0.20)),
               border: InputBorder.none,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -264,7 +267,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ? '${_selectedDate!.month}/${_selectedDate!.day}/${_selectedDate!.year}'
                   : 'Select date',
               style: GoogleFonts.inter(
-                color: _selectedDate != null ? Colors.white70 : Colors.white.withValues(alpha: 0.20),
+                color: _selectedDate != null ? Colors.white70 : Colors.white.withOpacity(0.20),
                 fontSize: 14,
               ),
             ),
@@ -307,7 +310,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ? _selectedTime!.format(context)
                   : 'Select time',
               style: GoogleFonts.inter(
-                color: _selectedTime != null ? Colors.white70 : Colors.white.withValues(alpha: 0.20),
+                color: _selectedTime != null ? Colors.white70 : Colors.white.withOpacity(0.20),
                 fontSize: 14,
               ),
             ),
@@ -321,7 +324,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _handleCreate,
+        onPressed: _saving ? null : _handleCreate,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFCE93D8),
           foregroundColor: Colors.white,
@@ -330,7 +333,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             borderRadius: BorderRadius.circular(14),
           ),
         ),
-        child: Text(
+        child: _saving
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2),
+              )
+            : Text(
           _mode == _CreateMode.paste ? 'PARSE & CREATE' : 'CREATE EVENT',
           style: GoogleFonts.orbitron(
             fontSize: 14,
@@ -342,35 +352,74 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     );
   }
 
-  void _handleCreate() {
+  void _handleCreate() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    setState(() => _saving = true);
+
+    String title;
+    String? description;
+    String? location;
+    DateTime startDate;
+
     if (_mode == _CreateMode.paste) {
       final text = _pasteController.text.trim();
-      if (text.isEmpty) return;
+      if (text.isEmpty) {
+        setState(() => _saving = false);
+        return;
+      }
+      title = text.length > 60 ? '${text.substring(0, 60)}...' : text;
+      description = text.length > 60 ? text : null;
+      startDate = DateTime.now();
+    } else {
+      title = _titleController.text.trim();
+      if (title.isEmpty) {
+        setState(() => _saving = false);
+        return;
+      }
+      final date = _selectedDate ?? DateTime.now();
+      final time = _selectedTime ?? TimeOfDay.now();
+      startDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      location = _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim();
+    }
+
+    final endTime = startDate.add(const Duration(hours: 1));
+
+    final calendarEvent = CalendarEvent(
+      id: '', // DB will generate
+      userId: userId,
+      title: title,
+      description: description,
+      location: location,
+      startTime: startDate,
+      endTime: endTime,
+      status: 'confirmed',
+      createdAt: DateTime.now(),
+    );
+
+    final saved = await PlannerService.instance.createEvent(calendarEvent);
+
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    if (saved != null) {
       final entry = PlannerEntry(
-        id: const Uuid().v4(),
-        title: text.length > 60 ? '${text.substring(0, 60)}...' : text,
-        subtitle: text.length > 60 ? text : null,
+        id: saved.id,
+        title: saved.title,
+        subtitle: saved.description,
         type: PlannerEntryType.event,
-        startDate: DateTime.now(),
+        startDate: saved.startTime,
+        endDate: saved.endTime,
+        location: saved.location,
       );
       Navigator.pop(context, entry);
     } else {
-      final title = _titleController.text.trim();
-      if (title.isEmpty) return;
-      final date = _selectedDate ?? DateTime.now();
-      final time = _selectedTime ?? TimeOfDay.now();
-      final startDate = DateTime(
-          date.year, date.month, date.day, time.hour, time.minute);
-      final entry = PlannerEntry(
-        id: const Uuid().v4(),
-        title: title,
-        type: PlannerEntryType.event,
-        startDate: startDate,
-        location: _locationController.text.trim().isEmpty
-            ? null
-            : _locationController.text.trim(),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create event')),
       );
-      Navigator.pop(context, entry);
     }
   }
 }
