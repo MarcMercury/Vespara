@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,7 +56,15 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   }
 
   Future<void> _performAction(String memberId, String action) async {
-    // Optimistic removal — avoid a full list reload edge function + DB query
+    final statusMap = {
+      'approve': 'approved',
+      'reject': 'suspended', // DB constraint only allows: pending, approved, suspended, banned
+      'suspend': 'suspended',
+    };
+    final newStatus = statusMap[action];
+    if (newStatus == null) return;
+
+    // Optimistic removal — avoid a full list reload
     final removedIndex =
         _pendingMembers.indexWhere((m) => m['id'] == memberId);
     Map<String, dynamic>? removedMember;
@@ -70,38 +76,32 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     }
 
     try {
-      final response = await _supabase.functions.invoke(
-        'admin-approve-member',
-        body: {'member_id': memberId, 'action': action},
-      );
+      await _supabase.from('profiles').update({
+        'membership_status': newStatus,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+        if (action == 'approve') 'approved_at': DateTime.now().toUtc().toIso8601String(),
+        if (action == 'approve') 'approved_by': _supabase.auth.currentUser!.id,
+      }).eq('id', memberId);
 
-      if (response.status == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Member ${action}d successfully'),
-              backgroundColor: action == 'approve'
-                  ? VesparaColors.success
-                  : VesparaColors.error,
-            ),
-          );
-        }
-        // Invalidate the members provider so counts refresh
-        ref.invalidate(allMembersProvider);
-      } else {
-        final body = response.data is Map
-            ? response.data as Map<String, dynamic>
-            : jsonDecode(response.data.toString()) as Map<String, dynamic>;
-        // Rollback optimistic removal on failure
-        if (removedMember != null && removedIndex != -1) {
-          setState(() {
-            _pendingMembers.insert(
-                removedIndex.clamp(0, _pendingMembers.length), removedMember!);
-          });
-        }
-        throw Exception(body['error'] ?? 'Unknown error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Member ${action}d successfully'),
+            backgroundColor: action == 'approve'
+                ? VesparaColors.success
+                : VesparaColors.error,
+          ),
+        );
       }
+      ref.invalidate(allMembersProvider);
     } catch (e) {
+      // Rollback optimistic removal on failure
+      if (removedMember != null && removedIndex != -1) {
+        setState(() {
+          _pendingMembers.insert(
+              removedIndex.clamp(0, _pendingMembers.length), removedMember!);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -176,7 +176,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          children: ['pending', 'approved', 'suspended', 'rejected']
+          children: ['pending', 'approved', 'suspended']
               .map((status) => Expanded(
                     child: GestureDetector(
                       onTap: () {
@@ -345,7 +345,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
               icon: const Icon(Icons.block, color: VesparaColors.tagsYellow),
               tooltip: 'Suspend',
             ),
-          ] else if (status == 'suspended' || status == 'rejected') ...[
+          ] else if (status == 'suspended') ...[
             IconButton(
               onPressed: () => _performAction(member['id'], 'approve'),
               icon: const Icon(Icons.check_circle_outline,
