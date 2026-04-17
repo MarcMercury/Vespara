@@ -235,19 +235,50 @@ serve(async (req) => {
         );
       }
 
-      const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=500&type=bar|restaurant|cafe&key=${googleMapsKey}`;
+      // Places API (New) — replaces legacy nearbysearch
+      const placesResponse = await fetch(
+        "https://places.googleapis.com/v1/places:searchNearby",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": googleMapsKey,
+            "X-Goog-FieldMask":
+              "places.id,places.displayName,places.formattedAddress," +
+              "places.location,places.rating,places.primaryType,places.priceLevel",
+          },
+          body: JSON.stringify({
+            includedTypes: ["bar", "restaurant", "cafe", "night_club", "lounge"],
+            maxResultCount: 10,
+            locationRestriction: {
+              circle: {
+                center: { latitude: lat, longitude: lng },
+                radius: 500,
+              },
+            },
+          }),
+        }
+      );
 
-      const response = await fetch(placesUrl);
-      const data = await response.json();
+      if (!placesResponse.ok) {
+        console.error(`Places API error: ${placesResponse.status}`);
+        return new Response(
+          JSON.stringify({ error: "Could not fetch venues" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-      const venues = (data.results || []).slice(0, 10).map((place: any) => ({
-        id: place.place_id,
-        name: place.name,
-        address: place.vicinity,
-        type: place.types?.[0] || "venue",
+      const placesData = await placesResponse.json();
+
+      const venues = (placesData.places || []).map((place: any) => ({
+        id: place.id,
+        name: place.displayName?.text || "Unknown",
+        address: place.formattedAddress || "",
+        type: place.primaryType || "venue",
         rating: place.rating,
-        lat: place.geometry?.location?.lat,
-        lng: place.geometry?.location?.lng,
+        priceLevel: place.priceLevel,
+        lat: place.location?.latitude,
+        lng: place.location?.longitude,
       }));
 
       return new Response(

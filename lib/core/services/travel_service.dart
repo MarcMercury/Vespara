@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/models/travel_plan.dart';
+import 'google_maps_service.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TRAVEL SERVICE
@@ -328,5 +329,104 @@ class TravelService {
       debugPrint('TravelService.getCrosspathNotifications error: $e');
       return [];
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GEOCODING & TIMEZONE (Google Maps APIs)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  final GoogleMapsService _maps = GoogleMapsService.instance;
+
+  /// Geocode a destination city name to coordinates
+  /// Call when creating a trip to auto-fill lat/lng
+  Future<({double lat, double lng, String? country})?> geocodeDestination(
+    String cityName,
+  ) async {
+    final result = await _maps.geocode(cityName);
+    if (result == null) return null;
+    return (
+      lat: result.lat,
+      lng: result.lng,
+      country: result.country,
+    );
+  }
+
+  /// Get timezone for a travel destination
+  /// Useful for showing local time and time difference
+  Future<TravelTimezone?> getDestinationTimezone({
+    required double lat,
+    required double lng,
+  }) async {
+    final tz = await _maps.getTimezone(lat: lat, lng: lng);
+    if (tz == null) return null;
+
+    // Get user's current timezone offset
+    final localOffset = DateTime.now().timeZoneOffset.inHours;
+    final destOffset = tz.utcOffsetHours;
+    final timeDiff = destOffset - localOffset;
+
+    return TravelTimezone(
+      timeZoneId: tz.timeZoneId,
+      timeZoneName: tz.timeZoneName,
+      formattedOffset: tz.formattedOffset,
+      hoursDifferenceFromLocal: timeDiff,
+    );
+  }
+
+  /// Search for destination cities with autocomplete
+  Future<List<AutocompleteResult>> searchDestinations(String query) async {
+    return _maps.autocomplete(
+      query: query,
+      types: ['(cities)'],
+    );
+  }
+
+  /// Get a static map thumbnail URL for a trip card
+  String getTripMapThumbnail(TravelPlan plan, {int width = 400, int height = 200}) {
+    if (plan.destinationLat == null || plan.destinationLng == null) return '';
+    return _maps.getStaticMapUrl(
+      lat: plan.destinationLat!,
+      lng: plan.destinationLng!,
+      zoom: 11,
+      width: width,
+      height: height,
+    );
+  }
+
+  /// Get directions from user's current location to trip destination
+  Future<DirectionsResult?> getDirectionsToDestination({
+    required double originLat,
+    required double originLng,
+    required double destLat,
+    required double destLng,
+  }) async {
+    return _maps.getDirections(
+      originLat: originLat,
+      originLng: originLng,
+      destLat: destLat,
+      destLng: destLng,
+    );
+  }
+}
+
+/// Timezone info for a travel destination
+class TravelTimezone {
+  const TravelTimezone({
+    required this.timeZoneId,
+    required this.timeZoneName,
+    required this.formattedOffset,
+    required this.hoursDifferenceFromLocal,
+  });
+  final String timeZoneId;
+  final String timeZoneName;
+  final String formattedOffset;
+  final double hoursDifferenceFromLocal;
+
+  String get displayDifference {
+    final diff = hoursDifferenceFromLocal;
+    if (diff == 0) return 'Same timezone';
+    final sign = diff > 0 ? '+' : '';
+    final hours = diff.abs().toStringAsFixed(diff == diff.roundToDouble() ? 0 : 1);
+    return '${sign}${diff > 0 ? '' : '-'}${hours}h from you';
   }
 }

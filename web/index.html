@@ -28,7 +28,15 @@
   </style>
 </head>
 <body>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBpvIPok-gYyCM2EdvkULPK6xgl4R248M&libraries=places"></script>
+  <script>
+    // Load Google Maps JS API dynamically to avoid hardcoded keys
+    (function() {
+      var key = new URLSearchParams(window.location.search).get('gmk') || 'AIzaSyDBpvIPok-gYyCM2EdvkULPK6xgl4R248M';
+      var s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places';
+      document.head.appendChild(s);
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

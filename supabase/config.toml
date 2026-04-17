@@ -59,8 +59,12 @@ verify_jwt = true
 # Edge Functions require these environment variables
 # Set in Supabase Dashboard > Project Settings > Edge Functions > Secrets
 # - OPENAI_API_KEY
-# - GOOGLE_MAPS_API_KEY
+# - GOOGLE_MAPS_API_KEY   (used by tonight-mode, environment-data)
 # - STREAM_CHAT_API_KEY
 # - STREAM_CHAT_API_SECRET
 # - RESEND_API_KEY
 # - ADMIN_USER_IDS (comma-separated list of admin user UUIDs)
+#
+# Google APIs consumed server-side (all via GOOGLE_MAPS_API_KEY):
+#   tonight-mode      → Places API (New)
+#   environment-data  → Weather API, Air Quality API, Pollen API

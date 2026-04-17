@@ -15,7 +15,8 @@ import '../../../core/theme/app_theme.dart';
 /// ════════════════════════════════════════════════════════════════════════════
 
 class AddTripScreen extends StatefulWidget {
-  const AddTripScreen({super.key});
+  const AddTripScreen({super.key, this.existingTrip});
+  final TravelPlan? existingTrip;
 
   @override
   State<AddTripScreen> createState() => _AddTripScreenState();
@@ -37,6 +38,28 @@ class _AddTripScreenState extends State<AddTripScreen> {
   TravelType _travelType = TravelType.leisure;
   bool _isFlexible = false;
   bool _saving = false;
+
+  bool get _isEditing => widget.existingTrip != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final trip = widget.existingTrip;
+    if (trip != null) {
+      _titleController.text = trip.title;
+      _cityController.text = trip.destinationCity;
+      _countryController.text = trip.destinationCountry ?? '';
+      _descriptionController.text = trip.description ?? '';
+      _accommodationController.text = trip.accommodation ?? '';
+      _notesController.text = trip.notes ?? '';
+      _startDate = trip.startDate;
+      _endDate = trip.endDate;
+      _certainty = trip.certainty;
+      _visibility = trip.visibility;
+      _travelType = trip.travelType;
+      _isFlexible = trip.isFlexible;
+    }
+  }
 
   @override
   void dispose() {
@@ -61,7 +84,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'New Trip',
+          _isEditing ? 'Edit Trip' : 'New Trip',
           style: GoogleFonts.cinzel(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -520,33 +543,64 @@ class _AddTripScreenState extends State<AddTripScreen> {
       return;
     }
 
-    final plan = TravelPlan(
-      id: '',
-      userId: userId,
-      title: _titleController.text.trim(),
-      description: _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
-      destinationCity: _cityController.text.trim(),
-      destinationCountry: _countryController.text.trim().isNotEmpty
-          ? _countryController.text.trim()
-          : null,
-      startDate: _startDate,
-      endDate: _endDate,
-      isFlexible: _isFlexible,
-      certainty: _certainty,
-      visibility: _visibility,
-      travelType: _travelType,
-      accommodation: _accommodationController.text.trim().isNotEmpty
-          ? _accommodationController.text.trim()
-          : null,
-      notes: _notesController.text.trim().isNotEmpty
-          ? _notesController.text.trim()
-          : null,
-      createdAt: DateTime.now(),
-    );
+    TravelPlan? result;
 
-    final result = await TravelService.instance.createTrip(plan);
+    if (_isEditing) {
+      // Update existing trip
+      result = await TravelService.instance.updateTrip(
+        widget.existingTrip!.id,
+        {
+          'title': _titleController.text.trim(),
+          'description': _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
+          'destination_city': _cityController.text.trim(),
+          'destination_country': _countryController.text.trim().isNotEmpty
+              ? _countryController.text.trim()
+              : null,
+          'start_date': _startDate.toIso8601String().split('T').first,
+          'end_date': _endDate.toIso8601String().split('T').first,
+          'is_flexible': _isFlexible,
+          'certainty': _certainty.name,
+          'visibility': _visibility.name,
+          'travel_type': _travelType.name,
+          'accommodation': _accommodationController.text.trim().isNotEmpty
+              ? _accommodationController.text.trim()
+              : null,
+          'notes': _notesController.text.trim().isNotEmpty
+              ? _notesController.text.trim()
+              : null,
+        },
+      );
+    } else {
+      // Create new trip
+      final plan = TravelPlan(
+        id: '',
+        userId: userId,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+        destinationCity: _cityController.text.trim(),
+        destinationCountry: _countryController.text.trim().isNotEmpty
+            ? _countryController.text.trim()
+            : null,
+        startDate: _startDate,
+        endDate: _endDate,
+        isFlexible: _isFlexible,
+        certainty: _certainty,
+        visibility: _visibility,
+        travelType: _travelType,
+        accommodation: _accommodationController.text.trim().isNotEmpty
+            ? _accommodationController.text.trim()
+            : null,
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : null,
+        createdAt: DateTime.now(),
+      );
+      result = await TravelService.instance.createTrip(plan);
+    }
 
     if (mounted) {
       setState(() => _saving = false);
@@ -556,7 +610,9 @@ class _AddTripScreenState extends State<AddTripScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to create trip. Please try again.',
+              _isEditing
+                  ? 'Failed to update trip. Please try again.'
+                  : 'Failed to create trip. Please try again.',
               style: GoogleFonts.inter(),
             ),
             backgroundColor: const Color(0xFFEF5350),

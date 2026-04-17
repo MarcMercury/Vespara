@@ -245,8 +245,8 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
         travelType: trip.travelType,
         accommodation: trip.accommodation,
         notes: trip.notes,
-        certainty: TripCertainty.tentative,
-        visibility: TripVisibility.connections,
+        certainty: trip.certainty,
+        visibility: trip.visibility,
         createdAt: DateTime.now(),
       );
 
@@ -660,6 +660,10 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
                   Icons.calendar_today_rounded,
                   '${DateFormat('MMM d, yyyy').format(trip.startDate)} – ${DateFormat('MMM d, yyyy').format(trip.endDate)}',
                 ),
+                _buildDetailRow(
+                    trip.certainty.icon,
+                    trip.certainty.label,
+                    color: trip.certainty.color),
                 if (trip.accommodation != null && trip.accommodation!.isNotEmpty)
                   _buildDetailRow(
                       Icons.hotel_rounded, trip.accommodation!),
@@ -711,7 +715,7 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String text) {
+  Widget _buildDetailRow(IconData icon, String text, {Color? color}) {
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Row(
@@ -719,14 +723,14 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
         children: [
           Icon(icon,
               size: 14,
-              color: VesparaColors.secondary.withOpacity(0.5)),
+              color: color ?? VesparaColors.secondary.withOpacity(0.5)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: VesparaColors.secondary,
+                color: color ?? VesparaColors.secondary,
                 height: 1.4,
               ),
               maxLines: 3,
@@ -750,6 +754,8 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
     final notesCtrl = TextEditingController(text: trip.notes ?? '');
     var startDate = trip.startDate;
     var endDate = trip.endDate;
+    var certainty = trip.certainty;
+    var visibility = trip.visibility;
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -823,6 +829,75 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
                   ),
                   const SizedBox(height: 10),
                   _editField(accomCtrl, 'Accommodation'),
+                  const SizedBox(height: 14),
+                  Text('CERTAINTY', style: GoogleFonts.inter(
+                    fontSize: 10, fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2, color: VesparaColors.secondary,
+                  )),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: TripCertainty.values.map((c) {
+                      final sel = c == certainty;
+                      return GestureDetector(
+                        onTap: () => setSheetState(() => certainty = c),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: sel ? c.color.withOpacity(0.15) : VesparaColors.background,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: sel ? c.color.withOpacity(0.5) : VesparaColors.secondary.withOpacity(0.15),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(c.icon, size: 14, color: sel ? c.color : VesparaColors.secondary),
+                              const SizedBox(width: 4),
+                              Text(c.label, style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                                color: sel ? c.color : VesparaColors.secondary,
+                              )),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+                  Text('VISIBILITY', style: GoogleFonts.inter(
+                    fontSize: 10, fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2, color: VesparaColors.secondary,
+                  )),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: TripVisibility.values.map((v) {
+                      final sel = v == visibility;
+                      return GestureDetector(
+                        onTap: () => setSheetState(() => visibility = v),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: sel ? const Color(0xFF00BFA6).withOpacity(0.12) : VesparaColors.background,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: sel ? const Color(0xFF00BFA6).withOpacity(0.4) : VesparaColors.secondary.withOpacity(0.15),
+                            ),
+                          ),
+                          child: Text('${v.icon} ${v.label}', style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                            color: sel ? const Color(0xFF00BFA6) : VesparaColors.secondary,
+                          )),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                   const SizedBox(height: 10),
                   _editField(descCtrl, 'Description', maxLines: 2),
                   const SizedBox(height: 10),
@@ -862,6 +937,8 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
           startDate: startDate,
           endDate: endDate,
           travelType: trip.travelType,
+          certainty: certainty,
+          visibility: visibility,
           accommodation:
               accomCtrl.text.trim().isNotEmpty ? accomCtrl.text.trim() : null,
           description:
@@ -998,6 +1075,8 @@ class _ParsedTrip {
   DateTime startDate;
   DateTime endDate;
   TravelType travelType;
+  TripCertainty certainty;
+  TripVisibility visibility;
   String? accommodation;
   String? description;
   String? notes;
@@ -1010,6 +1089,8 @@ class _ParsedTrip {
     required this.startDate,
     required this.endDate,
     required this.travelType,
+    this.certainty = TripCertainty.tentative,
+    this.visibility = TripVisibility.connections,
     this.accommodation,
     this.description,
     this.notes,

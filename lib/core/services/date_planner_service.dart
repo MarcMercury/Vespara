@@ -1,7 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ai_service.dart';
+import 'google_maps_service.dart';
+import 'location_service.dart';
+import '../config/env.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// DATE PLANNING ASSISTANT - Zero Effort Date Ideas
@@ -72,6 +77,149 @@ class DatePlannerService {
       vibe: vibe,
       myProfile: myProfile,
       otherProfile: otherProfile,
+    );
+  }
+
+  /// Get smart date ideas using real-time weather, air quality, and nearby venues
+  Future<SmartDateSuggestion> getSmartDateIdeas({
+    required String matchId,
+    double? lat,
+    double? lng,
+  }) async {
+    // Get user's location if not provided
+    double? userLat = lat;
+    double? userLng = lng;
+    if (userLat == null || userLng == null) {
+      final pos = await LocationService.getCurrentPosition();
+      userLat = pos?.latitude;
+      userLng = pos?.longitude;
+    }
+
+    // Fetch environment conditions from edge function (parallel)
+    Map<String, dynamic>? conditions;
+    List<PlaceResult> nearbyVenues = [];
+
+    if (userLat != null && userLng != null) {
+      final futures = await Future.wait([
+        _fetchEnvironmentConditions(userLat, userLng),
+        GoogleMapsService.instance.nearbySearch(
+          lat: userLat,
+          lng: userLng,
+          radiusMeters: 2000,
+          types: ['restaurant', 'bar', 'cafe', 'park', 'museum', 'bowling_alley'],
+          maxResults: 8,
+        ),
+      ]);
+      conditions = futures[0] as Map<String, dynamic>?;
+      nearbyVenues = futures[1] as List<PlaceResult>;
+    }
+
+    // Get match data for personalization
+    final match = await _getMatchData(matchId);
+    final myProfile = match?['my_profile'] as Map<String, dynamic>? ?? {};
+    final otherProfile = match?['other_profile'] as Map<String, dynamic>? ?? {};
+
+    // Build context-enriched prompt
+    final weatherContext = conditions?['weather'] != null
+        ? 'Current weather: ${conditions!['weather']['temperature']}°, '
+          '${conditions['weather']['weatherCondition']}'
+        : '';
+    final airContext = conditions?['airQuality'] != null
+        ? 'Air quality: ${conditions!['airQuality']['category'] ?? 'Unknown'}'
+        : '';
+    final dateRec = conditions?['dateRecommendation'] as Map<String, dynamic>?;
+    final venueContext = nearbyVenues.isNotEmpty
+        ? 'Nearby venues: ${nearbyVenues.take(5).map((v) => '${v.name} (${v.primaryType ?? "venue"}, ${v.rating ?? "unrated"})').join(', ')}'
+        : '';
+
+    final ideas = await _generateSmartDateIdeas(
+      myProfile: myProfile,
+      otherProfile: otherProfile,
+      weatherContext: weatherContext,
+      airContext: airContext,
+      venueContext: venueContext,
+      suggestedType: dateRec?['suggestedType'] as String? ?? 'flexible',
+    );
+
+    return SmartDateSuggestion(
+      ideas: ideas,
+      conditions: conditions,
+      nearbyVenues: nearbyVenues,
+      recommendation: dateRec?['recommendation'] as String? ??
+          'Check out these date ideas!',
+      isOutdoorFriendly: dateRec?['isOutdoorFriendly'] as bool? ?? true,
+    );
+  }
+
+  /// Fetch environment conditions from the edge function
+  Future<Map<String, dynamic>?> _fetchEnvironmentConditions(
+    double lat,
+    double lng,
+  ) async {
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session == null) return null;
+
+      final response = await http.post(
+        Uri.parse('${Env.supabaseUrl}/functions/v1/environment-data'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${session.accessToken}',
+          'apikey': Env.supabaseAnonKey,
+        },
+        body: jsonEncode({
+          'action': 'conditions',
+          'lat': lat,
+          'lng': lng,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('DatePlanner: Environment fetch error - $e');
+    }
+    return null;
+  }
+
+  Future<List<DateIdea>> _generateSmartDateIdeas({
+    required Map<String, dynamic> myProfile,
+    required Map<String, dynamic> otherProfile,
+    required String weatherContext,
+    required String airContext,
+    required String venueContext,
+    required String suggestedType,
+  }) async {
+    final myInterests = (myProfile['interest_tags'] as List?)?.join(', ') ?? '';
+    final theirInterests =
+        (otherProfile['interest_tags'] as List?)?.join(', ') ?? '';
+
+    final result = await _aiService.chat(
+      systemPrompt: '''Generate 3 date ideas considering real-time conditions.
+For each idea, provide:
+TITLE|DESCRIPTION|CATEGORY|COST|TIME
+
+Rules:
+- Titles under 30 chars, descriptions under 100 chars
+- Use real venue names if provided
+- If weather is bad or air quality is poor, suggest indoor activities
+- If conditions are great, prioritize outdoor options
+- Be creative and specific to the local area''',
+      prompt: '''Your interests: $myInterests
+Their interests: $theirInterests
+$weatherContext
+$airContext
+Suggested setting: $suggestedType
+$venueContext
+
+Generate 3 smart date ideas:''',
+      maxTokens: 300,
+    );
+
+    return result.fold(
+      onSuccess: (response) => _parseIdeas(response.content),
+      onFailure: (_) => _getFallbackIdeas(),
     );
   }
 
@@ -480,4 +628,34 @@ class DateCategory {
   final String name;
   final String emoji;
   final String description;
+}
+
+/// Environment-enriched date suggestion with weather/venue context
+class SmartDateSuggestion {
+  const SmartDateSuggestion({
+    required this.ideas,
+    this.conditions,
+    this.nearbyVenues = const [],
+    required this.recommendation,
+    required this.isOutdoorFriendly,
+  });
+  final List<DateIdea> ideas;
+  final Map<String, dynamic>? conditions;
+  final List<PlaceResult> nearbyVenues;
+  final String recommendation;
+  final bool isOutdoorFriendly;
+
+  /// Weather summary for display (e.g., "72°F, Clear skies")
+  String get weatherSummary {
+    final w = conditions?['weather'];
+    if (w == null || w['error'] != null) return '';
+    return '${w['temperature']}°, ${w['weatherCondition'] ?? 'Unknown'}';
+  }
+
+  /// Air quality level for display
+  String get airQualitySummary {
+    final aq = conditions?['airQuality'];
+    if (aq == null || aq['error'] != null) return '';
+    return aq['category'] as String? ?? '';
+  }
 }

@@ -742,14 +742,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 'Edit Trip',
                 Icons.edit_rounded,
                 const Color(0xFF00BFA6),
-                () {
+                () async {
                   Navigator.pop(context);
-                  Navigator.push(
+                  final updated = await Navigator.push<TravelPlan>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const AddTripScreen(),
+                      builder: (_) => AddTripScreen(existingTrip: _trip),
                     ),
                   );
+                  if (updated != null && mounted) {
+                    setState(() => _trip = updated);
+                  }
                 },
               ),
               _buildOptionTile(
