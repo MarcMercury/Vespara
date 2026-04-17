@@ -38,11 +38,11 @@ ALTER TABLE public.ai_matching_weights ENABLE ROW LEVEL SECURITY;
 --         These contain game content and reference data — authenticated read.
 -- ════════════════════════════════════════════════════════════════════════════
 
--- spatial_ref_sys (PostGIS reference data — safe to read)
-ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can read spatial references"
-  ON public.spatial_ref_sys FOR SELECT
-  USING (true);
+-- spatial_ref_sys is owned by PostGIS extension, skip it.
+-- ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "Anyone can read spatial references"
+--   ON public.spatial_ref_sys FOR SELECT
+--   USING (true);
 
 -- Game content tables
 ALTER TABLE public.game_cards ENABLE ROW LEVEL SECURITY;
