@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/models/group.dart';
+import '../../../core/domain/models/wire_models.dart';
 import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/groups_provider.dart';
+import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../wire/presentation/wire_chat_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
@@ -557,11 +560,33 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     // TODO: Implement edit group
   }
 
-  void _openGroupChat(VesparaGroup group) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const WireScreen()),
-    );
+  Future<void> _openGroupChat(VesparaGroup group) async {
+    final navigator = Navigator.of(context);
+
+    if (group.conversationId != null) {
+      await ref.read(wireProvider.notifier).loadConversations();
+      final wireState = ref.read(wireProvider);
+      final conversation = wireState.conversations.cast<WireConversation?>().firstWhere(
+        (c) => c!.id == group.conversationId,
+        orElse: () => null,
+      );
+
+      if (conversation != null && mounted) {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => WireChatScreen(conversation: conversation),
+          ),
+        );
+        return;
+      }
+    }
+
+    // Fallback to Wire home if conversation not found
+    if (mounted) {
+      navigator.push(
+        MaterialPageRoute(builder: (_) => const WireScreen()),
+      );
+    }
   }
 
   void _planGroupEvent(VesparaGroup group) {

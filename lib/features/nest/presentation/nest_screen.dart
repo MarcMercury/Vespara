@@ -15,8 +15,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
+import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
-import 'groups_section.dart';
+import 'group_invitations_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// NEST SCREEN - Module 3
@@ -64,21 +65,10 @@ class _NestScreenState extends ConsumerState<NestScreen>
             child: Column(
               children: [
                 _buildHeader(),
+                _buildStats(),
+                _buildTabBar(),
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        const GroupsSection(),
-                        const SizedBox(height: 16),
-                        _buildStats(),
-                        _buildTabBar(),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.5,
-                          child: _buildTabBarView(),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _buildTabBarView(),
                 ),
               ],
             ),
@@ -480,35 +470,131 @@ class _NestScreenState extends ConsumerState<NestScreen>
           child: CircularProgressIndicator(color: VesparaColors.glow));
     }
 
-    if (groupsState.groups.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.group_outlined,
-                size: 48, color: VesparaColors.secondary),
-            const SizedBox(height: 16),
-            const Text(
-              'No circles yet',
-              style: TextStyle(fontSize: 16, color: VesparaColors.secondary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create a circle to organize your connections',
-              style: TextStyle(
-                  fontSize: 13,
-                  color: VesparaColors.secondary.withOpacity(0.7)),
-            ),
-          ],
+    return Column(
+      children: [
+        // Create Circle + Invitations header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Your private circles',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: VesparaColors.secondary.withOpacity(0.7),
+                  ),
+                ),
+              ),
+              if (groupsState.pendingInvitationCount > 0) ...[
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const GroupInvitationsScreen()),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.warning.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: VesparaColors.warning.withOpacity(0.5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.mail_outline,
+                            color: VesparaColors.warning, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${groupsState.pendingInvitationCount}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: VesparaColors.warning,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CreateGroupScreen()),
+                ),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [VesparaColors.glow, VesparaColors.secondary],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add,
+                          color: VesparaColors.background, size: 16),
+                      SizedBox(width: 4),
+                      Text(
+                        'Create Circle',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: VesparaColors.background,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      );
-    }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: groupsState.groups.length,
-      itemBuilder: (context, index) =>
-          _buildCircleListItem(groupsState.groups[index]),
+        if (groupsState.groups.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.group_outlined,
+                      size: 48, color: VesparaColors.secondary),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No circles yet',
+                    style:
+                        TextStyle(fontSize: 16, color: VesparaColors.secondary),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Create a circle to group members\ninto your own private chats',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: VesparaColors.secondary.withOpacity(0.7)),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: groupsState.groups.length,
+              itemBuilder: (context, index) =>
+                  _buildCircleListItem(groupsState.groups[index]),
+            ),
+          ),
+      ],
     );
   }
 
@@ -597,107 +683,109 @@ class _NestScreenState extends ConsumerState<NestScreen>
           const SizedBox(height: 12),
           Row(
             children: [
-              if (group.isCreator) ...[
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) =>
-                              GroupDetailScreen(groupId: group.id)),
+              // Chat button - always visible, opens the circle's group chat
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _openCircleChat(group),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.glow.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: VesparaColors.glow.withOpacity(0.3)),
                     ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [VesparaColors.glow, VesparaColors.secondary],
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_bubble_outline,
+                            color: VesparaColors.glow, size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          'Chat',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.glow,
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.person_add,
-                              color: VesparaColors.background, size: 18),
-                          SizedBox(width: 6),
-                          Text(
-                            'Invite',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: VesparaColors.background,
-                            ),
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              // View / Manage button
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            GroupDetailScreen(groupId: group.id)),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: group.isCreator
+                          ? const LinearGradient(
+                              colors: [
+                                VesparaColors.glow,
+                                VesparaColors.secondary
+                              ],
+                            )
+                          : null,
+                      color: group.isCreator
+                          ? null
+                          : VesparaColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: group.isCreator
+                          ? null
+                          : Border.all(
+                              color: VesparaColors.secondary.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          group.isCreator
+                              ? Icons.settings
+                              : Icons.visibility,
+                          color: group.isCreator
+                              ? VesparaColors.background
+                              : VesparaColors.secondary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          group.isCreator ? 'Manage' : 'View',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: group.isCreator
+                                ? VesparaColors.background
+                                : VesparaColors.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (group.isCreator) ...[
                 const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _confirmDeleteGroup(group),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: VesparaColors.error.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: VesparaColors.error.withOpacity(0.3)),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.delete_outline,
-                              color: VesparaColors.error, size: 18),
-                          SizedBox(width: 6),
-                          Text(
-                            'Delete',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: VesparaColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
+                GestureDetector(
+                  onTap: () => _confirmDeleteGroup(group),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: VesparaColors.error.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: VesparaColors.error.withOpacity(0.3)),
                     ),
-                  ),
-                ),
-              ] else ...[
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) =>
-                              GroupDetailScreen(groupId: group.id)),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: VesparaColors.glow.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: VesparaColors.glow.withOpacity(0.3)),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.visibility,
-                              color: VesparaColors.glow, size: 18),
-                          SizedBox(width: 6),
-                          Text(
-                            'View Circle',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: VesparaColors.glow,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: const Icon(Icons.delete_outline,
+                        color: VesparaColors.error, size: 18),
                   ),
                 ),
               ],
@@ -727,6 +815,39 @@ class _NestScreenState extends ConsumerState<NestScreen>
   // ════════════════════════════════════════════════════════════════════════════
   // ACTIONS
   // ════════════════════════════════════════════════════════════════════════════
+
+  Future<void> _openCircleChat(VesparaGroup group) async {
+    final navigator = Navigator.of(context);
+
+    if (group.conversationId != null) {
+      // Load conversations so we can find this one
+      await ref.read(wireProvider.notifier).loadConversations();
+      final wireState = ref.read(wireProvider);
+      final conversation = wireState.conversations.cast<WireConversation?>().firstWhere(
+        (c) => c!.id == group.conversationId,
+        orElse: () => null,
+      );
+
+      if (conversation != null && mounted) {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => WireChatScreen(conversation: conversation),
+          ),
+        );
+        return;
+      }
+    }
+
+    // Fallback: conversation not found or no conversationId
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Circle chat not available. Try opening from the circle details.'),
+          backgroundColor: VesparaColors.error,
+        ),
+      );
+    }
+  }
 
   void _showMemberDetails(CommunityMember member) {
     showModalBottomSheet(
