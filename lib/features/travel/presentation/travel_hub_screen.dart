@@ -12,6 +12,7 @@ import '../widgets/overlap_card.dart';
 import '../widgets/trip_card.dart';
 import 'add_trip_screen.dart';
 import 'trip_detail_screen.dart';
+import 'upload_itinerary_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TRAVEL HUB SCREEN
@@ -498,10 +499,141 @@ class _TravelHubScreenState extends State<TravelHubScreen>
     );
   }
 
-  void _addTrip() async {
+  void _addTrip() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: VesparaColors.secondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Add a Trip',
+                style: GoogleFonts.cinzel(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: VesparaColors.primary,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildAddTripOption(
+                icon: Icons.edit_rounded,
+                title: 'Enter Manually',
+                subtitle: 'Fill in your trip details by hand',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openManualEntry();
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildAddTripOption(
+                icon: Icons.auto_awesome_rounded,
+                title: 'Upload Itinerary',
+                subtitle: 'AI reads your booking or itinerary file',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openItineraryUpload();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddTripOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VesparaColors.background.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: VesparaColors.secondary.withOpacity(0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF00BFA6).withOpacity(0.1),
+              ),
+              child: Icon(icon, color: const Color(0xFF00BFA6), size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: VesparaColors.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: VesparaColors.secondary.withOpacity(0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openManualEntry() async {
     final result = await Navigator.push<TravelPlan>(
       context,
       MaterialPageRoute(builder: (_) => const AddTripScreen()),
+    );
+    if (result != null) {
+      _loadData();
+    }
+  }
+
+  void _openItineraryUpload() async {
+    final result = await Navigator.push<TravelPlan>(
+      context,
+      MaterialPageRoute(builder: (_) => const UploadItineraryScreen()),
     );
     if (result != null) {
       _loadData();

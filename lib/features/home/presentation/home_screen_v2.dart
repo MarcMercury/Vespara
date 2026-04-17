@@ -897,65 +897,121 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
   Widget _buildNotificationItem(Map<String, dynamic> notif) {
     final isRead = notif['is_read'] as bool? ?? true;
     final type = notif['type'] as String? ?? 'system';
+    final body = notif['body'] as String? ?? notif['message'] as String?;
+    final data = notif['data'] as Map<String, dynamic>?;
+    final isCrosspath = type == 'travel' && data?['crosspath_type'] != null;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isRead
-            ? VesparaColors.surface.withOpacity(0.3)
-            : VesparaColors.accentViolet.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: isRead
-            ? null
-            : Border.all(color: VesparaColors.accentViolet.withOpacity(0.15)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _getNotifColor(type).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(_getNotifIcon(type),
-                size: 18, color: _getNotifColor(type)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notif['title'] as String? ?? '',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
-                    color: VesparaColors.primary,
-                  ),
-                ),
-                if (notif['body'] != null)
-                  Text(
-                    notif['body'] as String,
-                    style: GoogleFonts.inter(
-                        fontSize: 11, color: VesparaColors.secondary),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-          if (!isRead)
+    return GestureDetector(
+      onTap: () {
+        // Navigate based on notification type
+        if (type == 'travel') {
+          Navigator.of(context).pop(); // Close the sheet
+          context.pushPortal(const TravelHubScreen(),
+              color: VesparaColors.accentTeal);
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isRead
+              ? VesparaColors.surface.withOpacity(0.3)
+              : (isCrosspath
+                  ? VesparaColors.accentTeal.withOpacity(0.08)
+                  : VesparaColors.accentViolet.withOpacity(0.08)),
+          borderRadius: BorderRadius.circular(14),
+          border: isRead
+              ? null
+              : Border.all(
+                  color: (isCrosspath
+                          ? VesparaColors.accentTeal
+                          : VesparaColors.accentViolet)
+                      .withOpacity(0.15)),
+        ),
+        child: Row(
+          children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: VesparaColors.accentRose,
+                color: _getNotifColor(type).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                  isCrosspath
+                      ? Icons.connecting_airports_rounded
+                      : _getNotifIcon(type),
+                  size: 18,
+                  color: _getNotifColor(type)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    notif['title'] as String? ?? '',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
+                      color: VesparaColors.primary,
+                    ),
+                  ),
+                  if (body != null)
+                    Text(
+                      body,
+                      style: GoogleFonts.inter(
+                          fontSize: 11, color: VesparaColors.secondary),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  if (isCrosspath && data?['overlap_days'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 10, color: VesparaColors.accentTeal),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${data!['overlap_days']} day${(data['overlap_days'] as num) > 1 ? 's' : ''} overlap',
+                            style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: VesparaColors.accentTeal),
+                          ),
+                          if (data['is_same_city'] == true) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.location_on_rounded,
+                                size: 10, color: VesparaColors.accentTeal),
+                            const SizedBox(width: 2),
+                            Text(
+                              'Same city',
+                              style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: VesparaColors.accentTeal),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
-        ],
+            if (!isRead)
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCrosspath
+                      ? VesparaColors.accentTeal
+                      : VesparaColors.accentRose,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -963,7 +1019,12 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
   Color _getNotifColor(String type) {
     switch (type) {
       case 'message':
+      case 'new_message':
         return VesparaColors.accentViolet;
+      case 'new_match':
+        return VesparaColors.accentRose;
+      case 'new_like':
+        return VesparaColors.accentGold;
       case 'photo_view':
         return VesparaColors.accentRose;
       case 'event':
@@ -980,7 +1041,12 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
   IconData _getNotifIcon(String type) {
     switch (type) {
       case 'message':
+      case 'new_message':
         return Icons.chat_bubble_rounded;
+      case 'new_match':
+        return Icons.favorite_rounded;
+      case 'new_like':
+        return Icons.thumb_up_rounded;
       case 'photo_view':
         return Icons.visibility_rounded;
       case 'event':

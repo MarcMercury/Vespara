@@ -4,6 +4,7 @@ library travel;
 export 'presentation/travel_hub_screen.dart';
 export 'presentation/add_trip_screen.dart';
 export 'presentation/trip_detail_screen.dart';
+export 'presentation/upload_itinerary_screen.dart';
 export 'widgets/trip_card.dart';
 export 'widgets/overlap_card.dart';
 export 'widgets/travel_map_view.dart';

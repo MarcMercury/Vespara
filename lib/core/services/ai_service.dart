@@ -423,6 +423,41 @@ Be creative, fun, and engaging.''',
     return result.map((r) => r.content);
   }
 
+  /// Parse an uploaded itinerary text into structured trip data
+  Future<Result<List<Map<String, dynamic>>>> parseItinerary({
+    required String itineraryText,
+  }) async {
+    final result = await _proxyAction(
+      action: 'parse_itinerary',
+      prompt: itineraryText,
+    );
+
+    return result.map((content) {
+      try {
+        // Try to extract JSON array from response
+        var jsonStr = content.trim();
+        // Handle cases where AI wraps in markdown code blocks
+        if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr
+              .replaceAll(RegExp(r'^```\w*\n?'), '')
+              .replaceAll(RegExp(r'\n?```$'), '');
+        }
+        final decoded = jsonDecode(jsonStr);
+        if (decoded is List) {
+          return decoded.cast<Map<String, dynamic>>();
+        }
+        // Single trip wrapped as object
+        if (decoded is Map<String, dynamic>) {
+          return [decoded];
+        }
+        return <Map<String, dynamic>>[];
+      } catch (e) {
+        debugPrint('AIService.parseItinerary JSON parse error: $e');
+        return <Map<String, dynamic>>[];
+      }
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // INTERNAL
   // ═══════════════════════════════════════════════════════════════════════════

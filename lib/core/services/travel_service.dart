@@ -309,4 +309,24 @@ class TravelService {
         .replaceAll(',', '\\,')
         .replaceAll('\n', '\\n');
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CROSSPATH NOTIFICATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Get crosspath notifications for the current user
+  Future<List<Map<String, dynamic>>> getCrosspathNotifications() async {
+    try {
+      final data = await _client
+          .from('travel_crosspath_notifications')
+          .select()
+          .or('user_a_id.eq.$_userId,user_b_id.eq.$_userId')
+          .order('notified_at', ascending: false)
+          .limit(50);
+      return List<Map<String, dynamic>>.from(data as List);
+    } catch (e) {
+      debugPrint('TravelService.getCrosspathNotifications error: $e');
+      return [];
+    }
+  }
 }

@@ -101,9 +101,29 @@ Respond in JSON format: {"sentiment": "...", "toxicity": 0.0, "flags": ["..."]}`
     temperature: 0.3,
     model: "gpt-4o-mini",
   },
+  parse_itinerary: {
+    systemPrompt: `You are a travel itinerary parser. Extract trip details from the provided itinerary text.
+Return a JSON array of trip objects. Each trip should have these fields:
+- "title": a short descriptive name for the trip (e.g. "Paris Getaway")
+- "destination_city": the main city
+- "destination_country": the country (use full name)
+- "start_date": ISO date string (YYYY-MM-DD)
+- "end_date": ISO date string (YYYY-MM-DD)
+- "travel_type": one of "leisure", "business", "adventure", "event", "other"
+- "accommodation": hotel/airbnb name if mentioned, or null
+- "description": brief trip summary from the itinerary
+- "notes": any important details like flight numbers, confirmation codes, etc.
+
+If the itinerary contains multiple destinations/legs, create separate trip entries for each.
+If dates are ambiguous, make your best estimate. If a year is not specified, assume the next occurrence of that date.
+ONLY return valid JSON. No markdown, no explanation.`,
+    maxTokens: 1500,
+    temperature: 0.1,
+    model: "gpt-4o-mini",
+  },
 };
 
-const MAX_PROMPT_LENGTH = 2000;
+const MAX_PROMPT_LENGTH = 10000; // Increased for itinerary uploads
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
