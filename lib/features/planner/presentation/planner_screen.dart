@@ -49,12 +49,11 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   Future<void> _loadEntries() async {
     setState(() => _loading = true);
-    // TODO: Load from travel_plans, events, dates, etc.
-    // For now, populate with empty list
+    // TODO: Load from travel_plans, events, dates via Supabase
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       setState(() {
-        _entries = [];
+        // Keep existing local entries
         _loading = false;
       });
     }
@@ -503,11 +502,17 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
 
   Widget _buildFab() {
     return FloatingActionButton(
-      onPressed: () {
-        Navigator.push(
+      onPressed: () async {
+        final result = await Navigator.push<PlannerEntry>(
           context,
           MaterialPageRoute(builder: (_) => const CreateEventScreen()),
-        ).then((_) => _loadEntries());
+        );
+        if (result != null && mounted) {
+          setState(() {
+            _entries.add(result);
+            _entries.sort((a, b) => a.startDate.compareTo(b.startDate));
+          });
+        }
       },
       backgroundColor: const Color(0xFFCE93D8),
       child: const Icon(Icons.add_rounded, color: Colors.white),

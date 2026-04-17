@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
+import 'planner_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// CREATE EVENT SCREEN
@@ -319,10 +321,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {
-          // TODO: Save event and pop
-          Navigator.pop(context);
-        },
+        onPressed: _handleCreate,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFCE93D8),
           foregroundColor: Colors.white,
@@ -341,6 +340,38 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ),
       ),
     );
+  }
+
+  void _handleCreate() {
+    if (_mode == _CreateMode.paste) {
+      final text = _pasteController.text.trim();
+      if (text.isEmpty) return;
+      final entry = PlannerEntry(
+        id: const Uuid().v4(),
+        title: text.length > 60 ? '${text.substring(0, 60)}...' : text,
+        subtitle: text.length > 60 ? text : null,
+        type: PlannerEntryType.event,
+        startDate: DateTime.now(),
+      );
+      Navigator.pop(context, entry);
+    } else {
+      final title = _titleController.text.trim();
+      if (title.isEmpty) return;
+      final date = _selectedDate ?? DateTime.now();
+      final time = _selectedTime ?? TimeOfDay.now();
+      final startDate = DateTime(
+          date.year, date.month, date.day, time.hour, time.minute);
+      final entry = PlannerEntry(
+        id: const Uuid().v4(),
+        title: title,
+        type: PlannerEntryType.event,
+        startDate: startDate,
+        location: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
+      );
+      Navigator.pop(context, entry);
+    }
   }
 }
 
