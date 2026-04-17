@@ -450,7 +450,7 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen>
             Text(
               'Events, travel, and dates will appear here',
               style: GoogleFonts.inter(
-                color: Colors.white16,
+                color: Colors.white.withValues(alpha: 0.16),
                 fontSize: 13,
               ),
             ),
