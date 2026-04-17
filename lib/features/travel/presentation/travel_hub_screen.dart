@@ -544,7 +544,7 @@ class _TravelHubScreenState extends State<TravelHubScreen>
               _buildAddTripOption(
                 icon: Icons.auto_awesome_rounded,
                 title: 'Upload Itinerary',
-                subtitle: 'AI reads your booking or itinerary file',
+                subtitle: 'Reads your booking or itinerary file',
                 onTap: () {
                   Navigator.pop(ctx);
                   _openItineraryUpload();

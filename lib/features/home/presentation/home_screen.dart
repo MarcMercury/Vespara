@@ -69,12 +69,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Chat & group messages',
     },
     {
-      'name': 'TAG',
-      'subtitle': 'Adult Games',
-      'icon': Icons.local_fire_department_rounded,
-      'emoji': '🎭',
-      'color': Color(0xFFFFD54F), // Bright gold
-      'description': 'Games for the daring',
+      'name': 'VOYAGER',
+      'subtitle': 'Travel & Events',
+      'icon': Icons.flight_takeoff_rounded,
+      'emoji': '✈️',
+      'color': Color(0xFF00BFA6), // Vibrant teal-cyan
+      'description': 'Trip sharing & meetups',
     },
     {
       'name': 'MINIS',
@@ -85,12 +85,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Solo mini-games',
     },
     {
-      'name': 'VOYAGER',
-      'subtitle': 'Travel & Events',
-      'icon': Icons.flight_takeoff_rounded,
-      'emoji': '✈️',
-      'color': Color(0xFF00BFA6), // Vibrant teal-cyan
-      'description': 'Trip sharing & meetups',
+      'name': 'TAG',
+      'subtitle': 'Adult Games',
+      'icon': Icons.local_fire_department_rounded,
+      'emoji': '🎭',
+      'color': Color(0xFFFFD54F), // Bright gold
+      'description': 'Games for the daring',
     },
   ];
 
@@ -99,9 +99,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     const BrowseScreen(), // 0: Browse members
     const NestScreen(), // 1: Sanctum (full access)
     WireEntryScreen(), // 2: Wire chat
-    const TagScreen(), // 3: TAG
+    const TravelHubScreen(), // 3: Voyager
     const MinisScreen(), // 4: Mini's
-    const TravelHubScreen(), // 5: Voyager
+    const TagScreen(), // 5: TAG
   ];
 
   @override

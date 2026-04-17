@@ -181,7 +181,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
             Tab(icon: Icon(Icons.notifications, size: 18), text: 'Alerts'),
             Tab(icon: Icon(Icons.explore, size: 18), text: 'Discovery'),
             Tab(icon: Icon(Icons.extension, size: 18), text: 'Integrations'),
-            Tab(icon: Icon(Icons.auto_awesome, size: 18), text: 'AI'),
+            Tab(icon: Icon(Icons.auto_awesome, size: 18), text: 'Smart'),
           ],
         ),
       );
@@ -225,7 +225,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 'Match alerts',
                 'Message notifications',
                 'Experience reminders',
-                'AI nudges',
+                'Smart nudges',
               ],
             ),
             const SizedBox(height: VesparaSpacing.md),
@@ -441,12 +441,12 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
             ),
             const SizedBox(height: VesparaSpacing.lg),
             _buildNotificationSection(
-              'AI Assistant',
+              'Smart Assistant',
               Icons.auto_awesome_rounded,
               [
                 _NotificationOption(
                   title: 'Smart Nudges',
-                  subtitle: 'AI-powered suggestions to boost your connections',
+                  subtitle: 'Smart suggestions to boost your connections',
                   value: _nudgeNotifications,
                   onChanged: (v) => setState(() => _nudgeNotifications = v),
                 ),
@@ -1098,7 +1098,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeader(
-              'AI Personalization',
+              'Personalization',
               'Let Vespara craft your perfect experience',
               Icons.auto_awesome_rounded,
             ),
@@ -1120,14 +1120,14 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               ),
               child: SwitchListTile(
                 title: const Text(
-                  'AI Suggestions',
+                  'Suggestions',
                   style: TextStyle(
                     color: VesparaColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 subtitle: const Text(
-                  'Enable AI-powered recommendations across Vespara',
+                  'Enable personalized recommendations across Vespara',
                   style:
                       TextStyle(color: VesparaColors.secondary, fontSize: 12),
                 ),
@@ -1153,7 +1153,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     SwitchListTile(
                       title: const Text('Match Insights',
                           style: TextStyle(color: VesparaColors.primary),),
-                      subtitle: const Text('AI analysis of compatibility',
+                      subtitle: const Text('Analysis of compatibility',
                           style: TextStyle(
                               color: VesparaColors.secondary, fontSize: 12,),),
                       secondary: const Icon(Icons.insights_rounded,
@@ -1213,7 +1213,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                             color: VesparaColors.glow, size: 20,),
                         SizedBox(width: VesparaSpacing.sm),
                         Text(
-                          'AI Personality',
+                          'Communication Style',
                           style: TextStyle(
                             color: VesparaColors.primary,
                             fontWeight: FontWeight.bold,
@@ -1223,7 +1223,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       ],
                     ),
                     const Text(
-                      'How should the AI communicate with you?',
+                      'How should Vespara communicate with you?',
                       style: TextStyle(
                           color: VesparaColors.secondary, fontSize: 12,),
                     ),
@@ -1262,7 +1262,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                       Icon(Icons.school_rounded, color: VesparaColors.glow),
                       SizedBox(width: VesparaSpacing.sm),
                       Text(
-                        'AI Learning',
+                        'Learning',
                         style: TextStyle(
                           color: VesparaColors.primary,
                           fontWeight: FontWeight.bold,
@@ -1272,7 +1272,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   ),
                   const SizedBox(height: VesparaSpacing.sm),
                   const Text(
-                    'The AI learns from your behavior to provide better recommendations. Your data is encrypted and never shared.',
+                    'Vespara learns from your behavior to provide better recommendations. Your data is encrypted and never shared.',
                     style:
                         TextStyle(color: VesparaColors.secondary, fontSize: 12),
                   ),
@@ -1281,7 +1281,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                     onPressed: _resetAIData,
                     icon: const Icon(Icons.refresh_rounded,
                         color: VesparaColors.error,),
-                    label: const Text('Reset AI Data',
+                    label: const Text('Reset Data',
                         style: TextStyle(color: VesparaColors.error),),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
@@ -1458,10 +1458,10 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VesparaColors.surface,
-        title: const Text('Reset AI Data?',
+        title: const Text('Reset Data?',
             style: TextStyle(color: VesparaColors.primary),),
         content: const Text(
-          'This will clear all AI learning data. The AI will need to relearn your preferences.',
+          'This will clear all learning data. Vespara will need to relearn your preferences.',
           style: TextStyle(color: VesparaColors.secondary),
         ),
         actions: [
@@ -1475,7 +1475,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('AI data reset'),
+                  content: Text('Data reset'),
                   backgroundColor: VesparaColors.error,
                 ),
               );

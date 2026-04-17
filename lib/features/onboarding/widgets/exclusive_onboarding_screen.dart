@@ -603,7 +603,7 @@ class _ExclusiveOnboardingScreenState
     {'title': 'LOGISTICS', 'subtitle': 'Status, availability, hosting'},
     {'title': 'THE SEARCH', 'subtitle': 'What you\'re looking for'},
     {'title': 'THE DOSSIER', 'subtitle': 'Photos & your hook'},
-    {'title': 'AI PROFILE', 'subtitle': 'Let AI craft your story'},
+    {'title': 'YOUR PROFILE', 'subtitle': 'Craft your story'},
   ];
 
   @override
@@ -2860,7 +2860,7 @@ class _ExclusiveOnboardingScreenState
             const SizedBox(height: 8),
 
             const Text(
-              'AI-crafted from your selections • Feel free to edit',
+              'Crafted from your selections • Feel free to edit',
               style: TextStyle(
                 fontSize: 12,
                 color: VesparaColors.secondary,

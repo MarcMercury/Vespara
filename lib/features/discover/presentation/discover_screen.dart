@@ -899,7 +899,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                         Icon(Icons.auto_awesome, size: 14, color: Colors.black),
                         SizedBox(width: 4),
                         Text(
-                          'AI PICK',
+                          'TOP PICK',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,

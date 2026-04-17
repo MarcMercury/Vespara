@@ -105,7 +105,7 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
         },
         failure: (error) {
           setState(() {
-            _errorMessage = 'AI parsing failed: ${error.message}';
+            _errorMessage = 'Parsing failed: ${error.message}';
             _state = _ScreenState.pickFile;
           });
         },
@@ -204,7 +204,7 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
       },
       failure: (error) {
         setState(() {
-          _errorMessage = 'AI parsing failed: ${error.message}';
+          _errorMessage = 'Parsing failed: ${error.message}';
           _state = _ScreenState.pickFile;
         });
       },
@@ -357,7 +357,7 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Upload a booking confirmation, itinerary email, or travel plan and AI will extract your trip details.',
+            'Upload a booking confirmation, itinerary email, or travel plan to extract your trip details.',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 14,
@@ -483,7 +483,7 @@ class _UploadItineraryScreenState extends State<UploadItineraryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'AI is reading $_fileName and extracting trip details',
+              'Reading $_fileName and extracting trip details',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,

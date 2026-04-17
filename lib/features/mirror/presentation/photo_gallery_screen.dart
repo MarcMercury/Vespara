@@ -464,7 +464,7 @@ class _PhotoGalleryScreenState extends ConsumerState<PhotoGalleryScreen> {
             ListTile(
               leading: const Icon(Icons.auto_fix_high,
                   color: VesparaColors.accentViolet),
-              title: const Text('AI Enhance All',
+              title: const Text('Enhance All',
                   style: TextStyle(color: VesparaColors.primary)),
               subtitle: const Text('Auto-enhance all your photos',
                   style: TextStyle(color: VesparaColors.secondary)),
@@ -542,7 +542,7 @@ class _PhotoDetailSheet extends StatelessWidget {
                         _statChip(Icons.visibility, '${photo.score?.totalRankings ?? 0} views'),
                         _statChip(Icons.star, 'Pos ${photo.position}'),
                         if (photo.version > 1)
-                          _statChip(Icons.auto_fix_high, 'AI edited'),
+                          _statChip(Icons.auto_fix_high, 'Enhanced'),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -552,7 +552,7 @@ class _PhotoDetailSheet extends StatelessWidget {
                         Expanded(
                           child: _actionButton(
                             icon: Icons.auto_fix_high,
-                            label: 'AI Edit',
+                            label: 'Edit',
                             color: VesparaColors.accentViolet,
                             onTap: onEdit,
                           ),
@@ -739,7 +739,7 @@ class _AiEditSheetState extends State<_AiEditSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('AI Photo Editor',
+                    Text('Photo Editor',
                         style: GoogleFonts.cinzel(
                             fontSize: 18, color: VesparaColors.primary)),
                     if (_selectedEdit != null)
@@ -807,7 +807,7 @@ class _AiEditSheetState extends State<_AiEditSheet> {
                               strokeWidth: 2,
                               color: VesparaColors.accentViolet)),
                       SizedBox(width: 12),
-                      Text('AI analyzing your photo...',
+                      Text('Analyzing your photo...',
                           style: TextStyle(color: VesparaColors.secondary)),
                     ],
                   ),

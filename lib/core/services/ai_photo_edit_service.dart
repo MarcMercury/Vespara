@@ -67,7 +67,7 @@ class AiPhotoEditService {
     'crop_smart': AiEditOption(
       id: 'crop_smart',
       label: 'Smart Crop',
-      description: 'AI-powered crop focusing on your best angle',
+      description: 'Smart crop focusing on your best angle',
       icon: 'crop',
     ),
   };
@@ -161,7 +161,7 @@ class AiPhotoEditService {
       if (apiKey.isEmpty) {
         return {
           'recommendations': ['enhance', 'crop_smart'],
-          'analysis': 'AI analysis unavailable — try Auto Enhance for best results.',
+          'analysis': 'Analysis unavailable — try Auto Enhance for best results.',
         };
       }
 

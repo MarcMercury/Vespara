@@ -45,7 +45,7 @@ class _WelcomeTutorialState extends State<WelcomeTutorial>
       subtitle: 'Your Reflection',
       description:
           'Build and manage your profile. Set your vibe, upload photos, '
-          'customize your interests, and let AI craft your perfect bio.',
+          'customize your interests, and craft your perfect bio.',
       color: Color(0xFFBFA6D8),
     ),
     _TutorialPage(
@@ -74,7 +74,7 @@ class _WelcomeTutorialState extends State<WelcomeTutorial>
       title: 'SHREDDER',
       subtitle: 'Clean Slate',
       description:
-          'Disconnect with confidence. AI-powered cleanup helps you '
+          'Disconnect with confidence. Smart cleanup helps you '
           'end connections gracefully and maintain your boundaries.',
       color: Color(0xFFEF5350),
     ),

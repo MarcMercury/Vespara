@@ -216,7 +216,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
               _buildEmptyState()
             else ...[
               const Text(
-                'AI SUGGESTS YOU LET GO OF',
+                'SUGGESTED TO LET GO OF',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -273,7 +273,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'The AI has analyzed your conversations, response patterns, and energy levels to identify connections that may not be serving you anymore.',
+              'Your conversations, response patterns, and energy levels have been analyzed to identify connections that may not be serving you anymore.',
               style: TextStyle(
                 fontSize: 13,
                 color: VesparaColors.secondary,
@@ -472,7 +472,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
                         size: 14, color: VesparaColors.glow,),
                     SizedBox(width: 8),
                     Text(
-                      'AI Analysis',
+                      'Analysis',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

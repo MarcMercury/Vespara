@@ -194,12 +194,12 @@ class _NotificationSettingsScreenState
 
           // AI & Insights
           _buildSection(
-            title: 'AI & INSIGHTS',
+            title: 'INSIGHTS',
             icon: Icons.auto_awesome_rounded,
             color: VesparaColors.glow,
             children: [
               _buildToggle(
-                title: 'AI Insights',
+                title: 'Insights',
                 subtitle: 'Personalized tips and recommendations',
                 icon: Icons.psychology_rounded,
                 value: settings.notifyAiInsights,

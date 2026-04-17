@@ -69,12 +69,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Chat & connections',
     },
     {
-      'name': 'TAG',
-      'subtitle': 'Adult Games',
-      'icon': Icons.local_fire_department_rounded,
-      'emoji': '🎭',
-      'color': Color(0xFFFFD54F),
-      'description': 'Games for the bold',
+      'name': 'VOYAGER',
+      'subtitle': 'Travel & Events',
+      'icon': Icons.flight_takeoff_rounded,
+      'emoji': '✈️',
+      'color': Color(0xFF00BFA6),
+      'description': 'Trip sharing & meetups',
     },
     {
       'name': 'MINIS',
@@ -85,12 +85,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Solo mini-games',
     },
     {
-      'name': 'VOYAGER',
-      'subtitle': 'Travel & Events',
-      'icon': Icons.flight_takeoff_rounded,
-      'emoji': '✈️',
-      'color': Color(0xFF00BFA6),
-      'description': 'Trip sharing & meetups',
+      'name': 'TAG',
+      'subtitle': 'Adult Games',
+      'icon': Icons.local_fire_department_rounded,
+      'emoji': '🎭',
+      'color': Color(0xFFFFD54F),
+      'description': 'Games for the bold',
     },
   ];
 
@@ -98,9 +98,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     const BrowseScreen(),
     const NestScreen(),
     WireEntryScreen(),
-    const TagScreen(),
-    const MinisScreen(),
     const TravelHubScreen(),
+    const MinisScreen(),
+    const TagScreen(),
   ];
 
   @override

@@ -611,7 +611,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       case 1:
         return 'Select at least 5 that describe you';
       case 2:
-        return 'AI-crafted from your vibe • Feel free to edit';
+        return 'Crafted from your vibe • Feel free to edit';
       default:
         return '';
     }

@@ -589,7 +589,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 },
                 icon: const Icon(Icons.refresh, size: 16),
                 label: Text(
-                  _hardTruthAssessment == null ? 'Generate AI Assessment' : 'Refresh Assessment',
+                  _hardTruthAssessment == null ? 'Generate Assessment' : 'Refresh Assessment',
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
@@ -626,7 +626,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             ),
             SizedBox(height: 8),
             Text(
-              'AI analysis of your dating behavior. No sugarcoating. No excuses.',
+              'Analysis of your dating behavior. No sugarcoating. No excuses.',
               style: TextStyle(
                 fontSize: 13,
                 color: VesparaColors.secondary,
@@ -659,7 +659,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
         ),
         SizedBox(height: 16),
         Text(
-          'The AI is studying your patterns...',
+          'Studying your patterns...',
           style: TextStyle(
             fontSize: 14,
             color: VesparaColors.secondary,
@@ -991,7 +991,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                 Icon(Icons.auto_awesome, color: VesparaColors.glow, size: 18),
                 SizedBox(width: 8),
                 Text(
-                  'AI Personality Summary',
+                  'Personality Summary',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1583,7 +1583,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
-                      'AI POWERED',
+                      'POWERED',
                       style: TextStyle(
                           fontSize: 10,
                           color: VesparaColors.glow,
@@ -1594,7 +1594,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               ),
               const SizedBox(height: 8),
               const Text(
-                'Personalized suggestions based on your psychological profile, behavior patterns, and compatibility insights.',
+                'Personalized suggestions based on your profile, behavior patterns, and compatibility insights.',
                 style: TextStyle(fontSize: 12, color: VesparaColors.secondary),
               ),
               const SizedBox(height: 12),
@@ -1677,7 +1677,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   child: TextButton(
                     onPressed: _loadTraitRecommendations,
                     child: const Text(
-                      'Get AI suggestions',
+                      'Get suggestions',
                       style: TextStyle(fontSize: 11, color: VesparaColors.glow),
                     ),
                   ),
@@ -2276,7 +2276,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI PHOTO RECOMMENDATION',
+                      'PHOTO RECOMMENDATION',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -2353,7 +2353,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(success 
-                              ? 'Photos reordered based on AI recommendation!' 
+                              ? 'Photos reordered based on recommendation!' 
                               : 'Failed to apply recommendation'),
                           backgroundColor: success 
                               ? VesparaColors.success 
@@ -2363,7 +2363,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     }
                   },
                   icon: const Icon(Icons.auto_fix_high, size: 18),
-                  label: const Text('Apply AI Recommendation'),
+                  label: const Text('Apply Recommendation'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: VesparaColors.glow,
                     side: const BorderSide(color: VesparaColors.glow),
@@ -2879,7 +2879,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
                     builder: (_) => const PhotoGalleryScreen(),
                   )),),
               _buildSettingTile(
-                  'AI Photo Tools',
+                  'Photo Tools',
                   'Enhance, retouch, and transform',
                   Icons.auto_fix_high_rounded,
                   () => Navigator.push(context, MaterialPageRoute(
@@ -2922,7 +2922,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
               _buildSettingToggleWithProvider('New Matches', 'notify_new_matches', s.notifyNewMatches),
               _buildSettingToggleWithProvider('Messages', 'notify_new_messages', s.notifyNewMessages),
               _buildSettingToggleWithProvider('Date Reminders', 'notify_date_reminders', s.notifyDateReminders),
-              _buildSettingToggleWithProvider('AI Insights', 'notify_ai_insights', s.notifyAiInsights),
+              _buildSettingToggleWithProvider('Insights', 'notify_ai_insights', s.notifyAiInsights),
             ]),
             const SizedBox(height: 16),
             _buildSettingsSection('Privacy', [
@@ -3325,7 +3325,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen>
             const SizedBox(height: 24),
             _buildSubscriptionFeature('Unlimited swipes'),
             _buildSubscriptionFeature('See who likes you'),
-            _buildSubscriptionFeature('AI dating coach'),
+            _buildSubscriptionFeature('Dating coach'),
             _buildSubscriptionFeature('Priority matching'),
             const SizedBox(height: 24),
             OutlinedButton(
