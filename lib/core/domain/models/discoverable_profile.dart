@@ -10,6 +10,7 @@ class DiscoverableProfile extends Equatable {
     this.bio,
     this.photos = const [],
     this.location,
+    this.state,
     this.distanceKm,
     this.heightCm,
     this.bodyType,
@@ -35,15 +36,36 @@ class DiscoverableProfile extends Equatable {
     this.vouchCount = 0,
     this.isVerified = false,
     this.verifications = const [],
+    // Onboarding-collected fields
+    this.gender = const [],
+    this.pronouns,
+    this.orientation = const [],
+    this.relationshipStatus = const [],
+    this.seeking = const [],
+    this.partnerInvolvement,
+    this.availabilityGeneral = const [],
+    this.schedulingStyle,
+    this.hostingStatus,
+    this.travelRadius,
+    this.partyAvailability = const [],
+    this.bandwidth,
+    this.lookingFor = const [],
+    this.vibeTags = const [],
+    this.interestTags = const [],
+    this.desireTags = const [],
   });
 
   factory DiscoverableProfile.fromJson(Map<String, dynamic> json) {
-    // Calculate age from date_of_birth if present
+    // Calculate age from birth_date or date_of_birth
     int? age;
-    if (json['date_of_birth'] != null) {
-      final dob = DateTime.parse(json['date_of_birth']);
+    final dobString = json['birth_date'] ?? json['date_of_birth'];
+    if (dobString != null) {
+      final dob = DateTime.parse(dobString as String);
       age = DateTime.now().difference(dob).inDays ~/ 365;
     }
+
+    // Location: onboarding writes 'city', legacy uses 'location_city'
+    final location = json['city'] as String? ?? json['location_city'] as String?;
 
     return DiscoverableProfile(
       id: json['id'] as String,
@@ -52,7 +74,8 @@ class DiscoverableProfile extends Equatable {
       age: age ?? json['age'] as int?,
       bio: json['bio'] as String?,
       photos: List<String>.from(json['photos'] ?? []),
-      location: json['location_city'] as String?,
+      location: location,
+      state: json['state'] as String?,
       distanceKm: (json['distance_km'] as num?)?.toDouble(),
       heightCm: json['height_cm'] as int?,
       bodyType: json['body_type'] as String?,
@@ -82,6 +105,26 @@ class DiscoverableProfile extends Equatable {
       vouchCount: json['vouch_count'] as int? ?? 0,
       isVerified: json['is_verified'] as bool? ?? false,
       verifications: List<String>.from(json['verifications'] ?? []),
+      // Onboarding-collected fields
+      gender: List<String>.from(json['gender'] ?? []),
+      pronouns: json['pronouns'] as String?,
+      orientation: List<String>.from(json['orientation'] ?? []),
+      relationshipStatus:
+          List<String>.from(json['relationship_status'] ?? []),
+      seeking: List<String>.from(json['seeking'] ?? []),
+      partnerInvolvement: json['partner_involvement'] as String?,
+      availabilityGeneral:
+          List<String>.from(json['availability_general'] ?? []),
+      schedulingStyle: json['scheduling_style'] as String?,
+      hostingStatus: json['hosting_status'] as String?,
+      travelRadius: json['travel_radius'] as int?,
+      partyAvailability:
+          List<String>.from(json['party_availability'] ?? []),
+      bandwidth: (json['bandwidth'] as num?)?.toDouble(),
+      lookingFor: List<String>.from(json['looking_for'] ?? []),
+      vibeTags: List<String>.from(json['vibe_tags'] ?? []),
+      interestTags: List<String>.from(json['interest_tags'] ?? []),
+      desireTags: List<String>.from(json['desire_tags'] ?? []),
     );
   }
   final String id;
@@ -91,6 +134,7 @@ class DiscoverableProfile extends Equatable {
   final String? bio;
   final List<String> photos;
   final String? location;
+  final String? state;
   final double? distanceKm;
 
   // Physical attributes
@@ -130,6 +174,24 @@ class DiscoverableProfile extends Equatable {
   final int vouchCount;
   final bool isVerified;
   final List<String> verifications;
+
+  // Onboarding-collected identity & preferences
+  final List<String> gender;
+  final String? pronouns;
+  final List<String> orientation;
+  final List<String> relationshipStatus;
+  final List<String> seeking;
+  final String? partnerInvolvement;
+  final List<String> availabilityGeneral;
+  final String? schedulingStyle;
+  final String? hostingStatus;
+  final int? travelRadius;
+  final List<String> partyAvailability;
+  final double? bandwidth;
+  final List<String> lookingFor;
+  final List<String> vibeTags;
+  final List<String> interestTags;
+  final List<String> desireTags;
 
   String get displayAge => age != null ? '$age' : '';
 

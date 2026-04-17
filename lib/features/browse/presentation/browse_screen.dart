@@ -748,23 +748,12 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                       if (member.location != null)
                         _profileInfoRow(
                           Icons.location_on,
-                          '${member.location}${member.distanceKm != null ? ' • ${member.distanceKm!.toStringAsFixed(1)} km away' : ''}',
+                          '${member.location}${member.state != null ? ', ${member.state}' : ''}',
                         ),
                       if (member.occupation != null)
-                        _profileInfoRow(
-                          Icons.work_outline,
-                          '${member.occupation}${member.company != null ? " at ${member.company}" : ""}',
-                        ),
-                      if (member.education != null)
-                        _profileInfoRow(Icons.school, member.education!),
-                      if (member.heightCm != null)
-                        _profileInfoRow(
-                          Icons.straighten,
-                          _formatHeight(member.heightCm!),
-                        ),
-                      if (member.bodyType != null)
-                        _profileInfoRow(
-                            Icons.accessibility_new, _formatLabel(member.bodyType!)),
+                        _profileInfoRow(Icons.work_outline, member.occupation!),
+                      if (member.pronouns != null)
+                        _profileInfoRow(Icons.badge_outlined, member.pronouns!),
                     ]),
 
                     // ── Bio ──
@@ -783,110 +772,6 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                             color: VesparaColors.primary,
                             height: 1.6,
                           ),
-                        ),
-                      ),
-                    ],
-
-                    // ── Prompts ──
-                    if (member.prompts.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      _buildSectionHeader('Prompts', Icons.chat_bubble_outline),
-                      const SizedBox(height: 12),
-                      ...member.prompts.map((prompt) => Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: VesparaColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: VesparaColors.glow.withOpacity(0.1),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  prompt.question,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: VesparaColors.secondary,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  prompt.answer,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    color: VesparaColors.primary,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )),
-                    ],
-
-                    // ── Relationship Preferences ──
-                    if (member.relationshipTypes.isNotEmpty ||
-                        member.loveLanguages.isNotEmpty ||
-                        member.communicationStyle != null) ...[
-                      const SizedBox(height: 24),
-                      _buildSectionHeader(
-                          'Relationship Style', Icons.favorite_border),
-                      const SizedBox(height: 12),
-                      if (member.relationshipTypes.isNotEmpty)
-                        _buildTagGroup(
-                          'Looking for',
-                          member.relationshipTypes
-                              .map(_formatType)
-                              .toList(),
-                          VesparaColors.glow,
-                        ),
-                      if (member.loveLanguages.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        _buildTagGroup(
-                          'Love Languages',
-                          member.loveLanguages.map(_formatLabel).toList(),
-                          VesparaColors.accentRose,
-                        ),
-                      ],
-                      if (member.communicationStyle != null) ...[
-                        const SizedBox(height: 12),
-                        _buildTagGroup(
-                          'Communication',
-                          [_formatLabel(member.communicationStyle!)],
-                          VesparaColors.accentViolet,
-                        ),
-                      ],
-                    ],
-
-                    // ── Lifestyle ──
-                    if (member.drinking != null ||
-                        member.smoking != null ||
-                        member.cannabis != null) ...[
-                      const SizedBox(height: 24),
-                      _buildSectionHeader('Lifestyle', Icons.local_bar),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: VesparaColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            if (member.drinking != null)
-                              _lifestyleRow(Icons.local_bar, 'Drinking',
-                                  _formatLabel(member.drinking!)),
-                            if (member.smoking != null)
-                              _lifestyleRow(Icons.smoking_rooms, 'Smoking',
-                                  _formatLabel(member.smoking!)),
-                            if (member.cannabis != null)
-                              _lifestyleRow(Icons.eco, 'Cannabis',
-                                  _formatLabel(member.cannabis!)),
-                          ],
                         ),
                       ),
                     ],
@@ -941,9 +826,138 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                       ),
                     ],
 
-                    // ── Trust & Verification ──
-                    if (member.vouchCount > 0 ||
-                        member.verifications.isNotEmpty) ...[
+                    // ── Identity ──
+                    if (member.gender.isNotEmpty ||
+                        member.orientation.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Identity', Icons.person_pin),
+                      const SizedBox(height: 12),
+                      if (member.gender.isNotEmpty)
+                        _buildTagGroup(
+                          'Gender',
+                          member.gender.map(_formatLabel).toList(),
+                          VesparaColors.accentViolet,
+                        ),
+                      if (member.orientation.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Orientation',
+                          member.orientation.map(_formatLabel).toList(),
+                          VesparaColors.glow,
+                        ),
+                      ],
+                    ],
+
+                    // ── Relationship & Seeking ──
+                    if (member.relationshipStatus.isNotEmpty ||
+                        member.seeking.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                          'Relationship', Icons.favorite_border),
+                      const SizedBox(height: 12),
+                      if (member.relationshipStatus.isNotEmpty)
+                        _buildTagGroup(
+                          'Status',
+                          member.relationshipStatus
+                              .map(_formatLabel)
+                              .toList(),
+                          VesparaColors.accentRose,
+                        ),
+                      if (member.seeking.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Seeking',
+                          member.seeking.map(_formatLabel).toList(),
+                          VesparaColors.glow,
+                        ),
+                      ],
+                      if (member.partnerInvolvement != null) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Partner Involvement',
+                          [_formatLabel(member.partnerInvolvement!)],
+                          VesparaColors.accentViolet,
+                        ),
+                      ],
+                    ],
+
+                    // ── Looking For (traits) ──
+                    if (member.lookingFor.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Looking For', Icons.search),
+                      const SizedBox(height: 12),
+                      _buildTagGroup(
+                        '',
+                        member.lookingFor.map(_formatLabel).toList(),
+                        VesparaColors.glow,
+                      ),
+                    ],
+
+                    // ── Availability & Logistics ──
+                    if (member.availabilityGeneral.isNotEmpty ||
+                        member.hostingStatus != null ||
+                        member.travelRadius != null) ...[
+                      const SizedBox(height: 24),
+                      _buildProfileSection(
+                          'Availability', Icons.calendar_today, [
+                        if (member.availabilityGeneral.isNotEmpty)
+                          _profileInfoRow(
+                            Icons.access_time,
+                            member.availabilityGeneral
+                                .map(_formatLabel)
+                                .join(', '),
+                          ),
+                        if (member.schedulingStyle != null)
+                          _profileInfoRow(
+                            Icons.event_note,
+                            _formatLabel(member.schedulingStyle!),
+                          ),
+                        if (member.hostingStatus != null)
+                          _profileInfoRow(
+                            Icons.home_outlined,
+                            _formatLabel(member.hostingStatus!),
+                          ),
+                        if (member.travelRadius != null)
+                          _profileInfoRow(
+                            Icons.explore,
+                            '${member.travelRadius} mi radius',
+                          ),
+                      ]),
+                    ],
+
+                    // ── Tags ──
+                    if (member.vibeTags.isNotEmpty ||
+                        member.interestTags.isNotEmpty ||
+                        member.desireTags.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Tags', Icons.label_outline),
+                      const SizedBox(height: 12),
+                      if (member.vibeTags.isNotEmpty)
+                        _buildTagGroup(
+                          'Vibe',
+                          member.vibeTags.map(_formatLabel).toList(),
+                          VesparaColors.accentViolet,
+                        ),
+                      if (member.interestTags.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Interests',
+                          member.interestTags.map(_formatLabel).toList(),
+                          VesparaColors.glow,
+                        ),
+                      ],
+                      if (member.desireTags.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildTagGroup(
+                          'Desires',
+                          member.desireTags.map(_formatLabel).toList(),
+                          VesparaColors.accentRose,
+                        ),
+                      ],
+                    ],
+
+                    // ── Trust ──
+                    if (member.vouchCount > 0) ...[
                       const SizedBox(height: 24),
                       _buildSectionHeader('Trust', Icons.shield_outlined),
                       const SizedBox(height: 12),
@@ -953,58 +967,18 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                           color: VesparaColors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Column(
+                        child: Row(
                           children: [
-                            if (member.vouchCount > 0)
-                              Row(
-                                children: [
-                                  const Icon(Icons.people,
-                                      size: 18, color: VesparaColors.success),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    '${member.vouchCount} ${member.vouchCount == 1 ? 'vouch' : 'vouches'}',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: VesparaColors.primary,
-                                    ),
-                                  ),
-                                ],
+                            const Icon(Icons.people,
+                                size: 18, color: VesparaColors.success),
+                            const SizedBox(width: 10),
+                            Text(
+                              '${member.vouchCount} ${member.vouchCount == 1 ? 'vouch' : 'vouches'}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: VesparaColors.primary,
                               ),
-                            if (member.verifications.isNotEmpty) ...[
-                              if (member.vouchCount > 0)
-                                const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: member.verifications.map((v) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: VesparaColors.success
-                                          .withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.check_circle,
-                                            size: 14,
-                                            color: VesparaColors.success),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatLabel(v),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: VesparaColors.success,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
                       ),
@@ -1317,15 +1291,16 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: VesparaColors.secondary,
-              letterSpacing: 0.5,
+          if (label.isNotEmpty)
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: VesparaColors.secondary,
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
