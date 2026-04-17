@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/chat.dart';
+import '../../../core/domain/models/discoverable_profile.dart';
 import '../../../core/providers/match_state_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -928,16 +929,192 @@ class _ChatDetailScreenState extends ConsumerState<_ChatDetailScreen> {
     );
   }
 
-  void _navigateToProfile(String userId) {
-    // Navigate to profile view
-    if (userId.isNotEmpty) {
-      // For now, show a snackbar since profile screen navigation depends on app structure
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Opening ${widget.conversation.otherUserName}\'s profile'),
-          backgroundColor: VesparaColors.glow,
+  void _navigateToProfile(String userId) async {
+    if (userId.isEmpty) return;
+
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response == null || !mounted) return;
+
+      final profile = DiscoverableProfile.fromJson(response);
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          maxChildSize: 0.96,
+          minChildSize: 0.5,
+          builder: (context, scrollController) => Container(
+            decoration: const BoxDecoration(
+              color: VesparaColors.background,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 4),
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: VesparaColors.secondary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: [
+                      const SizedBox(height: 12),
+
+                      // Avatar
+                      Center(
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                          backgroundImage: (profile.photos.isNotEmpty)
+                              ? NetworkImage(profile.photos.first)
+                              : null,
+                          child: profile.photos.isEmpty
+                              ? Text(
+                                  (profile.displayName ?? '?')[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.bold,
+                                    color: VesparaColors.glow,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Name & Age
+                      Center(
+                        child: Text(
+                          [
+                            profile.displayName ?? 'Unknown',
+                            if (profile.age != null) '${profile.age}',
+                          ].join(', '),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                      ),
+
+                      // Location
+                      if (profile.location != null) ...[
+                        const SizedBox(height: 4),
+                        Center(
+                          child: Text(
+                            profile.location!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: VesparaColors.secondary.withOpacity(0.8),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // Headline
+                      if (profile.headline != null) ...[
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            profile.headline!,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontStyle: FontStyle.italic,
+                              color: VesparaColors.glow.withOpacity(0.9),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+
+                      // Bio
+                      if (profile.bio != null) ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          'About',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          profile.bio!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: VesparaColors.secondary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+
+                      // Photos gallery
+                      if (profile.photos.length > 1) ...[
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Photos',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: VesparaColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 200,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: profile.photos.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) => ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                profile.photos[index],
+                                width: 160,
+                                height: 200,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load profile')),
+        );
+      }
     }
   }
 
