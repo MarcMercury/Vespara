@@ -683,10 +683,15 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
         _navigateToCreateGroup(context);
         break;
       case 'starred':
-        // TODO: Navigate to starred messages
+        _showStarredMessages();
         break;
       case 'settings':
-        // TODO: Navigate to settings
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const _WireSettingsSheet(),
+          ),
+        );
         break;
     }
   }
@@ -959,6 +964,15 @@ class _WireHomeScreenState extends ConsumerState<WireHomeScreen>
       _openConversation(context, conversation);
     }
   }
+
+  void _showStarredMessages() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Starred messages coming soon'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 }
 
 /// Widget that loads and displays all members for starting a new chat
@@ -1077,6 +1091,59 @@ class _NewChatMemberListState extends State<_NewChatMemberList> {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Minimal Wire settings page
+class _WireSettingsSheet extends StatelessWidget {
+  const _WireSettingsSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: VesparaColors.background,
+      appBar: AppBar(
+        backgroundColor: VesparaColors.background,
+        title: const Text('Wire Settings',
+            style: TextStyle(color: VesparaColors.primary)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: VesparaColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined,
+                color: VesparaColors.primary),
+            title: const Text('Notifications',
+                style: TextStyle(color: VesparaColors.primary)),
+            subtitle: const Text('Manage message notifications',
+                style: TextStyle(color: VesparaColors.secondary)),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Notification settings available in Mirror > Settings')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.block_outlined,
+                color: VesparaColors.primary),
+            title: const Text('Blocked Contacts',
+                style: TextStyle(color: VesparaColors.primary)),
+            subtitle: const Text('Manage blocked users',
+                style: TextStyle(color: VesparaColors.secondary)),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Blocked contacts available in Mirror > Settings')),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

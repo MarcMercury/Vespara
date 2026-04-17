@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
 
+import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/chat_backend_provider.dart';
 import '../../../core/services/stream_chat_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -129,7 +130,14 @@ class StreamChatWireScreen extends StatelessWidget {
               ),
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WireHomeScreen(),
+                  ),
+                );
+              },
               icon: const Icon(Icons.search, color: VesparaColors.primary),
             ),
           ],
@@ -183,7 +191,7 @@ class StreamChatWireScreen extends StatelessWidget {
                   style: TextStyle(color: VesparaColors.secondary)),
               onTap: () {
                 Navigator.pop(ctx);
-                // TODO: Show member picker for direct message
+                _showMemberPicker(context);
               },
             ),
             ListTile(
@@ -203,6 +211,94 @@ class StreamChatWireScreen extends StatelessWidget {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showMemberPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Consumer(
+          builder: (context, ref, _) {
+            final connectionsAsync = ref.watch(sanctumConnectionsProvider);
+            return Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text('Start a Chat',
+                      style: TextStyle(
+                          color: VesparaColors.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  const Text('Select a connection to message',
+                      style: TextStyle(color: VesparaColors.secondary, fontSize: 13)),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: connectionsAsync.when(
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(
+                        child: Text('Error: $e',
+                            style: const TextStyle(color: VesparaColors.secondary)),
+                      ),
+                      data: (connections) {
+                        if (connections.isEmpty) {
+                          return const Center(
+                            child: Text('No connections yet. Match with members to chat!',
+                                style: TextStyle(color: VesparaColors.secondary)),
+                          );
+                        }
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: connections.length,
+                          itemBuilder: (context, index) {
+                            final conn = connections[index];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                                backgroundImage: conn.avatarUrl != null
+                                    ? NetworkImage(conn.avatarUrl!)
+                                    : null,
+                                child: conn.avatarUrl == null
+                                    ? Text(
+                                        (conn.displayName ?? '?')[0].toUpperCase(),
+                                        style: const TextStyle(color: VesparaColors.glow),
+                                      )
+                                    : null,
+                              ),
+                              title: Text(conn.displayName ?? 'Member',
+                                  style: const TextStyle(color: VesparaColors.primary)),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                // Navigate to chat via WireHomeScreen which handles chat creation
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const WireHomeScreen(),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

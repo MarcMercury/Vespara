@@ -187,7 +187,7 @@ class _ShredderScreenState extends ConsumerState<ShredderScreen> {
             ],
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showHistoryDialog(),
             icon: const Icon(Icons.history, color: VesparaColors.secondary),
           ),
         ],

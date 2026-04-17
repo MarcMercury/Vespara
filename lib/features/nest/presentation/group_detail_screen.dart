@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/domain/models/group.dart';
 import '../../../core/domain/models/wire_models.dart';
@@ -8,6 +9,7 @@ import '../../../core/providers/app_providers.dart';
 import '../../../core/providers/groups_provider.dart';
 import '../../../core/providers/wire_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../events/presentation/events_home_screen.dart';
 import '../../wire/presentation/wire_chat_screen.dart';
 import '../../wire/presentation/wire_screen.dart';
 
@@ -557,7 +559,76 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
   }
 
   void _showEditGroup(VesparaGroup group) {
-    // TODO: Implement edit group
+    final nameController = TextEditingController(text: group.name);
+    final descController = TextEditingController(text: group.description ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VesparaColors.surface,
+        title: const Text('Edit Group',
+            style: TextStyle(color: VesparaColors.primary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: VesparaColors.primary),
+              decoration: const InputDecoration(
+                labelText: 'Group Name',
+                labelStyle: TextStyle(color: VesparaColors.secondary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descController,
+              style: const TextStyle(color: VesparaColors.primary),
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                labelStyle: TextStyle(color: VesparaColors.secondary),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await Supabase.instance.client
+                    .from('vespara_groups')
+                    .update({
+                  'name': nameController.text.trim(),
+                  'description': descController.text.trim(),
+                  'updated_at': DateTime.now().toIso8601String(),
+                }).eq('id', group.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Group updated')),
+                  );
+                  ref.read(groupsProvider.notifier).loadGroups();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error updating group: $e')),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VesparaColors.glow,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _openGroupChat(VesparaGroup group) async {
@@ -590,7 +661,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
   }
 
   void _planGroupEvent(VesparaGroup group) {
-    // TODO: Navigate to event creation with group
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EventsHomeScreen(),
+      ),
+    );
   }
 
   void _showMemberActions(GroupMember member) {

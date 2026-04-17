@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../core/providers/user_settings_provider.dart';
 import '../../../core/services/permission_service.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -39,6 +40,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
   bool _nudgeNotifications = true;
   bool _weeklyDigest = true;
   bool _specialOffers = false;
+  bool _quietHoursEnabled = false;
 
   // Discovery preferences
   String _discoveryMode = 'balanced';
@@ -543,8 +545,21 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 ),
                 const Spacer(),
                 Switch(
-                  value: false,
-                  onChanged: (v) {},
+                  value: _quietHoursEnabled,
+                  onChanged: (v) {
+                    setState(() => _quietHoursEnabled = v);
+                    if (v) {
+                      ref.read(userSettingsProvider.notifier).updateSetting(
+                            'quiet_hours_start', '22:00');
+                      ref.read(userSettingsProvider.notifier).updateSetting(
+                            'quiet_hours_end', '08:00');
+                    } else {
+                      ref.read(userSettingsProvider.notifier).updateSetting(
+                            'quiet_hours_start', null);
+                      ref.read(userSettingsProvider.notifier).updateSetting(
+                            'quiet_hours_end', null);
+                    }
+                  },
                   thumbColor: WidgetStatePropertyAll(VesparaColors.glow),
                 ),
               ],
@@ -1418,7 +1433,17 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
 
   void _saveSettings() {
     HapticFeedback.heavyImpact();
-    // TODO: Persist to Supabase
+    final notifier = ref.read(userSettingsProvider.notifier);
+    notifier.updateSetting('notify_new_matches', _matchNotifications);
+    notifier.updateSetting('notify_new_messages', _messageNotifications);
+    notifier.updateSetting('notify_new_events', _experienceNotifications);
+    notifier.updateSetting('notify_date_reminders', _reminderNotifications);
+    notifier.updateSetting('notify_ai_insights', _nudgeNotifications);
+    notifier.updateSetting('notify_weekly_digest', _weeklyDigest);
+    notifier.updateSetting('max_distance', _maxDistance);
+    notifier.updateSetting('min_age', _ageRange.start.round());
+    notifier.updateSetting('max_age', _ageRange.end.round());
+    notifier.updateSetting('show_online_status', _showActiveRecently);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Settings saved! ✨'),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/app_providers.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../wire/presentation/wire_entry_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// QR CONNECT MODAL
@@ -548,7 +549,12 @@ class _QrConnectModalState extends ConsumerState<QrConnectModal>
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to chat
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const WireEntryScreen(),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('MESSAGE'),

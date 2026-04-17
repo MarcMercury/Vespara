@@ -15,6 +15,7 @@ import '../../../core/services/deep_connection_engine.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/animated_background.dart';
 import '../../../core/widgets/premium_effects.dart';
+import '../../wire/presentation/wire_entry_screen.dart';
 
 /// Supabase client provider for discover screen
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -278,7 +279,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   textColor: Colors.white,
                   onPressed: () {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    // TODO: Navigate to Wire with this match conversation
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const WireEntryScreen(),
+                      ),
+                    );
                   },
                 )
               : null,

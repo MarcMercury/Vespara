@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/domain/models/travel_plan.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../wire/presentation/wire_entry_screen.dart';
+import '../../events/presentation/events_home_screen.dart';
 
 /// Overlap card showing when two travel plans intersect
 class OverlapCard extends StatelessWidget {
@@ -172,7 +174,12 @@ class OverlapCard extends StatelessWidget {
                       Icons.chat_bubble_outline_rounded,
                       const Color(0xFF00BFA6),
                       () {
-                        // TODO: Navigate to Wire chat
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WireEntryScreen(),
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -183,7 +190,12 @@ class OverlapCard extends StatelessWidget {
                       Icons.event_rounded,
                       const Color(0xFF6366F1),
                       () {
-                        // TODO: Create shared event
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EventsHomeScreen(),
+                          ),
+                        );
                       },
                     ),
                   ),

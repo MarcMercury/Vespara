@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/domain/models/travel_plan.dart';
 import '../../../core/services/travel_service.dart';
 import '../../../core/theme/app_theme.dart';
+import 'add_trip_screen.dart';
 
 /// ════════════════════════════════════════════════════════════════════════════
 /// TRIP DETAIL SCREEN
@@ -743,7 +744,12 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 const Color(0xFF00BFA6),
                 () {
                   Navigator.pop(context);
-                  // TODO: Navigate to edit screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AddTripScreen(),
+                    ),
+                  );
                 },
               ),
               _buildOptionTile(
@@ -752,7 +758,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 const Color(0xFF6366F1),
                 () {
                   Navigator.pop(context);
-                  // TODO: Show invite picker
+                  _showInviteCompanion();
                 },
               ),
               _buildOptionTile(
@@ -761,7 +767,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 const Color(0xFFFFB74D),
                 () {
                   Navigator.pop(context);
-                  // TODO: Share functionality
+                  _shareTrip();
                 },
               ),
               if (!_trip.isCompleted && _trip.isPast)
@@ -848,6 +854,55 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       onTap: onTap,
+    );
+  }
+
+  void _showInviteCompanion() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Invite Companion',
+                style: GoogleFonts.inter(
+                    color: VesparaColors.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Share this trip with a connection to invite them.',
+                style: GoogleFonts.inter(
+                    color: VesparaColors.secondary, fontSize: 13)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _shareTrip();
+              },
+              icon: const Icon(Icons.share),
+              label: const Text('Share Trip Link'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VesparaColors.glow,
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shareTrip() {
+    final tripInfo =
+        '✈️ ${_trip.destination}\n📅 ${_trip.startDate.month}/${_trip.startDate.day} - ${_trip.endDate.month}/${_trip.endDate.day}\n\nJoin me on Vespara!';
+    Clipboard.setData(ClipboardData(text: tripInfo));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Trip details copied to clipboard!')),
     );
   }
 }

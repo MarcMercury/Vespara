@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -37,6 +38,8 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
   WireMessage? _replyingTo;
   bool _isRecordingVoice = false;
   bool _isLoadingMore = false;
+  bool _isSearchingChat = false;
+  String _chatSearchQuery = '';
 
   /// Cached notifier ref so we can call it safely in dispose()
   late final WireNotifier _wireNotifier;
@@ -203,13 +206,23 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              // TODO: Video call
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Video calling requires a dedicated service integration'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
             icon: const Icon(Icons.videocam, color: VesparaColors.primary),
           ),
           IconButton(
             onPressed: () {
-              // TODO: Voice call
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Voice calling requires a dedicated service integration'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
             icon: const Icon(Icons.call, color: VesparaColors.primary),
           ),
@@ -573,7 +586,7 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
                     // Emoji button
                     IconButton(
                       onPressed: () {
-                        // TODO: Show emoji picker
+                        _showEmojiQuickPicker();
                       },
                       icon: const Icon(
                         Icons.emoji_emotions_outlined,
@@ -678,16 +691,21 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
         _openGroupInfo(context);
         break;
       case 'search':
-        // TODO: Implement search in chat
+        setState(() {
+          _isSearchingChat = !_isSearchingChat;
+          if (!_isSearchingChat) _chatSearchQuery = '';
+        });
         break;
       case 'media':
-        // TODO: Show media gallery
+        _showMediaGallery();
         break;
       case 'mute':
         ref.read(wireProvider.notifier).toggleMute(widget.conversation.id);
         break;
       case 'wallpaper':
-        // TODO: Wallpaper settings
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Wallpaper customization coming soon')),
+        );
         break;
       case 'clear':
         _confirmClearChat();
@@ -748,24 +766,41 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
   }
 
   Future<void> _pickDocument() async {
-    // Document picking requires native platform support
-    // On web, this feature is not available yet
-    if (kIsWeb) return;
-    
-    // On mobile/desktop, would use file_picker but it has web compatibility issues
-    // TODO: Implement with platform-specific code when needed
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xlsx', 'csv'],
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        await ref.read(wireProvider.notifier).sendMessage(
+              conversationId: widget.conversation.id,
+              content: '📎 ${file.name}',
+              replyToId: _replyingTo?.id,
+            );
+        setState(() => _replyingTo = null);
+      }
+    } catch (e) {
+      debugPrint('Error picking document: $e');
+    }
   }
 
   void _shareLocation() {
-    // TODO: Implement location sharing
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Location sharing requires additional setup')),
+    );
   }
 
   void _shareContact() {
-    // TODO: Implement contact sharing
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Contact sharing coming soon')),
+    );
   }
 
   void _createPoll() {
-    // TODO: Implement poll creation
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Polls coming soon')),
+    );
   }
 
   void _openGiphyPicker() {
@@ -841,9 +876,77 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
   }
 
   void _forwardMessage(WireMessage message) {
-    // TODO: Show conversation picker for forwarding
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Forward coming soon')),
+    final wireState = ref.read(wireProvider);
+    final conversations = wireState.conversations
+        .where((c) => c.id != widget.conversation.id)
+        .toList();
+
+    if (conversations.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No other conversations to forward to')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Forward to...',
+                style: TextStyle(
+                    color: VesparaColors.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: conversations.length,
+                itemBuilder: (context, index) {
+                  final conv = conversations[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: VesparaColors.glow.withOpacity(0.2),
+                      child: Text(
+                        conv.displayName.isNotEmpty
+                            ? conv.displayName[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(color: VesparaColors.glow),
+                      ),
+                    ),
+                    title: Text(conv.displayName,
+                        style: const TextStyle(color: VesparaColors.primary)),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await ref.read(wireProvider.notifier).sendMessage(
+                            conversationId: conv.id,
+                            content: message.content ?? '',
+                          );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  'Forwarded to ${conv.displayName}')),
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -890,13 +993,139 @@ class _WireChatScreenState extends ConsumerState<WireChatScreen> {
     );
 
     if (confirmed == true) {
-      // TODO: Clear chat messages
+      await ref.read(wireProvider.notifier).deleteConversation(
+            widget.conversation.id,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chat cleared')),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   // HELPERS
   // ══════════════════════════════════════════════════════════════════════════
+
+  void _showEmojiQuickPicker() {
+    const emojis = ['😀', '😂', '❤️', '🔥', '👍', '😍', '🎉', '😎',
+        '🥰', '😘', '💜', '✨', '🙌', '💯', '🤔', '😏',
+        '🍷', '💋', '🌹', '🎭', '💎', '🦋', '🌙', '⭐'];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Quick Emoji',
+                style: TextStyle(color: VesparaColors.primary, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: emojis.map((emoji) => GestureDetector(
+                onTap: () {
+                  _messageController.text += emoji;
+                  _messageController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _messageController.text.length),
+                  );
+                  Navigator.pop(ctx);
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: VesparaColors.background,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                ),
+              )).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMediaGallery() {
+    final wireState = ref.read(wireProvider);
+    final messages = wireState.messagesByConversation[widget.conversation.id] ?? [];
+    final mediaMessages = messages.where((m) =>
+        m.mediaUrl != null && m.mediaUrl!.isNotEmpty).toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: VesparaColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text('Shared Media',
+                  style: TextStyle(
+                      color: VesparaColors.primary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Expanded(
+                child: mediaMessages.isEmpty
+                    ? const Center(
+                        child: Text('No shared media yet',
+                            style: TextStyle(color: VesparaColors.secondary)),
+                      )
+                    : GridView.builder(
+                        controller: scrollController,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                        ),
+                        itemCount: mediaMessages.length,
+                        itemBuilder: (context, index) {
+                          final msg = mediaMessages[index];
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: VesparaColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                              image: msg.mediaUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(msg.mediaUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: msg.mediaUrl == null
+                                ? const Icon(Icons.broken_image,
+                                    color: VesparaColors.secondary)
+                                : null,
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   String _getTypingText(List<TypingUser> users) {
     if (users.length == 1) {
