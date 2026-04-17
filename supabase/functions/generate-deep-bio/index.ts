@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.3.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { rateLimitOrNull } from "../_shared/rate_limit.ts";
 
 /**
  * ════════════════════════════════════════════════════════════════════════════
@@ -227,6 +228,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Rate limit: 5 deep bio generations per minute per user
+    const limited = rateLimitOrNull(user.id, 5, 60_000, corsHeaders);
+    if (limited) return limited;
 
     // Get request params
     const body = await req.json().catch(() => ({}));

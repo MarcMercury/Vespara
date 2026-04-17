@@ -40,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late List<Animation<double>> _tileAnimations;
   bool _showTutorial = false;
   bool _tutorialChecked = false;
+  int _unreadNotificationCount = 0;
 
   /// The 6 Dashboard Modules (shown on Home tab)
   static const List<Map<String, dynamic>> _modules = [
@@ -131,6 +132,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     _staggerController.forward();
     _checkTutorial();
+    _loadUnreadCount();
+    _subscribeToNotifications();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final response = await supabase
+          .from('notifications')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_read', false)
+          .count(CountOption.exact);
+
+      if (mounted) {
+        setState(() {
+          _unreadNotificationCount = response.count ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading unread count: $e');
+    }
+  }
+
+  void _subscribeToNotifications() {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    supabase
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .listen((_) {
+          _loadUnreadCount();
+        });
   }
 
   Future<void> _checkTutorial() async {
@@ -249,25 +289,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: const Icon(Icons.notifications_rounded,
                         color: VesparaColors.secondary, size: 22),
                   ),
-                  // Unread badge
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: VesparaColors.accentRose,
-                        boxShadow: [
-                          BoxShadow(
-                            color: VesparaColors.accentRose.withOpacity(0.5),
-                            blurRadius: 6,
+                  // Unread badge - only show when there are unread notifications
+                  if (_unreadNotificationCount > 0)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: VesparaColors.accentRose,
+                          boxShadow: [
+                            BoxShadow(
+                              color: VesparaColors.accentRose.withOpacity(0.5),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            _unreadNotificationCount > 99 ? '99+' : '$_unreadNotificationCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -682,7 +733,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _NotificationsSheet(),
-    );
+    ).then((_) => _loadUnreadCount());
   }
 
   String _getModuleIconPath(String moduleName) {
@@ -704,7 +755,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  bool _hasNotification(int index) => false;
+  bool _hasNotification(int index) => _unreadNotificationCount > 0;
 }
 
 class _StatData {

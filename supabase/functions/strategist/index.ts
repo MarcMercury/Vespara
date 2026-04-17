@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { rateLimitOrNull } from "../_shared/rate_limit.ts";
 
 const ALLOWED_ORIGINS = [
   "https://vespara.vercel.app",
@@ -67,6 +68,10 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Rate limit: 10 strategist requests per minute per user
+    const limited = rateLimitOrNull(user.id, 10, 60_000, corsHeaders);
+    if (limited) return limited;
 
     const body: StrategistRequest = await req.json();
     const { matchName, matchContext, userQuestion, conversationHistory } = body;
