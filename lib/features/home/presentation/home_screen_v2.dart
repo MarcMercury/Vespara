@@ -16,6 +16,7 @@ import '../../ludus/presentation/tags_screen.dart';
 import '../../minis/presentation/minis_screen.dart';
 import '../../mirror/presentation/mirror_screen.dart';
 import '../../nest/presentation/nest_screen.dart';
+import '../../planner/presentation/planner_screen.dart';
 import '../../travel/presentation/travel_hub_screen.dart';
 import '../../wire/presentation/wire_entry_screen.dart';
 import 'welcome_tutorial.dart';
@@ -77,6 +78,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       'description': 'Trip sharing & meetups',
     },
     {
+      'name': 'PLANNER',
+      'subtitle': 'Calendar',
+      'icon': Icons.calendar_month_rounded,
+      'emoji': '📅',
+      'color': Color(0xFFCE93D8),
+      'description': 'Your world at a glance',
+    },
+    {
       'name': 'MINIS',
       'subtitle': 'Quick Hits',
       'icon': Icons.auto_awesome_rounded,
@@ -99,6 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     const NestScreen(),
     WireEntryScreen(),
     const TravelHubScreen(),
+    const PlannerScreen(),
     const MinisScreen(),
     const TagScreen(),
   ];
@@ -750,6 +760,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return 'assets/Main Page Tile Icons/Minis.png';
       case 'VOYAGER':
         return 'assets/Main Page Tile Icons/Voyager.png';
+      case 'PLANNER':
+        return 'assets/Main Page Tile Icons/Planner1.png';
       default:
         return 'assets/Main Page Tile Icons/Discover1.png';
     }

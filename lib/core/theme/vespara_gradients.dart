@@ -67,9 +67,10 @@ class VesparaGradients {
       case 0: return discover;
       case 1: return nest;
       case 2: return shredder;
-      case 3: return tag;
-      case 4: return discover; // Minis
-      case 5: return voyager;
+      case 3: return voyager;
+      case 4: return planner;
+      case 5: return discover; // Minis
+      case 6: return tag;
       default: return discover;
     }
   }
